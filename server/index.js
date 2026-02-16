@@ -10,7 +10,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
-  "https://*.vercel.app",
   "https://clubsetu.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
@@ -20,22 +19,34 @@ const allowedOrigins = [
   "http://localhost:5178",
   "http://localhost:5179",
 ];
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      // 1. Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+
+      // 2. Check if origin matches any exact string in allowedOrigins
+      const isAllowed = allowedOrigins.includes(origin);
+
+      // 3. Check if origin matches the Vercel wildcard pattern
+      const isVercelPreview = /\.vercel\.app$/.test(origin);
+
+      if (isAllowed || isVercelPreview) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
-  }),
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
 );
 
 app.use(express.json());
 
-connectDB(process.env.MONGO_URI)
+await connectDB(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected");
   })
