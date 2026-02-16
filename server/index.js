@@ -1,8 +1,12 @@
-const express = require("express");
-
-const cors = require("cors");
-const dotenv = require("dotenv");
-const connectDB = require("./connection");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import connectDB from "./connection.js";
+import eventRoutes from "./routes/events.js";
+import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/users.js";
+import paymentRoutes from "./routes/payment.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 
@@ -40,8 +44,8 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
 app.use(express.json());
@@ -57,13 +61,6 @@ await connectDB(process.env.MONGO_URI)
 app.get("/", (req, res) => {
   res.send("ClubSetu API Running");
 });
-
-// Import Routes
-const eventRoutes = require("./routes/events");
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
-const paymentRoutes = require("./routes/payment");
-const adminRoutes = require("./routes/admin");
 
 app.use("/api/events", eventRoutes);
 app.use("/api/auth", authRoutes);

@@ -1,7 +1,8 @@
-const express = require("express");
+import express from "express";
+import Student from "../models/Student.js";
+import ClubHead from "../models/ClubHead.js";
+
 const router = express.Router();
-const Student = require("../models/Student");
-const ClubHead = require("../models/ClubHead");
 
 // PUT /api/users/:role/:id
 router.put("/:role/:id", async (req, res) => {
@@ -34,4 +35,4 @@ router.put("/:role/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

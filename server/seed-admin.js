@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const Admin = require("./models/Admin");
-const dotenv = require("dotenv");
+import mongoose from "mongoose";
+import Admin from "./models/Admin.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 

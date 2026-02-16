@@ -1,9 +1,10 @@
-const express = require("express");
+import express from "express";
+import Admin from "../models/Admin.js";
+import Registration from "../models/Registration.js";
+import Event from "../models/Event.js";
+import ClubHead from "../models/ClubHead.js";
+
 const router = express.Router();
-const Admin = require("../models/Admin");
-const Registration = require("../models/Registration");
-const Event = require("../models/Event");
-const ClubHead = require("../models/ClubHead");
 
 // Admin Login
 router.post("/login", async (req, res) => {
@@ -121,4 +122,4 @@ router.get("/club-head/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

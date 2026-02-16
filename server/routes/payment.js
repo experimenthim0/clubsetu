@@ -1,9 +1,11 @@
-const express = require("express");
+import express from "express";
+import crypto from "crypto";
+import Razorpay from "razorpay";
+import Event from "../models/Event.js";
+import Registration from "../models/Registration.js";
+import dotenv from "dotenv/config";
+
 const router = express.Router();
-const Razorpay = require("razorpay");
-const crypto = require("crypto");
-const Event = require("../models/Event");
-const Registration = require("../models/Registration");
 
 // Initialize Razorpay instance with credentials from environment
 const razorpay = new Razorpay({
@@ -267,4 +269,4 @@ router.get("/event/:eventId/stats", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

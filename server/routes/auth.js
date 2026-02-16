@@ -1,7 +1,8 @@
-const express = require("express");
+import express from "express";
+import Student from "../models/Student.js";
+import ClubHead from "../models/ClubHead.js";
+
 const router = express.Router();
-const Student = require("../models/Student");
-const ClubHead = require("../models/ClubHead");
 
 // POST /api/auth/register/student
 router.post("/register/student", async (req, res) => {
@@ -151,4 +152,4 @@ router.post("/login", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,6 +1,9 @@
-const express = require("express");
+import express from "express";
+import Event from "../models/Event.js";
+import Student from "../models/Student.js";
+import Registration from "../models/Registration.js";
+
 const router = express.Router();
-const Event = require("../models/Event");
 
 // GET /api/events
 router.get("/", async (req, res) => {
@@ -128,7 +131,6 @@ router.post("/:id/register", async (req, res) => {
     }
 
     // Check program and year eligibility
-    const Student = require("../models/Student");
     const student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ message: "Student not found." });
@@ -169,7 +171,7 @@ router.post("/:id/register", async (req, res) => {
       });
     }
 
-    const existingReg = await require("../models/Registration").findOne({
+    const existingReg = await Registration.findOne({
       eventId,
       studentId,
     });
@@ -184,7 +186,7 @@ router.post("/:id/register", async (req, res) => {
       status = "WAITLISTED";
     }
 
-    const registration = new require("../models/Registration")({
+    const registration = new Registration({
       eventId,
       studentId,
       status,
@@ -228,11 +230,10 @@ router.delete("/:id/register", async (req, res) => {
       });
     }
 
-    const registration =
-      await require("../models/Registration").findOneAndDelete({
-        eventId,
-        studentId,
-      });
+    const registration = await Registration.findOneAndDelete({
+      eventId,
+      studentId,
+    });
 
     if (!registration) {
       return res.status(404).json({ message: "Registration not found." });
@@ -264,7 +265,7 @@ router.delete("/:id", async (req, res) => {
     }
 
     // Delete all registrations for this event
-    await require("../models/Registration").deleteMany({
+    await Registration.deleteMany({
       eventId: req.params.id,
     });
 
@@ -280,24 +281,11 @@ router.delete("/:id", async (req, res) => {
 // GET /api/events/:id/registrations
 router.get("/:id/registrations", async (req, res) => {
   try {
-    // We need student details. Since `studentId` is just a string in Registration schema (mock),
-    // we might not be able to populate it if it's not an ObjectId ref.
-    // Let's check Registration model again.
-    // Ah, Registration schema has `studentId: { type: String, required: true }`.
-    // Ideally we should have made it a ref to 'Student' model.
-    // For now, we will just return the registrations.
-    // A better approach is to fetch student details. Let's do a manual lookup or update Schema.
-
-    // Let's rely on the client to fetch student details or just display studentId/Email if stored.
-    // Wait, the Student registration stores email in the Student model.
-    // To show "Student Information", we need to link Registration -> Student.
-
-    const registrations = await require("../models/Registration").find({
+    const registrations = await Registration.find({
       eventId: req.params.id,
     });
 
     // Manual population if studentId matches _id of Student model
-    const Student = require("../models/Student");
     const populatedRegistrations = await Promise.all(
       registrations.map(async (reg) => {
         const student = await Student.findById(reg.studentId);
@@ -332,13 +320,13 @@ router.get("/club-head/:clubHeadId", async (req, res) => {
 router.get("/student/:studentId", async (req, res) => {
   try {
     const studentId = req.params.studentId;
-    const registrations = await require("../models/Registration")
-      .find({ studentId })
-      .populate("eventId");
+    const registrations = await Registration.find({ studentId }).populate(
+      "eventId",
+    );
     res.json(registrations);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-module.exports = router;
+export default router;

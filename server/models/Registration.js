@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const registrationSchema = new mongoose.Schema({
   eventId: {
@@ -25,4 +25,4 @@ const registrationSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Registration", registrationSchema);
+export default mongoose.model("Registration", registrationSchema);
