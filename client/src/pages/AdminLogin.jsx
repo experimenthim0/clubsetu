@@ -14,7 +14,7 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/admin/login', { email, password });
+      const res = await axios.post('https://clubsetu-backend.onrender.com/api/admin/login', { email, password });
       if (res.data.success) {
         localStorage.setItem('admin', JSON.stringify(res.data.admin));
         showNotification('Welcome back, Admin!', 'success');

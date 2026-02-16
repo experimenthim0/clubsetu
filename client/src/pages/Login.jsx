@@ -19,7 +19,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
+      const res = await axios.post('https://clubsetu-backend.onrender.com/api/auth/login', {
         ...formData,
         role
       });

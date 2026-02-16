@@ -13,8 +13,8 @@ const EventRegistrations = () => {
         const fetchData = async () => {
             try {
                 const [regRes, statsRes] = await Promise.all([
-                    axios.get(`http://localhost:5000/api/events/${id}/registrations`),
-                    axios.get(`http://localhost:5000/api/payment/event/${id}/stats`)
+                    axios.get(`https://clubsetu-backend.onrender.com/api/events/${id}/registrations`),
+                    axios.get(`https://clubsetu-backend.onrender.com/api/payment/event/${id}/stats`)
                 ]);
                 setRegistrations(regRes.data);
                 setStats(statsRes.data);

@@ -73,7 +73,7 @@ const CreateEvent = () => {
         };
 
         try {
-            await axios.post('http://localhost:5000/api/events', payload);
+            await axios.post('https://clubsetu-backend.onrender.com/api/events', payload);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');

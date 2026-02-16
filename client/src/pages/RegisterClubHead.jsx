@@ -41,7 +41,7 @@ const RegisterClubHead = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/register/club-head', formData);
+      await axios.post('https://clubsetu-backend.onrender.com/api/auth/register/club-head', formData);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');

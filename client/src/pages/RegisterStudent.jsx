@@ -29,7 +29,7 @@ const RegisterStudent = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/auth/register/student', formData);
+      await axios.post('https://clubsetu-backend.onrender.com/api/auth/register/student', formData);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');

@@ -55,7 +55,7 @@ const EditProfile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`http://localhost:5000/api/users/${role}/${user._id}`, formData);
+            const res = await axios.put(`https://clubsetu-backend.onrender.com/api/users/${role}/${user._id}`, formData);
             localStorage.setItem('user', JSON.stringify(res.data.user)); // Update local storage
             showNotification('Profile updated successfully', 'success');
             navigate('/profile');

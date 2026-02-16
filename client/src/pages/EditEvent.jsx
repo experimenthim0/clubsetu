@@ -31,7 +31,7 @@ const EditEvent = () => {
     useEffect(() => {
         const fetchEvent = async () => {
              try {
-                const res = await axios.get('http://localhost:5000/api/events');
+                const res = await axios.get('https://clubsetu-backend.onrender.com/api/events');
                 const event = res.data.find(e => e._id === id || e.id === id);
                 if (event) {
                     const start = new Date(event.startTime).toISOString().slice(0, 16);
@@ -125,7 +125,7 @@ const EditEvent = () => {
         };
 
         try {
-            await axios.put(`http://localhost:5000/api/events/${id}`, payload);
+            await axios.put(`https://clubsetu-backend.onrender.com/api/events/${id}`, payload);
             showNotification('Event updated successfully!', 'success');
             navigate('/profile');
         } catch (err) {

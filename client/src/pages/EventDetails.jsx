@@ -17,7 +17,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/events');
+        const res = await axios.get('https://clubsetu-backend.onrender.com/api/events');
         const found = res.data.find((e) => e._id === id || e.id === id);
         if (found) setEvent(found);
         else setError('Event not found');
@@ -54,7 +54,7 @@ const EventDetails = () => {
     if (event.entryFee > 0) {
       try {
         // 1. Create Order on backend
-        const orderRes = await axios.post('http://localhost:5000/api/payment/create-order', {
+        const orderRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/create-order', {
           eventId: id,
           studentId: user._id
         });
@@ -72,7 +72,7 @@ const EventDetails = () => {
           handler: async (response) => {
             // 3. Verify payment on backend
             try {
-              const verifyRes = await axios.post('http://localhost:5000/api/payment/verify', {
+              const verifyRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/verify', {
                 orderId: orderId,
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
@@ -114,7 +114,7 @@ const EventDetails = () => {
 
     // Free Event Registration
     try {
-      const res = await axios.post(`http://localhost:5000/api/events/${id}/register`, {
+      const res = await axios.post(`https://clubsetu-backend.onrender.com/api/events/${id}/register`, {
         studentId: user._id,
       });
       showNotification(res.data.message, 'success');
@@ -130,7 +130,7 @@ const EventDetails = () => {
 
     try {
       // Update profile with missing fields
-      const res = await axios.put(`http://localhost:5000/api/users/${role}/${user._id}`, modalInputs);
+      const res = await axios.put(`https://clubsetu-backend.onrender.com/api/users/${role}/${user._id}`, modalInputs);
       
       // Update localStorage with new user data
       const updatedUser = res.data.user;
@@ -146,7 +146,7 @@ const EventDetails = () => {
       // Handle Paid Events with Razorpay
       if (event.entryFee > 0) {
         try {
-          const orderRes = await axios.post('http://localhost:5000/api/payment/create-order', {
+          const orderRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/create-order', {
             eventId: id,
             studentId: updatedUser._id
           });
@@ -162,7 +162,7 @@ const EventDetails = () => {
             order_id: orderId,
             handler: async (response) => {
               try {
-                const verifyRes = await axios.post('http://localhost:5000/api/payment/verify', {
+                const verifyRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/verify', {
                   orderId: orderId,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
@@ -195,7 +195,7 @@ const EventDetails = () => {
       }
 
       // Free Event Registration
-      const regRes = await axios.post(`http://localhost:5000/api/events/${id}/register`, {
+      const regRes = await axios.post(`https://clubsetu-backend.onrender.com/api/events/${id}/register`, {
         studentId: updatedUser._id,
       });
       showNotification(regRes.data.message, 'success');
