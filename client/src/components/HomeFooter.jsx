@@ -7,6 +7,8 @@ const HomeFooter = () => {
   const quickLinks = [
     { label: 'Events', to: '/events' },
     { label: 'Clubs', to: '/clubs' },
+    { label: 'Event Guide', to: '/event-guide' },
+    { label: 'Contribute', to: '/contribute' },
     { label: 'Register', to: '/register' },
     { label: 'Login', to: '/login' },
   ];
@@ -20,19 +22,19 @@ const HomeFooter = () => {
           {/* Brand column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-orange-600 rounded-sm flex items-center justify-center">
-                <i className="ri-community-line text-white text-lg" />
-              </div>
-              <span className="text-xl font-black tracking-tight">ClubSetu</span>
+              
+              <span className="font-extrabold text-[24px] tracking-tight text-white leading-none select-none">
+              Club<span className="text-orange-600">Setu</span>
+            </span>
             </div>
             <p className="text-[14px] text-neutral-400 leading-relaxed mb-5 max-w-xs">
               Your gateway to campus life. Discover events, join clubs, and connect with your college community.
             </p>
             <div className="flex items-center gap-3">
               {[
-                { icon: 'ri-github-fill', href: '#' },
-                { icon: 'ri-instagram-line', href: '#' },
-                { icon: 'ri-twitter-x-line', href: '#' },
+                { icon: 'ri-github-fill', href: 'https://github.com/experimenthim0' },
+                { icon: 'ri-instagram-line', href: 'https://instagram.com/nikhim.me' },
+                { icon: 'ri-twitter-x-line', href: 'https://x.com/Nikhil0148' },
               ].map((social) => (
                 <a
                   key={social.icon}
@@ -73,9 +75,9 @@ const HomeFooter = () => {
               ClubSetu is an event management platform built for NIT Jalandhar, making it easy for clubs to organize and students to discover campus events.
             </p>
             <p className="text-[13px] text-neutral-500">
-              Have questions? Reach out to us at{' '}
+              Have any questions or suggestion? Reach out to us at{' '}
               <a href="mailto:support@clubsetu.in" className="text-orange-500 hover:underline font-medium">
-                support@clubsetu.in
+                contact.nikhim@gmail.com
               </a>
             </p>
           </div>

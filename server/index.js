@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import connectDB from "./connection.js";
 import eventRoutes from "./routes/events.js";
 import authRoutes from "./routes/auth.js";
@@ -28,15 +29,9 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // 1. Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-
-      // 2. Check if origin matches any exact string in allowedOrigins
       const isAllowed = allowedOrigins.includes(origin);
-
-      // 3. Check if origin matches the Vercel wildcard pattern
       const isVercelPreview = /\.vercel\.app$/.test(origin);
-
       if (isAllowed || isVercelPreview) {
         callback(null, true);
       } else {
@@ -50,6 +45,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 await connectDB(process.env.MONGO_URI)
   .then(() => {
@@ -58,7 +54,8 @@ await connectDB(process.env.MONGO_URI)
   .catch((err) => {
     console.error("MongoDB connection error:", err);
   });
-// Routes (Placeholder)
+
+// Routes
 app.get("/", (req, res) => {
   res.send("ClubSetu API Running");
 });

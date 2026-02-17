@@ -48,10 +48,15 @@ const Home = () => {
 
           {/* Top badges */}
           <div className="flex items-center justify-between mb-14 flex-wrap gap-4">
-            <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
-              <i className="ri-fire-fill" /> Trending on Campus
-            </span>
-            <span className="bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-[0.1em] px-4 py-1.5 rounded-sm">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
+                <i className="ri-fire-fill" /> Trending on Campus
+              </span>
+              <span className="inline-flex items-center gap-2 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
+                <i className="ri-school-line" /> Exclusively for NITJ
+              </span>
+            </div>
+            <span className="bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm">
               2026 Edition
             </span>
           </div>
@@ -118,24 +123,39 @@ const Home = () => {
         <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
       </div>
 
-      {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section className="bg-white border-b-2 border-black">
-        <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4">
-          {[
-            { label: 'Active Students',  value: '2,000+', icon: 'ri-user-smile-line' },
-            { label: 'Organized Events', value: '500+',   icon: 'ri-calendar-check-line' },
-            { label: 'Registered Clubs', value: '30+',    icon: 'ri-team-line' },
-            { label: 'Daily Visitors',   value: '150+',   icon: 'ri-eye-line' },
-          ].map((s, i) => (
-            <div
-              key={i}
-              className={`border-l-[3px] border-orange-600 px-7 py-8 ${i < 3 ? 'border-r border-neutral-100' : ''}`}
-            >
-              <i className={`${s.icon} text-2xl text-orange-600 block mb-3`} />
-              <div className="text-[40px] font-black leading-none text-black mb-1.5">{s.value}</div>
-              <div className="text-[11px] uppercase tracking-[0.1em] text-neutral-400 font-semibold">{s.label}</div>
+      {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
+      <section className="py-24 bg-white border-b-2 border-black">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+            <div>
+              <SectionLabel>Latest Happenings</SectionLabel>
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+                What's Buzzing<br />on Campus
+              </h2>
             </div>
-          ))}
+            <BtnSecondary to="/events">
+              View All Events <i className="ri-arrow-right-line text-sm" />
+            </BtnSecondary>
+          </div>
+          <EventFeed limit={3} hideHeader={true} />
+        </div>
+      </section>
+
+      {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
+      <section className="py-24 bg-orange-50 border-b-2 border-black">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+            <div>
+              <SectionLabel>Our Clubs</SectionLabel>
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+                Find Your<br />Community
+              </h2>
+            </div>
+            <BtnSecondary to="/clubs">
+              View More <i className="ri-arrow-right-line text-sm" />
+            </BtnSecondary>
+          </div>
+          <Clubspage isHome={true} />
         </div>
       </section>
 
@@ -226,10 +246,10 @@ const Home = () => {
           {/* Feature grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
             {[
-              { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.',      icon: 'ri-broadcast-line' },
+              { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.(Coming Soon)',      icon: 'ri-broadcast-line' },
               { title: 'Digital Attendance', desc: 'Scan QR codes to mark attendance instantly. (Coming Soon)',     icon: 'ri-qr-scan-2-line' },
               { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-groupped-line' },
-              { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.',   icon: 'ri-trophy-line' },
+              { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.(Coming Soon)',   icon: 'ri-trophy-line' },
             ].map((item, i) => (
               <div
                 key={i}
@@ -285,7 +305,7 @@ const Home = () => {
                 className={`bg-white p-12 relative ${i < 2 ? 'border-r-2 border-black' : ''} border-t-[3px] border-t-black`}
               >
                 {/* Ghost step number */}
-                <span className="absolute top-3 right-4 font-black text-[72px] leading-none text-neutral-100 select-none pointer-events-none">
+                <span className="absolute top-3 right-4 font-black text-[72px] leading-none text-neutral-300 select-none pointer-events-none">
                   {card.step}
                 </span>
                 <div className="w-13 h-13 w-[52px] h-[52px] bg-black rounded-sm flex items-center justify-center text-white text-[22px] mb-6">
@@ -298,45 +318,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-black">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
-            <div>
-              <SectionLabel>Latest Happenings</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
-                What's Buzzing<br />on Campus
-              </h2>
-            </div>
-            <BtnSecondary to="/events">
-              View All Events <i className="ri-arrow-right-line text-sm" />
-            </BtnSecondary>
-          </div>
-          <EventFeed limit={3} hideHeader={true} />
-        </div>
-      </section>
-
-      {/* ── CLUBS ────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-orange-50 border-b-2 border-black">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
-            <div>
-              <SectionLabel>Our Clubs</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
-                Find Your<br />Community
-              </h2>
-            </div>
-            <p className="text-[15px] text-neutral-600 max-w-xs leading-relaxed">
-              30+ active clubs across technical, cultural, sports, and social categories.
-            </p>
-          </div>
-          <Clubspage isHome={true} />
-        </div>
-      </section>
-
-      
-     
 
       {/* Home Footer */}
       <HomeFooter />

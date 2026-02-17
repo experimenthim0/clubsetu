@@ -29,7 +29,10 @@ const RegisterStudent = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/student`, formData);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/student`, formData);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('role', res.data.role);
+      localStorage.setItem('token', res.data.token);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');

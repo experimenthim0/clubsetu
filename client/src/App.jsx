@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EventFeed from './pages/EventFeed';
@@ -23,8 +24,42 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PaymentPolicy from './pages/PaymentPolicy';
 import DataPrivacy from './pages/DataPrivacy';
+import PaymentTracking from './pages/PaymentTracking';
+import EventGuide from './pages/EventGuide';
+import Contribute from './pages/Contribute';
 
 import { NotificationProvider } from './context/NotificationContext';
+
+// Global axios interceptor — attach JWT token to every request
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Global axios interceptor — handle 401 responses (expired token)
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Only redirect if not already on login/register pages
+      const path = window.location.pathname;
+      if (!path.includes('/login') && !path.includes('/register') && !path.includes('/admin')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+        localStorage.removeItem('admin');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 function App() {
   return (
@@ -54,6 +89,9 @@ function App() {
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/payment-policy" element={<PaymentPolicy />} />
             <Route path="/data-privacy" element={<DataPrivacy />} />
+            <Route path="/payments" element={<PaymentTracking />} />
+            <Route path="/event-guide" element={<EventGuide />} />
+            <Route path="/contribute" element={<Contribute />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </div>

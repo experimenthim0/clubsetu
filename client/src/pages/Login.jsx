@@ -24,12 +24,13 @@ const Login = () => {
         role
       });
       
-      // Simple Auth: Store user in localStorage
+      // Store user, role, and JWT token
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('role', res.data.role);
+      localStorage.setItem('token', res.data.token);
       
       navigate('/');
-      window.location.reload(); // Quick way to update Navbar state
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }

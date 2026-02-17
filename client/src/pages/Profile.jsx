@@ -66,9 +66,59 @@ const Profile = () => {
               <p className="text-sm text-gray-500">Designation</p>
               <p className="font-medium">{user.designation}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-500">Roll No</p>
+              <p className="font-medium">{user.rollNo}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{user.phone}</p>
+            </div>
           </>
         )}
       </div>
+
+      {/* Bank Information — Club Head Only */}
+      {role === 'club-head' && (
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <i className="ri-bank-line text-orange-600" />
+            Bank / Payment Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-gray-500">Account Holder Name</p>
+              <p className="font-medium">{user.accountHolderName || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Bank Name</p>
+              <p className="font-medium">{user.bankName || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Account Number</p>
+              <p className="font-medium font-mono">{user.accountNumber || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">IFSC Code</p>
+              <p className="font-medium font-mono uppercase">{user.ifscCode || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">UPI ID</p>
+              <p className="font-medium text-orange-600">{user.upiId || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Bank Phone</p>
+              <p className="font-medium">{user.bankPhone || <span className="text-gray-400 italic">Not added</span>}</p>
+            </div>
+          </div>
+          {(!user.accountNumber && !user.upiId) && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              <i className="ri-error-warning-line mr-1" />
+              Please add your bank details via <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Edit Profile</Link> to receive event payouts.
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -129,12 +179,18 @@ const Profile = () => {
     )}
 
     {role === 'club-head' && (
-      <div className="mt-8 flex gap-4">
+      <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
           className="inline-flex items-center gap-2 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors"
         >
           <i className="ri-calendar-event-line" /> My Events
+        </Link>
+        <Link 
+          to="/payments" 
+          className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 border-2 border-orange-600 text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-700 hover:border-orange-700 transition-colors"
+        >
+          <i className="ri-money-dollar-circle-line" /> Payment Tracking
         </Link>
         <Link 
           to="/events/create" 

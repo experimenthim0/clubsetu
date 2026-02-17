@@ -1,107 +1,80 @@
-# Club Event Management System
+# ClubSetu — Campus Event Management System 🎓🚀
 
-A full-stack web application for managing club events, registrations, and user profiles. Built with the MERN stack (MongoDB, Express, React, Node.js).
+Hi! I'm **Nikhil Yadav**, a student at NIT Jalandhar. Welcome to **ClubSetu**, a full-stack web application designed to simplify how we manage and participate in campus events.
 
-## 🚀 Features
+---
 
-- **User Authentication**: Secure login and registration for Students and Club Heads.
-- **Role-Based Access**:
-  - **Students**: Browse events, register for events, view their registrations.
-  - **Club Heads**: Create, edit, and manage events.
-- **Event Management**:
-  - Create, Read, Update, and Delete (CRUD) events.
-  - View event details and manage attendee lists.
-- **Responsive UI**: Modern interface built with React and Tailwind CSS.
+## 🧐 The Problem
+
+As a student, I noticed that managing club events on campus was always chaotic:
+
+- **Information Overload**: Event details were scattered across hundreds of WhatsApp groups.
+- **Lost Registrations**: Google Forms were hard to track, and students often missed deadlines.
+- **Manual Payments**: collecting entry fees via UPI screenshots and verifying them manually was a nightmare for club heads.
+- **No Central Hub**: There was no single place to see _all_ upcoming events, causing clashes.
+
+## 💡 The Solution
+
+**ClubSetu** solves these problems by providing a centralized platform for everyone on campus:
+
+- **For Students**: A single dashboard to browse all events, register with one click, pay securely, and track their participation.
+- **For Club Heads**: A powerful dashboard to create events, manage registrations (with custom forms!), track payments in real-time, and download attendee lists.
+- **For Administration**: A bird's-eye view of all club activities and financial transparency.
+
+---
 
 ## 🛠️ Tech Stack
 
-### Client
-- **Framework**: [React](https://reactjs.org/) (via [Vite](https://vitejs.dev/))
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Routing**: [React Router](https://reactrouter.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **HTTP Client**: [Axios](https://axios-http.com/)
+This project is built using the **MERN Stack**:
 
-### Server
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (using [Mongoose](https://mongoosejs.com/))
-- **Authentication**: JWT (JSON Web Tokens) *[Implied based on typical MERN auth, adjust if specific lib seen]*
-- **Environment**: [Dotenv](https://www.npmjs.com/package/dotenv)
+### Frontend
 
-## 📋 Prerequisites
+- **React.js (Vite)**: For a fast, responsive, and interactive user interface.
+- **Tailwind CSS**: For modern, mobile-first styling and a premium look.
+- **Axios**: For handling API requests securely with JWT interceptors.
 
-Before running the project, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v14 or higher recommended)
-- [MongoDB](https://www.mongodb.com/try/download/community) (Local instance running on default port `27017`)
+### Backend
 
-## ⚙️ Installation & Setup
+- **Node.js & Express.js**: A robust REST API handling auth, events, and payments.
+- **MongoDB**: A flexible NoSQL database to store users, events, and complex registration data.
+- **Razorpay**: Integrated payment gateway for secure and instant entry fee collection.
+- **JWT (JSON Web Tokens)**: For secure, stateless authentication and role-based access control.
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd club-event-main
-```
+---
 
-### 2. Backend Setup
-Navigate to the server directory and install dependencies:
+## ✨ Key Features
 
-```bash
-cd server
-npm install
-```
+### 👨‍🎓 For Students
 
-**Configuration:**
-The application currently connects to a local MongoDB instance at `mongodb://localhost:27017/club-event`. Ensure your local MongoDB server is running.
+- **Explore Events**: Filter events by type (Hackathon, Workshop, Cultural, etc.).
+- **Smart Registration**: Auto-fills your details; just answer event-specific questions.
+- **Secure Payments**: Pay entry fees directly via Razorpay integration.
+- **My Dashboard**: Track all your registered events and payment status in one place.
 
-Start the backend server:
-```bash
-npm start
-# OR for development with nodemon
-npm run dev
-```
-The server will start on `http://localhost:5000` (or the port defined in your `.env`).
+### 🧑‍💼 For Club Heads
 
-### 3. Frontend Setup
-Open a new terminal, navigate to the client directory, and install dependencies:
+- **Create Events**: Set up events with details like venue, time, custom registration fields (like Google Forms), and entry fees.
+- **Real-Time Analytics**: See who registered, how much money was collected, and download data as CSV/Excel.
+- **Payment Tracking**: Detailed breakdown of revenue and settlements.
+- **Profile Management**: customizable club profiles with social links.
 
-```bash
-cd client
-npm install
-```
+### �️ For Admins
 
-Start the development server:
-```bash
-npm run dev
-```
-The application will be available at `http://localhost:5173`.
+- **Club Verification**: Approve or reject new club registrations.
+- **Platform Overview**: Monitor all events and transactions across the campus.
 
-## 📂 Project Structure
+---
 
-```
-club-event-main/
-├── client/                 # React Frontend
-│   ├── src/
-│   │   ├── components/     # Reusable UI components (Navbar, etc.)
-│   │   ├── pages/          # Application pages (Login, EventFeed, etc.)
-│   │   ├── assets/         # Static assets
-│   │   ├── App.jsx         # Main application component with routes
-│   │   └── main.jsx        # Entry point
-│   ├── package.json
-│   └── vite.config.js
-│
-├── server/                 # Express Backend
-│   ├── models/             # Mongoose schemas
-│   ├── routes/             # API routes (auth, events)
-│   ├── index.js            # Server entry point
-│   ├── connection.js       # Database connection logic
-│   └── package.json
-│
-└── README.md
-```
+## 📬 Contact User / Maintainer
 
-## 🤝 Contributing
+I'd love to hear your feedback or suggestions! Feel free to reach out:
 
-1. Fork the repository.
+- **Email**: [contact.nikhim@gmail.com](mailto:contact.nikhim@gmail.com)
+- **GitHub**: [@experimenthim0](https://github.com/experimenthim0)
+- **LinkedIn**: [Nikhil Yadav](https://linkedin.com/in/nikhilydv0148)
+- **X (Twitter)**: [@Nikhil0148](https://x.com/Nikhil0148)
+- **Instagram**: [@nikhim.me](https://instagram.com/nikhim.me)
 
-5. Open a Pull Request.
+---
+
+_Built with ❤️ for NIT Jalandhar._

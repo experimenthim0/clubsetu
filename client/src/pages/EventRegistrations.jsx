@@ -142,7 +142,7 @@ const EventRegistrations = () => {
                     </div>
                     <div className="bg-white p-6 border-2 border-black rounded-sm shadow-[4px_4px_0px_#EA580C]">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Money Collected</p>
-                        <p className="text-3xl font-black text-orange-600">₹{stats.totalMoneyCollected}</p>
+                        <p className="text-3xl font-black text-orange-600">₹{stats.totalCollected ?? stats.totalMoneyCollected ?? 0}</p>
                         <p className="text-[11px] text-neutral-500 mt-2">from {stats.paidRegistrations} paid entries</p>
                     </div>
                     <div className="bg-orange-600 p-6 border-2 border-black rounded-sm shadow-[4px_4px_0px_#000] text-white">

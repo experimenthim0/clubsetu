@@ -1,19 +1,27 @@
 import express from "express";
 import Student from "../models/Student.js";
 import ClubHead from "../models/ClubHead.js";
+import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// PUT /api/users/:role/:id
-router.put("/:role/:id", async (req, res) => {
+// PUT /api/users/:role/:id — AUTHENTICATED USERS ONLY
+router.put("/:role/:id", verifyToken, async (req, res) => {
   const { role, id } = req.params;
   const updates = req.body;
+
+  // Verify user is updating their own profile
+  if (req.user.id !== id) {
+    return res
+      .status(403)
+      .json({ message: "You can only update your own profile." });
+  }
 
   // Prevent updates to restricted fields
   delete updates.email;
   delete updates.rollNo;
-  delete updates.collegeEmail; // for club head
-  delete updates.password; // secure password update should be separate
+  delete updates.collegeEmail;
+  delete updates.password;
 
   try {
     let user;

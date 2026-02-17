@@ -19,9 +19,10 @@ const seedAdmin = async () => {
     if (existingAdmin) {
       console.log("Admin already exists");
     } else {
+      // Password will be auto-hashed by the pre-save hook
       const newAdmin = new Admin({ email, password });
       await newAdmin.save();
-      console.log("Admin account created successfully");
+      console.log("Admin account created successfully (password hashed)");
     }
 
     mongoose.disconnect();

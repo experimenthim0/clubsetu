@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const clubHeadSchema = new mongoose.Schema(
   {
@@ -28,5 +29,16 @@ const clubHeadSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Hash password before saving
+clubHeadSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+// Compare password method
+clubHeadSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export default mongoose.model("ClubHead", clubHeadSchema);
