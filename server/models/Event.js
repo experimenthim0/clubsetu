@@ -23,6 +23,18 @@ const eventSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "Registration" },
     ],
     requiredFields: [{ type: String }], // Array of field names that are required for registration
+    customFields: [
+      {
+        label: { type: String, required: true },
+        type: {
+          type: String,
+          enum: ["text", "url", "textarea", "select"],
+          default: "text",
+        },
+        required: { type: Boolean, default: false },
+        options: [{ type: String }], // Only used for type "select"
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ClubHead",

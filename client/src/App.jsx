@@ -18,6 +18,11 @@ import ClubsPage from './pages/Clubspage';
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import NotFound from './pages/NotFound';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PaymentPolicy from './pages/PaymentPolicy';
+import DataPrivacy from './pages/DataPrivacy';
 
 import { NotificationProvider } from './context/NotificationContext';
 
@@ -45,7 +50,11 @@ function App() {
             <Route path="/events/:id/registrations" element={<EventRegistrations />} />
             <Route path="/admin-secret-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            {/* Add more routes here */}
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/payment-policy" element={<PaymentPolicy />} />
+            <Route path="/data-privacy" element={<DataPrivacy />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </div>
           <Footer />

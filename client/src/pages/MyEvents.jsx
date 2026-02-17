@@ -36,7 +36,7 @@ const MyEvents = () => {
 
   const fetchRegistrations = async (studentId) => {
     try {
-      const res = await axios.get(`https://clubsetu-backend.onrender.com/api/events/student/${studentId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/student/${studentId}`);
       setRegistrations(res.data);
       setLoading(false);
     } catch (err) {
@@ -48,7 +48,7 @@ const MyEvents = () => {
 
   const fetchCreatedEvents = async (clubHeadId) => {
     try {
-      const res = await axios.get(`https://clubsetu-backend.onrender.com/api/events/club-head/${clubHeadId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-head/${clubHeadId}`);
       setCreatedEvents(res.data);
       setLoading(false);
     } catch (err) {
@@ -67,7 +67,7 @@ const MyEvents = () => {
     if (!eventToDeregister) return;
     
     try {
-      await axios.delete(`https://clubsetu-backend.onrender.com/api/events/${eventToDeregister}/register`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDeregister}/register`, {
         data: { studentId: user._id }
       });
       
@@ -92,7 +92,7 @@ const MyEvents = () => {
     if (!eventToDelete) return;
     
     try {
-      await axios.delete(`https://clubsetu-backend.onrender.com/api/events/${eventToDelete}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
       setCreatedEvents(createdEvents.filter(e => e._id !== eventToDelete));
       showNotification('Event deleted successfully', 'success');
       setDeleteModalOpen(false);

@@ -16,6 +16,7 @@ const CreateEvent = () => {
         entryFee: 0,
         imageUrl: '',
         requiredFields: [],
+        customFields: [],
         registrationDeadline: '',
         createdBy: JSON.parse(localStorage.getItem('user'))?._id,
         allowedPrograms: ['BTECH', 'MTECH'],
@@ -51,6 +52,59 @@ const CreateEvent = () => {
         });
     };
 
+    // ── Custom Fields Handlers ──────────────────────────────────────────
+    const addCustomField = () => {
+        setFormData(prev => ({
+            ...prev,
+            customFields: [...prev.customFields, { label: '', type: 'text', required: false, options: [] }]
+        }));
+    };
+
+    const removeCustomField = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            customFields: prev.customFields.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateCustomField = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...prev.customFields];
+            updated[index] = { ...updated[index], [field]: value };
+            // Clear options if type is not select
+            if (field === 'type' && value !== 'select') {
+                updated[index].options = [];
+            }
+            return { ...prev, customFields: updated };
+        });
+    };
+
+    const updateCustomFieldOption = (fieldIndex, optIndex, value) => {
+        setFormData(prev => {
+            const updated = [...prev.customFields];
+            const opts = [...(updated[fieldIndex].options || [])];
+            opts[optIndex] = value;
+            updated[fieldIndex] = { ...updated[fieldIndex], options: opts };
+            return { ...prev, customFields: updated };
+        });
+    };
+
+    const addOptionToField = (fieldIndex) => {
+        setFormData(prev => {
+            const updated = [...prev.customFields];
+            updated[fieldIndex] = { ...updated[fieldIndex], options: [...(updated[fieldIndex].options || []), ''] };
+            return { ...prev, customFields: updated };
+        });
+    };
+
+    const removeOptionFromField = (fieldIndex, optIndex) => {
+        setFormData(prev => {
+            const updated = [...prev.customFields];
+            updated[fieldIndex] = { ...updated[fieldIndex], options: updated[fieldIndex].options.filter((_, i) => i !== optIndex) };
+            return { ...prev, customFields: updated };
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const start = new Date(formData.startTime);
@@ -73,7 +127,7 @@ const CreateEvent = () => {
         };
 
         try {
-            await axios.post('https://clubsetu-backend.onrender.com/api/events', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');
@@ -280,6 +334,110 @@ const CreateEvent = () => {
                                 </label>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Custom Registration Fields Builder */}
+                    <div>
+                        <label className={labelCls}>
+                            Custom Registration Fields
+                        </label>
+                        <p className="text-xs text-neutral-500 mb-4">Add custom fields that students must fill during registration (like Google Forms)</p>
+
+                        <div className="space-y-4">
+                            {formData.customFields.map((cf, idx) => (
+                                <div key={idx} className="border-2 border-neutral-200 rounded-sm p-4 relative bg-neutral-50">
+                                    {/* Delete button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeCustomField(idx)}
+                                        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors"
+                                        title="Remove field"
+                                    >
+                                        <i className="ri-delete-bin-line text-lg" />
+                                    </button>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-10">
+                                        {/* Label */}
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Field Label <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. Team Name, GitHub Repo..."
+                                                value={cf.label}
+                                                onChange={(e) => updateCustomField(idx, 'label', e.target.value)}
+                                                className={inputCls}
+                                                required
+                                            />
+                                        </div>
+                                        {/* Type */}
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Field Type</label>
+                                            <select
+                                                value={cf.type}
+                                                onChange={(e) => updateCustomField(idx, 'type', e.target.value)}
+                                                className={inputCls}
+                                            >
+                                                <option value="text">Text</option>
+                                                <option value="url">Link / URL</option>
+                                                <option value="textarea">Long Text</option>
+                                                <option value="select">Dropdown</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Required toggle */}
+                                    <label className="inline-flex items-center gap-2 mt-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={cf.required}
+                                            onChange={(e) => updateCustomField(idx, 'required', e.target.checked)}
+                                            className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                        />
+                                        <span className="text-sm text-neutral-600">Required</span>
+                                    </label>
+
+                                    {/* Dropdown Options */}
+                                    {cf.type === 'select' && (
+                                        <div className="mt-3 pl-4 border-l-2 border-orange-300">
+                                            <p className="text-xs font-bold text-neutral-600 mb-2">Dropdown Options</p>
+                                            {(cf.options || []).map((opt, optIdx) => (
+                                                <div key={optIdx} className="flex items-center gap-2 mb-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder={`Option ${optIdx + 1}`}
+                                                        value={opt}
+                                                        onChange={(e) => updateCustomFieldOption(idx, optIdx, e.target.value)}
+                                                        className="flex-1 px-3 py-2 border-2 border-neutral-200 rounded-sm text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeOptionFromField(idx, optIdx)}
+                                                        className="text-neutral-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <i className="ri-close-line text-lg" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => addOptionToField(idx)}
+                                                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 mt-1"
+                                            >
+                                                <i className="ri-add-line" /> Add Option
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={addCustomField}
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <i className="ri-add-circle-line text-lg" /> Add Custom Field
+                        </button>
                     </div>
 
                     {/* Actions */}

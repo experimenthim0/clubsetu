@@ -22,6 +22,11 @@ const registrationSchema = new mongoose.Schema({
   },
   amountPaid: { type: Number, default: 0 }, // Amount in rupees
   paymentTimestamp: { type: Date },
+  formResponses: {
+    type: Map,
+    of: String,
+    default: {},
+  },
   timestamp: { type: Date, default: Date.now },
 });
 

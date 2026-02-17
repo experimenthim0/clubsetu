@@ -110,7 +110,8 @@ router.post("/create-order", async (req, res) => {
 // CRITICAL: This is where we verify payment authenticity
 // ============================================================================
 router.post("/verify", async (req, res) => {
-  const { orderId, paymentId, signature, eventId, studentId } = req.body;
+  const { orderId, paymentId, signature, eventId, studentId, formResponses } =
+    req.body;
 
   try {
     // Validate all required fields
@@ -196,6 +197,7 @@ router.post("/verify", async (req, res) => {
       paymentStatus: "SUCCESS",
       amountPaid: event.entryFee,
       paymentTimestamp: new Date(),
+      formResponses: formResponses || {},
     });
 
     await registration.save();

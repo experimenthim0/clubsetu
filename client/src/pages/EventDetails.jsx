@@ -13,11 +13,13 @@ const EventDetails = () => {
   const [missingFieldsModalOpen, setMissingFieldsModalOpen] = useState(false);
   const [missingFields, setMissingFields] = useState([]);
   const [modalInputs, setModalInputs] = useState({});
+  const [customFormModalOpen, setCustomFormModalOpen] = useState(false);
+  const [customFormResponses, setCustomFormResponses] = useState({});
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get('https://clubsetu-backend.onrender.com/api/events');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
         const found = res.data.find((e) => e._id === id || e.id === id);
         if (found) setEvent(found);
         else setError('Event not found');
@@ -50,11 +52,18 @@ const EventDetails = () => {
         }
     }
 
+    // Check for custom registration fields
+    if (event.customFields && event.customFields.length > 0) {
+        setCustomFormResponses({});
+        setCustomFormModalOpen(true);
+        return;
+    }
+
     // Handle Paid Events with Razorpay
     if (event.entryFee > 0) {
       try {
         // 1. Create Order on backend
-        const orderRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/create-order', {
+        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: id,
           studentId: user._id
         });
@@ -72,7 +81,7 @@ const EventDetails = () => {
           handler: async (response) => {
             // 3. Verify payment on backend
             try {
-              const verifyRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/verify', {
+              const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, {
                 orderId: orderId,
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
@@ -82,7 +91,7 @@ const EventDetails = () => {
 
               if (verifyRes.data.success) {
                 showNotification(`Successfully registered for ${eventTitle}!`, 'success');
-                window.location.reload();
+                setTimeout(() => navigate('/my-events'), 1500);
               }
             } catch (err) {
               showNotification(err.response?.data?.message || 'Payment verification failed', 'error');
@@ -114,11 +123,11 @@ const EventDetails = () => {
 
     // Free Event Registration
     try {
-      const res = await axios.post(`https://clubsetu-backend.onrender.com/api/events/${id}/register`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
         studentId: user._id,
       });
       showNotification(res.data.message, 'success');
-      window.location.reload();
+      setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Registration failed', 'error');
     }
@@ -130,7 +139,7 @@ const EventDetails = () => {
 
     try {
       // Update profile with missing fields
-      const res = await axios.put(`https://clubsetu-backend.onrender.com/api/users/${role}/${user._id}`, modalInputs);
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, modalInputs);
       
       // Update localStorage with new user data
       const updatedUser = res.data.user;
@@ -142,11 +151,18 @@ const EventDetails = () => {
       // Show success notification
       showNotification('Profile updated successfully!', 'success');
       
+      // Proceed with registration after saving profile + if custom fields exist
+      if (event.customFields && event.customFields.length > 0) {
+        setCustomFormResponses({});
+        setCustomFormModalOpen(true);
+        return;
+      }
+
       // Proceed with registration
       // Handle Paid Events with Razorpay
       if (event.entryFee > 0) {
         try {
-          const orderRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/create-order', {
+          const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
             eventId: id,
             studentId: updatedUser._id
           });
@@ -162,7 +178,7 @@ const EventDetails = () => {
             order_id: orderId,
             handler: async (response) => {
               try {
-                const verifyRes = await axios.post('https://clubsetu-backend.onrender.com/api/payment/verify', {
+                const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, {
                   orderId: orderId,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
@@ -172,7 +188,7 @@ const EventDetails = () => {
 
                 if (verifyRes.data.success) {
                   showNotification(`Successfully registered for ${eventTitle}!`, 'success');
-                  window.location.reload();
+                  setTimeout(() => navigate('/my-events'), 1500);
                 }
               } catch (err) {
                 showNotification(err.response?.data?.message || 'Payment verification failed', 'error');
@@ -195,13 +211,94 @@ const EventDetails = () => {
       }
 
       // Free Event Registration
-      const regRes = await axios.post(`https://clubsetu-backend.onrender.com/api/events/${id}/register`, {
+      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
         studentId: updatedUser._id,
       });
       showNotification(regRes.data.message, 'success');
-      window.location.reload();
+      setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Failed to update profile', 'error');
+    }
+  };
+
+  // ── Custom Form Submit (for events with customFields) ───────────────
+  const handleCustomFormSubmit = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    // Validate required custom fields
+    if (event.customFields) {
+      for (const field of event.customFields) {
+        if (field.required && !customFormResponses[field.label]) {
+          showNotification(`"${field.label}" is required.`, 'error');
+          return;
+        }
+      }
+    }
+
+    // Handle Paid Events with Razorpay
+    if (event.entryFee > 0) {
+      try {
+        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
+          eventId: id,
+          studentId: user._id
+        });
+
+        const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
+
+        const options = {
+          key: keyId,
+          amount: amount * 100,
+          currency: currency,
+          name: 'ClubSetu',
+          description: `Registration for ${eventTitle}`,
+          order_id: orderId,
+          handler: async (response) => {
+            try {
+              const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, {
+                orderId: orderId,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                eventId: id,
+                studentId: user._id,
+                formResponses: customFormResponses,
+              });
+
+              if (verifyRes.data.success) {
+                showNotification(`Successfully registered for ${eventTitle}!`, 'success');
+                setCustomFormModalOpen(false);
+                setTimeout(() => navigate('/my-events'), 1500);
+              }
+            } catch (err) {
+              showNotification(err.response?.data?.message || 'Payment verification failed', 'error');
+            }
+          },
+          prefill: {
+            name: user.name,
+            email: user.email || user.collegeEmail,
+            contact: user.phone || ''
+          },
+          theme: { color: '#EA580C' }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        showNotification(err.response?.data?.message || 'Failed to initiate payment', 'error');
+      }
+      return;
+    }
+
+    // Free Event Registration
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
+        studentId: user._id,
+        formResponses: customFormResponses,
+      });
+      showNotification(res.data.message, 'success');
+      setCustomFormModalOpen(false);
+      setTimeout(() => navigate('/my-events'), 1500);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Registration failed', 'error');
     }
   };
 
@@ -528,6 +625,125 @@ const EventDetails = () => {
                 className="flex-1 px-4 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Save & Register
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Custom Registration Form Modal ─────────────────────────────── */}
+      {customFormModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[8px_8px_0px_#0D0D0D] max-h-[90vh] flex flex-col">
+
+            {/* Header */}
+            <div className="bg-orange-600 px-6 py-4 border-b-2 border-black flex-shrink-0">
+              <h3 className="font-black text-white text-lg flex items-center gap-2">
+                <i className="ri-file-list-3-line" />
+                Registration Form
+              </h3>
+              <p className="text-white/80 text-xs mt-1">Fill in the details to complete your registration</p>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto flex-1">
+
+              {/* Auto-filled Profile Info */}
+              <div className="mb-6">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Your Profile (Auto-filled)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Name', value: JSON.parse(localStorage.getItem('user'))?.name },
+                    { label: 'Roll No', value: JSON.parse(localStorage.getItem('user'))?.rollNo },
+                    { label: 'Email', value: JSON.parse(localStorage.getItem('user'))?.email },
+                    { label: 'Branch', value: JSON.parse(localStorage.getItem('user'))?.branch },
+                    { label: 'Year', value: JSON.parse(localStorage.getItem('user'))?.year },
+                    { label: 'Program', value: JSON.parse(localStorage.getItem('user'))?.program },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{item.label}</p>
+                      <p className="text-sm font-medium text-black truncate">{item.value || '-'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t-2 border-neutral-100 mb-6" />
+
+              {/* Custom Fields */}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Additional Information</p>
+              <div className="space-y-4">
+                {(event.customFields || []).map((field, idx) => (
+                  <div key={idx}>
+                    <label className="block text-sm font-bold text-black mb-1.5">
+                      {field.label}{' '}
+                      {field.required && <span className="text-orange-600">*</span>}
+                    </label>
+
+                    {field.type === 'text' && (
+                      <input
+                        type="text"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                        value={customFormResponses[field.label] || ''}
+                        onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })}
+                        className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-sm text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                      />
+                    )}
+
+                    {field.type === 'url' && (
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={customFormResponses[field.label] || ''}
+                        onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })}
+                        className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-sm text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                      />
+                    )}
+
+                    {field.type === 'textarea' && (
+                      <textarea
+                        rows="3"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                        value={customFormResponses[field.label] || ''}
+                        onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })}
+                        className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-sm text-sm focus:border-orange-600 focus:outline-none transition-colors resize-none"
+                      />
+                    )}
+
+                    {field.type === 'select' && (
+                      <select
+                        value={customFormResponses[field.label] || ''}
+                        onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })}
+                        className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-sm text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                      >
+                        <option value="">Select an option</option>
+                        {(field.options || []).map((opt, optIdx) => (
+                          <option key={optIdx} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 pt-3 flex gap-3 border-t border-neutral-100 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setCustomFormModalOpen(false);
+                  setCustomFormResponses({});
+                }}
+                className="flex-1 px-4 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCustomFormSubmit}
+                className="flex-1 px-4 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors cursor-pointer"
+              >
+                {event.entryFee > 0 ? 'Pay & Register' : 'Register'}
               </button>
             </div>
           </div>

@@ -30,6 +30,7 @@ router.post("/", async (req, res) => {
     entryFee,
     imageUrl,
     requiredFields,
+    customFields,
     createdBy,
     allowedPrograms,
     allowedYears,
@@ -62,6 +63,7 @@ router.post("/", async (req, res) => {
       entryFee: entryFee || 0,
       imageUrl: imageUrl || "",
       requiredFields: requiredFields || [],
+      customFields: customFields || [],
       createdBy,
       allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
       allowedYears: allowedYears || [],
@@ -88,6 +90,7 @@ router.put("/:id", async (req, res) => {
       entryFee,
       imageUrl,
       requiredFields,
+      customFields,
       allowedPrograms,
       allowedYears,
       registrationDeadline,
@@ -105,6 +108,7 @@ router.put("/:id", async (req, res) => {
         entryFee,
         imageUrl,
         requiredFields,
+        customFields: customFields || [],
         allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
         allowedYears: allowedYears || [],
         registrationDeadline: registrationDeadline || null,
@@ -119,7 +123,7 @@ router.put("/:id", async (req, res) => {
 
 // POST /api/events/:id/register
 router.post("/:id/register", async (req, res) => {
-  const { studentId } = req.body;
+  const { studentId, formResponses } = req.body;
   const eventId = req.params.id;
 
   try {
@@ -182,14 +186,27 @@ router.post("/:id/register", async (req, res) => {
     }
 
     let status = "CONFIRMED";
-    if (event.registeredCount >= event.totalSeats) {
+    if (event.totalSeats > 0 && event.registeredCount >= event.totalSeats) {
       status = "WAITLISTED";
+    }
+
+    // Validate required custom fields
+    if (event.customFields && event.customFields.length > 0) {
+      const requiredCustom = event.customFields.filter((f) => f.required);
+      for (const field of requiredCustom) {
+        if (!formResponses || !formResponses[field.label]) {
+          return res.status(400).json({
+            message: `"${field.label}" is required.`,
+          });
+        }
+      }
     }
 
     const registration = new Registration({
       eventId,
       studentId,
       status,
+      formResponses: formResponses || {},
     });
 
     await registration.save();
@@ -289,8 +306,13 @@ router.get("/:id/registrations", async (req, res) => {
     const populatedRegistrations = await Promise.all(
       registrations.map(async (reg) => {
         const student = await Student.findById(reg.studentId);
+        const regObj = reg.toObject();
+        // Convert Mongoose Map to plain object for JSON serialization
+        if (reg.formResponses instanceof Map) {
+          regObj.formResponses = Object.fromEntries(reg.formResponses);
+        }
         return {
-          ...reg.toObject(),
+          ...regObj,
           student: student
             ? student
             : { name: "Unknown", email: "Unknown", rollNo: "Unknown" },

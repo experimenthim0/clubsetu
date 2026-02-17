@@ -21,7 +21,7 @@ const AdminDashboard = () => {
 
         const fetchStats = async () => {
             try {
-                const res = await axios.get('https://clubsetu-backend.onrender.com/api/admin/dashboard-stats');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
                 setStats(res.data);
                 setLoading(false);
             } catch (err) {
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
 
     const refreshStats = async () => {
         try {
-            const res = await axios.get('https://clubsetu-backend.onrender.com/api/admin/dashboard-stats');
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
             setStats(res.data);
         } catch (err) {
             console.error('Failed to refresh stats');
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
 
     const handleFetchPayoutInfo = async (clubHeadId, eventId) => {
         try {
-            const res = await axios.get(`https://clubsetu-backend.onrender.com/api/admin/club-head/${clubHeadId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-head/${clubHeadId}`);
             setSelectedClub(res.data);
             setSelectedEventId(eventId);
             setModalOpen(true);
@@ -54,7 +54,7 @@ const AdminDashboard = () => {
 
     const handleConfirmPayout = async () => {
         try {
-            const res = await axios.post(`https://clubsetu-backend.onrender.com/api/admin/complete-payout/${selectedEventId}`);
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/complete-payout/${selectedEventId}`);
             if (res.data.success) {
                 showNotification('Payout marked as complete!', 'success');
                 setModalOpen(false);

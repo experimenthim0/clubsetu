@@ -12,10 +12,10 @@ const EventFeed = ({ limit, hideHeader = false }) => {
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get('https://clubsetu-backend.onrender.com/api/events');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
       setEvents(res.data);
       if (user && localStorage.getItem('role') === 'student') {
-          const regRes = await axios.get(`https://clubsetu-backend.onrender.com/api/events/student/${user._id}`);
+          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/student/${user._id}`);
           setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId._id));
       }
       setLoading(false);
@@ -41,7 +41,7 @@ const EventFeed = ({ limit, hideHeader = false }) => {
     }
 
     try {
-        const res = await axios.post(`https://clubsetu-backend.onrender.com/api/events/${eventId}/register`, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/register`, {
             studentId: user._id
         });
         showNotification(res.data.message, 'success');
