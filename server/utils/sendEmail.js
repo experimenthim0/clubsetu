@@ -12,6 +12,7 @@ const sendEmail = async (options) => {
     // Increase timeouts
     connectionTimeout: 10000, // 10 seconds
     socketTimeout: 10000, // 10 seconds
+    family: 4, // Force IPv4 to avoid ENETUNREACH errors on some networks (like Render)
   });
 
   const message = {
