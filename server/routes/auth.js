@@ -12,6 +12,16 @@ router.post("/register/student", async (req, res) => {
   try {
     const { name, rollNo, branch, year, program, email, password } = req.body;
 
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://clubsetu.nikhim.me",
+      "https://clubsetu.vercel.app",
+    ];
+    const origin = req.headers.origin;
+    const clientUrl = allowedOrigins.includes(origin)
+      ? origin
+      : process.env.CLIENT_URL;
+
     // Validation
     if (!email.endsWith("@nitj.ac.in")) {
       return res.status(400).json({
@@ -70,7 +80,7 @@ router.post("/register/student", async (req, res) => {
 
     if (!isDevMode) {
       // Send verification email
-      const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+      const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
         <h1>Email Verification</h1>
         <p>Please click the link below to verify your account:</p>
@@ -131,6 +141,16 @@ router.post("/register/club-head", async (req, res) => {
       password,
     } = req.body;
 
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://clubsetu.nikhim.me",
+      "https://clubsetu.vercel.app",
+    ];
+    const origin = req.headers.origin;
+    const clientUrl = allowedOrigins.includes(origin)
+      ? origin
+      : process.env.CLIENT_URL;
+
     // Check if a club head already exists for this club
     const existingClubHead = await ClubHead.findOne({ clubName });
     if (existingClubHead) {
@@ -179,11 +199,13 @@ router.post("/register/club-head", async (req, res) => {
 
     if (!isDevMode) {
       // Send verification email
-      const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+      const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
-        <h1>Email Verification</h1>
+        <h1>Email Verification - ClubSetu</h1>
         <p>Please click the link below to verify your account:</p>
         <a href="${verifyUrl}" clicktracking=off>${verifyUrl}</a>
+        <p>This link will expire in 24 hours.</p>
+        <p>Thanks for joining ClubSetu!</p>
       `;
 
       try {
