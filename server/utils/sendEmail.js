@@ -1,33 +1,33 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
+import dotenv from "dotenv";
 
+// Load environment variables BEFORE importing modules that use them
+dotenv.config();
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // use SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    // Increase timeouts
-    connectionTimeout: 10000, // 10 seconds
-    socketTimeout: 10000, // 10 seconds
-    family: 4, // Force IPv4 to avoid ENETUNREACH errors on some networks (like Render)
-  });
+  // Set SendGrid API Key dynamically to ensure process.env is loaded
+  if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  } else {
+    console.warn("SENDGRID_API_KEY is not set in environment variables.");
+  }
 
-  const message = {
-    from: `${process.env.EMAIL_FROM_NAME || "Club Event Support"} <${process.env.EMAIL_USER}>`,
+  const msg = {
     to: options.email,
+    from: `${process.env.EMAIL_FROM_NAME || "Club Event Support"} <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`, // Use a verified sender email
     subject: options.subject,
     html: options.message,
   };
 
   try {
-    const info = await transporter.sendMail(message);
-    console.log("Message sent: %s", info.messageId);
+    await sgMail.send(msg);
+    console.log(`Email sent to ${options.email}`);
   } catch (error) {
-    console.error("Error sending email:", error);
-    throw error; // Re-throw to be handled by the caller
+    console.error("Error sending email via SendGrid:", error);
+
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw error;
   }
 };
 
