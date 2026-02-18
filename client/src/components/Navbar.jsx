@@ -2,7 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
-  const user = JSON.parse(localStorage.getItem('user'));
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && storedUser !== 'undefined') {
+      user = JSON.parse(storedUser);
+    }
+  } catch (err) {
+    console.error('Error parsing user from local storage', err);
+    localStorage.removeItem('user');
+  }
   const role = localStorage.getItem('role');
 
   const [mobileOpen, setMobileOpen]     = useState(false);

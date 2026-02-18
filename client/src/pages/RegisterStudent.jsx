@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
@@ -8,6 +9,7 @@ const PROGRAMS = ['BTECH', 'MTECH'];
 
 const RegisterStudent = () => {
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     name: '',
     rollNo: '',
@@ -30,10 +32,16 @@ const RegisterStudent = () => {
     setLoading(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/student`, formData);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('role', res.data.role);
-      localStorage.setItem('token', res.data.token);
-      navigate('/');
+      if (res.data.token) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        localStorage.setItem('role', res.data.role);
+        localStorage.setItem('token', res.data.token);
+        navigate('/');
+      } else {
+        // Verification required - Redirect to Home with notification
+        showNotification(res.data.message, 'success', 5000);
+        navigate('/'); 
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

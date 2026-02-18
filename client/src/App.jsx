@@ -27,6 +27,7 @@ import DataPrivacy from './pages/DataPrivacy';
 import PaymentTracking from './pages/PaymentTracking';
 import EventGuide from './pages/EventGuide';
 import Contribute from './pages/Contribute';
+import VerifyEmail from './pages/VerifyEmail';
 
 import { NotificationProvider } from './context/NotificationContext';
 
@@ -92,6 +93,7 @@ function App() {
             <Route path="/payments" element={<PaymentTracking />} />
             <Route path="/event-guide" element={<EventGuide />} />
             <Route path="/contribute" element={<Contribute />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </div>

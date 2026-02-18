@@ -26,6 +26,9 @@ const clubHeadSchema = new mongoose.Schema(
     ifscCode: { type: String },
     upiId: { type: String },
     bankPhone: { type: String },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    verificationTokenExpire: { type: Date },
   },
   { timestamps: true },
 );

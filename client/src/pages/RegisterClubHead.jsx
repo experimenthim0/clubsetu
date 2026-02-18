@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
 
 const clubs = [
   { name: "GDSC NITJ" },
@@ -17,6 +18,7 @@ const PROGRAMS = ['BTECH', 'MTECH'];
 
 const RegisterClubHead = () => {
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     name: '',
     clubName: '',
@@ -41,11 +43,16 @@ const RegisterClubHead = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/club-head`, formData);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('role', res.data.role);
-      localStorage.setItem('token', res.data.token);
-      navigate('/');
+      if (res.data.token) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        localStorage.setItem('role', res.data.role);
+        localStorage.setItem('token', res.data.token);
+        navigate('/');
+      } else {
+        // Verification required
+        showNotification(res.data.message, 'success', 5000);
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

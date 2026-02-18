@@ -14,6 +14,9 @@ const studentSchema = new mongoose.Schema(
     linkedinProfile: { type: String },
     xProfile: { type: String },
     portfolioUrl: { type: String },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    verificationTokenExpire: { type: Date },
   },
   { timestamps: true },
 );
