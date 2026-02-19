@@ -3,6 +3,7 @@ import Admin from "../models/Admin.js";
 import Registration from "../models/Registration.js";
 import Event from "../models/Event.js";
 import ClubHead from "../models/ClubHead.js";
+import Student from "../models/Student.js";
 import { generateToken, verifyToken, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -76,8 +77,15 @@ router.get(
         0,
       );
 
+      const totalStudents = await Student.countDocuments();
+      const totalClubHeads = await ClubHead.countDocuments();
+      const totalEvents = await Event.countDocuments();
+
       res.json({
         totalRevenue: totalPlatformRevenue,
+        totalStudents,
+        totalClubHeads,
+        totalEvents,
         eventStats,
       });
     } catch (error) {
@@ -141,6 +149,21 @@ router.get(
       });
     } catch (error) {
       res.status(500).json({ message: "Error fetching club head info" });
+    }
+  },
+);
+
+// Get All Club Heads List — ADMIN ONLY
+router.get(
+  "/club-heads-list",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const clubHeads = await ClubHead.find().select("-password");
+      res.json(clubHeads);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch club heads" });
     }
   },
 );

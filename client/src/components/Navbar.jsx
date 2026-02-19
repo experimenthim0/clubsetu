@@ -83,7 +83,7 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white border-b-2 border-black transition-shadow duration-200 ${
+        className={`sticky top-0 z-50 bg-white border-b-2 border-black transition-shadow duration-200 myfont ${
           scrolled ? 'shadow-sm' : ''
         }`}
       >

@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+
+@font-face {
+  font-family: 'myfont';
+  src: local('mysans'), url(./fonts/mysans.ttf) format('truetype');
+}
+
+.myfont {
+    font-family: myfont, Arial, serif;
+    font-weight: black;
+}

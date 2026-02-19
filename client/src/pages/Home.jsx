@@ -40,7 +40,7 @@ const BtnSecondary = ({ to, children }) => (
 
 const Home = () => {
   return (
-    <div className="font-sans text-black bg-white">
+    <div className="myfont text-black bg-white">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="min-h-screen flex flex-col justify-center bg-white border-b-2 border-black pt-16 pb-0">
@@ -49,16 +49,16 @@ const Home = () => {
           {/* Top badges */}
           <div className="flex items-center justify-between mb-14 flex-wrap gap-4">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
+              {/* <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
                 <i className="ri-fire-fill" /> Trending on Campus
-              </span>
+              </span> */}
               <span className="inline-flex items-center gap-2 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
                 <i className="ri-school-line" /> Exclusively for NITJ
               </span>
             </div>
-            <span className="bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm">
+            {/* <span className="bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm">
               2026 Edition
-            </span>
+            </span> */}
           </div>
 
           {/* Headline */}

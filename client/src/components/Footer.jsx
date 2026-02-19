@@ -23,6 +23,9 @@ const Footer = () => {
             <Link to="/data-privacy" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
               Data Privacy
             </Link>
+            <Link to="/faq" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
+              FAQ
+            </Link>
           </div>
 
           <p className="text-[12px] text-neutral-500 tracking-wide">

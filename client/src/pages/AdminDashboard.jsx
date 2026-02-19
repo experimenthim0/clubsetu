@@ -5,7 +5,9 @@ import { useNotification } from '../context/NotificationContext';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
+    const [clubHeads, setClubHeads] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'club-heads'
     const [selectedClub, setSelectedClub] = useState(null);
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -19,23 +21,27 @@ const AdminDashboard = () => {
             return;
         }
 
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
-                setStats(res.data);
+                const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
+                setStats(statsRes.data);
+
+                const headsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-heads-list`);
+                setClubHeads(headsRes.data);
+                
                 setLoading(false);
             } catch (err) {
-                showNotification('Failed to fetch admin stats', 'error');
+                showNotification('Failed to fetch admin data', 'error');
                 setLoading(false);
             }
         };
-        fetchStats();
+        fetchData();
     }, [navigate, showNotification]);
 
     const refreshStats = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
-            setStats(res.data);
+            const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
+            setStats(statsRes.data);
         } catch (err) {
             console.error('Failed to refresh stats');
         }
@@ -80,7 +86,7 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-neutral-50 p-6 lg:p-12">
             <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-12">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-black tracking-tight uppercase">Admin Panel</h1>
                         <p className="text-neutral-500 text-sm mt-1 uppercase tracking-widest font-bold">Manage Platform Payouts & Revenue</p>
@@ -93,93 +99,157 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
-                {/* Total Revenue Summary */}
-                <div className="bg-orange-600 border-2 border-black p-8 rounded-sm shadow-[8px_8px_0px_#000] mb-12 flex flex-col md:flex-row items-center justify-between text-white">
-                    <div className="mb-6 md:mb-0">
-                        <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Total Platform Revenue</p>
-                        <p className="text-6xl font-black">₹{stats?.totalRevenue || 0}</p>
-                    </div>
-                    <div className="flex gap-4">
-                         <div className="bg-white/10 p-4 border border-white/20 rounded-sm">
-                              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Total Events</p>
-                              <p className="text-2xl font-black">{stats?.eventStats?.length || 0}</p>
-                         </div>
-                         <div className="bg-white/10 p-4 border border-white/20 rounded-sm">
-                              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Payouts Pending</p>
-                              <p className="text-2xl font-black">{stats?.eventStats?.filter(e => e.totalCollected > 0).length || 0}</p>
-                         </div>
-                    </div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                     <div className="bg-orange-600 border-2 border-black p-4 rounded-sm text-white shadow-[4px_4px_0px_#000]">
+                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Total Revenue</p>
+                         <p className="text-2xl font-black">₹{stats?.totalRevenue || 0}</p>
+                     </div>
+                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                         <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Students</p>
+                         <p className="text-2xl font-black text-black">{stats?.totalStudents || 0}</p>
+                     </div>
+                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                         <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Club Heads</p>
+                         <p className="text-2xl font-black text-black">{stats?.totalClubHeads || 0}</p>
+                     </div>
+                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                         <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Events</p>
+                         <p className="text-2xl font-black text-black">{stats?.totalEvents || 0}</p>
+                     </div>
                 </div>
 
-                {/* Events Table */}
-                <div className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y-2 divide-black">
-                            <thead className="bg-neutral-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event Title</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Amount</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Deadline</th>
-                                    <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y-2 divide-black">
-                                {stats?.eventStats?.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.clubName}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black">{item.title}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r-2 border-black">₹{item.totalCollected}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.regCount} students</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-black uppercase tracking-tighter">
-                                            {item.registrationDeadline 
-                                                ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                                                : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                                            }
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            {(() => {
-                                                const deadline = item.registrationDeadline || item.startTime;
-                                                const isLocked = new Date() < new Date(deadline);
+                {/* Navigation Tabs */}
+                <div className="flex gap-4 border-b-2 border-neutral-200 mb-8">
+                    <button 
+                        onClick={() => setActiveTab('overview')}
+                        className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'overview' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
+                    >
+                        Event Overview
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('club-heads')}
+                        className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'club-heads' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
+                    >
+                        Club Heads List
+                    </button>
+                </div>
 
-                                                if (item.payoutStatus === 'COMPLETED') {
-                                                    return (
-                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-green-600">
-                                                            <i className="ri-checkbox-circle-fill text-sm" />
-                                                            Completed
-                                                        </span>
-                                                    );
-                                                }
-
-                                                if (isLocked) {
-                                                    return (
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-400 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-neutral-200 cursor-not-allowed">
-                                                                <i className="ri-lock-2-line text-sm" />
-                                                                Locked
-                                                            </span>
-                                                            <span className="text-[9px] font-bold text-neutral-400 mt-1 uppercase">Available after deadline</span>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <button 
-                                                        onClick={() => handleFetchPayoutInfo(item.clubHeadId, item.eventId)}
-                                                        className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors border-2 border-black active:translate-y-1"
-                                                    >
-                                                        Make Payout
-                                                    </button>
-                                                );
-                                            })()}
-                                        </td>
+                {activeTab === 'overview' && (
+                    <div className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y-2 divide-black">
+                                <thead className="bg-neutral-100">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event Title</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Amount</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Deadline</th>
+                                        <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y-2 divide-black">
+                                    {stats?.eventStats?.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-neutral-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black">{item.title}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r-2 border-black">₹{item.totalCollected}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.regCount} students</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-black uppercase tracking-tighter">
+                                                {item.registrationDeadline 
+                                                    ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                                    : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                                }
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {(() => {
+                                                    const deadline = item.registrationDeadline || item.startTime;
+                                                    const isLocked = new Date() < new Date(deadline);
+
+                                                    if (item.payoutStatus === 'COMPLETED') {
+                                                        return (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-green-600">
+                                                                <i className="ri-checkbox-circle-fill text-sm" />
+                                                                Completed
+                                                            </span>
+                                                        );
+                                                    }
+
+                                                    if (isLocked) {
+                                                        return (
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-400 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-neutral-200 cursor-not-allowed">
+                                                                    <i className="ri-lock-2-line text-sm" />
+                                                                    Locked
+                                                                </span>
+                                                                <span className="text-[9px] font-bold text-neutral-400 mt-1 uppercase">Available after deadline</span>
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <button 
+                                                            onClick={() => handleFetchPayoutInfo(item.clubHeadId, item.eventId)}
+                                                            className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors border-2 border-black active:translate-y-1"
+                                                        >
+                                                            Make Payout
+                                                        </button>
+                                                    );
+                                                })()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {activeTab === 'club-heads' && (
+                    <div className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y-2 divide-black">
+                                <thead className="bg-neutral-100">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Email</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Phone</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y-2 divide-black">
+                                    {clubHeads.map((head, idx) => (
+                                        <tr key={idx} className="hover:bg-neutral-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{head.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black text-orange-600">{head.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-black">{head.collegeEmail}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono border-r-2 border-black">{head.phone}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {head.isVerified ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-green-200">
+                                                        Verified
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-yellow-200">
+                                                        Pending
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {clubHeads.length === 0 && (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-neutral-500 text-sm">No club heads registered yet.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
 
                 {/* Payout Modal */}
                 {modalOpen && selectedClub && (
