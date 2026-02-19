@@ -13,7 +13,7 @@ const VerifyEmail = () => {
             try {
                 // In production, you might want to use an environment variable for the API URL
                 // Assuming proxy is set up or relative path works
-                const res = await axios.get(`http://localhost:5000/api/auth/verify-email/${token}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`);
                 setStatus('success');
                 setMessage(res.data.message);
             } catch (error) {
