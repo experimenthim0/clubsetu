@@ -181,6 +181,8 @@ const ClubsPage = ({ isHome = false }) => {
           </div>
         ))}
       </div>
+
+      <p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your club or society, Click <a href="https://forms.gle/ZJKNhGXNrSkimWtG9" className="text-orange-600">here</a>.</p>
     </div>
   );
 };

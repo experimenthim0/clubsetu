@@ -189,7 +189,12 @@ const CreateEvent = () => {
                             <option value="OAT">OAT</option>
                             <option value="CSH">CSH</option>
                             <option value="VCH">VCH</option>
-                            <option value="Others">Others</option>
+                            <option value="Science Block">Science Block</option>
+                            <option value="Community Center">Community Center</option>
+                            <option value="NITJ Temple">NITJ Temple</option>
+                            <option value="LT">LT</option>
+                            <option value="Online">Online</option>
+                            <option value="Department Building">Department Building</option>
                         </select>
                     </div>
 

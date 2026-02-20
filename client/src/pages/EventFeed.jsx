@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EventCard from '../components/EventCard';
 import { useNotification } from '../context/NotificationContext';
+import { Link } from 'react-router-dom';
 
 const EventFeed = ({ limit, hideHeader = false }) => {
   const { showNotification } = useNotification();
@@ -143,7 +144,8 @@ return (
         ))}
       </div>
     )}
-
+<p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your event,Become a Club or Society Head <Link to="/register/club-head" className="text-orange-600 font-bold">Register Now</Link> || Also Fill this <a href="https://forms.gle/ZJKNhGXNrSkimWtG9" className="text-orange-600 font-bold">Form</a></p>
+  
   </div>
 );
 }

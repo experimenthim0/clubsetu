@@ -373,58 +373,57 @@ const EventDetails = () => {
         <div className="bg-white border-2 border-black rounded-sm overflow-hidden">
 
           {/* ── Hero banner ──────────────────────────────────────────────── */}
-          <div className="relative bg-black h-80 flex items-center justify-center overflow-hidden">
-            {(() => {
-              const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop';
-              const displayImage = event.imageUrl || DEFAULT_IMAGE;
-              
-              return (
-                <>
-                  <img 
-                    src={displayImage} 
-                    alt={title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-80"
-                    onError={(e) => {
-                      // Fallback to dot pattern if image fails
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  {/* Backup pattern if image fails */}
-                  {!displayImage && (
-                    <>
-                      <div
-                        className="absolute inset-0 opacity-10"
-                        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '28px 28px' }}
-                      />
-                      <i className="ri-calendar-event-line text-[120px] text-white opacity-10 absolute" />
-                    </>
-                  )}
-                </>
-              );
-            })()}
-            {/* Status pill */}
-            <div className="relative z-10 flex flex-col items-center gap-3">
-              {isLive && (
-                <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full animate-pulse">
-                  <span className="w-2 h-2 bg-white rounded-full" />
-                  Live Now
-                </span>
-              )}
-              {isEnded && (
-                <span className="inline-flex items-center gap-2 bg-neutral-700 text-neutral-300 text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm">
-                  <i className="ri-check-line" /> Ended
-                </span>
-              )}
-              {!isLive && !isEnded && (
-                <span className="inline-flex items-center gap-2 bg-yellow-400 text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm border-2 border-black">
-                  <i className="ri-time-line" /> Upcoming
-                </span>
-              )}
-            </div>
-            {/* Bottom orange bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-orange-600" />
+          <div className="relative bg-neutral-100 flex items-center justify-center overflow-hidden">
+  {(() => {
+    const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop';
+    const displayImage = event.imageUrl || DEFAULT_IMAGE;
+    
+    return (
+      <>
+        <img 
+          src={displayImage} 
+          alt={title}
+          className="w-full h-auto max-h-[520px] object-contain"
+          onError={(e) => {
+            e.target.style.display = 'none';
+          }}
+        />
+        {!displayImage && (
+          <div className="h-80 flex items-center justify-center w-full">
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{ backgroundImage: 'radial-gradient(#000000 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+            />
+            <i className="ri-calendar-event-line text-[120px] text-neutral-400 opacity-30 absolute" />
           </div>
+        )}
+      </>
+    );
+  })()}
+
+  {/* Status pill — top-right corner */}
+  <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+    {isLive && (
+      <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full animate-pulse shadow-lg">
+        <span className="w-2 h-2 bg-white rounded-full" />
+        Live Now
+      </span>
+    )}
+    {isEnded && (
+      <span className="inline-flex items-center gap-2 bg-neutral-800 text-neutral-200 text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm shadow-lg">
+        <i className="ri-check-line" /> Ended
+      </span>
+    )}
+    {!isLive && !isEnded && (
+      <span className="inline-flex items-center gap-2 bg-yellow-400 text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm border-2 border-black shadow-lg">
+        <i className="ri-time-line" /> Upcoming
+      </span>
+    )}
+  </div>
+
+  {/* Bottom orange bar */}
+  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-orange-600" />
+  </div>
 
           {/* ── Body ─────────────────────────────────────────────────────── */}
           <div className="p-8 md:p-12">
@@ -550,13 +549,18 @@ const EventDetails = () => {
               </button>
 
               {/* Helper text */}
-              {!isEnded && (
+              {/* {!isEnded && (
                 <p className="text-center text-[12px] text-neutral-400 mt-3 tracking-wide">
                   {isUnlimited
                     ? 'Unlimited seats available — register now.'
                     : isFull
                       ? 'You will be notified if a seat opens up.'
                       : `${totalSeats - registeredCount} seat${totalSeats - registeredCount !== 1 ? 's' : ''} remaining — register now.`}
+                </p>
+              )} */}
+              {entryFee>0 && (
+                <p className="text-center text-[12px] text-neutral-400 mt-3 tracking-wide">
+                  Note: Entry fee is non-refundable.
                 </p>
               )}
             </div>
