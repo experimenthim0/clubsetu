@@ -193,7 +193,7 @@ const Profile = () => {
           <i className="ri-money-dollar-circle-line" /> Payment Tracking
         </Link>
         <Link 
-          to="/events/create" 
+          to="/create" 
           className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-black hover:text-white transition-colors"
         >
           <i className="ri-add-line" /> Create Event

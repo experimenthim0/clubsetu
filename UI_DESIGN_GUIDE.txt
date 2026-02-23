@@ -1,0 +1,158 @@
+
+==========================================
+  CLUBSETU — UI / DESIGN SYSTEM GUIDE
+==========================================
+
+
+1. DESIGN PHILOSOPHY
+--------------------
+Style:        Neo-Brutalist / Bold Minimalist
+Feel:         Premium, editorial, high-contrast
+Typography:   Custom font via "myfont" class (used on body/root)
+Corners:      Sharp — always use `rounded-sm` (no rounded-lg/xl)
+Shadows:      Solid offset — e.g. `shadow-[4px_4px_0px_#0D0D0D]`
+Hover:        Lift effect — `hover:-translate-y-0.5` or `hover:-translate-y-px`
+Borders:      Thick, black — `border-2 border-black`
+
+
+2. COLOR PALETTE
+-----------------
+
+  PRIMARY COLORS
+  ──────────────
+  Black        #000000   (bg-black, text-black, border-black)
+               → Backgrounds, text, borders, primary buttons
+  White        #FFFFFF   (bg-white, text-white)
+               → Page backgrounds, card backgrounds
+  Orange-600   Tailwind  (bg-orange-600, text-orange-600, border-orange-600)
+               → Brand accent, LIVE badges, hover states, icons, links
+  Yellow-400   Tailwind  (bg-yellow-400, text-yellow-400)
+               → Secondary accent, UPCOMING badges, floating badges, highlights
+
+  NEUTRAL TONES
+  ─────────────
+  neutral-950  → Dark sections (e.g. "For Club Heads" section bg)
+  neutral-900  → Dark cards inside dark sections
+  neutral-800  → Borders in dark sections
+  neutral-700  → Dark button bg (e.g. ENDED filter active state)
+  neutral-600  → Secondary body text
+  neutral-500  → Muted text, captions, helper text
+  neutral-400  → Disabled/past items text
+  neutral-200  → Light borders, inactive filter borders
+  neutral-100  → Divider lines, subtle borders inside cards
+
+  SEMANTIC COLORS
+  ───────────────
+  Orange-600   → LIVE status (pulsing badge, active filter)
+  Yellow-400   → UPCOMING status (badge, active filter)
+  neutral-200  → ENDED status (muted badge)
+  Green-50/700 → "Free" entry badge, "Registered" confirmation
+  Yellow-50/800→ Paid entry badge (₹ amount)
+  Red-500      → LIVE indicator on homepage embed
+
+  SECTION BACKGROUNDS
+  ───────────────────
+  bg-white        → Hero, Events, For Students, How It Works
+  bg-orange-50    → Clubs section
+  bg-orange-600   → Ticker bar
+  bg-neutral-950  → For Club Heads section
+  bg-yellow-50    → How It Works section
+  bg-gray-50      → Full clubs page (standalone)
+
+
+3. TYPOGRAPHY
+--------------
+
+  Headlines (h1):
+    font-black, text-[clamp(52px,8vw,108px)], tracking-[-3px]
+
+  Section Titles (h2):
+    font-black, text-[clamp(28px,4vw,44px)], tracking-tight
+
+  Section Labels (above titles):
+    text-[11px], font-bold, uppercase, tracking-[0.15em]
+    Color: text-orange-600 (light sections) or text-yellow-400 (dark sections)
+
+  Card Titles:
+    text-lg (18px), font-black, leading-tight
+
+  Body / Descriptions:
+    text-[13px]-[15px], text-neutral-500 or text-neutral-600, leading-relaxed
+
+  Badges / Tags:
+    text-[10px]-[11px], font-bold, uppercase, tracking-widest
+
+  Buttons:
+    text-[11px]-[13px], font-bold, uppercase, tracking-widest
+
+
+4. BUTTONS
+-----------
+
+  Primary (BtnPrimary):
+    bg-black text-white border-2 border-black
+    Hover: bg-orange-600 border-orange-600
+    Style: px-8 py-3.5, rounded-sm, uppercase
+
+  Secondary (BtnSecondary):
+    bg-white text-black border-2 border-black
+    Hover: bg-yellow-400 border-yellow-400
+    Style: px-8 py-3.5, rounded-sm, uppercase
+
+  Filter Toggle (active states):
+    ALL     → bg-black text-white border-black
+    LIVE    → bg-orange-600 text-white border-orange-600
+    UPCOMING→ bg-yellow-400 text-black border-yellow-400
+    ENDED   → bg-neutral-700 text-white border-neutral-700
+    Inactive→ bg-white text-neutral-600 border-neutral-200
+
+
+5. CARDS
+---------
+
+  Event Card:
+    bg-white, border-2 border-black, rounded-sm
+    Shadow: shadow-[4px_4px_0px_#0D0D0D]
+    Hover:  shadow-[6px_6px_0px_#0D0D0D], -translate-y-0.5
+    Image:  h-44 with object-cover, hover scale-105
+    Footer: border-t-2 border-neutral-100
+
+  Club Card:
+    bg-white, border-2 border-black, rounded-sm
+    Shadow: shadow-[8px_8px_0px_#000]
+    Hover:  shadow-[10px_10px_0px_#000], translate-x-[-2px] translate-y-[-2px]
+
+  Filter Bar:
+    bg-white, border-2 border-black, rounded-sm
+    Shadow: shadow-[4px_4px_0px_#0D0D0D]
+    Padding: p-4
+
+
+6. ICONS
+---------
+  Library: Remix Icon (ri-*)
+  Usage:   Always text-orange-600 for info icons inside cards
+  Common:  ri-time-line, ri-map-pin-line, ri-group-line, ri-timer-line
+           ri-calendar-event-line, ri-history-line, ri-live-line
+           ri-building-line, ri-arrow-right-line, ri-close-line
+
+
+7. LAYOUT
+----------
+  Max Width:   max-w-[1200px] (sections) or max-w-7xl (event grids)
+  Padding:     px-6 lg:px-8
+  Grid:        grid-cols-1 md:grid-cols-2 lg:grid-cols-3, gap-6 or gap-8
+  Section Py:  py-24
+  Section Sep: border-b-2 border-black
+
+
+8. ANIMATIONS
+--------------
+  Ticker:      @keyframes ticker (translateX linear infinite 22s)
+  LIVE badge:  animate-pulse
+  LIVE dot:    animate-ping (on events page header)
+  Card hover:  transition-all (shadow + translate)
+  Image hover: transition-transform duration-300 (scale)
+  Button hover: transition-all + hover:-translate-y-px
+
+==========================================

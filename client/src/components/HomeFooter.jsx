@@ -76,8 +76,8 @@ const HomeFooter = () => {
             </p>
             <p className="text-[13px] text-neutral-500">
               Have any questions or suggestion? Reach out to us at{' '}
-              <a href="mailto:support@clubsetu.in" className="text-orange-500 hover:underline font-medium">
-                contact.nikhim@gmail.com
+              <a href="mailto:clubsetu@nikhim.me" className="text-orange-500 hover:underline font-medium">
+                clubsetu@nikhim.me
               </a>
             </p>
           </div>

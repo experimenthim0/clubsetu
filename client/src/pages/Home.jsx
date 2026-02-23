@@ -267,10 +267,10 @@ const Home = () => {
           {/* Quote strip */}
           <div className="mt-0.5 border border-neutral-800 overflow-hidden relative">
             <img
-              src="https://images.unsplash.com/photo-1544531320-dd40e3a2e6ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+              src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Event Organizer"
-              className="w-full h-56 object-cover object-[center_30%] block"
-              style={{ filter: 'saturate(0) brightness(0.4)' }}
+              className="w-full h-56 object-cover object-[center_50%] block"
+              style={{ filter: 'saturate(0) brightness(0.8)' }}
             />
             <div className="absolute inset-0 flex items-center justify-center px-6">
               <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-tight leading-snug max-w-2xl">
@@ -318,6 +318,94 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* <section className="py-20 bg-white border-t-2 border-black">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <SectionLabel>Testimonials</SectionLabel>
+              <h2 className="font-black text-[clamp(28px,4vw,48px)] text-black leading-none tracking-tight">
+                What Our Community Says
+              </h2>
+            </div>
+            <div className="hidden md:flex items-center gap-3">
+              <button className="w-12 h-12 border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors">
+                <i className="ri-arrow-left-line text-lg" />
+              </button>
+              <button className="w-12 h-12 border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors">
+                <i className="ri-arrow-right-line text-lg" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Yash Sharma",
+                role: "Computer Science Student",
+                quote: "This platform transformed how I experience campus life. I never miss a hackathon now!",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              },
+              {
+                name: "Ajeet Yadav",
+                role: "Kabbadi Club Head",
+                quote: "Managing events has never been easier. The analytics dashboard is a game-changer.",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              },
+              {
+                name: "Himanshu Yadav",
+                role: "Student",
+                quote: "From discovery to participation, the entire flow is seamless. Highly recommended!",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              }
+            
+            ].map((t, i) => (
+              <div
+                key={i}
+                className="border-2 border-black bg-white p-8 relative hover:shadow-lg transition-shadow"
+              >
+                <div className="absolute top-4 right-4 text-orange-600 text-2xl">
+                  <i className="ri-double-quotes-r" />
+                </div>
+                <p className="text-neutral-600 italic mb-6 text-lg leading-relaxed">
+                  "{t.quote}"
+                </p>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full border-2 border-black object-cover"
+                  />
+                  <div>
+                    <div className="font-bold text-black">{t.name}</div>
+                    <div className="text-sm text-neutral-500">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section> */}
+
+     {/* <section className="py-20 bg-yellow-50 border-t-2 border-black">
+  <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+    <div className="flex items-center justify-center mb-12">
+      <div className=" p-8 text-center">
+        <h2 className="font-black text-[clamp(28px,4vw,48px)] text-black leading-none tracking-tight text-center relative inline-block after:content-[''] after:block after:w-16 after:h-1 after:bg-black after:mx-auto after:mt-2">
+          Request for more features
+        </h2>
+        
+        <a 
+          href="mailto:clubsetu@nikhim.me" 
+          className="text-2xl text-orange-600 font-bold p-4 hover:text-gray-600 transition-colors duration-300 block"
+        >
+          clubsetu@nikhim.me
+        </a>
+      </div>
+    </div>
+  </div>
+</section> */}
 
       {/* Home Footer */}
       <HomeFooter />
