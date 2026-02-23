@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[12px] text-neutral-500 tracking-wide">
-            © {new Date().getFullYear()} <span className="font-bold text-black">ClubSetu</span>. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-bold text-black">Club<span className="text-orange-600">Setu</span></span>. All rights reserved.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
@@ -29,15 +29,16 @@ const Footer = () => {
           </div>
 
           <p className="text-[12px] text-neutral-500 tracking-wide">
-            Crafted with <span className="text-red-500">♥</span> by{' '}
+            Developed with <span className="text-red-500">♥</span> by{' '}
             <a
               href="https://nikhim.me"
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-orange-600 hover:underline"
             >
-              DevHim
+              NikHim {' '}
             </a>
+            for <span className="font-bold text-black">NITJ</span>
           </p>
         </div>
       </div>

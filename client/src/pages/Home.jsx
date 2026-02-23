@@ -126,36 +126,36 @@ const Home = () => {
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
       <section className="py-24 bg-white border-b-2 border-black">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
-            <div>
-              <SectionLabel>Latest Happenings</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
-                What's Buzzing<br />on Campus
-              </h2>
-            </div>
+          <div className="mb-12">
+            <SectionLabel>Latest Happenings</SectionLabel>
+            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+              What's Buzzing<br />on Campus
+            </h2>
+          </div>
+          <EventFeed limit={6} hideHeader={true} />
+          <div className="flex justify-center mt-12">
             <BtnSecondary to="/events">
               View All Events <i className="ri-arrow-right-line text-sm" />
             </BtnSecondary>
           </div>
-          <EventFeed limit={3} hideHeader={true} />
         </div>
       </section>
 
       {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
       <section className="py-24 bg-orange-50 border-b-2 border-black">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
-            <div>
-              <SectionLabel>Our Clubs</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
-                Find Your<br />Community
-              </h2>
-            </div>
+          <div className="mb-12">
+            <SectionLabel>Our Clubs</SectionLabel>
+            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+              Find Your<br />Community
+            </h2>
+          </div>
+          <Clubspage isHome={true} />
+          <div className="flex justify-center mt-12">
             <BtnSecondary to="/clubs">
               View More <i className="ri-arrow-right-line text-sm" />
             </BtnSecondary>
           </div>
-          <Clubspage isHome={true} />
         </div>
       </section>
 

@@ -8,7 +8,17 @@ const funnyMessages = [
   "404: Page bunked class today.",
   "This page is as lost as a fresher on Day 1.",
   "Our server looked everywhere — under the chairs, behind the projector... nothing.",
-  "This page didn't register before the deadline. 😬",
+  
+  "Har Cheej hi available thodi hoti h bhai 😅",
+  "Aaj is page ne bunk mar liya 😄",
+  "Chai peene gya tha lekin page nahi aaya 😅",
+  "Page ko kaam ke liye bheja tha but Reels scroll krne lg gya kya kre ab GenZ h 😅",
+  "Page ko mummy ne dusra kam de diya toh aa nhi paya 😅",
+  "Page ko jaate time papa ne pkd liya",
+  "Page sister ke sath gappe marne lg gya or kam bhul gya 😅",
+  "Oh bhai tu ye kha pr aa gaya 😅",
+  "Abhi tk baat puri nhi hui 😅",
+  ""
 ];
 
 const NotFound = () => {

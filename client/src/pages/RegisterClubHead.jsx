@@ -10,10 +10,27 @@ const clubs = [
   { name: "LADC Society" },
   { name: "Fine Arts" },
   { name: "R-Tists" },
+  { name: "APOGEE Space Club" },
+  { name: "AAROGYA" },
+  { name: "Pryaas" },
+  { name: "SEED" },
+  { name: "FinNest" },
+  { name: "SI Crew" },
+  { name: "Kalkaar" },
+  { name: "BIS NITJ" },
+  { name: "RTist" },
+  { name: "RajBhasha" },
+  { name: "TCA(Team Culutral Affairs)" },
+  { name: "RAC(Regional Activity Club)" },
+  { name: "IOTA" },
+  { name: "ZEAL" },
+  { name: "Netra" },
+  { name: "Vortex" },
+  {name:"Other"}
 ];
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
-const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
+const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 const PROGRAMS = ['BTECH', 'MTECH'];
 
 const RegisterClubHead = () => {

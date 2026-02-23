@@ -4,23 +4,37 @@ import React from "react";
 export const clubsData = [
   {
     id: 1,
-    club_name: "SPICE Society",
+    club_name: "APOGEE Space Club",
     category: "Technical",
     description:
-      "Society for Progression of Instrumentation and Control Engineering. Organizes workshops, expert lectures and industrial tours.",
-    faculty_coordinators: ["Dr. Afzal Sikander"],
-    student_coordinators: ["Arpit Jha"],
-    contacts: ["9636880077"],
+      "APOGEE is a community for space enthusiasts, exploring everything from astrophotography and theoretical physics to rockets, satellites, and the business of space. We turn curiosity into projects, ideas into innovation, and big cosmic questions into hands-on experiences that aim beyond Earth.",
+    faculty_coordinators: ["Dr. Harleen Dahiya", "Dr. Sateesh Kumar Awasthi"],
+    student_coordinators: ["Bhavya Goyal"],
+    contacts: ["apogee@nitj.ac.in", "9877542620"],
+    socials: {
+      instagram: "https://www.instagram.com/apogee_nitj/",
+      twitter: "https://x.com/Apogee_Nitj",
+      linkedin: "https://www.linkedin.com/company/apogee-space-club/",
+      website: "https://brahmand-nitj.vercel.app/",
+      whatsapp: "https://chat.whatsapp.com/JZMuaC87SJbJaTCnMzj18C",
+    },
   },
   {
     id: 2,
-    club_name: "NETRA Photography Club",
-    category: "Creative",
+    club_name: "AAROGYA",
+    category: "Health",
     description:
-      "Photography club focusing on exhibitions, photowalks and competitions.",
-    faculty_coordinators: ["Dr. Abhinav Pratap Singh"],
-    student_coordinators: ["Priyanshu Sahu", "Rahul Kumar"],
-    contacts: ["9919525922", "7707967639"],
+      "A club that focuses on health and wellness.",
+    faculty_coordinators: ["Dr. Ravi Verma","Dr. Tarun Sehgal"],
+    student_coordinators: ["Anuj", "Abhishek Yadav"],
+    contacts: ["7206122922", "9817074717"],
+    socials: {
+      instagram: "https://www.instagram.com/aarogya_nitj",
+      twitter: "#",
+      linkedin: "https://www.linkedin.com/in/aarogyanitj/",
+      website: "https://www.aarogyanitj.in/",
+      whatsapp: "https://chat.whatsapp.com/L8Rt3ZXVCXAFBIfJu0rp7h",
+    },
   },
   {
     id: 3,
@@ -83,7 +97,7 @@ export const clubsData = [
 
 const ClubsPage = ({ isHome = false }) => {
   // If isHome, show only first 3 clubs
-  const clubsToShow = isHome ? clubsData.slice(0, 3) : clubsData;
+  const clubsToShow = isHome ? clubsData.slice(0, 6) : clubsData;
 
   return (
     <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-6`}>

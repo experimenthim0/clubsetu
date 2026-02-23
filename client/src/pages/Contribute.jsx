@@ -13,10 +13,10 @@ const Contribute = () => {
             <span className="text-[11px] font-bold uppercase tracking-widest">Open Source</span>
           </div>
           <h1 className="text-4xl font-black text-black tracking-tight">
-            Contribute to <span className="text-orange-600">ClubSetu</span>
+            Contribute to Club<span className="text-orange-600">Setu</span>
           </h1>
           <p className="text-neutral-600 mt-2 max-w-xl">
-            ClubSetu is built for and by NIT Jalandhar students. We welcome contributions from developers, designers, and anyone passionate about improving campus life.
+            Club<span className="text-orange-600">Setu</span> is built for and by NIT Jalandhar students. We welcome contributions from developers, designers, and anyone passionate about improving campus life.
           </p>
         </div>
 
@@ -27,7 +27,7 @@ const Contribute = () => {
             About the Project
           </h2>
           <p className="text-neutral-700 leading-relaxed mb-4">
-            ClubSetu is a full-stack event management platform designed exclusively for NIT Jalandhar. It enables club heads to create and manage events, handle registrations with custom forms, process payments through Razorpay, and track payouts — all in one place.
+            Club<span className="text-orange-600">Setu</span> is a full-stack event management platform designed exclusively for NIT Jalandhar. It enables club heads to create and manage events, handle registrations with custom forms, process payments through Razorpay, and track payouts — all in one place.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             {[
@@ -135,7 +135,7 @@ const Contribute = () => {
             Contact the Maintainer
           </h2>
           <p className="text-neutral-300 text-sm mb-6 leading-relaxed">
-            ClubSetu is maintained by <strong className="text-white">Nikhil Yadav</strong>, a student at NIT Jalandhar. Feel free to reach out for questions, suggestions, or collaboration!
+            Club<span className="text-orange-600">Setu</span> is maintained by <strong className="text-white">Nikhil Yadav</strong>, a student at NIT Jalandhar. Feel free to reach out for questions, suggestions, or collaboration!
           </p>
 
           <div className="space-y-4">

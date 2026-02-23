@@ -66,7 +66,7 @@ const TermsAndConditions = () => {
 
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">6. Limitation of Liability</h2>
-                        <p>ClubSetu is provided "as is" without warranties of any kind. We are not liable for any damages resulting from your use of the platform, including but not limited to event cancellations, payment disputes, or data loss.</p>
+                        <p>Club <span className='text-orange-600'>Setu</span> is provided "as is" without warranties of any kind. We are not liable for any damages resulting from your use of the platform, including but not limited to event cancellations, payment disputes, or data loss.</p>
                     </section>
 
                     <section>

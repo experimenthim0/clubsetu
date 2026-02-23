@@ -41,7 +41,7 @@ const Login = () => {
     
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <h2 className="text-center text-3xl font-bold text-gray-800">
-        Sign in to ClubSetu
+        Sign in to Club<span className="text-orange-600">Setu</span>
       </h2>
     </div>
 
