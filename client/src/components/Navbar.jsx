@@ -126,6 +126,9 @@ const Navbar = () => {
             <Link to="/clubs" className={navLinkCls("/clubs")}>
               Clubs
             </Link>
+            <Link to="/about-features" className={navLinkCls("/about-features")}>
+              ClubSetu Features
+            </Link>
           </div>
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}

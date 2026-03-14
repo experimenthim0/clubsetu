@@ -7,10 +7,11 @@ const HomeFooter = () => {
   const quickLinks = [
     { label: 'Events', to: '/events' },
     { label: 'Clubs', to: '/clubs' },
+    { label: 'ClubSetu Features', to: '/about-features' },
     { label: 'Event Guide', to: '/event-guide' },
     { label: 'Contribute', to: '/contribute' },
-    { label: 'Register', to: '/register' },
-    { label: 'Login', to: '/login' },
+    // { label: 'Register', to: '/register' },
+    // { label: 'Login', to: '/login' },
   ];
 
   return (

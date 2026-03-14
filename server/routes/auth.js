@@ -201,11 +201,19 @@ router.post("/register/club-head", async (req, res) => {
       // Send verification email
       const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
-        <h1>Email Verification - ClubSetu</h1>
-        <p>Please click the link below to verify your account:</p>
-        <a href="${verifyUrl}" clicktracking=off>${verifyUrl}</a>
-        <p>This link will expire in 24 hours.</p>
-        <p>Thanks for joining ClubSetu!</p>
+       <div style="font-family: sans-serif; max-width: 400px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+    <h2 style="color: #333;">Welcome to ClubSetu!</h2>
+    <p style="color: #555; line-height: 1.5;">We're excited to have you. Please verify your email address to get started and explore the community.</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="${verifyUrl}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Verify My Account</a>
+    </div>
+
+    <p style="font-size: 12px; color: #888;">This link expires in 24 hours. If you didn't sign up for ClubSetu, you can safely ignore this email.</p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="font-size: 14px; font-weight: bold;">See you inside,<br>The ClubSetu Team</p>
+</div>
+
       `;
 
       try {
