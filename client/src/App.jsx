@@ -33,9 +33,14 @@ import Aboutfeatures from './pages/Aboutfeatures';
 
 import { NotificationProvider } from './context/NotificationContext';
 
+// Global axios config - enable cookies
+axios.defaults.withCredentials = true;
+
 // Global axios interceptor — attach JWT token to every request
 axios.interceptors.request.use(
   (config) => {
+    // We still keep the Authorization header fallback just in case,
+    // though the server now primarily reads from cookies.
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -63,23 +63,25 @@ const Home = () => {
 
           {/* Headline */}
           <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[-3px] text-black mb-0">
-            Discover<br />
-            <span className="text-orange-600">&amp; Manage</span><br />
-            College Events.
-          </h1>
+  Discover<br />
+  <span className="text-orange-600">Clubs & Events</span><br />
+  at NITJ.
+</h1>
 
           {/* Sub + CTAs */}
           <div className="mt-12 flex flex-wrap items-end gap-10">
-            <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
-              The ultimate hub for students and clubs. Join the community, explore passions, and never miss out on campus life.
-            </p>
+           <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
+  ClubSetu connects NIT Jalandhar students with campus clubs and events in one place. 
+  Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
+</p>
             <div className="flex gap-3 flex-wrap">
               <BtnPrimary to="/events">
-                <i className="ri-calendar-event-line text-sm" /> Explore Events
-              </BtnPrimary>
-              <BtnSecondary to="/register">
-                <i className="ri-user-add-line text-sm" /> Get Started
-              </BtnSecondary>
+  <i className="ri-calendar-event-line text-sm" /> Browse Events
+</BtnPrimary>
+
+<BtnSecondary to="/clubs">
+  <i className="ri-group-line text-sm" /> Explore Clubs
+</BtnSecondary>
             </div>
           </div>
 
