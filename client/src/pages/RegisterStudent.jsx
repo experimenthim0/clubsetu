@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
-const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
+const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 const PROGRAMS = ['BTECH', 'MTECH'];
 
 const RegisterStudent = () => {

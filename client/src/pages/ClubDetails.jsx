@@ -86,8 +86,8 @@ const ClubDetails = () => {
                         )}
                     </div>
                     <div className="flex-1 text-center md:text-left">
-                        <div className="inline-block px-3 py-1 bg-orange-600 text-[9px] font-black uppercase tracking-widest mb-3">
-                            Verified By ClubSetu NITJ
+                        <div className="inline-block px-3 py-1 bg-orange-600 text-[9px] font-black tracking-wider mb-3">
+                            Verified By ClubSetu
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-3 leading-none">
                             {club.clubName}
@@ -233,13 +233,20 @@ const ClubDetails = () => {
                         <div className="h-0.5 flex-1 bg-black" />
                     </div>
                         
-                        {club.clubGallery.length > 0 && (
+                        {club.clubGallery.length > 0 ? (
                             <div className="grid grid-cols-3 gap-4">
                                 {club.clubGallery.map((image, index) => (
                                     <img key={index} src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover rounded-xs  hover:scale-105 transition-all duration-300" />
                                 ))}
                             </div>
-                        )}
+                        ):(
+                            <div className="bg-white border-2 border-dashed border-neutral-200 py-8 text-center">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">No image found, Lagta hai Clubhead ji add krna bhul gye.</p>
+                            </div>
+                        )
+                        
+                        
+                        }
                         
                         
                         {/* <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Coming Soon...</p> */}

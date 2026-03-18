@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
+import { loadRazorpay } from '../utils/razorpay';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -21,7 +22,13 @@ const EventDetails = () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
         const found = res.data.find((e) => e._id === id || e.id === id);
-        if (found) setEvent(found);
+        if (found) {
+            setEvent(found);
+            // Pre-load Razorpay if it's a paid event
+            if (found.entryFee > 0) {
+                loadRazorpay();
+            }
+        }
         else setError('Event not found');
         setLoading(false);
       } catch (err) {
@@ -32,15 +39,6 @@ const EventDetails = () => {
     fetchEvent();
   }, [id]);
 
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.onload = () => resolve(true);
-            script.onerror = () => resolve(false);
-            document.body.appendChild(script);
-        });
-    };
 
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));

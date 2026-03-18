@@ -251,7 +251,7 @@ const Home = () => {
               { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.(Coming Soon)',      icon: 'ri-broadcast-line' },
               { title: 'Digital Attendance', desc: 'Scan QR codes to mark attendance instantly. (Coming Soon)',     icon: 'ri-qr-scan-2-line' },
               { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-line' },
-              { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.(Coming Soon)',   icon: 'ri-trophy-line' },
+              { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.',   icon: 'ri-trophy-line' },
             ].map((item, i) => (
               <div
                 key={i}
@@ -298,7 +298,7 @@ const Home = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 border-2 border-black rounded-sm overflow-hidden">
             {[
-              { step: '01', title: 'Discover',    desc: 'Browse a curated feed of workshops, cultural fests, and hackathons happening on campus.', icon: 'ri-compass-3-line' },
+              { step: '01', title: 'Discover',    desc: 'Browse a curated feed of events, cultural fests, and hackathons happening on campus.', icon: 'ri-compass-3-line' },
               { step: '02', title: 'Register',    desc: 'Sign up for events instantly. Get a personalized dashboard to track your participation.', icon: 'ri-edit-circle-line' },
               { step: '03', title: 'Participate', desc: 'Show up with your digital pass and build a track record that lasts beyond graduation.',   icon: 'ri-user-heart-line' },
             ].map((card, i) => (

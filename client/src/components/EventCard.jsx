@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { loadRazorpay } from '../utils/razorpay';
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
     const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline } = event;
@@ -66,7 +67,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             {/* Body */}
             <div className="p-5 flex-1 flex flex-col">
                 <h3 className="text-lg font-black text-black leading-tight mb-2 line-clamp-1">{title}</h3>
-                <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 flex-grow leading-relaxed">{description}</p>
+                <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 grow leading-relaxed">{description}</p>
 
                 {/* Info row */}
                 <div className="space-y-1.5 text-[12px] text-neutral-600 mb-4">
@@ -120,6 +121,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     ) : (
                         <Link
                             to={`/events/${_id}`}
+                            onClick={() => loadRazorpay()}
                             className={`flex-1 block text-center py-2 rounded-sm text-[11px] font-bold uppercase tracking-widest border-2 transition-all ${
                                 isEnded
                                     ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
@@ -138,3 +140,4 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 };
 
 export default EventCard;
+
