@@ -59,7 +59,7 @@ const PaymentPolicy = () => {
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">5. Settlement to Event Organizers</h2>
                         <ul className="list-disc pl-6 space-y-1.5">
-                            <li>Collected payments are settled to event organizers' linked bank accounts within 7 working days of event completion.</li>
+                            <li>Collected payments are settled to event organizers linked bank accounts within 7 working days of event completion.</li>
                             <li>For settlement-related queries, organizers can contact <a href="mailto:contact.nikhim@gmail.com" className="text-orange-600 font-bold hover:underline">contact.nikhim@gmail.com</a>.</li>
                         </ul>
                     </section>

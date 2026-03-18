@@ -250,7 +250,7 @@ const Home = () => {
             {[
               { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.(Coming Soon)',      icon: 'ri-broadcast-line' },
               { title: 'Digital Attendance', desc: 'Scan QR codes to mark attendance instantly. (Coming Soon)',     icon: 'ri-qr-scan-2-line' },
-              { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-groupped-line' },
+              { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-line' },
               { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.(Coming Soon)',   icon: 'ri-trophy-line' },
             ].map((item, i) => (
               <div

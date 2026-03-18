@@ -2,3 +2,13 @@
 .txt
 whatextend.txt
 whatnext.md
+CLUB_HEAD_PITCH.md
+node_modules
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.env.example
+README_MONETIZATION.md
+UI_DESIGN_GUIDE.txt

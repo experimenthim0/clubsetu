@@ -111,6 +111,11 @@ const Login = () => {
               onChange={handleChange}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
+            <div className="flex justify-end mt-1">
+              <Link to="/forgot-password" size="sm" className="text-xs text-orange-600 hover:text-orange-700 font-bold uppercase tracking-tight">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {/* Submit */}

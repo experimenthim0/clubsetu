@@ -11,21 +11,14 @@ const Footer = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-            <Link to="/privacy" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
-              Terms & Conditions
-            </Link>
-            <Link to="/payment-policy" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
-              Payment Policy
-            </Link>
+           
             <Link to="/data-privacy" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
               Data Privacy
             </Link>
             <Link to="/faq" className="text-[11px] text-neutral-500 hover:text-black font-medium transition-colors">
               FAQ
             </Link>
+            
           </div>
 
           <p className="text-[12px] text-neutral-500 tracking-wide">

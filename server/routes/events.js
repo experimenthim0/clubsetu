@@ -38,6 +38,12 @@ router.get(
   async (req, res) => {
     try {
       const studentId = req.params.studentId;
+      
+      // SECURITY FIX: Prevent IDOR. User can only view their own registrations
+      if (req.user.id !== studentId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied. You can only view your own registrations." });
+      }
+
       const registrations = await Registration.find({ studentId }).populate(
         "eventId",
       );
@@ -248,11 +254,10 @@ router.post(
       await registration.save();
 
       if (status === "CONFIRMED") {
-        event.registeredCount += 1;
+        await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
       } else {
-        event.waitingList.push(registration._id);
+        await Event.findByIdAndUpdate(eventId, { $push: { waitingList: registration._id } });
       }
-      await event.save();
 
       res.json({
         message:
@@ -299,13 +304,10 @@ router.delete(
 
       if (event) {
         if (registration.status === "CONFIRMED") {
-          event.registeredCount = Math.max(0, event.registeredCount - 1);
+          await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
         } else {
-          event.waitingList = event.waitingList.filter(
-            (id) => id.toString() !== registration._id.toString(),
-          );
+          await Event.findByIdAndUpdate(eventId, { $pull: { waitingList: registration._id } });
         }
-        await event.save();
       }
 
       res.json({ message: "Deregistered successfully" });
@@ -351,23 +353,23 @@ router.get(
     try {
       const registrations = await Registration.find({
         eventId: req.params.id,
+      }).populate({
+        path: "studentId",
+        select: "name email rollNo program year",
       });
 
-      const populatedRegistrations = await Promise.all(
-        registrations.map(async (reg) => {
-          const student = await Student.findById(reg.studentId);
-          const regObj = reg.toObject();
-          if (reg.formResponses instanceof Map) {
-            regObj.formResponses = Object.fromEntries(reg.formResponses);
-          }
-          return {
-            ...regObj,
-            student: student
-              ? student
-              : { name: "Unknown", email: "Unknown", rollNo: "Unknown" },
-          };
-        }),
-      );
+      const populatedRegistrations = registrations.map((reg) => {
+        const regObj = reg.toObject();
+        if (reg.formResponses instanceof Map) {
+          regObj.formResponses = Object.fromEntries(reg.formResponses);
+        }
+        return {
+          ...regObj,
+          student: reg.studentId
+            ? reg.studentId
+            : { name: "Unknown", email: "Unknown", rollNo: "Unknown" },
+        };
+      });
 
       res.json(populatedRegistrations);
     } catch (err) {

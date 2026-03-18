@@ -1,103 +1,28 @@
-import React from "react";
-
-// 🔹 Your Cleaned Club Data
-export const clubsData = [
-  {
-    id: 1,
-    club_name: "APOGEE Space Club",
-    category: "Technical",
-    description:
-      "APOGEE is a community for space enthusiasts, exploring everything from astrophotography and theoretical physics to rockets, satellites, and the business of space. We turn curiosity into projects, ideas into innovation, and big cosmic questions into hands-on experiences that aim beyond Earth.",
-    faculty_coordinators: ["Dr. Harleen Dahiya", "Dr. Sateesh Kumar Awasthi"],
-    student_coordinators: ["Bhavya Goyal"],
-    contacts: ["apogee@nitj.ac.in", "9877542620"],
-    socials: {
-      instagram: "https://www.instagram.com/apogee_nitj/",
-      twitter: "https://x.com/Apogee_Nitj",
-      linkedin: "https://www.linkedin.com/company/apogee-space-club/",
-      website: "https://brahmand-nitj.vercel.app/",
-      whatsapp: "https://chat.whatsapp.com/JZMuaC87SJbJaTCnMzj18C",
-    },
-  },
-  {
-    id: 2,
-    club_name: "AAROGYA",
-    category: "Health",
-    description:
-      "A club that focuses on health and wellness.",
-    faculty_coordinators: ["Dr. Ravi Verma","Dr. Tarun Sehgal"],
-    student_coordinators: ["Anuj", "Abhishek Yadav"],
-    contacts: ["7206122922", "9817074717"],
-    socials: {
-      instagram: "https://www.instagram.com/aarogya_nitj",
-      twitter: "#",
-      linkedin: "https://www.linkedin.com/in/aarogyanitj/",
-      website: "https://www.aarogyanitj.in/",
-      whatsapp: "https://chat.whatsapp.com/L8Rt3ZXVCXAFBIfJu0rp7h",
-    },
-  },
-  {
-    id: 3,
-    club_name: "Kalakaar",
-    category: "Cultural",
-    description:
-      "Official dramatics club encouraging acting, music, writing and stage performances.",
-    faculty_coordinators: ["Dr. Sumer Singh Meena"],
-    student_coordinators: ["Malhar Kawatra", "Nidhi Khunteta"],
-    contacts: ["8239937689", "7300208494"],
-  },
-  {
-    id: 4,
-    club_name: "Fine Arts Society",
-    category: "Creative",
-    description:
-      "Promotes visual and graphic arts through competitions and workshops.",
-    faculty_coordinators: ["Dr. Sadhika Khullar"],
-    student_coordinators: ["Rahul Kumar", "Komal"],
-    contacts: ["9931287524", "9915264496"],
-  },
-  {
-    id: 5,
-    club_name: "Zeal Society",
-    category: "Development",
-    description:
-      "Focuses on communication, leadership and event management skills.",
-    faculty_coordinators: ["Dr. Jagwinder Singh", "Dr. Shyamkiran Kaur"],
-    student_coordinators: ["Chetan Jassal", "Shuchi Gupta"],
-    contacts: ["9056373107"],
-  },
-  {
-    id: 6,
-    club_name: "Rural Activity Club",
-    category: "Social",
-    description:
-      "Organizes rural awareness programs, technology guidance and education outreach.",
-    faculty_coordinators: ["Dr. Ashok Kumar Bagha"],
-    student_coordinators: ["Shivam Saini"],
-    contacts: ["8264792688"],
-  },
-  {
-    id: 7,
-    club_name: "Google Developer Student Club (GDSC)",
-    category: "Technical",
-    description:
-      "Empowers students with Google technologies and real-world project collaboration.",
-    faculty_coordinators: ["Dr. Indu Saini"],
-    student_coordinators: ["Naman Singla", "Namamish Awasthi"],
-    contacts: ["9464139983", "8787226741"],
-    socials: {
-      instagram: "#",
-      twitter: "#",
-      linkedin: "#",
-      website: "#",
-      whatsapp: "#",
-    },
-  },
-];
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 const ClubsPage = ({ isHome = false }) => {
-  // If isHome, show only first 3 clubs
-  const clubsToShow = isHome ? clubsData.slice(0, 6) : clubsData;
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs`);
+        setClubs(res.data);
+      } catch (err) {
+        console.error("Error fetching clubs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClubs();
+  }, []);
+
+  const clubsToShow = isHome ? clubs.slice(0, 6) : clubs;
+
+  if (loading) return <div className="text-center py-20">Loading clubs...</div>;
 
   return (
     <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-6`}>
@@ -118,85 +43,94 @@ const ClubsPage = ({ isHome = false }) => {
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {clubsToShow.map((club) => (
           <div
-            key={club.id}
+            key={club._id}
             className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_#000] transition-all"
           >
             <div>
-              <span className="inline-block mb-3 px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600 border border-orange-200 rounded-sm">
-                {club.category}
-              </span>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-16 h-16 border-2 border-black bg-white flex items-center justify-center p-1 shadow-[4px_4px_0px_#000]">
+                  {club.clubLogo ? (
+                    <img src={club.clubLogo} alt={club.clubName} className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="font-black text-xl italic">{club.clubName.charAt(0)}</span>
+                  )}
+                </div>
+                <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600 border border-black rounded-sm">
+                  {club.category || "Student Club"}
+                </span>
+              </div>
 
-              <h2 className="text-2xl font-black text-black leading-tight">
-                {club.club_name}
+              <h2 className="text-2xl font-black text-black leading-tight uppercase tracking-tighter">
+                {club.clubName}
               </h2>
 
-              <p className="text-sm text-neutral-600 mt-3 leading-relaxed">
-                {club.description}
+              <p className="text-sm text-neutral-600 mt-3 leading-relaxed line-clamp-2">
+                {club.description || "The official student group dedicated to community, innovation, and campus spirit."}
               </p>
 
-              <div className="mt-6 text-[12px] text-neutral-500 space-y-2">
-                <p className="flex items-center gap-2">
-                  <i className="ri-user-star-line text-black" />
-                  <span className="font-bold text-black uppercase tracking-tighter">
-                    Faculty:
-                  </span>{" "}
-                  {club.faculty_coordinators.join(", ")}
-                </p>
-                <p className="flex items-center gap-2">
-                  <i className="ri-group-line text-black" />
-                  <span className="font-bold text-black uppercase tracking-tighter">
-                    Students:
-                  </span>{" "}
-                  {club.student_coordinators.join(", ")}
-                </p>
-                <p className="flex items-center gap-2">
-                  <i className="ri-phone-line text-black" />
-                  <span className="font-bold text-black uppercase tracking-tighter">
-                    Contact:
-                  </span>{" "}
-                  {club.contacts.join(", ")}
-                </p>
+              <div className="mt-6 space-y-3">
+                {club.facultyCoordinators && club.facultyCoordinators.length > 0 && (
+                  <div className="border-2 border-black bg-neutral-50 px-4 py-2 shadow-[2px_2px_0px_#000]">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                      Faculty Coordinator
+                    </p>
+                    <p className="text-[11px] text-black font-bold">
+                      {club.facultyCoordinators.join(", ")}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="border-2 border-black bg-neutral-50 px-4 py-2 shadow-[2px_2px_0px_#000]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                    Student Lead
+                  </p>
+                  <p className="text-[11px] text-black font-bold">
+                    {club.studentCoordinators && club.studentCoordinators.length > 0 ? club.studentCoordinators.join(", ") : club.name}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="mt-8 pt-6 border-t-2 border-neutral-100 flex items-center justify-center gap-4">
-              <a
-                href={club.socials?.instagram || "#"}
-                className="w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm hover:bg-orange-600 hover:text-white transition-colors"
+            <div className="mt-8 flex items-center gap-4 border-t-2 border-black pt-6">
+              <div className="flex gap-2">
+                 {club.clubInstagram && (
+                   <a href={club.clubInstagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center border-2 border-black hover:bg-black hover:text-white transition-all">
+                     <i className="ri-instagram-line text-lg" />
+                   </a>
+                 )}
+                 {club.clubLinkedin && (
+                   <a href={club.clubLinkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center border-2 border-black hover:bg-black hover:text-white transition-all">
+                     <i className="ri-linkedin-fill text-lg" />
+                   </a>
+                 )}
+              </div>
+              <Link
+                to={`/club/${club._id}`}
+                className="flex-1 text-center py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest border-2 border-black hover:bg-orange-600 transition-all shadow-[4px_4px_0px_#ea580c] hover:shadow-none"
               >
-                <i className="ri-instagram-line text-xl" />
-              </a>
-              <a
-                href={club.socials?.twitter || "#"}
-                className="w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm hover:bg-orange-600 hover:text-white transition-colors"
-              >
-                <i className="ri-twitter-x-line text-xl" />
-              </a>
-              <a
-                href={club.socials?.linkedin || "#"}
-                className="w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm hover:bg-orange-600 hover:text-white transition-colors"
-              >
-                <i className="ri-linkedin-box-line text-xl" />
-              </a>
-              <a
-                href={club.socials?.website || "#"}
-                className="w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm hover:bg-orange-600 hover:text-white transition-colors"
-              >
-                <i className="ri-global-line text-xl" />
-              </a>
-              <a
-                href={club.socials?.whatsapp || "#"}
-                className="w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm hover:bg-orange-600 hover:text-white transition-colors"
-              >
-                <i className="ri-whatsapp-line text-xl" />
-              </a>
+                Explore →
+              </Link>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your club or society, Click <a href="https://forms.gle/ZJKNhGXNrSkimWtG9" className="text-orange-600">here</a>.</p>
+      {/* {!isHome && (
+        <p className="text-center mt-12 text-neutral-500 uppercase tracking-widest text-[10px] font-bold">
+          If you want to add your club or society, Click{" "}
+          <a
+            href="https://forms.gle/ZJKNhGXNrSkimWtG9"
+            className="text-orange-600 underline"
+          >
+            here
+          </a>
+          .
+        </p>
+      )} */}
+ <p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your club or society, Click <a href="https://forms.gle/ZJKNhGXNrSkimWtG9" className="text-orange-600">here</a>.</p>
+   
+
+
     </div>
   );
 };

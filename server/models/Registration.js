@@ -5,8 +5,14 @@ const registrationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Event",
     required: true,
+    index: true,
   },
-  studentId: { type: String, required: true },
+  studentId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Student",
+    required: true,
+    index: true,
+  },
   status: {
     type: String,
     enum: ["CONFIRMED", "WAITLISTED"],

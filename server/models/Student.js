@@ -17,6 +17,10 @@ const studentSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     verificationTokenExpire: { type: Date },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
+    passwordChangeCount: { type: Number, default: 0 },
+    lastPasswordChangeDate: { type: Date },
   },
   { timestamps: true },
 );

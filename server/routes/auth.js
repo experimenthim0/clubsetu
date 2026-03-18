@@ -2,8 +2,9 @@ import express from "express";
 import crypto from "crypto";
 import Student from "../models/Student.js";
 import ClubHead from "../models/ClubHead.js";
-import { generateToken } from "../middleware/auth.js";
+import { generateToken, verifyToken } from "../middleware/auth.js";
 import sendEmail from "../utils/sendEmail.js";
+import { getClientUrl } from "../utils/corsConfig.js";
 
 const router = express.Router();
 
@@ -12,15 +13,8 @@ router.post("/register/student", async (req, res) => {
   try {
     const { name, rollNo, branch, year, program, email, password } = req.body;
 
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://clubsetu.nikhim.me",
-      "https://clubsetu.vercel.app",
-    ];
     const origin = req.headers.origin;
-    const clientUrl = allowedOrigins.includes(origin)
-      ? origin
-      : process.env.CLIENT_URL;
+    const clientUrl = getClientUrl(origin);
 
     // Validation
     if (!email.endsWith("@nitj.ac.in")) {
@@ -114,11 +108,18 @@ router.post("/register/student", async (req, res) => {
     delete userObj.verificationToken;
     delete userObj.verificationTokenExpire;
 
+    // Set token as HttpOnly cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.status(201).json({
       message: "Student registered successfully (Dev Mode: Verified)",
       user: userObj,
       role: "student",
-      token,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -192,6 +193,7 @@ router.post("/register/club-head", async (req, res) => {
       designation,
       password,
       isVerified: isDevMode,
+      isApproved: false, // Explicitly set to false, needs admin approval
       verificationToken,
       verificationTokenExpire,
     });
@@ -235,19 +237,14 @@ router.post("/register/club-head", async (req, res) => {
       }
     }
 
-    // If Dev Mode
-    const token = generateToken(newHead, "club-head");
-    const userObj = newHead.toObject();
-    delete userObj.password;
-    delete userObj.verificationToken;
-    delete userObj.verificationTokenExpire;
-
-    res.status(201).json({
-      message: "Club Head registered successfully (Dev Mode: Verified)",
-      user: userObj,
-      role: "club-head",
-      token,
-    });
+    // Since Club Heads need admin approval, we don't auto-login even in Dev Mode
+    // unless you want to bypass approval in dev. Let's keep it secure.
+    if (isDevMode) {
+      return res.status(201).json({
+        message:
+          "Club Head registered successfully. Please wait for admin approval before logging in.",
+      });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -281,11 +278,18 @@ router.post("/login", async (req, res) => {
       delete userObj.verificationToken;
       delete userObj.verificationTokenExpire;
 
+      // Set token as HttpOnly cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
       return res.json({
         message: "Login successful",
         user: userObj,
         role: "student",
-        token,
       });
     } else if (role === "club-head") {
       const head = await ClubHead.findOne({ collegeEmail: email });
@@ -299,6 +303,13 @@ router.post("/login", async (req, res) => {
           .json({ message: "Please verify your email to login." });
       }
 
+      if (!head.isApproved) {
+        return res.status(403).json({
+          message:
+            "Your account is pending admin approval. You will be able to login once approved.",
+        });
+      }
+
       const isMatch = await head.comparePassword(password);
       if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
@@ -310,11 +321,18 @@ router.post("/login", async (req, res) => {
       delete userObj.verificationToken;
       delete userObj.verificationTokenExpire;
 
+      // Set token as HttpOnly cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
       return res.json({
         message: "Login successful",
         user: userObj,
         role: "club-head",
-        token,
       });
     } else {
       return res.status(400).json({ message: "Invalid role specified" });
@@ -354,13 +372,170 @@ router.get("/verify-email/:token", async (req, res) => {
     user.verificationTokenExpire = undefined;
     await user.save();
 
-    // After verification, we could optionally login the user or just remove token stuff
-    // For now, return success message
+    // Determine if we need to log them in automatically. 
+    // In our current flow, verify just verifies. They still need to login.
+    // If they were automatically logged in, we'd set the cookie here too.
+
     res
       .status(200)
       .json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    let user;
+
+    if (role === "student") {
+      user = await Student.findOne({ email });
+    } else if (role === "club-head") {
+      user = await ClubHead.findOne({ collegeEmail: email });
+    } else {
+      return res.status(400).json({ message: "Invalid role specified" });
+    }
+
+    if (!user) {
+      // For security, don't reveal if user exists
+      return res.json({ message: "If an account exists with that email, a reset link has been sent." });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
+    await user.save();
+
+    const origin = req.headers.origin;
+    const clientUrl = getClientUrl(origin);
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+
+    const message = `
+      <div style="font-family: sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p style="color: #555; line-height: 1.5;">You requested a password reset for your ClubSetu account. Please click the button below to reset your password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #EA580C; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
+        </div>
+        <p style="font-size: 12px; color: #888;">This link expires in 30 minutes. If you didn't request this, please ignore this email.</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail({
+        email: role === "student" ? user.email : user.collegeEmail,
+        subject: "Password Reset Request",
+        message,
+      });
+      res.json({ message: "If an account exists with that email, a reset link has been sent." });
+    } catch (error) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      return res.status(500).json({ message: "Email could not be sent. Please try again later." });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/reset-password/:token
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+    const { newPassword, role } = req.body;
+
+    let user;
+    const query = {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    };
+
+    if (role === "student") {
+      user = await Student.findOne(query);
+    } else if (role === "club-head") {
+      user = await ClubHead.findOne(query);
+    }
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Rate limit check
+    const today = new Date().setHours(0, 0, 0, 0);
+    const lastReset = user.lastPasswordChangeDate ? new Date(user.lastPasswordChangeDate).setHours(0, 0, 0, 0) : null;
+
+    if (lastReset === today) {
+      if (user.passwordChangeCount >= 2) {
+        return res.status(429).json({ message: "Password change limit reached (2 times per day). Please try again tomorrow." });
+      }
+      user.passwordChangeCount += 1;
+    } else {
+      user.passwordChangeCount = 1;
+      user.lastPasswordChangeDate = new Date();
+    }
+
+    // Set new password
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.json({ message: "Password reset successful. You can now login with your new password." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/change-password
+router.post("/change-password", verifyToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const { id, role } = req.user;
+
+    let user;
+    if (role === "student") {
+      user = await Student.findById(id);
+    } else if (role === "club-head") {
+      user = await ClubHead.findById(id);
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Rate limit check
+    const today = new Date().setHours(0, 0, 0, 0);
+    const lastChange = user.lastPasswordChangeDate ? new Date(user.lastPasswordChangeDate).setHours(0, 0, 0, 0) : null;
+
+    if (lastChange === today) {
+      if (user.passwordChangeCount >= 2) {
+        return res.status(429).json({ message: "Password change limit reached (2 times per day). Please try again tomorrow." });
+      }
+      user.passwordChangeCount += 1;
+    } else {
+      user.passwordChangeCount = 1;
+      user.lastPasswordChangeDate = new Date();
+    }
+
+    // Set new password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

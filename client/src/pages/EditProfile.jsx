@@ -55,7 +55,27 @@ const EditProfile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, formData);
+            const updateData = { ...formData };
+            // If newPassword is provided, use the change-password endpoint separately or combine
+            // Let's keep it simple: if newPassword is provided, we use a separate logic or the backend handles it.
+            // Our backend has a separate /change-password route. Let's send it there if filled.
+            
+            if (formData.newPassword) {
+                if (!formData.currentPassword) {
+                    return showNotification('Current password is required to set a new password', 'error');
+                }
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
+                    currentPassword: formData.currentPassword,
+                    newPassword: formData.newPassword
+                });
+                showNotification('Password updated successfully', 'success');
+            }
+
+            // Remove password fields from profile update data
+            delete updateData.currentPassword;
+            delete updateData.newPassword;
+
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, updateData);
             localStorage.setItem('user', JSON.stringify(res.data.user)); // Update local storage
             showNotification('Profile updated successfully', 'success');
             navigate('/profile');
@@ -247,6 +267,41 @@ const EditProfile = () => {
                         </p>
                     </div>
                 )}
+
+                {/* Change Password Section */}
+                <div className="pt-6 border-t-2 border-black space-y-6">
+                    <div className="flex items-center gap-2 mb-2">
+                         <i className="ri-lock-password-line text-orange-600 text-lg" />
+                         <h3 className="font-bold text-gray-800 uppercase tracking-tight">Security (Change Password)</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                            <input 
+                                type="password" 
+                                name="currentPassword" 
+                                value={formData.currentPassword || ''} 
+                                onChange={handleChange}
+                                placeholder="Enter current password"
+                                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input 
+                                type="password" 
+                                name="newPassword" 
+                                value={formData.newPassword || ''} 
+                                onChange={handleChange}
+                                placeholder="Enter new password (optional)"
+                                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                            />
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-gray-400 italic">
+                        * Leave New Password blank if you don't want to change it. Password changes are limited to 2 times per day.
+                    </p>
+                </div>
 
                 <div className="pt-4 flex gap-4">
                     <button 

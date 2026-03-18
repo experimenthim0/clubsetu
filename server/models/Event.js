@@ -39,6 +39,7 @@ const eventSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "ClubHead",
       required: true,
+      index: true,
     }, // Reference to Club Head
     payoutStatus: {
       type: String,

@@ -16,6 +16,10 @@ import EditEvent from './pages/EditEvent';
 import EventRegistrations from './pages/EventRegistrations';
 import RegisterLanding from './pages/RegisterLanding';
 import ClubsPage from './pages/Clubspage';
+import ClubDetails from './pages/ClubDetails';
+import EditClub from './pages/EditClub';
+
+
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -27,7 +31,11 @@ import DataPrivacy from './pages/DataPrivacy';
 import PaymentTracking from './pages/PaymentTracking';
 import EventGuide from './pages/EventGuide';
 import Contribute from './pages/Contribute';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import Changelog from './pages/Changelog';
+// import ProtectedRoute from './components/ProtectedRoute';
 import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
 
@@ -55,15 +63,26 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only redirect if not already on login/register pages
       const path = window.location.pathname;
-      if (!path.includes('/login') && !path.includes('/register') && !path.includes('/admin')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
-        localStorage.removeItem('admin');
-        window.location.href = '/login';
+      
+      // Don't redirect if already on any login/register pages
+      if (path.includes('/login') || path.includes('/register') || path.includes('/admin-secret-login')) {
+        return Promise.reject(error);
       }
+
+      // Handle Admin routes
+      if (path.includes('/admin')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('admin');
+        window.location.href = '/admin-secret-login';
+        return Promise.reject(error);
+      }
+
+      // Handle regular User routes
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('role');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -79,6 +98,14 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/clubs" element={<ClubsPage />} />
+            <Route path="/club/:id" element={<ClubDetails />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            
+            {/* Student Protected Routes */}
+            <Route path="/club/edit/:id" element={<EditClub />} />
+
+
             <Route path="/events" element={<EventFeed />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/login" element={<Login />} />
@@ -102,6 +129,7 @@ function App() {
             <Route path="/contribute" element={<Contribute />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/changelog" element={<Changelog />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/about-features" element={<Aboutfeatures />} />
           </Routes>

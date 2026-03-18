@@ -32,6 +32,16 @@ const EventDetails = () => {
     fetchEvent();
   }, [id]);
 
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
@@ -62,6 +72,7 @@ const EventDetails = () => {
     // Handle Paid Events with Razorpay
     if (event.entryFee > 0) {
       try {
+        await loadRazorpay();
         // 1. Create Order on backend
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: id,
@@ -162,6 +173,7 @@ const EventDetails = () => {
       // Handle Paid Events with Razorpay
       if (event.entryFee > 0) {
         try {
+          await loadRazorpay();
           const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
             eventId: id,
             studentId: updatedUser._id
@@ -238,6 +250,7 @@ const EventDetails = () => {
     // Handle Paid Events with Razorpay
     if (event.entryFee > 0) {
       try {
+        await loadRazorpay();
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: id,
           studentId: user._id
@@ -473,7 +486,7 @@ const EventDetails = () => {
                   key={i}
                   className={`flex items-start gap-4 p-5 ${i % 2 === 0 ? 'border-r border-black' : ''} ${i < 4 ? 'border-b-2 border-black' : ''}`}
                 >
-                  <div className="w-10 h-10 flex-shrink-0 bg-orange-600 rounded-sm flex items-center justify-center text-white text-base">
+                  <div className="w-10 h-10 shrink-0 bg-orange-600 rounded-sm flex items-center justify-center text-white text-base">
                     <i className={meta.icon} />
                   </div>
                   <div>
@@ -641,7 +654,7 @@ const EventDetails = () => {
           <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[8px_8px_0px_#0D0D0D] max-h-[90vh] flex flex-col">
 
             {/* Header */}
-            <div className="bg-orange-600 px-6 py-4 border-b-2 border-black flex-shrink-0">
+            <div className="bg-orange-600 px-6 py-4 border-b-2 border-black shrink-0">
               <h3 className="font-black text-white text-lg flex items-center gap-2">
                 <i className="ri-file-list-3-line" />
                 Registration Form
@@ -733,7 +746,7 @@ const EventDetails = () => {
             </div>
 
             {/* Footer */}
-            <div className="px-6 pb-6 pt-3 flex gap-3 border-t border-neutral-100 flex-shrink-0">
+            <div className="px-6 pb-6 pt-3 flex gap-3 border-t border-neutral-100 shrink-0">
               <button
                 onClick={() => {
                   setCustomFormModalOpen(false);

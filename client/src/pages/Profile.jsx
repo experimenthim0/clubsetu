@@ -198,6 +198,12 @@ const Profile = () => {
         >
           <i className="ri-add-line" /> Create Event
         </Link>
+        <Link 
+          to={`/club/edit/${user._id}`} 
+          className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:translate-y-[-2px] transition-all shadow-[4px_4px_0px_#000]"
+        >
+          <i className="ri-community-line" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
+        </Link>
       </div>
     )}
   </div>

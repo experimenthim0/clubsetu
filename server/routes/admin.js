@@ -168,4 +168,54 @@ router.get(
   },
 );
 
+// Approve Club Head — ADMIN ONLY
+router.patch(
+  "/approve-club-head/:id",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const clubHead = await ClubHead.findById(id);
+      if (!clubHead)
+        return res.status(404).json({ message: "Club Head not found" });
+
+      clubHead.isApproved = true;
+      await clubHead.save();
+
+      res.json({
+        success: true,
+        message: `Club Head for ${clubHead.clubName} approved successfully`,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve club head" });
+    }
+  },
+);
+
+// Reject/Delete Club Head — ADMIN ONLY
+router.delete(
+  "/reject-club-head/:id",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const clubHead = await ClubHead.findById(id);
+      if (!clubHead)
+        return res.status(404).json({ message: "Club Head not found" });
+
+      const clubName = clubHead.clubName;
+      await ClubHead.findByIdAndDelete(id);
+
+      res.json({
+        success: true,
+        message: `Club Head for ${clubName} rejected and deleted`,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reject club head" });
+    }
+  },
+);
+
 export default router;

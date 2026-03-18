@@ -60,6 +60,7 @@ const RegisterClubHead = () => {
     setError('');
     setLoading(true);
     try {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/club-head`, formData);
       if (res.data.user) {
         localStorage.setItem('user', JSON.stringify(res.data.user));
         localStorage.setItem('role', res.data.role);

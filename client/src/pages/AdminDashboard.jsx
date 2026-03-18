@@ -16,7 +16,8 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         const admin = localStorage.getItem('admin');
-        if (!admin) {
+        const token = localStorage.getItem('token');
+        if (!admin || !token) {
             navigate('/admin-secret-login');
             return;
         }
@@ -75,6 +76,36 @@ const AdminDashboard = () => {
         localStorage.removeItem('admin');
         localStorage.removeItem('token');
         navigate('/admin-secret-login');
+    };
+
+    const handleApproveClubHead = async (id) => {
+        if (!window.confirm('Are you sure you want to approve this club head?')) return;
+        try {
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/approve-club-head/${id}`);
+            if (res.data.success) {
+                showNotification(res.data.message, 'success');
+                // Refresh the list
+                const headsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-heads-list`);
+                setClubHeads(headsRes.data);
+            }
+        } catch (err) {
+            showNotification('Failed to approve club head', 'error');
+        }
+    };
+
+    const handleRejectClubHead = async (id) => {
+        if (!window.confirm('Are you sure you want to REJECT and DELETE this club head registration? This cannot be undone.')) return;
+        try {
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/reject-club-head/${id}`);
+            if (res.data.success) {
+                showNotification(res.data.message, 'success');
+                // Refresh the list
+                const headsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-heads-list`);
+                setClubHeads(headsRes.data);
+            }
+        } catch (err) {
+            showNotification('Failed to reject club head', 'error');
+        }
     };
 
     if (loading) return (
@@ -215,8 +246,9 @@ const AdminDashboard = () => {
                                         <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Name</th>
                                         <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club</th>
                                         <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Email</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Phone</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black">Status</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Email Verified</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Approval Status</th>
+                                        <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y-2 divide-black">
@@ -225,11 +257,10 @@ const AdminDashboard = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{head.name}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black text-orange-600">{head.clubName}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-black">{head.collegeEmail}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono border-r-2 border-black">{head.phone}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-black">
                                                 {head.isVerified ? (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-green-200">
-                                                        Verified
+                                                        Yes
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-yellow-200">
@@ -237,11 +268,40 @@ const AdminDashboard = () => {
                                                     </span>
                                                 )}
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-black">
+                                                {head.isApproved ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-green-200">
+                                                        Approved
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-orange-200">
+                                                        Wait Approval
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex gap-2 justify-end">
+                                                    {!head.isApproved && (
+                                                        <button 
+                                                            onClick={() => handleApproveClubHead(head._id)}
+                                                            className="px-3 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-green-600 transition-colors border-2 border-black"
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handleRejectClubHead(head._id)}
+                                                        className="px-3 py-1 border-2 border-black text-black text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                    >
+                                                        {head.isApproved ? 'Delete' : 'Reject'}
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                     {clubHeads.length === 0 && (
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-12 text-center text-neutral-500 text-sm">No club heads registered yet.</td>
+                                            <td colSpan="6" className="px-6 py-12 text-center text-neutral-500 text-sm">No club heads registered yet.</td>
                                         </tr>
                                     )}
                                 </tbody>

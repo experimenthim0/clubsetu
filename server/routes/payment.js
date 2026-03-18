@@ -33,6 +33,11 @@ router.post(
           .json({ message: "Event ID and Student ID are required" });
       }
 
+      // SECURITY FIX: Prevent IDOR - User can only create orders for themselves
+      if (req.user.id !== studentId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied. Cannot create orders for other students." });
+      }
+
       // Fetch event details
       const event = await Event.findById(eventId);
       if (!event) {
@@ -131,6 +136,11 @@ router.post(
         });
       }
 
+      // SECURITY FIX: Prevent IDOR - User can only verify payments for themselves
+      if (req.user.id !== studentId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied. Cannot verify payments for other students." });
+      }
+
       // ========================================================================
       // SECURITY: Verify payment signature using Razorpay's algorithm
       // This prevents tampering and ensures payment actually went through
@@ -212,9 +222,11 @@ router.post(
 
       await registration.save();
 
-      // Increment registered count
-      event.registeredCount += 1;
-      await event.save();
+      // Implement atomic increment for seat count
+      await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
+
+      // Refresh event to get the updated title
+      const updatedEvent = await Event.findById(eventId).select("title entryFee");
 
       res.json({
         success: true,

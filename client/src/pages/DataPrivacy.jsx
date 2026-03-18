@@ -15,7 +15,7 @@ const DataPrivacy = () => {
                     </div>
                     <h1 className="text-3xl font-black text-black tracking-tight">Data Privacy Rules</h1>
                 </div>
-                <p className="text-xs text-neutral-400 font-bold uppercase tracking-widest mb-8">Last updated: February 2026</p>
+                <p className="text-xs text-neutral-400 font-bold uppercase tracking-widest mb-8">Last updated: MARCH 2026</p>
 
                 <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
                     <section>
