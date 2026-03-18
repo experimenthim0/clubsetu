@@ -24,9 +24,10 @@ const Login = () => {
         role
       });
       
-      // Store user, role (JWT token is now handled via HttpOnly cookie)
+      // Store user, token, role (JWT token is now also stored in localStorage for Authorization header)
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('role', res.data.role);
+      localStorage.setItem('token', res.data.token);
       
       navigate('/');
       window.location.reload();

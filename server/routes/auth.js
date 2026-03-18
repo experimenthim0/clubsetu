@@ -111,8 +111,8 @@ router.post("/register/student", async (req, res) => {
     // Set token as HttpOnly cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true, // Always true since we're using Render/Vercel (HTTPS)
+      sameSite: "none", // Allow cross-domain cookies
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -120,6 +120,7 @@ router.post("/register/student", async (req, res) => {
       message: "Student registered successfully (Dev Mode: Verified)",
       user: userObj,
       role: "student",
+      token, // Return token for cross-domain localStorage storage
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -281,8 +282,8 @@ router.post("/login", async (req, res) => {
       // Set token as HttpOnly cookie
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -290,6 +291,7 @@ router.post("/login", async (req, res) => {
         message: "Login successful",
         user: userObj,
         role: "student",
+        token, // Return token for cross-domain localStorage storage
       });
     } else if (role === "club-head") {
       const head = await ClubHead.findOne({ collegeEmail: email });
@@ -324,8 +326,8 @@ router.post("/login", async (req, res) => {
       // Set token as HttpOnly cookie
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -333,6 +335,7 @@ router.post("/login", async (req, res) => {
         message: "Login successful",
         user: userObj,
         role: "club-head",
+        token, // Return token for cross-domain localStorage storage
       });
     } else {
       return res.status(400).json({ message: "Invalid role specified" });
