@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t-2 border-black py-6 px-6">
+    <footer className="bg-white border-t-2 border-black py-4 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[12px] text-neutral-500 tracking-wide">
@@ -21,18 +21,8 @@ const Footer = () => {
             
           </div>
 
-          <p className="text-[12px] text-neutral-500 tracking-wide">
-            Developed with <span className="text-red-500">♥</span> by{' '}
-            <a
-              href="https://nikhim.me"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-orange-600 hover:underline"
-            >
-              NikHim {' '}
-            </a>
-            for <span className="font-bold text-black">NITJ</span>
-          </p>
+<p className='text-[14px] text-neutral-600 font-semibold'>Crafted between classes, deadlines, and hostel Wi-Fi.</p>
+          
         </div>
       </div>
     </footer>

@@ -39,9 +39,10 @@ const HomeFooter = () => {
               Club<span className="text-orange-600">Setu</span>
             </span>
             </div>
-            <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
-             ClubSetu is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p>
-           
+            {/* <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
+             ClubSetu is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}
+           <p className='text-[14px] text-neutral-400 leading-relaxed mb-4'>Built with
+roommates and Crafted between classes, deadlines, and hostel Wi-Fi.</p>
             <div className="flex items-center gap-3">
               {[
                 { icon: 'ri-github-fill', href: 'https://github.com/experimenthim0' },
