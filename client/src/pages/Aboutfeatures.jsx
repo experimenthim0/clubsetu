@@ -96,7 +96,7 @@ const Aboutfeatures = () => {
             style={{ fontFamily: "'Syne', sans-serif" }}
             aria-hidden
           >
-            CS
+            NH
           </span>
 
           {/* Eyebrow */}

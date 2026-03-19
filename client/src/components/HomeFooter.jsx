@@ -35,7 +35,7 @@ const HomeFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               
-              <span className="font-extrabold text-[24px] tracking-tight text-white leading-none select-none">
+              <span className="font-extrabold text-[24px] tracking-tight text-white leading-none select-none logofont">
               Club<span className="text-orange-600">Setu</span>
             </span>
             </div>
@@ -58,7 +58,7 @@ roommates and Crafted between classes, deadlines, and hostel Wi-Fi.</p>
                 </a>
               ))}
             </div>
-             <p className="text-[13px] text-neutral-500">
+             <p className="text-[13px] text-neutral-500 mt-4">
               Have any questions or suggestion? Reach out to us at{' '}
               <a href="mailto:clubsetu@nikhim.me" className="text-orange-500 hover:underline font-medium">
                 clubsetu@nikhim.me

@@ -21,7 +21,7 @@ const Footer = () => {
             
           </div>
 
-<p className='text-[14px] text-neutral-600 font-semibold'>Crafted between classes, deadlines, and hostel Wi-Fi.</p>
+<p className='text-[14px] text-neutral-500 font-semibold'>Crafted between classes, deadlines, and hostel Wi-Fi.</p>
           
         </div>
       </div>

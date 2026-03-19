@@ -65,7 +65,7 @@ const Home = () => {
           <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[-3px] text-black mb-0">
   Discover<br />
   <span className="text-orange-600">Clubs & Events</span><br />
-  at NITJ.
+  at NITJ...
 </h1>
 
           {/* Sub + CTAs */}
@@ -94,7 +94,7 @@ const Home = () => {
               style={{ filter: 'saturate(0.8)' }}
             />
             <div className="absolute bottom-4 left-4 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-2 rounded-sm">
-              NITJ · Jalandhar
+              NIT Jalandhar
             </div>
             <div className="absolute bottom-4 right-4 bg-yellow-400 text-black text-[12px] font-black px-4 py-2 rounded-sm border-2 border-black">
               10+ Events Hosted

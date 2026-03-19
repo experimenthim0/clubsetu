@@ -108,7 +108,7 @@ const Navbar = () => {
           {/* ── Logo ─────────────────────────────────────────────────────── */}
           <Link
             to="/"
-            className="flex items-center gap-2.5 flex-shrink-0 group"
+            className="flex items-center gap-2.5 shrink-0 group logofont" 
           >
             <span className="font-extrabold text-[24px] tracking-tight text-black leading-none select-none">
               Club<span className="text-orange-600">Setu</span>
