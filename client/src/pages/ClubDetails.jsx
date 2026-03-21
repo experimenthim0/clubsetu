@@ -42,9 +42,9 @@ const ClubDetails = () => {
     const EventCard = ({ event, type, wide = false }) => (
         <Link
             to={`/events/${event._id}`}
-            className={`block group bg-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000] transition-all p-5
+            className={`block group bg-white border-2 border-black  hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000] transition-all p-5
                 ${type === 'live' ? 'border-orange-600 shadow-[4px_4px_0px_#ea580c] hover:shadow-[6px_6px_0px_#ea580c]' : ''}
-                ${type === 'past' ? 'opacity-75' : ''}
+                ${type === 'past' ? 'opacity-90' : ''}
                 ${wide ? 'md:col-span-2 md:flex md:items-center md:gap-8' : ''}
             `}
         >
@@ -114,47 +114,47 @@ const ClubDetails = () => {
                 <div className="grid grid-cols-3 gap-4">
 
                     {/* Coordinator cell — dark */}
-                    <div className="bg-black text-white border-2 border-black p-5 shadow-[4px_4px_0px_#000]">
+                    <div className="bg-black text-white border-2 border-black p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">Faculty Coordinator</p>
                         <p className="font-black text-base text-white">{club.facultyCoordinators}</p>
                     </div>
-                    <div className="bg-black text-white border-2 border-black p-5 shadow-[4px_4px_0px_#000]">
+                    <div className="bg-black text-white border-2 border-black p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">Student Lead</p>
                         <p className="font-black text-base text-white"> {club.studentCoordinators && club.studentCoordinators.length > 0 ? club.studentCoordinators.join(", ") : club.name}</p>
                         
                     </div>
 
                     {/* Socials cell — spans 2 cols */}
-                    <div className="col-span-2 bg-white border-2 border-black p-5 shadow-[4px_4px_0px_#000]">
+                    <div className="col-span-2 bg-white border-2 border-gray-300 p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-3">Connect with us</p>
                         <div className="flex flex-wrap gap-2">
                             {club.clubInstagram && (
                                 <a href={club.clubInstagram} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                     <i className="ri-instagram-line text-lg" />
                                 </a>
                             )}
                             {club.clubLinkedin && (
                                 <a href={club.clubLinkedin} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                     <i className="ri-linkedin-fill text-lg" />
                                 </a>
                             )}
                             {club.clubX && (
                                 <a href={club.clubX} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                     <i className="ri-twitter-x-line text-lg" />
                                 </a>
                             )}
                             {club.clubWebsite && (
                                 <a href={club.clubWebsite} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                     <i className="ri-global-line text-lg" />
                                 </a>
                             )}
                             {club.clubWhatsapp && (
                                 <a href={`https://wa.me/${club.clubWhatsapp.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                                     <i className="ri-whatsapp-line text-lg" />
                                 </a>
                             )}
@@ -169,7 +169,7 @@ const ClubDetails = () => {
                         { num: upcomingEvents.length, label: 'Upcoming Events', accent: false },
                         { num: pastEvents.length, label: 'Past Events', accent: false },
                     ].map(({ num, label, accent }) => (
-                        <div key={label} className={`border-2 border-black p-4 shadow-[4px_4px_0px_#000] ${accent ? 'bg-orange-600' : 'bg-white'}`}>
+                        <div key={label} className={`border-2 border-gray-400 p-4 rounded-sm  ${accent ? 'bg-orange-600' : 'bg-white'}`}>
                             <div className={`text-3xl font-black leading-none ${accent ? 'text-white' : 'text-orange-600'}`}>{num}</div>
                             <div className={`text-[9px] font-black uppercase tracking-widest mt-1 ${accent ? 'text-orange-100' : 'text-neutral-400'}`}>{label}</div>
                         </div>

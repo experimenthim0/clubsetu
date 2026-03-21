@@ -87,7 +87,7 @@ const Navbar = () => {
   const navLinkCls = (path) =>
     `px-3.5 py-1.5 text-[12px] font-bold tracking-widest border-2 rounded-sm transition-colors duration-150 ${
       isActive(path)
-        ? "border-black bg-neutral-100 text-black"
+        ? "border-gray-500 bg-neutral-100 text-black"
         : "border-transparent text-black hover:border-black hover:bg-neutral-100"
     }`;
 
@@ -95,14 +95,14 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white border-b-2 border-black transition-shadow duration-200 myfont ${
+        className={`sticky top-0 z-50 bg-white border-b-2 border-gray-400 transition-shadow duration-200 myfont ${
           scrolled ? "shadow-sm" : ""
         }`}
       >
         {/* Orange top accent on scroll */}
-        {scrolled && (
+        {/* {scrolled && (
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-orange-600 z-10 pointer-events-none" />
-        )}
+        )} */}
 
         <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* ── Logo ─────────────────────────────────────────────────────── */}

@@ -236,7 +236,7 @@ const Home = () => {
       </section>
 
       {/* ── FOR CLUB HEADS ───────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-gray-800">
+      <section className="py-24 bg-white border-b-2 border-gray-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
 
           {/* Header */}
@@ -274,7 +274,7 @@ const Home = () => {
           </div>
 
           {/* Quote strip */}
-          <div className="mt-5 border border-neutral-800 overflow-hidden relative">
+          <div className="mt-5 border border-gray-300 overflow-hidden relative">
             <img
               src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Event Organizer"

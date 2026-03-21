@@ -21,7 +21,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const displayImage = event.imageUrl || DEFAULT_IMAGE;
 
     return (
-        <div className="bg-white border-2 border-black rounded-sm overflow-hidden hover:shadow-[6px_6px_0px_#0D0D0D] transition-all hover:-translate-y-0.5 flex flex-col h-full group">
+        <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden hover:shadow-[6px_6px_0px_#0D0D0D] transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
             <div className="h-64 overflow-hidden bg-neutral-100 relative">
@@ -67,7 +67,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             {/* Body */}
             <div className="p-3 flex flex-auto flex-col">
                 <h3 className="text-lg font-black text-black leading-tight mb-2 line-clamp-1">{title}</h3>
-                <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 grow leading-relaxed">{description}</p>
+                <p className="text-[13px] text-neutral-500 mb-4 line-clamp-3 leading-relaxed">{description}</p>
 
                 {/* Info row */}
                 {isEnded ? (
@@ -76,6 +76,10 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         {event.winners && event.winners.length > 0 ? (
                             <div className="flex flex-col gap-2 w-full">
                                 {/* Winners Header */}
+                                <div className="flex items-center gap-2">
+                                 <i className="ri-time-line text-orange-600 text-sm" />
+                            <span className="font-medium">{formattedTime}</span>
+                            </div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <i className="ri-trophy-fill text-orange-600 text-base" />
                                     <span className="text-[11px] font-black uppercase tracking-widest text-orange-600">Winners</span>
@@ -101,7 +105,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             </div>
                         ) : (
                             /* Results not yet declared */
-                            <div className="flex   gap-2 py-2 flex-col-reverse">
+                            <div className="flex   gap-2 py-2 flex-col">
+
                                 <div className="flex items-center gap-2">
                                  <i className="ri-time-line text-orange-600 text-sm" />
                             <span className="font-medium">{formattedTime}</span>
@@ -118,6 +123,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         )}
                     </div>
                 ) : (
+                    
                     /* SHOW DETAILS ONLY WHILE ACTIVE */
                     <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
                         <div className="flex items-center gap-2">

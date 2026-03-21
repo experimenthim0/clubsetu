@@ -70,7 +70,7 @@ const ClubsPage = ({ isHome = false }) => {
 
               <div className="mt-6 space-y-3">
                 {club.facultyCoordinators && club.facultyCoordinators.length > 0 && (
-                  <div className="border-2 border-black bg-neutral-50 px-4 py-2 shadow-[2px_2px_0px_#000]">
+                  <div className="border-2 border-gray-300 bg-neutral-50 px-4 py-2 ">
                     <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
                       Faculty Coordinator
                     </p>
@@ -80,7 +80,7 @@ const ClubsPage = ({ isHome = false }) => {
                   </div>
                 )}
                 
-                <div className="border-2 border-black bg-neutral-50 px-4 py-2 shadow-[2px_2px_0px_#000]">
+                <div className="border-2 border-gray-300 bg-neutral-50 px-4 py-2 ">
                   <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
                     Student Lead
                   </p>
