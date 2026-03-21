@@ -71,6 +71,7 @@ router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
     allowedPrograms,
     allowedYears,
     registrationDeadline,
+    winners,
   } = req.body;
 
   // Basic conflict check
@@ -130,6 +131,7 @@ router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
       allowedPrograms,
       allowedYears,
       registrationDeadline,
+      winners,
     } = req.body;
 
     const event = await Event.findByIdAndUpdate(
@@ -148,6 +150,7 @@ router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
         allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
         allowedYears: allowedYears || [],
         registrationDeadline: registrationDeadline || null,
+        winners: winners || [],
       },
       { new: true },
     );

@@ -28,7 +28,30 @@
   --text-color: var(--color-text-light);
 }
 
+@font-face {
+  font-family: 'myfont';
+  src: url('/fonts/mysans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'logofont';
+  src: url('/fonts/organix.regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
+  font-family: 'myfont', sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
+}
+
+.myfont {
+  font-family: 'myfont', sans-serif;
+}
+
+.logofont {
+  font-family: 'logofont', serif;
 }

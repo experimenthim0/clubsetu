@@ -49,6 +49,11 @@ const eventSchema = new mongoose.Schema(
     registrationDeadline: { type: Date }, // Deadline for registrations
     // status can be computed, but we might store it for caching if needed.
     // For now, we'll compute it or use a virtual.
+  
+  winners:{
+    type:Array,
+    default:[],
+  },
   },
   { timestamps: true },
 );

@@ -21,10 +21,10 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const displayImage = event.imageUrl || DEFAULT_IMAGE;
 
     return (
-        <div className="bg-white border-2 border-black rounded-sm overflow-hidden shadow-[4px_4px_0px_#0D0D0D] hover:shadow-[6px_6px_0px_#0D0D0D] transition-all hover:-translate-y-0.5 flex flex-col h-full group">
+        <div className="bg-white border-2 border-black rounded-sm overflow-hidden hover:shadow-[6px_6px_0px_#0D0D0D] transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
-            <div className="h-44 overflow-hidden bg-neutral-100 relative">
+            <div className="h-64 overflow-hidden bg-neutral-100 relative">
                 <img
                     src={displayImage}
                     alt={title}
@@ -65,41 +65,77 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             </div>
 
             {/* Body */}
-            <div className="p-5 flex-1 flex flex-col">
+            <div className="p-3 flex-1 flex flex-col">
                 <h3 className="text-lg font-black text-black leading-tight mb-2 line-clamp-1">{title}</h3>
                 <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 grow leading-relaxed">{description}</p>
 
                 {/* Info row */}
-                <div className="space-y-1.5 text-[12px] text-neutral-600 mb-4">
-                    <div className="flex items-center gap-2">
-                        <i className="ri-time-line text-orange-600 text-sm" />
-                        <span className="font-medium">{formattedTime}</span>
+              {isEnded ? (
+    /* ONLY SHOW WINNER WHEN ENDED */
+    <div className="flex  gap-3  mb-2 ">
+        {/* <div className=" p-1.5 rounded-full">
+            <i className="ri-trophy-fill text-white text-sm bg-orange-600 p-1 rounded-full" />
+        </div> */}
+        <div className=" bg-orange-600 py-1 px-0.5 rounded-full">
+            <p className='[writing-mode:vertical-rl] [text-orientation:upright] uppercase text-white text-sm'>Winners</p>
+        </div>
+        <div className='flex flex-col gap-2 w-full'>
+                       {event.winners && event.winners.length > 0 ? (
+                event.winners.map((winner, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white p-2 rounded border border-orange-50 shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                winner.rank === 1 ? 'bg-yellow-400 text-white' : 'bg-neutral-200 text-neutral-600'
+                            }`}>
+                                #{winner.rank}
+                            </span>
+                            <span className="text-[12px] font-bold text-neutral-800">{winner.name}</span>
+                        </div>
+                        {winner.rank === 1 && <i className="ri-medal-fill text-yellow-500" />}
+                        {winner.rank === 2 && <i className="ri-medal-fill text-gray-500" />}
+                        {winner.rank === 3 && <i className="ri-medal-fill text-[#CD7F32]" />}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <i className="ri-map-pin-line text-orange-600 text-sm" />
-                        <span className="font-medium">{venue}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <i className="ri-group-line text-orange-600 text-sm" />
-                        <span className="font-medium">
-                            {seatsText}
-                            {isUnlimited && <span className="ml-1 text-[10px] text-orange-600 font-bold">(Unlimited)</span>}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-orange-600">
-                        <i className="ri-timer-line text-sm" />
-                        <span className="font-bold text-[11px] uppercase tracking-wide">
-                            Ends: {new Date(registrationDeadline || startTime).toLocaleString('en-US', {
-                                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                            })}
-                        </span>
-                    </div>
-                </div>
+                ))
+            ) : (
+                <p className="text-[11px] text-neutral-500 italic">Results being finalized...</p>
+            )}
+  </div>
+    </div>
+) : (
+    /* SHOW DETAILS ONLY WHILE ACTIVE */
+    <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
+        <div className="flex items-center gap-2">
+            <i className="ri-time-line text-orange-600 text-sm" />
+            <span className="font-medium">{formattedTime}</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <i className="ri-map-pin-line text-orange-600 text-sm" />
+            <span className="font-medium">{venue}</span>
+        </div>
+        <div className="flex items-center gap-2">
+            <i className="ri-group-line text-orange-600 text-sm" />
+            <span className="font-medium">
+                {seatsText}
+                {isUnlimited && <span className="ml-1 text-[10px] text-orange-600 font-bold">(Unlimited)</span>}
+            </span>
+        </div>
+        <div className="flex items-center gap-2 text-orange-600">
+            <i className="ri-timer-line text-sm" />
+            <span className="font-bold text-[11px] uppercase tracking-wide">
+                Ends: {new Date(registrationDeadline || startTime).toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                })}
+            </span>
+        </div>
+    </div>
+)}
+
+              
             </div>
 
             {/* Footer: Entry Fee + Action on same line */}
-            <div className="px-5 pb-5">
-                <div className="flex items-center gap-3 border-t-2 border-neutral-100 pt-4">
+            <div className="px-5 pb-3">
+                <div className="flex items-center gap-3 border-t-2 border-neutral-100 pt-2">
                     {/* Entry fee badge */}
                     <span className={`inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm border-2 shrink-0 ${
                         !entryFee || entryFee === 0

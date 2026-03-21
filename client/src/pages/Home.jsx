@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
 import HomeFooter from '../components/HomeFooter';
+import Maintainance from './Maintainance';
 
 // Ticker items
 const tickerItems = [
@@ -12,8 +13,8 @@ const tickerItems = [
 
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
-  <div className={`flex items-center gap-2 mb-5 ${light ? 'text-yellow-400' : 'text-orange-600'}`}>
-    <span className={`block w-6 h-0.5 ${light ? 'bg-yellow-400' : 'bg-orange-600'}`} />
+  <div className={`flex items-center gap-2 mb-5 ${light ? 'text-orange-600' : 'text-orange-600'}`}>
+    <span className={`block w-6 h-0.5 ${light ? 'bg-orange-600' : 'bg-orange-600'}`} />
     <span className="text-[11px] font-bold uppercase tracking-[0.15em]">{children}</span>
   </div>
 );
@@ -39,6 +40,12 @@ const BtnSecondary = ({ to, children }) => (
 );
 
 const Home = () => {
+
+   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  if (isMaintenance) {
+    return <Maintainance />;
+  }
+
   return (
     <div className="myfont text-black bg-white">
 
@@ -105,7 +112,7 @@ const Home = () => {
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
       <div
-        className="overflow-hidden bg-orange-600 border-b-2 border-black py-3"
+        className="overflow-hidden bg-orange-600 border-b-2 border-neutral-800 py-3"
         style={{ whiteSpace: 'nowrap' }}
       >
         <div
@@ -126,7 +133,7 @@ const Home = () => {
       </div>
 
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-black">
+      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="mb-12">
             <SectionLabel>Latest Happenings</SectionLabel>
@@ -144,7 +151,7 @@ const Home = () => {
       </section>
 
       {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-orange-50 border-b-2 border-black">
+      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="mb-12">
             <SectionLabel>Our Clubs</SectionLabel>
@@ -162,7 +169,7 @@ const Home = () => {
       </section>
 
       {/* ── FOR STUDENTS ─────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-black">
+      <section className="py-24 bg-white border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
 
           {/* Image */}
@@ -229,24 +236,24 @@ const Home = () => {
       </section>
 
       {/* ── FOR CLUB HEADS ───────────────────────────────────────────────── */}
-      <section className="py-24 bg-neutral-950 border-b-2 border-neutral-800">
+      <section className="py-24 bg-white border-b-2 border-gray-800">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
 
           {/* Header */}
           <div className="flex items-end justify-between mb-14 flex-wrap gap-6">
             <div>
               <SectionLabel light>For Club Heads</SectionLabel>
-              <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-white">
+              <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black">
                 Less Logistics,<br /><span className="text-orange-500">More Impact.</span>
               </h2>
             </div>
-            <p className="text-[15px] text-neutral-400 max-w-xs leading-relaxed">
+            <p className="text-[15px] text-neutral-700 max-w-xs leading-relaxed">
               Stop wrestling with Google Forms and messy spreadsheets. We give you a command center for your entire event lifecycle.
             </p>
           </div>
 
           {/* Feature grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {[
               { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.(Coming Soon)',      icon: 'ri-broadcast-line' },
               { title: 'Digital Attendance', desc: 'Scan QR codes to mark attendance instantly. (Coming Soon)',     icon: 'ri-qr-scan-2-line' },
@@ -255,19 +262,19 @@ const Home = () => {
             ].map((item, i) => (
               <div
                 key={i}
-                className="bg-neutral-900 border border-neutral-800 p-7 hover:border-orange-600 hover:-translate-y-1 transition-all group"
+                className=" border border-neutral-300 rounded-xl p-7 hover:border-orange-600 hover:-translate-y-1 transition-all group"
               >
                 <div className="w-12 h-12 bg-orange-600 rounded-sm flex items-center justify-center text-white text-xl mb-5">
                   <i className={item.icon} />
                 </div>
-                <h3 className="text-white font-bold text-[18px] mb-2.5">{item.title}</h3>
-                <p className="text-neutral-500 text-[14px] leading-relaxed">{item.desc}</p>
+                <h3 className="text-black font-bold text-[18px] mb-2.5">{item.title}</h3>
+                <p className="text-neutral-700 text-[14px] leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
 
           {/* Quote strip */}
-          <div className="mt-0.5 border border-neutral-800 overflow-hidden relative">
+          <div className="mt-5 border border-neutral-800 overflow-hidden relative">
             <img
               src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Event Organizer"
@@ -284,7 +291,7 @@ const Home = () => {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section className="py-24 bg-yellow-50 border-b-2 border-black">
+      {/* <section className="py-24 bg-yellow-50 border-black">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
 
           <div className="flex items-center justify-between mb-16 flex-wrap gap-4">
@@ -304,9 +311,9 @@ const Home = () => {
             ].map((card, i) => (
               <div
                 key={i}
-                className={`bg-white p-12 relative ${i < 2 ? 'border-r-2 border-black' : ''} border-t-[3px] border-t-black`}
+                className={`bg-white p-12 relative ${i < 2 ? 'border-r-2 border-black' : ''} `}
               >
-                {/* Ghost step number */}
+               
                 <span className="absolute top-3 right-4 font-black text-[72px] leading-none text-neutral-300 select-none pointer-events-none">
                   {card.step}
                 </span>
@@ -319,7 +326,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* <section className="py-20 bg-white border-t-2 border-black">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">

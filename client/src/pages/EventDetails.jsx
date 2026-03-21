@@ -355,6 +355,17 @@ const EventDetails = () => {
   const isDeadlinePassed = new Date() > new Date(deadline);
   const fillPct  = isUnlimited ? 0 : Math.min(100, Math.round((registeredCount / totalSeats) * 100));
 
+  // Winners: only show if event ended and winners array is non-empty
+  const winners = (event.winners || []).filter(w => w.name);
+  const showWinners = isEnded && winners.length > 0;
+
+  // Medal colors for top 3 ranks
+  const medalConfig = {
+    1: { bg: 'bg-yellow-400', border: 'border-yellow-500', icon: 'ri-medal-line', label: '1st' },
+    2: { bg: 'bg-neutral-300', border: 'border-neutral-400', icon: 'ri-medal-line', label: '2nd' },
+    3: { bg: 'bg-orange-400',  border: 'border-orange-500',  icon: 'ri-medal-line', label: '3rd' },
+  };
+
   // ── Derived button state ─────────────────────────────────────────────────
   const btnConfig = isEnded
     ? { label: 'Event has Ended',      cls: 'bg-neutral-100 text-neutral-400 cursor-not-allowed border-neutral-200',       disabled: true  }
@@ -522,6 +533,48 @@ const EventDetails = () => {
               <p className="text-[16px] text-neutral-700 leading-relaxed">{description}</p>
             </div>
 
+            {/* ── Winners Section (only when event ended and winners declared) ── */}
+            {showWinners && (
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 shrink-0 bg-yellow-400 border-2 border-black rounded-sm flex items-center justify-center text-black text-lg">
+                    <i className="ri-trophy-fill" />
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Event Results</h3>
+                    <p className="text-[15px] font-black text-black">Winners</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {[...winners]
+                    .sort((a, b) => a.rank - b.rank)
+                    .map((winner, i) => {
+                      const medal = medalConfig[winner.rank];
+                      return (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-4 px-5 py-4 border-2 border-black rounded-sm ${medal ? medal.bg : 'bg-neutral-50'}`}
+                        >
+                          <div className={`w-9 h-9 shrink-0 rounded-sm border-2 ${medal ? medal.border : 'border-neutral-300 bg-white'} flex items-center justify-center`}>
+                            {medal
+                              ? <i className={`${medal.icon} text-black text-base`} />
+                              : <span className="text-xs font-black text-neutral-500">#{winner.rank}</span>
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[15px] font-black text-black truncate">{winner.name}</p>
+                          </div>
+                          <span className="text-[11px] font-bold uppercase tracking-widest text-black/60 shrink-0">
+                            {medal ? medal.label : `#${winner.rank}`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             {/* CTA */}
             <div className="border-t-2 border-black pt-8">
               {/* Entry Fee Display */}
@@ -559,16 +612,6 @@ const EventDetails = () => {
                 {btnConfig.label}
               </button>
 
-              {/* Helper text */}
-              {/* {!isEnded && (
-                <p className="text-center text-[12px] text-neutral-400 mt-3 tracking-wide">
-                  {isUnlimited
-                    ? 'Unlimited seats available — register now.'
-                    : isFull
-                      ? 'You will be notified if a seat opens up.'
-                      : `${totalSeats - registeredCount} seat${totalSeats - registeredCount !== 1 ? 's' : ''} remaining — register now.`}
-                </p>
-              )} */}
               {entryFee>0 && (
                 <p className="text-center text-[12px] text-neutral-400 mt-3 tracking-wide">
                   Note: Entry fee is non-refundable.

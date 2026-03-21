@@ -29,7 +29,7 @@ const ClubsPage = ({ isHome = false }) => {
       {/* Page Header - Hide if on Home */}
       {!isHome && (
         <div className="text-center mb-14">
-          <h1 className="text-4xl font-black text-black uppercase tracking-tight">
+          <h1 className="text-4xl font-black text-black tracking-wide">
             NITJ Clubs & Societies
           </h1>
           <p className="mt-4 text-neutral-500 uppercase tracking-widest text-xs font-bold">
@@ -44,7 +44,7 @@ const ClubsPage = ({ isHome = false }) => {
         {clubsToShow.map((club) => (
           <div
             key={club._id}
-            className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_#000] transition-all"
+            className="bg-white border-2 border-black rounded-sm  p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_#000] transition-all"
           >
             <div>
               <div className="flex justify-between items-start mb-4">
@@ -60,7 +60,7 @@ const ClubsPage = ({ isHome = false }) => {
                 </span>
               </div>
 
-              <h2 className="text-2xl font-black text-black leading-tight uppercase tracking-tighter">
+              <h2 className="text-2xl font-black text-black leading-tight uppercase tracking-wider">
                 {club.clubName}
               </h2>
 

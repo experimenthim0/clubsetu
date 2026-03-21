@@ -35,7 +35,7 @@ const HomeFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               
-              <span className="font-extrabold text-[24px] tracking-tight text-white leading-none select-none logofont">
+              <span className="font-extrabold text-[24px] tracking-wider text-white leading-none select-none logofont">
               Club<span className="text-orange-600">Setu</span>
             </span>
             </div>

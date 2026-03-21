@@ -85,7 +85,7 @@ const Navbar = () => {
 
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
-    `px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest border-2 rounded-sm transition-colors duration-150 ${
+    `px-3.5 py-1.5 text-[12px] font-bold tracking-widest border-2 rounded-sm transition-colors duration-150 ${
       isActive(path)
         ? "border-black bg-neutral-100 text-black"
         : "border-transparent text-black hover:border-black hover:bg-neutral-100"
@@ -110,7 +110,7 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont" 
           >
-            <span className="font-extrabold text-[24px] tracking-tight text-black leading-none select-none">
+            <span className="font-extrabold text-[24px] tracking-wider text-black leading-none select-none">
               Club<span className="text-orange-600">Setu</span>
             </span>
           </Link>
@@ -141,7 +141,7 @@ const Navbar = () => {
                 {role === "club-head" && (
                   <Link
                     to="/create"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 border-2 border-black text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
                   >
                     <i className="ri-add-line text-sm" />
                     Create Event

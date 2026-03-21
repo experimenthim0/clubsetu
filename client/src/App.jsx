@@ -18,6 +18,7 @@ import RegisterLanding from './pages/RegisterLanding';
 import ClubsPage from './pages/Clubspage';
 import ClubDetails from './pages/ClubDetails';
 import EditClub from './pages/EditClub';
+import Maintainance from './pages/Maintainance';
 
 
 import Home from './pages/Home';
@@ -88,7 +89,15 @@ axios.interceptors.response.use(
   }
 );
 
+
+
+
 function App() {
+
+   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  if (isMaintenance) {
+    return <Maintainance />;
+  }
   return (
     <NotificationProvider>
       <Router>

@@ -42,20 +42,3 @@
 }
 
 
-@font-face {
-  font-family: 'myfont';
-  src: url(/fonts/mysans.ttf) format('truetype');
-}
-@font-face {
-  font-family: 'logofont';
-  src: url(/fonts/SNPro-VariableFont_wght.ttf) format('truetype');
-}
-
-.myfont {
-    font-family: myfont, Arial, serif;
-    font-weight: black;
-}
-.logofont {
-    font-family: logofont, Arial, serif;
-    font-weight: black;
-}

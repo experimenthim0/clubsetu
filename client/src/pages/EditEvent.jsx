@@ -23,7 +23,9 @@ const EditEvent = () => {
         registrationDeadline: '',
         allowedPrograms: ['BTECH', 'MTECH'],
         allowedYears: [],
+        winners: [], // ← added
     });
+    const isEventCompleted = formData.endTime && new Date(formData.endTime) < new Date();
     const [isFree, setIsFree] = useState(true);
     const [isUnlimited, setIsUnlimited] = useState(false);
     const [allYears, setAllYears] = useState(true);
@@ -53,6 +55,7 @@ const EditEvent = () => {
                         registrationDeadline: event.registrationDeadline ? new Date(event.registrationDeadline).toISOString().slice(0, 16) : '',
                         allowedPrograms: event.allowedPrograms || ['BTECH', 'MTECH'],
                         allowedYears: yearArr,
+                        winners: event.winners || [], // ← added
                     });
                     setIsFree(!event.entryFee || event.entryFee === 0);
                     setIsUnlimited(unlimited);
@@ -154,6 +157,29 @@ const EditEvent = () => {
             const updated = [...prev.customFields];
             updated[fieldIndex] = { ...updated[fieldIndex], options: updated[fieldIndex].options.filter((_, i) => i !== optIndex) };
             return { ...prev, customFields: updated };
+        });
+    };
+
+    // ── Winners Handlers ────────────────────────────────────────────────
+    const addWinner = () => {
+        setFormData(prev => ({
+            ...prev,
+            winners: [...prev.winners, { rank: prev.winners.length + 1, name: '' }]
+        }));
+    };
+
+    const removeWinner = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            winners: prev.winners.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateWinner = (index, field, value) => {
+        setFormData(prev => {
+            const updated = [...prev.winners];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...prev, winners: updated };
         });
     };
 
@@ -483,6 +509,74 @@ const EditEvent = () => {
                         >
                             <i className="ri-add-circle-line text-lg" /> Add Custom Field
                         </button>
+
+
+                        {/* Winner Selection (Only visible when event is ended) */}
+                         {isEventCompleted ? (
+                        <div className="bg-white p-6 border-2 border-neutral-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-xl font-black uppercase">Winners List</h2>
+                                    <p className="text-xs text-neutral-400 mt-1 font-medium">Event has ended — declare winners below.</p>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={addWinner}
+                                    className="bg-black text-white px-4 py-2 text-xs font-bold uppercase hover:bg-orange-600"
+                                >
+                                    + Add Winner
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                {formData.winners.map((winner, index) => (
+                                    <div key={index} className="flex gap-3 items-end bg-neutral-50 p-4 border border-neutral-200">
+                                        <div className="w-24">
+                                            <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
+                                            <input
+                                                type="number"
+                                                value={winner.rank}
+                                                onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
+                                                className={inputCls}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter name"
+                                                value={winner.name}
+                                                onChange={(e) => updateWinner(index, 'name', e.target.value)}
+                                                className={inputCls}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeWinner(index)}
+                                            className="p-3 text-red-500 hover:bg-red-50 transition-colors"
+                                        >
+                                            <i className="ri-delete-bin-line text-xl" />
+                                        </button>
+                                    </div>
+                                ))}
+                                {formData.winners.length === 0 && (
+                                    <p className="text-sm text-neutral-400 italic text-center py-4">No winners declared yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        // Subtle info strip shown while event is still ongoing
+                        <div className="bg-amber-50 border-2 border-amber-200 px-5 py-4 flex items-center gap-3">
+                            <i className="ri-trophy-line text-amber-500 text-xl flex-shrink-0" />
+                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+                                Winners can be declared once the event ends on{' '}
+                                {new Date(formData.endTime).toLocaleString([], {
+                                    dateStyle: 'medium',
+                                    timeStyle: 'short',
+                                })}
+                            </p>
+                        </div>
+                    )}
                     </div>
 
                     {/* Actions */}
