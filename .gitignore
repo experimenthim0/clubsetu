@@ -12,3 +12,4 @@ node_modules
 .env.example
 README_MONETIZATION.md
 UI_DESIGN_GUIDE.txt
+new.md
