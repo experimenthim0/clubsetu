@@ -65,72 +65,86 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             </div>
 
             {/* Body */}
-            <div className="p-3 flex-1 flex flex-col">
+            <div className="p-3 flex flex-auto flex-col">
                 <h3 className="text-lg font-black text-black leading-tight mb-2 line-clamp-1">{title}</h3>
                 <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 grow leading-relaxed">{description}</p>
 
                 {/* Info row */}
-              {isEnded ? (
-    /* ONLY SHOW WINNER WHEN ENDED */
-    <div className="flex  gap-3  mb-2 ">
-        {/* <div className=" p-1.5 rounded-full">
-            <i className="ri-trophy-fill text-white text-sm bg-orange-600 p-1 rounded-full" />
-        </div> */}
-        <div className=" bg-orange-600 py-1 px-0.5 rounded-full">
-            <p className='[writing-mode:vertical-rl] [text-orientation:upright] uppercase text-white text-sm'>Winners</p>
-        </div>
-        <div className='flex flex-col gap-2 w-full'>
-                       {event.winners && event.winners.length > 0 ? (
-                event.winners.map((winner, index) => (
-                    <div key={index} className="flex justify-between items-center bg-white p-2 rounded border border-orange-50 shadow-sm">
-                        <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                                winner.rank === 1 ? 'bg-yellow-400 text-white' : 'bg-neutral-200 text-neutral-600'
-                            }`}>
-                                #{winner.rank}
-                            </span>
-                            <span className="text-[12px] font-bold text-neutral-800">{winner.name}</span>
+                {isEnded ? (
+                    /* ONLY SHOW WINNERS WHEN ENDED */
+                    <div className="flex gap-2 mb-2 ">
+                        {event.winners && event.winners.length > 0 ? (
+                            <div className="flex flex-col gap-2 w-full">
+                                {/* Winners Header */}
+                                <div className="flex items-center gap-2 mb-1">
+                                    <i className="ri-trophy-fill text-orange-600 text-base" />
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-orange-600">Winners</span>
+                                </div>
+                                {/* Winner Rows */}
+                                {event.winners.map((winner, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-neutral-50 p-2 rounded border border-neutral-200 shadow-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                                winner.rank === 1 ? 'bg-yellow-400 text-black' :
+                                                winner.rank === 2 ? 'bg-neutral-300 text-neutral-700' :
+                                                'bg-orange-200 text-orange-800'
+                                            }`}>
+                                                #{winner.rank}
+                                            </span>
+                                            <span className="text-[12px] font-bold text-neutral-800">{winner.name}</span>
+                                        </div>
+                                        {winner.rank === 1 && <i className="ri-medal-fill text-yellow-500" />}
+                                        {winner.rank === 2 && <i className="ri-medal-fill text-gray-400" />}
+                                        {winner.rank === 3 && <i className="ri-medal-fill text-[#CD7F32]" />}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* Results not yet declared */
+                            <div className="flex   gap-2 py-2 flex-col-reverse">
+                                <div className="flex items-center gap-2">
+                                 <i className="ri-time-line text-orange-600 text-sm" />
+                            <span className="font-medium">{formattedTime}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <i className="ri-map-pin-line text-orange-600 text-sm" />
+                            <span className="font-medium">{venue}</span>
                         </div>
-                        {winner.rank === 1 && <i className="ri-medal-fill text-yellow-500" />}
-                        {winner.rank === 2 && <i className="ri-medal-fill text-gray-500" />}
-                        {winner.rank === 3 && <i className="ri-medal-fill text-[#CD7F32]" />}
+                            <div className="flex items-center gap-2">
+                                 <i className="ri-trophy-fill text-orange-600 text-sm  p-1 rounded-full" />
+                                <p className="text-[16px] text-neutral-500 italic">Results being finalized...</p>
+                            </div>
+                            </div>
+                        )}
                     </div>
-                ))
-            ) : (
-                <p className="text-[11px] text-neutral-500 italic">Results being finalized...</p>
-            )}
-  </div>
-    </div>
-) : (
-    /* SHOW DETAILS ONLY WHILE ACTIVE */
-    <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
-        <div className="flex items-center gap-2">
-            <i className="ri-time-line text-orange-600 text-sm" />
-            <span className="font-medium">{formattedTime}</span>
-        </div>
-        <div className="flex items-center gap-2">
-            <i className="ri-map-pin-line text-orange-600 text-sm" />
-            <span className="font-medium">{venue}</span>
-        </div>
-        <div className="flex items-center gap-2">
-            <i className="ri-group-line text-orange-600 text-sm" />
-            <span className="font-medium">
-                {seatsText}
-                {isUnlimited && <span className="ml-1 text-[10px] text-orange-600 font-bold">(Unlimited)</span>}
-            </span>
-        </div>
-        <div className="flex items-center gap-2 text-orange-600">
-            <i className="ri-timer-line text-sm" />
-            <span className="font-bold text-[11px] uppercase tracking-wide">
-                Ends: {new Date(registrationDeadline || startTime).toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                })}
-            </span>
-        </div>
-    </div>
-)}
-
-              
+                ) : (
+                    /* SHOW DETAILS ONLY WHILE ACTIVE */
+                    <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
+                        <div className="flex items-center gap-2">
+                            <i className="ri-time-line text-orange-600 text-sm" />
+                            <span className="font-medium">{formattedTime}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <i className="ri-map-pin-line text-orange-600 text-sm" />
+                            <span className="font-medium">{venue}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <i className="ri-group-line text-orange-600 text-sm" />
+                            <span className="font-medium">
+                                {seatsText}
+                                {isUnlimited && <span className="ml-1 text-[10px] text-orange-600 font-bold">(Unlimited)</span>}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-orange-600">
+                            <i className="ri-timer-line text-sm" />
+                            <span className="font-bold text-[11px] uppercase tracking-wide">
+                                Ends: {new Date(registrationDeadline || startTime).toLocaleString('en-US', {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                })}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Footer: Entry Fee + Action on same line */}
@@ -176,4 +190,3 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 };
 
 export default EventCard;
-
