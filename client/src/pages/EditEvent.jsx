@@ -30,6 +30,7 @@ const EditEvent = () => {
     const [isUnlimited, setIsUnlimited] = useState(false);
     const [allYears, setAllYears] = useState(true);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -204,12 +205,15 @@ const EditEvent = () => {
             allowedYears: allYears ? [] : formData.allowedYears,
         };
 
+        setIsSaving(true);
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${id}`, payload);
             showNotification('Event updated successfully!', 'success');
             navigate('/profile');
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to update event', 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -586,8 +590,9 @@ const EditEvent = () => {
                             Cancel
                         </button>
                         <button type="submit"
-                            className="flex-1 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors">
-                            Update Event
+                            disabled={isSaving}
+                            className={`flex-1 px-6 py-3 border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm transition-colors ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600 hover:border-orange-600'}`}>
+                            {isSaving ? 'Updating...' : 'Update Event'}
                         </button>
                     </div>
                 </form>

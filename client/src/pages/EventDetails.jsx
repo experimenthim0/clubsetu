@@ -10,6 +10,7 @@ const EventDetails = () => {
   const { showNotification } = useNotification();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
   const [missingFieldsModalOpen, setMissingFieldsModalOpen] = useState(false);
   const [missingFields, setMissingFields] = useState([]);
@@ -602,10 +603,10 @@ const EventDetails = () => {
 
               <button
                 onClick={!btnConfig.disabled ? handleRegister : undefined}
-                disabled={btnConfig.disabled}
-                className={`w-full py-4 px-6 text-[14px] font-black uppercase tracking-widest border-2 rounded-sm transition-all ${btnConfig.cls}`}
+                disabled={btnConfig.disabled || isRegistering}
+                className={`w-full py-4 px-6 text-[14px] font-black uppercase tracking-widest border-2 rounded-sm transition-all ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {btnConfig.label}
+                {isRegistering ? 'Processing...' : btnConfig.label}
               </button>
 
               {entryFee>0 && (
@@ -675,10 +676,10 @@ const EventDetails = () => {
               </button>
               <button
                 onClick={handleSaveAndRegister}
-                disabled={missingFields.some(field => !modalInputs[field])}
+                disabled={missingFields.some(field => !modalInputs[field]) || isRegistering}
                 className="flex-1 px-4 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                Save & Register
+                {isRegistering ? 'Processing...' : 'Save & Register'}
               </button>
             </div>
           </div>
@@ -795,9 +796,10 @@ const EventDetails = () => {
               </button>
               <button
                 onClick={handleCustomFormSubmit}
-                className="flex-1 px-4 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors cursor-pointer"
+                disabled={isRegistering}
+                className="flex-1 px-4 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {event.entryFee > 0 ? 'Pay & Register' : 'Register'}
+                {isRegistering ? 'Processing...' : (event.entryFee > 0 ? 'Pay & Register' : 'Register')}
               </button>
             </div>
           </div>

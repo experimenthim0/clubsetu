@@ -10,6 +10,7 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -18,6 +19,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         ...formData,
@@ -33,6 +35,8 @@ const Login = () => {
       window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,9 +126,10 @@ const Login = () => {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-2 px-4 rounded-lg text-white bg-primary hover:bg-primary transition shadow-md"
+            disabled={isLoading}
+            className={`w-full py-2 px-4 rounded-lg text-white transition shadow-md ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary'}`}
           >
-            Sign In
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 

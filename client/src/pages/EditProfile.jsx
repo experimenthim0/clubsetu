@@ -8,6 +8,7 @@ const EditProfile = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         githubProfile: '',
@@ -54,6 +55,7 @@ const EditProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             const updateData = { ...formData };
             // If newPassword is provided, use the change-password endpoint separately or combine
@@ -81,6 +83,8 @@ const EditProfile = () => {
             navigate('/profile');
         } catch (err) {
             showNotification(err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -313,9 +317,10 @@ const EditProfile = () => {
                     </button>
                     <button 
                         type="submit" 
-                        className="flex-1 py-3 bg-black text-white rounded font-bold hover:bg-orange-600 transition"
+                        disabled={isSaving}
+                        className={`flex-1 py-3 text-white rounded font-bold transition ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}
                     >
-                        Save Changes
+                        {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </form>

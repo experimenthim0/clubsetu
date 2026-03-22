@@ -8,6 +8,7 @@ const EditClub = () => {
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         clubName: '',
         category: '',
@@ -59,6 +60,7 @@ const EditClub = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             const processedData = {
                 ...formData,
@@ -80,6 +82,8 @@ const EditClub = () => {
             navigate(`/club/${res.data.club.slug || id}`);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Update failed', 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -234,7 +238,7 @@ const EditClub = () => {
 
                 <div className="pt-8 flex gap-4">
                     <button type="button" onClick={() => navigate(`/club/${id}`)} className="flex-1 py-4 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition shadow-[4px_4px_0px_#000]">Cancel</button>
-                    <button type="submit" className="flex-1 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-orange-600 transition shadow-[4px_4px_0px_#ea580c]">Save Club Changes</button>
+                    <button type="submit" disabled={isSaving} className={`flex-1 py-4 text-white font-black uppercase tracking-widest transition shadow-[4px_4px_0px_#ea580c] disabled:shadow-none ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}>{isSaving ? 'Saving...' : 'Save Club Changes'}</button>
                 </div>
             </form>
         </div>
