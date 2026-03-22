@@ -194,6 +194,7 @@ router.post("/register/club-head", async (req, res) => {
       program,
       designation,
       password,
+      slug: slugify(clubName),
       isVerified: isDevMode,
       isApproved: false, // Explicitly set to false, needs admin approval
       verificationToken,

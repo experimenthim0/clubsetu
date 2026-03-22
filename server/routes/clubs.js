@@ -9,7 +9,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const clubs = await ClubHead.find({ isVerified: true, isClubAdded: true }).select(
-      "clubName description clubLogo clubGallery designation name facultyCoordinators studentCoordinators category clubInstagram clubLinkedin clubX clubWebsite clubWhatsapp clubUniqueId"
+      "clubName description clubLogo clubGallery designation name facultyCoordinators studentCoordinators category clubInstagram clubLinkedin clubX clubWebsite clubWhatsapp clubUniqueId slug"
     );
     res.json(clubs);
   } catch (err) {

@@ -23,7 +23,7 @@ const ClubDetails = () => {
             }
         };
         fetchClubDetails();
-    }, [id]);
+    }, [slug]);
 
     if (loading) return <div className="text-center py-20">Loading club details...</div>;
     if (!club) return <div className="text-center py-20 text-red-600">Club not found.</div>;
@@ -98,7 +98,7 @@ const ClubDetails = () => {
                     </div>
                     {user?._id === club._id && (
                         <Link
-                            to={`/club/edit/${slug}`}
+                            to={`/club/edit/${club._id}`}
                             className="flex-shrink-0 px-5 py-3 bg-white text-black font-black uppercase text-[10px] tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-[5px_5px_0px_#ea580c]"
                         >
                             {!club.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
