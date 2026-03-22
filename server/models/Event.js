@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const eventSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
+    slug: { type: String, unique: true, sparse: true },
     description: { type: String },
     venue: { type: String, required: true },
     startTime: { type: Date, required: true },

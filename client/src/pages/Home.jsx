@@ -50,7 +50,7 @@ const Home = () => {
     <div className="myfont text-black bg-white">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="min-h-screen flex flex-col justify-center bg-white  border-black pt-16 pb-0">
+      <section className="flex flex-col justify-center bg-white  border-black pt-16 pb-0">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
 
           {/* Top badges */}
@@ -112,7 +112,7 @@ const Home = () => {
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
       <div
-        className="overflow-hidden bg-orange-600  py-3"
+        className="overflow-hidden bg-orange-600  py-3 mt-10"
         style={{ whiteSpace: 'nowrap' }}
       >
         <div

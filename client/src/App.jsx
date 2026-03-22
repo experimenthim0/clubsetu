@@ -41,6 +41,7 @@ import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
 
 import { NotificationProvider } from './context/NotificationContext';
+import Team from './pages/Team';
 
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
@@ -107,16 +108,15 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/clubs" element={<ClubsPage />} />
-            <Route path="/club/:id" element={<ClubDetails />} />
+            <Route path="/club/:slug" element={<ClubDetails />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             
-            {/* Student Protected Routes */}
+            {/* Protected Routes */}
             <Route path="/club/edit/:id" element={<EditClub />} />
 
-
             <Route path="/events" element={<EventFeed />} />
-            <Route path="/events/:id" element={<EventDetails />} />
+            <Route path="/event/:slug" element={<EventDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<RegisterLanding />} />
             <Route path="/register/student" element={<RegisterStudent />} />
@@ -126,7 +126,7 @@ function App() {
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/events/edit/:id" element={<EditEvent />} />
-            <Route path="/events/:id/registrations" element={<EventRegistrations />} />
+            <Route path="/event/:id/registrations" element={<EventRegistrations />} />
             <Route path="/admin-secret-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -141,6 +141,7 @@ function App() {
             <Route path="/changelog" element={<Changelog />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/about-features" element={<Aboutfeatures />} />
+            <Route path="/team" element={<Team />} />
           </Routes>
           </div>
           <Footer />

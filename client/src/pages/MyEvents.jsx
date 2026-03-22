@@ -152,7 +152,11 @@ const MyEvents = () => {
                   >
                     {/* Top stripe: title + timeline badge */}
                     <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
-                      <h3 className="text-lg font-bold text-black leading-tight">{event.title}</h3>
+                      <h3 className="text-lg font-bold text-black leading-tight">
+                        <Link to={`/event/${event.slug || event._id}`} className="hover:text-orange-600 transition-colors">
+                          {event.title}
+                        </Link>
+                      </h3>
                       <span
                         className={`shrink-0 ml-4 px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-wider ${
                           isPast
@@ -271,7 +275,7 @@ const MyEvents = () => {
                     {/* Right — action buttons */}
                     <div className="flex items-center gap-2 shrink-0">
                       <Link
-                        to={`/events/${event._id}/registrations`}
+                        to={`/event/${event._id}/registrations`}
                         className="px-4 py-2 bg-blue-100 text-blue-700 border-2 border-blue-700 rounded-sm hover:bg-blue-700 hover:text-white transition font-bold text-sm uppercase tracking-wider whitespace-nowrap"
                       >
                         Registrations

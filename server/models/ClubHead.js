@@ -5,6 +5,7 @@ const clubHeadSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     clubName: { type: String, required: true },
+    slug: { type: String, unique: true, sparse: true },
     phone: { type: String, required: true },
     collegeEmail: { type: String, required: true, unique: true },
     rollNo: { type: String, required: true, unique: true },
@@ -35,6 +36,7 @@ const clubHeadSchema = new mongoose.Schema(
     facultyCoordinators: [{ type: String }],
     studentCoordinators: [{ type: String }],
     clubGallery: [{type: String}],
+    clubSponsors: [{type: String}],
     category: { type: String },
     isClubAdded: { type: Boolean, default: false },
     clubUniqueId: { type: String, unique: true, sparse: true },

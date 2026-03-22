@@ -5,7 +5,7 @@ import { useNotification } from '../context/NotificationContext';
 import { loadRazorpay } from '../utils/razorpay';
 
 const EventDetails = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [event, setEvent] = useState(null);
@@ -20,24 +20,20 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
-        const found = res.data.find((e) => e._id === id || e.id === id);
-        if (found) {
-            setEvent(found);
-            // Pre-load Razorpay if it's a paid event
-            if (found.entryFee > 0) {
-                loadRazorpay();
-            }
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
+        setEvent(res.data);
+        // Pre-load Razorpay if it's a paid event
+        if (res.data.entryFee > 0) {
+            loadRazorpay();
         }
-        else setError('Event not found');
         setLoading(false);
       } catch (err) {
-        setError('Failed to load event');
+        setError(err.response?.data?.message || 'Failed to load event');
         setLoading(false);
       }
     };
     fetchEvent();
-  }, [id]);
+  }, [slug]);
 
 
   const handleRegister = async () => {
@@ -73,7 +69,7 @@ const EventDetails = () => {
         await loadRazorpay();
         // 1. Create Order on backend
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
-          eventId: id,
+          eventId: event._id,
           studentId: user._id
         });
 
@@ -94,7 +90,7 @@ const EventDetails = () => {
                 orderId: orderId,
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
-                eventId: id,
+                eventId: event._id,
                 studentId: user._id
               });
 
@@ -132,7 +128,7 @@ const EventDetails = () => {
 
     // Free Event Registration
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
         studentId: user._id,
       });
       showNotification(res.data.message, 'success');
@@ -173,7 +169,7 @@ const EventDetails = () => {
         try {
           await loadRazorpay();
           const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
-            eventId: id,
+            eventId: event._id,
             studentId: updatedUser._id
           });
 
@@ -192,7 +188,7 @@ const EventDetails = () => {
                   orderId: orderId,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
-                  eventId: id,
+                  eventId: event._id,
                   studentId: updatedUser._id
                 });
 
@@ -221,7 +217,7 @@ const EventDetails = () => {
       }
 
       // Free Event Registration
-      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
+      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
         studentId: updatedUser._id,
       });
       showNotification(regRes.data.message, 'success');
@@ -250,7 +246,7 @@ const EventDetails = () => {
       try {
         await loadRazorpay();
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
-          eventId: id,
+          eventId: event._id,
           studentId: user._id
         });
 
@@ -269,7 +265,7 @@ const EventDetails = () => {
                 orderId: orderId,
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
-                eventId: id,
+                eventId: event._id,
                 studentId: user._id,
                 formResponses: customFormResponses,
               });
@@ -301,7 +297,7 @@ const EventDetails = () => {
 
     // Free Event Registration
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${id}/register`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
         studentId: user._id,
         formResponses: customFormResponses,
       });

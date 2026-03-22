@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { loadRazorpay } from '../utils/razorpay';
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
-    const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline } = event;
+    const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline, slug } = event;
 
     const formattedTime = new Date(startTime).toLocaleString('en-US', {
         weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -175,8 +175,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             ✓ Registered
                         </div>
                     ) : (
-                        <Link
-                            to={`/events/${_id}`}
+                         <Link
+                            to={`/event/${slug || _id}`}
                             onClick={() => loadRazorpay()}
                             className={`flex-1 block text-center py-2 rounded-sm text-[11px] font-bold uppercase tracking-widest border-2 transition-all ${
                                 isEnded

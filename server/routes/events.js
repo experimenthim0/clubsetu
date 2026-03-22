@@ -3,6 +3,7 @@ import Event from "../models/Event.js";
 import Student from "../models/Student.js";
 import Registration from "../models/Registration.js";
 import { verifyToken, requireRole } from "../middleware/auth.js";
+import { slugify } from "../utils/slugify.js";
 
 const router = express.Router();
 
@@ -105,12 +106,44 @@ router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
       allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
       allowedYears: allowedYears || [],
       registrationDeadline: registrationDeadline || null,
+      slug: slugify(title),
     });
 
     const savedEvent = await newEvent.save();
     res.status(201).json(savedEvent);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// GET /api/events/:id — PUBLIC
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let query;
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      query = { _id: id };
+    } else {
+      query = { slug: id };
+    }
+
+    const event = await Event.findOne(query).populate("createdBy", "clubName description clubLogo slug");
+    if (!event) return res.status(404).json({ message: "Event not found" });
+    res.json(event);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/events/slug/:slug — PUBLIC (Alternative explicit route if needed)
+router.get("/slug/:slug", async (req, res) => {
+  try {
+    const event = await Event.findOne({ slug: req.params.slug }).populate("createdBy", "clubName description clubLogo slug");
+    if (!event) return res.status(404).json({ message: "Event not found" });
+    res.json(event);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -134,24 +167,30 @@ router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
       winners,
     } = req.body;
 
+    const updateData = {
+      title,
+      description,
+      venue,
+      startTime,
+      endTime,
+      totalSeats: totalSeats || 0,
+      entryFee,
+      imageUrl,
+      requiredFields,
+      customFields: customFields || [],
+      allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
+      allowedYears: allowedYears || [],
+      registrationDeadline: registrationDeadline || null,
+      winners: winners || [],
+    };
+
+    if (title) {
+      updateData.slug = slugify(title);
+    }
+
     const event = await Event.findByIdAndUpdate(
       req.params.id,
-      {
-        title,
-        description,
-        venue,
-        startTime,
-        endTime,
-        totalSeats: totalSeats || 0,
-        entryFee,
-        imageUrl,
-        requiredFields,
-        customFields: customFields || [],
-        allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
-        allowedYears: allowedYears || [],
-        registrationDeadline: registrationDeadline || null,
-        winners: winners || [],
-      },
+      updateData,
       { new: true },
     );
     res.json(event);

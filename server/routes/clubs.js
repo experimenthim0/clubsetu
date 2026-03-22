@@ -1,6 +1,7 @@
 import express from "express";
 import ClubHead from "../models/ClubHead.js";
 import Event from "../models/Event.js";
+import { slugify } from "../utils/slugify.js";
 
 const router = express.Router();
 
@@ -19,7 +20,17 @@ router.get("/", async (req, res) => {
 // GET /api/clubs/:id — PUBLIC
 router.get("/:id", async (req, res) => {
   try {
-    const club = await ClubHead.findById(req.params.id).select(
+    const { id } = req.params;
+    let query;
+    
+    // Check if ID is a valid MongoDB ObjectId
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      query = { _id: id };
+    } else {
+      query = { slug: id };
+    }
+
+    const club = await ClubHead.findOne(query).select(
       "-password -verificationToken -verificationTokenExpire"
     );
     if (!club) {
@@ -53,6 +64,11 @@ router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
     delete updates.password;
     delete updates.rollNo;
     delete updates.isVerified;
+
+    // Generate slug if clubName is updated
+    if (updates.clubName) {
+      updates.slug = slugify(updates.clubName);
+    }
 
     // Check if this is the first time adding club details
     const currentClub = await ClubHead.findById(clubId);

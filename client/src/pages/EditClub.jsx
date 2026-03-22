@@ -12,6 +12,7 @@ const EditClub = () => {
         clubName: '',
         category: '',
         clubGallery: '',
+        clubSponsors: '',
         description: '',
         clubLogo: '',
         facultyCoordinators: '',
@@ -34,6 +35,7 @@ const EditClub = () => {
                     description: club.description || '',
                     clubLogo: club.clubLogo || '',
                     clubGallery: club.clubGallery?.join(', ') || '',
+                    clubSponsors: club.clubSponsors?.join(', ') || '',
                     facultyCoordinators: club.facultyCoordinators?.join(', ') || '',
                     studentCoordinators: club.studentCoordinators?.join(', ') || '',
                     clubInstagram: club.clubInstagram || '',
@@ -62,7 +64,8 @@ const EditClub = () => {
                 ...formData,
                 facultyCoordinators: formData.facultyCoordinators.split(',').map(s => s.trim()).filter(s => s !== ''),
                 studentCoordinators: formData.studentCoordinators.split(',').map(s => s.trim()).filter(s => s !== ''),
-                clubGallery: formData.clubGallery.split(',').map(s => s.trim()).filter(s => s !== '')
+                clubGallery: formData.clubGallery.split(',').map(s => s.trim()).filter(s => s !== ''),
+                clubSponsors: formData.clubSponsors.split(',').map(s => s.trim()).filter(s => s !== '')
             };
             const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/clubs/${id}`, processedData);
             
@@ -74,7 +77,7 @@ const EditClub = () => {
             }
 
             showNotification('Club information updated successfully', 'success');
-            navigate(`/club/${id}`);
+            navigate(`/club/${res.data.club.slug || id}`);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Update failed', 'error');
         }
@@ -84,8 +87,8 @@ const EditClub = () => {
 
     return (
         <div className="max-w-4xl mx-auto px-6 py-12">
-            <h1 className="text-3xl font-black uppercase tracking-tight mb-8">Edit Club Information</h1>
-            <form onSubmit={handleSubmit} className="bg-white border-2 border-black p-8 shadow-[10px_10px_0px_#000] space-y-8">
+            <h1 className="text-3xl font-black uppercase tracking-wide mb-8">Edit Club Information</h1>
+            <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-500 p-8 space-y-8">
                 
                 {/* Basic Info Section */}
                 <div className="space-y-6">
@@ -100,7 +103,7 @@ const EditClub = () => {
                                 name="clubName" 
                                 value={formData.clubName} 
                                 onChange={handleChange}
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
+                                className="w-full p-3 border-2 border-gray-500 focus:bg-orange-50 outline-none font-bold"
                             />
                         </div>
                         <div>
@@ -165,9 +168,12 @@ const EditClub = () => {
                             ></textarea>
                         </div>
                     </div>
-                </div>
-
-
+               
+</div>
+ <div className="space-y-6">
+                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">
+                        <i className="ri-image-line text-orange-600" /> Club Gallery & Sponsors
+                    </h3>
 
                 {/* Club Gallery */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,8 +187,19 @@ const EditClub = () => {
                                 className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
                             ></textarea>
                         </div>
+                       
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Sponsors (Comma separated)</label>
+                            <textarea 
+                                name="clubSponsors" 
+                                value={formData.clubSponsors} 
+                                onChange={handleChange}
+                                placeholder="https://himanshu.me/sponsor1.jpg, https://nikhim.me/sponsor2.jpg"
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
+                            ></textarea>
+                        </div>
                         </div> 
-
+ </div>
                 {/* Social Links */}
                 <div className="space-y-6">
                     <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">

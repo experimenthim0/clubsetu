@@ -52,7 +52,7 @@ roommates and Crafted between classes, deadlines, and hostel Wi-Fi.</p>
                 <a
                   key={social.icon}
                   href={social.href}
-                  className="w-9 h-9 bg-neutral-800 rounded-sm flex items-center justify-center text-neutral-400 hover:bg-orange-600 hover:text-white transition-colors border border-neutral-700 hover:border-orange-600"
+                  className="w-9 h-9 bg-neutral-800 rounded-sm flex items-center justify-center text-neutral-100 hover:bg-orange-600 hover:text-white transition-colors border border-neutral-700 hover:border-orange-600"
                 >
                   <i className={`${social.icon} text-base`} />
                 </a>

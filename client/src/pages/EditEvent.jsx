@@ -34,8 +34,8 @@ const EditEvent = () => {
     useEffect(() => {
         const fetchEvent = async () => {
              try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
-                const event = res.data.find(e => e._id === id || e.id === id);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
+                const event = res.data;
                 if (event) {
                     const start = new Date(event.startTime).toISOString().slice(0, 16);
                     const end = new Date(event.endTime).toISOString().slice(0, 16);

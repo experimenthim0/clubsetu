@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const ClubDetails = () => {
-    const { id } = useParams();
+    const { slug } = useParams();
     const [club, setClub] = useState(null);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ const ClubDetails = () => {
     useEffect(() => {
         const fetchClubDetails = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${id}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${slug}`);
                 setClub(res.data.club);
                 setEvents(res.data.events);
                 setUser(JSON.parse(localStorage.getItem('user')));
@@ -41,7 +41,7 @@ const ClubDetails = () => {
 
     const EventCard = ({ event, type, wide = false }) => (
         <Link
-            to={`/events/${event._id}`}
+            to={`/event/${event.slug || event._id}`}
             className={`block group bg-white border-2 border-black  hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000] transition-all p-5
                 ${type === 'live' ? 'border-orange-600 shadow-[4px_4px_0px_#ea580c] hover:shadow-[6px_6px_0px_#ea580c]' : ''}
                 ${type === 'past' ? 'opacity-90' : ''}
@@ -98,7 +98,7 @@ const ClubDetails = () => {
                     </div>
                     {user?._id === club._id && (
                         <Link
-                            to={`/club/edit/${id}`}
+                            to={`/club/edit/${slug}`}
                             className="flex-shrink-0 px-5 py-3 bg-white text-black font-black uppercase text-[10px] tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-[5px_5px_0px_#ea580c]"
                         >
                             {!club.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
@@ -198,7 +198,7 @@ const ClubDetails = () => {
                 {/* ── Upcoming Events ── */}
                 <section>
                     <div className="flex items-center gap-4 my-6">
-                        <h2 className="text-2xl font-black uppercase italic tracking-tighter whitespace-nowrap">Upcoming</h2>
+                        <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap">Upcoming</h2>
                         <div className="h-0.5 flex-1 bg-black" />
                     </div>
                     {upcomingEvents.length > 0 ? (
@@ -216,7 +216,7 @@ const ClubDetails = () => {
                 {pastEvents.length > 0 && (
                     <section className="opacity-60">
                         <div className="flex items-center gap-4 my-6">
-                            <h2 className="text-2xl font-black uppercase italic tracking-tighter whitespace-nowrap">Past Events</h2>
+                            <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap">Past Events</h2>
                             <div className="h-0.5 flex-1 bg-black" />
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -229,7 +229,7 @@ const ClubDetails = () => {
 
  <section>
                     <div className="flex items-center gap-4 my-6">
-                        <h2 className="text-2xl font-black uppercase italic tracking-tighter whitespace-nowrap">Gallery</h2>
+                        <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap">Gallery</h2>
                         <div className="h-0.5 flex-1 bg-black" />
                     </div>
                         
@@ -248,6 +248,31 @@ const ClubDetails = () => {
                         
                         }
                         
+                        
+                        {/* <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Coming Soon...</p> */}
+                    </section>
+
+
+
+                    <section>
+                    <div className="flex items-center gap-4 my-6">
+                        <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap">Our Sponsors</h2>
+                        <div className="h-0.5 flex-1 bg-black" />
+                    </div>
+                        
+                        {club.clubSponsors.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-4">
+                                {club.clubSponsors.map((image, index) => (
+                                    <img key={index} src={image} alt={`Sponsor ${index + 1}`} className="w-full h-40 object-contain  rounded-xs  hover:scale-105 transition-all duration-300" />
+                                ))}
+                            </div>
+                        ):(
+                            <div className="bg-white border-2 border-dashed border-neutral-200 py-8 text-center">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">No sponsor found, Lagta h unhone kisi or ko sponsor kr diya 😂🤣</p>
+                            </div>
+                        )
+
+                    }
                         
                         {/* <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Coming Soon...</p> */}
                     </section>

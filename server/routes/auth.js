@@ -5,6 +5,7 @@ import ClubHead from "../models/ClubHead.js";
 import { generateToken, verifyToken } from "../middleware/auth.js";
 import sendEmail from "../utils/sendEmail.js";
 import { getClientUrl } from "../utils/corsConfig.js";
+import { slugify } from "../utils/slugify.js";
 
 const router = express.Router();
 

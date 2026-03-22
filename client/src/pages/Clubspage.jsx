@@ -105,7 +105,7 @@ const ClubsPage = ({ isHome = false }) => {
                  )}
               </div>
               <Link
-                to={`/club/${club._id}`}
+                to={`/club/${club.slug || club._id}`}
                 className="flex-1 text-center py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest border-2 border-black hover:bg-orange-600 transition-all shadow-[4px_4px_0px_#ea580c] hover:shadow-none"
               >
                 Explore →

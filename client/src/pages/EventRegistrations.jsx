@@ -14,15 +14,14 @@ const EventRegistrations = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [regRes, statsRes, eventsRes] = await Promise.all([
+                const [regRes, statsRes, eventRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`),
                     axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${id}/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/events`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`),
                 ]);
                 setRegistrations(regRes.data);
                 setStats(statsRes.data);
-                const found = eventsRes.data.find(e => e._id === id || e.id === id);
-                setEventData(found || null);
+                setEventData(eventRes.data);
                 setLoading(false);
             } catch (err) {
                 console.error('Fetch error:', err);
