@@ -50,7 +50,7 @@ const Home = () => {
     <div className="myfont text-black bg-white">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="min-h-screen flex flex-col justify-center bg-white border-b-2 border-black pt-16 pb-0">
+      <section className="min-h-screen flex flex-col justify-center bg-white  border-black pt-16 pb-0">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
 
           {/* Top badges */}
@@ -93,7 +93,7 @@ const Home = () => {
           </div>
 
           {/* Hero image strip */}
-          <div className="mt-14 border-2 border-black rounded-sm overflow-hidden relative">
+          {/* <div className="mt-14 border-2 border-black rounded-sm overflow-hidden relative">
             <img
               src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
               alt="Campus Life"
@@ -106,13 +106,13 @@ const Home = () => {
             <div className="absolute bottom-4 right-4 bg-yellow-400 text-black text-[12px] font-black px-4 py-2 rounded-sm border-2 border-black">
               10+ Events Hosted
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
       <div
-        className="overflow-hidden bg-orange-600 border-b-2 border-neutral-800 py-3"
+        className="overflow-hidden bg-orange-600  py-3"
         style={{ whiteSpace: 'nowrap' }}
       >
         <div
