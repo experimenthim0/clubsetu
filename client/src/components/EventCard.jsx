@@ -17,24 +17,24 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
         ? `${registeredCount} Registered`
         : `${registeredCount} / ${totalSeats}`;
 
-    const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop';
+    const DEFAULT_IMAGE = '/CLUBSETU.png';
     const displayImage = event.imageUrl || DEFAULT_IMAGE;
 
     return (
         <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
-            <div className="h-64 overflow-hidden bg-neutral-100 relative">
+            <div className="h-64 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-300">
                 <img
-                    src={displayImage}
-                    alt={title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.classList.add('bg-gradient-to-br', 'from-orange-500', 'to-orange-600');
-                        e.target.parentElement.classList.remove('bg-neutral-100');
-                    }}
-                />
+  src={displayImage}
+  alt={title}
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+  onError={(e) => {
+    e.target.onerror = null; // prevent infinite loop
+    e.target.src = "/CLUBSETU.png"; // fallback image
+  }}
+/>
+
                 {/* Status Badge */}
                 <div className="absolute top-3 left-3">
                     {isLive && (
@@ -57,7 +57,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 {/* Club Badge */}
                 {event.createdBy?.clubName && (
                     <div className="absolute top-3 right-3">
-                        <span className="bg-orange-600/70 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
+                        <span className="bg-orange-600/80 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
                             {event.createdBy.clubName}
                         </span>
                     </div>
