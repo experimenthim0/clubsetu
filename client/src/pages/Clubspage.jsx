@@ -44,7 +44,7 @@ const ClubsPage = ({ isHome = false }) => {
         {clubsToShow.map((club) => (
           <div
             key={club._id}
-            className="bg-white border-2 border-black rounded-sm  p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_#000] transition-all"
+            className="bg-white border-2 border-gray-300 rounded-sm  p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px]  transition-all"
           >
             <div>
               <div className="flex justify-between items-start mb-4">
@@ -106,7 +106,7 @@ const ClubsPage = ({ isHome = false }) => {
               </div>
               <Link
                 to={`/club/${club.slug || club._id}`}
-                className="flex-1 text-center py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest border-2 border-black hover:bg-orange-600 transition-all shadow-[4px_4px_0px_#ea580c] hover:shadow-none"
+                className="flex-1 text-center py-2 bg-black text-orange-600 text-[10px] font-black uppercase tracking-widest border-2 border-black hover:bg-orange-600 hover:text-white transition-all "
               >
                 Explore →
               </Link>

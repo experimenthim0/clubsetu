@@ -232,7 +232,7 @@ const MyEvents = () => {
           </div>
 
           {createdEvents.length === 0 ? (
-            <div className="bg-white border-2 border-black rounded-sm p-12 text-center shadow-[4px_4px_0px_#0D0D0D]">
+            <div className="bg-white border-2 border-black rounded-sm p-12 text-center ">
               <i className="ri-calendar-event-line text-6xl text-gray-300 mb-4" />
               <p className="text-gray-500 mb-4">You haven't created any events yet.</p>
               <Link
@@ -247,7 +247,7 @@ const MyEvents = () => {
               {createdEvents.map(event => (
                 <div
                   key={event._id}
-                  className="bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] overflow-hidden"
+                  className="bg-white border-2 border-black rounded-sm  overflow-hidden"
                 >
                   {/* Top stripe: title */}
                   <div className="px-6 pt-5 pb-3 border-b border-gray-100">
@@ -286,12 +286,12 @@ const MyEvents = () => {
                       >
                         Edit
                       </Link>
-                      <button
+                      {/* <button
                         onClick={() => handleDelete(event._id)}
                         className="px-4 py-2 bg-red-100 text-red-700 border-2 border-red-700 rounded-sm hover:bg-red-700 hover:text-white transition font-bold text-sm uppercase tracking-wider"
                       >
                         Delete
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>

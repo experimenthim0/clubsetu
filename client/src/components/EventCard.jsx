@@ -21,7 +21,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const displayImage = event.imageUrl || DEFAULT_IMAGE;
 
     return (
-        <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden hover:shadow-[6px_6px_0px_#0D0D0D] transition-all hover:-translate-y-0.5 flex flex-col h-full group">
+        <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
             <div className="h-64 overflow-hidden bg-neutral-100 relative">
@@ -57,7 +57,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 {/* Club Badge */}
                 {event.createdBy?.clubName && (
                     <div className="absolute top-3 right-3">
-                        <span className="bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
+                        <span className="bg-orange-600/70 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
                             {event.createdBy.clubName}
                         </span>
                     </div>

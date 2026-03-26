@@ -248,7 +248,7 @@ const EditEvent = () => {
                     <p className="text-neutral-600 mt-2">Update your event details below</p>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-black rounded-sm p-8 space-y-6 shadow-[8px_8px_0px_#0D0D0D]">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-500 rounded-sm p-8 space-y-6 ">
                     
                     {/* Event Title */}
                     <div>
@@ -517,7 +517,7 @@ const EditEvent = () => {
 
                         {/* Winner Selection (Only visible when event is ended) */}
                          {isEventCompleted ? (
-                        <div className="bg-white p-6 border-2 border-neutral-200">
+                        <div className="bg-white p-6 border-2 border-neutral-200 mt-8" >
                             <div className="flex justify-between items-center mb-6">
                                 <div>
                                     <h2 className="text-xl font-black uppercase">Winners List</h2>

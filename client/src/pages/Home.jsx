@@ -69,7 +69,7 @@ const Home = () => {
           </div>
 
           {/* Headline */}
-          <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[-3px] text-black mb-0">
+          <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black mb-0">
   Discover<br />
   <span className="text-orange-600">Clubs & Events</span><br />
   at NITJ...
@@ -137,7 +137,7 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="mb-12">
             <SectionLabel>Latest Happenings</SectionLabel>
-            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
               What's Buzzing<br />on Campus
             </h2>
           </div>
@@ -155,7 +155,7 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="mb-12">
             <SectionLabel>Our Clubs</SectionLabel>
-            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-tight">
+            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
               Find Your<br />Community
             </h2>
           </div>
@@ -192,7 +192,7 @@ const Home = () => {
           {/* Text */}
           <div>
             <SectionLabel>For Students</SectionLabel>
-            <h2 className="font-black text-[clamp(32px,4vw,52px)] leading-[1.1] tracking-tight text-black mb-10">
+            <h2 className="font-black text-[clamp(32px,4vw,52px)] leading-[1.1] tracking-wide text-black mb-10">
               Never Miss a<br />Campus Beat<br /><span className="text-orange-600">Again.</span>
             </h2>
 

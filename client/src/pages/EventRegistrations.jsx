@@ -134,17 +134,17 @@ const EventRegistrations = () => {
             {/* ── Stats Cards ─────────────────────────────────────────────── */}
             {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div className="bg-white p-6 border-2 border-black rounded-sm shadow-[4px_4px_0px_#000]">
+                    <div className="bg-white p-6 border-2 border-black rounded-sm ">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Registered</p>
                         <p className="text-3xl font-black text-black">{stats.registeredCount}</p>
                         <p className="text-[11px] text-neutral-500 mt-2">out of {stats.totalSeats} seats</p>
                     </div>
-                    <div className="bg-white p-6 border-2 border-black rounded-sm shadow-[4px_4px_0px_#EA580C]">
+                    <div className="bg-white p-6 border-2 border-black rounded-sm ">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Money Collected</p>
                         <p className="text-3xl font-black text-orange-600">₹{stats.totalCollected ?? stats.totalMoneyCollected ?? 0}</p>
                         <p className="text-[11px] text-neutral-500 mt-2">from {stats.paidRegistrations} paid entries</p>
                     </div>
-                    <div className="bg-orange-600 p-6 border-2 border-black rounded-sm shadow-[4px_4px_0px_#000] text-white">
+                    <div className="bg-orange-600 p-6 border-2 border-black rounded-sm  text-white">
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Entry Fee</p>
                         <p className="text-3xl font-black">₹{stats.entryFee}</p>
                         <p className="text-[11px] opacity-80 mt-2">per student</p>
