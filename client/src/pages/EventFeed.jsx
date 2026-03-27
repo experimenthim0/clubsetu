@@ -134,7 +134,7 @@ return (
 
     {/* ── FILTER BAR (only on full events page) ── */}
     {!hideHeader && (
-      <div className="mb-10 bg-white border-2 border-black rounded-sm p-4 shadow-[4px_4px_0px_#0D0D0D]">
+      <div className="mb-10 bg-white border-2 border-gray-400 rounded-sm p-4 ">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
 
           {/* Status toggle buttons */}
@@ -290,7 +290,7 @@ return (
       </div>
     )}
 
-<p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your event,Become a Club or Society Head <Link to="/register/club-head" className="text-orange-600 font-bold">Register Now</Link> || Also Fill this <a href="https://forms.gle/ZJKNhGXNrSkimWtG9" className="text-orange-600 font-bold">Form</a></p>
+<p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your event,Become a Club or Society Head <Link to="/register/club-head" className="text-orange-600 font-bold">Register Now</Link></p>
   
   </div>
 );

@@ -12,7 +12,7 @@ const RegisterLanding = () => {
           <span className="text-[11px] font-bold uppercase tracking-[0.15em]">Get Started</span>
           <span className="block w-6 h-0.5 bg-orange-600" />
         </div>
-        <h1 className="font-black text-[clamp(32px,6vw,48px)] leading-[1.05] tracking-tight text-black mb-3">
+        <h1 className="font-black text-[clamp(32px,6vw,48px)] leading-[1.05] tracking-wide text-black mb-3">
           Join<br />
           Club<span className="text-orange-600">Setu</span>
         </h1>
@@ -27,7 +27,7 @@ const RegisterLanding = () => {
         {/* Student Card */}
         <Link
           to="/register/student"
-          className="group flex items-center gap-5 p-6 bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] hover:shadow-[6px_6px_0px_#ea580c] hover:border-orange-600 hover:-translate-y-1 transition-all"
+          className="group flex items-center gap-5 p-6 bg-white border-2 border-black rounded-sm  hover:shadow-[6px_6px_0px_#ea580c] hover:border-orange-600 hover:-translate-y-1 transition-all"
         >
           <div className="w-14 h-14 bg-black rounded-sm flex items-center justify-center flex-shrink-0 group-hover:bg-orange-600 transition-colors">
             <i className="ri-user-line text-white text-2xl" />
@@ -43,7 +43,7 @@ const RegisterLanding = () => {
         {/* Club Head Card */}
         <Link
           to="/register/club-head"
-          className="group flex items-center gap-5 p-6 bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] hover:shadow-[6px_6px_0px_#ea580c] hover:border-orange-600 hover:-translate-y-1 transition-all"
+          className="group flex items-center gap-5 p-6 bg-white border-2 border-black rounded-sm  hover:shadow-[6px_6px_0px_#ea580c] hover:border-orange-600 hover:-translate-y-1 transition-all"
         >
           <div className="w-14 h-14 bg-orange-600 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:bg-black transition-colors">
             <i className="ri-team-line text-white text-2xl" />

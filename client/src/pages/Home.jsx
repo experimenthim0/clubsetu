@@ -267,7 +267,7 @@ const Home = () => {
                 <div className="w-12 h-12 bg-orange-600 rounded-sm flex items-center justify-center text-white text-xl mb-5">
                   <i className={item.icon} />
                 </div>
-                <h3 className="text-black font-bold text-[18px] mb-2.5">{item.title}</h3>
+                <h3 className="text-black font-bold text-[18px] mb-2.5 tracking-wide">{item.title}</h3>
                 <p className="text-neutral-700 text-[14px] leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -282,7 +282,7 @@ const Home = () => {
               style={{ filter: 'saturate(0) brightness(0.8)' }}
             />
             <div className="absolute inset-0 flex items-center justify-center px-6">
-              <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-tight leading-snug max-w-2xl">
+              <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-wide leading-snug max-w-2xl">
                 "Finally, no more manually checking 500 screenshots of payment proofs."
               </div>
             </div>

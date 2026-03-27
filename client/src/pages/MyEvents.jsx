@@ -224,7 +224,7 @@ const MyEvents = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-black">My Created Events</h2>
             <Link
-              to="/events/create"
+              to="/create"
               className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors"
             >
               <i className="ri-add-line" /> Create Event

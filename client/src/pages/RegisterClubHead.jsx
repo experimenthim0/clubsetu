@@ -96,10 +96,11 @@ const RegisterClubHead = () => {
           <span className="text-orange-600">Registration</span>
         </h1>
         <p className="text-[14px] text-neutral-500 mt-2">Register your club account to create and manage campus events.</p>
+        <p className="text-[14px] text-red-400 mt-1">Note: Only Club Heads or Society Heads are eligible to register. You will be able to log in only after your account has been approved by an administrator or faculty coordinator.</p>
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-lg bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] p-8">
+      <div className="w-full max-w-lg bg-white border-2 border-gray-400 rounded-sm  p-8">
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 

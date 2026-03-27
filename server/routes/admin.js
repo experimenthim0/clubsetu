@@ -218,4 +218,45 @@ router.delete(
   },
 );
 
+// Event Data Export — ADMIN ONLY
+router.get(
+  "/event-data-export",
+  verifyToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const events = await Event.find().populate("createdBy").sort({ startTime: -1 });
+
+      const registrations = await Registration.find({
+        paymentStatus: "SUCCESS",
+      });
+
+      const eventData = events.map((event) => {
+        const eventRegs = registrations.filter(
+          (reg) => reg.eventId.toString() === event._id.toString(),
+        );
+        const totalAmountReceived = eventRegs.reduce(
+          (sum, reg) => sum + (reg.amountPaid || 0),
+          0,
+        );
+
+        return {
+          eventName: event.title,
+          clubName: event.createdBy?.clubName || "Unknown",
+          totalRegistrations: event.registeredCount || 0,
+          eventDate: event.startTime,
+          eventType: event.entryFee > 0 ? "Paid" : "Free",
+          entryFee: event.entryFee || 0,
+          totalAmountReceived,
+        };
+      });
+
+      res.json({ events: eventData });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to fetch event data" });
+    }
+  },
+);
+
 export default router;

@@ -365,9 +365,9 @@ const EventDetails = () => {
 
   // ── Derived button state ─────────────────────────────────────────────────
   const btnConfig = isEnded
-    ? { label: 'Event has Ended',      cls: 'bg-neutral-100 text-neutral-400 cursor-not-allowed border-neutral-200',       disabled: true  }
+    ? { label: 'Event has Ended',      cls: 'bg-neutral-100 text-neutral-600 cursor-not-allowed border-neutral-200',       disabled: true  }
     : isDeadlinePassed
-    ? { label: 'Deadline Passed',      cls: 'bg-neutral-100 text-neutral-400 cursor-not-allowed border-neutral-200',       disabled: true  }
+    ? { label: 'Deadline Passed',      cls: 'bg-neutral-100 text-neutral-600 cursor-not-allowed border-neutral-200',       disabled: true  }
     : isFull
     ? { label: 'Join Waitlist',         cls: 'bg-yellow-400 text-black border-black hover:bg-yellow-300 cursor-pointer',    disabled: false }
     : { label: 'Register for Event',   cls: 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false };
@@ -376,7 +376,7 @@ const EventDetails = () => {
     <div className="min-h-screen bg-neutral-50">
 
       {/* ── Back bar ────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b-2 border-black">
+      <div className="">
         <div className="max-w-[900px] mx-auto px-6 lg:px-8 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -384,12 +384,12 @@ const EventDetails = () => {
           >
             <i className="ri-arrow-left-line" /> Back
           </button>
-          <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Event Details</span>
+          <span className="text-[16px] font-bold uppercase tracking-widest text-neutral-600">Event Details</span>
         </div>
       </div>
 
       <div className="max-w-[900px] mx-auto px-6 lg:px-8 py-12">
-        <div className="bg-white border-2 border-black rounded-sm overflow-hidden">
+        <div className="bg-white border-2 border-gray-400 rounded-sm overflow-hidden">
 
           {/* ── Hero banner ──────────────────────────────────────────────── */}
           <div className="relative bg-neutral-100 flex items-center justify-center overflow-hidden">
@@ -453,7 +453,7 @@ const EventDetails = () => {
             </h1>
 
             {/* Meta grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-2 border-black rounded-sm overflow-hidden mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-2 border-gray-400 rounded-sm overflow-hidden mb-10">
               {[
                 {
                   icon: 'ri-time-line',
@@ -490,9 +490,9 @@ const EventDetails = () => {
               ].filter(Boolean).map((meta, i) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-4 p-5 ${i % 2 === 0 ? 'border-r border-black' : ''} ${i < 4 ? 'border-b-2 border-black' : ''}`}
+                  className={`flex items-start gap-4 p-5 ${i % 2 === 0 ? 'border-r border-gray-400' : ''} ${i < 4 ? 'border-b-2 border-gray-400' : ''}`}
                 >
-                  <div className="w-10 h-10 shrink-0 bg-orange-600 rounded-sm flex items-center justify-center text-white text-base">
+                  <div className=" bg-white rounded-sm flex items-center justify-center text-orange-600 text-2xl">
                     <i className={meta.icon} />
                   </div>
                   <div>
@@ -551,7 +551,7 @@ const EventDetails = () => {
                       return (
                         <div
                           key={i}
-                          className={`flex items-center gap-4 px-5 py-4 border-2 border-black rounded-sm ${medal ? medal.bg : 'bg-neutral-50'}`}
+                          className={`flex items-center gap-4 px-5 py-4 border-2 border-gray-300 rounded-sm ${medal ? medal.bg : 'bg-neutral-50'}`}
                         >
                           <div className={`w-9 h-9 shrink-0 rounded-sm border-2 ${medal ? medal.border : 'border-neutral-300 bg-white'} flex items-center justify-center`}>
                             {medal
@@ -587,7 +587,7 @@ const EventDetails = () => {
                 </div>
                 {!isDeadlinePassed && !isEnded && (
                     <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Time Left</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Time Left</p>
                         <p className="text-sm font-bold text-black uppercase">
                             {(() => {
                                 const diff = new Date(deadline) - new Date();

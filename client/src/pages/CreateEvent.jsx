@@ -154,7 +154,7 @@ const CreateEvent = () => {
                     <p className="text-neutral-600 mt-2">Fill in the details to publish a new event</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-black rounded-sm p-8 space-y-6 shadow-[8px_8px_0px_#0D0D0D]">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-400 rounded-sm p-8 space-y-6 ">
                     {error && (
                         <div className="flex items-center gap-2 bg-red-50 border-2 border-red-400 text-red-700 text-[13px] font-bold px-4 py-3 rounded-sm">
                             <i className="ri-error-warning-line text-lg" />
@@ -182,6 +182,7 @@ const CreateEvent = () => {
                         <select name="venue" required className={inputCls} value={formData.venue} onChange={handleChange}>
                             <option value="">Select Venue</option>
                             <option value="Student Activity Centre">Student Activity Centre</option>
+                            <option value="Snackers">Snackers</option>
                             <option value="IT Building - Lab 1">IT Building</option>
                             <option value="Central Lawn">Central Lawn</option>
                             <option value="Mega Ground">Mega Ground</option>

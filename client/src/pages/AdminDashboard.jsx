@@ -6,8 +6,9 @@ import { useNotification } from '../context/NotificationContext';
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [clubHeads, setClubHeads] = useState([]);
+    const [eventData, setEventData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'club-heads'
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'club-heads' | 'event-data'
     const [selectedClub, setSelectedClub] = useState(null);
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -29,6 +30,9 @@ const AdminDashboard = () => {
 
                 const headsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-heads-list`);
                 setClubHeads(headsRes.data);
+
+                const eventDataRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/event-data-export`);
+                setEventData(eventDataRes.data.events || []);
                 
                 setLoading(false);
             } catch (err) {
@@ -76,6 +80,27 @@ const AdminDashboard = () => {
         localStorage.removeItem('admin');
         localStorage.removeItem('token');
         navigate('/admin-secret-login');
+    };
+
+    const handleDownloadCSV = () => {
+        if (!eventData.length) return;
+        const headers = ['Event Name', 'Organising Club', 'Total Registrations', 'Event Type', 'Event Date', 'Total Amount Received (₹)'];
+        const rows = eventData.map(e => [
+            `"${e.eventName}"`,
+            `"${e.clubName}"`,
+            e.totalRegistrations,
+            e.eventType,
+            new Date(e.eventDate).toLocaleDateString(),
+            e.totalAmountReceived,
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `event_data_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
     };
 
     const handleApproveClubHead = async (id) => {
@@ -132,19 +157,19 @@ const AdminDashboard = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                     <div className="bg-orange-600 border-2 border-black p-4 rounded-sm text-white shadow-[4px_4px_0px_#000]">
+                     <div className="bg-orange-600 border-2 border-gray-300 p-4 rounded-sm text-white ">
                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Total Revenue</p>
                          <p className="text-2xl font-black">₹{stats?.totalRevenue || 0}</p>
                      </div>
-                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                     <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Students</p>
                          <p className="text-2xl font-black text-black">{stats?.totalStudents || 0}</p>
                      </div>
-                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                     <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Club Heads</p>
                          <p className="text-2xl font-black text-black">{stats?.totalClubHeads || 0}</p>
                      </div>
-                     <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                     <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Events</p>
                          <p className="text-2xl font-black text-black">{stats?.totalEvents || 0}</p>
                      </div>
@@ -164,30 +189,36 @@ const AdminDashboard = () => {
                     >
                         Club Heads List
                     </button>
+                    <button 
+                        onClick={() => setActiveTab('event-data')}
+                        className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'event-data' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
+                    >
+                        Event Data
+                    </button>
                 </div>
 
                 {activeTab === 'overview' && (
-                    <div className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] overflow-hidden">
+                    <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y-2 divide-black">
                                 <thead className="bg-neutral-100">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event Title</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Amount</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Deadline</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Event Title</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Amount</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Registrations</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Deadline</th>
                                         <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y-2 divide-black">
                                     {stats?.eventStats?.map((item, idx) => (
                                         <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.clubName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black">{item.title}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r-2 border-black">₹{item.totalCollected}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.regCount} students</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-black uppercase tracking-tighter">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{item.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-gray-400">{item.title}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r-2 border-gray-400">₹{item.totalCollected}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{item.regCount} students</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-gray-400 uppercase tracking-tighter">
                                                 {item.registrationDeadline 
                                                     ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
                                                     : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
@@ -238,26 +269,26 @@ const AdminDashboard = () => {
                 )}
 
                 {activeTab === 'club-heads' && (
-                    <div className="bg-white border-2 border-black rounded-sm shadow-[8px_8px_0px_#000] overflow-hidden">
+                    <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y-2 divide-black">
                                 <thead className="bg-neutral-100">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Club</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Email</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Email Verified</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Approval Status</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Email</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Email Verified</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Approval Status</th>
                                         <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y-2 divide-black">
                                     {clubHeads.map((head, idx) => (
                                         <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{head.name}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-black text-orange-600">{head.clubName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-black">{head.collegeEmail}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-black">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{head.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-gray-400 text-orange-600">{head.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">{head.collegeEmail}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-gray-400">
                                                 {head.isVerified ? (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-green-200">
                                                         Yes
@@ -268,7 +299,7 @@ const AdminDashboard = () => {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-black">
+                                            <td className="px-6 py-4 whitespace-nowrap border-r-2 border-gray-400">
                                                 {head.isApproved ? (
                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wide rounded-sm border border-green-200">
                                                         Approved
@@ -284,14 +315,14 @@ const AdminDashboard = () => {
                                                     {!head.isApproved && (
                                                         <button 
                                                             onClick={() => handleApproveClubHead(head._id)}
-                                                            className="px-3 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-green-600 transition-colors border-2 border-black"
+                                                            className="px-3 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-green-600 transition-colors border-2 border-gray-400"
                                                         >
                                                             Approve
                                                         </button>
                                                     )}
                                                     <button 
                                                         onClick={() => handleRejectClubHead(head._id)}
-                                                        className="px-3 py-1 border-2 border-black text-black text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-red-50 hover:text-red-600 transition-colors"
+                                                        className="px-3 py-1 border-2 border-gray-400 text-black text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-red-50 hover:text-red-600 transition-colors"
                                                     >
                                                         {head.isApproved ? 'Delete' : 'Reject'}
                                                     </button>
@@ -310,6 +341,71 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {activeTab === 'event-data' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-4">
+                            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                                {eventData.length} event{eventData.length !== 1 ? 's' : ''} found
+                            </p>
+                            <button
+                                onClick={handleDownloadCSV}
+                                disabled={!eventData.length}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-gray-400 active:translate-x-1 active:translate-y-1 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 hover:cursor-pointer"
+                            >
+                                <i className="ri-download-2-line text-sm" />
+                                Download CSV
+                            </button>
+                        </div>
+                        <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y-2 divide-black">
+                                    <thead className="bg-neutral-100">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Event Name</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Organising Club</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event Date</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Type</th>
+                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Amount Received</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y-2 divide-black">
+                                        {eventData.map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-neutral-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.eventName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r-2 border-black">{item.clubName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.totalRegistrations}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-black uppercase tracking-wide">
+                                                    {new Date(item.eventDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap border-r-2 border-gray-400">
+                                                    <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 ${
+                                                        item.eventType === 'Paid'
+                                                            ? 'bg-orange-50 text-orange-700 border-orange-300'
+                                                            : 'bg-green-50 text-green-700 border-green-300'
+                                                    }`}>
+                                                        {item.eventType}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-black">
+                                                    {item.totalAmountReceived > 0 
+                                                        ? <span className="text-orange-600">₹{item.totalAmountReceived}</span> 
+                                                        : <span className="text-neutral-300">—</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {eventData.length === 0 && (
+                                            <tr>
+                                                <td colSpan="6" className="px-6 py-12 text-center text-neutral-500 text-sm">No events found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Payout Modal */}
                 {modalOpen && selectedClub && (
