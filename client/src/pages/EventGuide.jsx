@@ -21,7 +21,7 @@ const EventGuide = () => {
         </div>
 
         {/* Who can create */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 shadow-[4px_4px_0px_#000] mb-8">
+        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black text-black mb-4 flex items-center gap-2">
             <i className="ri-user-star-line text-orange-600" />
             Who Can Create Events?
@@ -36,7 +36,7 @@ const EventGuide = () => {
         </section>
 
         {/* Types of Events */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 shadow-[4px_4px_0px_#000] mb-8">
+        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
             <i className="ri-calendar-event-line text-orange-600" />
             Types of Events You Can Create
@@ -88,7 +88,7 @@ const EventGuide = () => {
         </section>
 
         {/* All Fields Explained */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 shadow-[4px_4px_0px_#000] mb-8">
+        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
             <i className="ri-file-list-3-line text-orange-600" />
             Event Fields — Complete Reference
@@ -206,7 +206,7 @@ const EventGuide = () => {
         </section>
 
         {/* Custom Field Types */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 shadow-[4px_4px_0px_#000] mb-8">
+        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
             <i className="ri-magic-line text-orange-600" />
             Custom Field Types
@@ -250,7 +250,7 @@ const EventGuide = () => {
         </section>
 
         {/* Tips */}
-        <section className="bg-black text-white border-2 border-black rounded-sm p-8 shadow-[4px_4px_0px_#ea580c] mb-8">
+        <section className="bg-black text-white border-2 border-black rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black mb-5 flex items-center gap-2">
             <i className="ri-lightbulb-flash-line text-yellow-400" />
             Pro Tips

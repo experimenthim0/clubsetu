@@ -41,7 +41,9 @@ import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
 
 import { NotificationProvider } from './context/NotificationContext';
+import { SocketProvider } from './context/SocketContext';
 import Team from './pages/Team';
+import SendNotification from './pages/SendNotification';
 
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
@@ -101,7 +103,8 @@ function App() {
   }
   return (
     <NotificationProvider>
-      <Router>
+      <SocketProvider>
+        <Router>
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Navbar />
           <div className="flex-1">
@@ -126,6 +129,7 @@ function App() {
             <Route path="/my-events" element={<MyEvents />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/events/edit/:id" element={<EditEvent />} />
+            <Route path="/send-notification" element={<SendNotification />} />
             <Route path="/event/:id/registrations" element={<EventRegistrations />} />
             <Route path="/admin-secret-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -147,6 +151,7 @@ function App() {
           <Footer />
         </div>
       </Router>
+      </SocketProvider>
     </NotificationProvider>
   );
 }

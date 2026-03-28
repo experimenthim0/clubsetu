@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 
 const Navbar = () => {
@@ -18,6 +22,10 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const { notifications, unreadCount, setUnreadCount, setNotifications } = useSocket() || {};
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const notifDropdownRef = useRef(null);
 
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -41,10 +49,26 @@ const Navbar = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target)) {
+        setNotifDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleNotificationClick = async () => {
+    setNotifDropdownOpen(!notifDropdownOpen);
+    if (!notifDropdownOpen && unreadCount > 0) {
+      try {
+        await axios.put(`${API_URL}/api/notifications/read-all`);
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map(n => ({...n, readBy: [...(n.readBy || []), user._id || user.id]})));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   // ── Escape key → close dropdown ──────────────────────────────────────────
   useEffect(() => {
@@ -148,6 +172,48 @@ const Navbar = () => {
                   </Link>
                 )}
 
+                {/* ── Notification Bell (Students Only) ── */}
+                {role === "student" && (
+                  <div className="relative" ref={notifDropdownRef}>
+                    <button
+                      onClick={handleNotificationClick}
+                      className="relative p-2 rounded-sm border-2 border-transparent hover:border-black hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                    >
+                      <i className="ri-notification-3-line text-lg" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+                      )}
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {notifDropdownOpen && (
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] z-50">
+                        <div className="px-4 py-3 border-b-2 border-black flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                          <h3 className="text-[14px] font-black uppercase tracking-widest">Notifications</h3>
+                        </div>
+                        <div className="divide-y divide-neutral-100">
+                          {notifications?.length > 0 ? (
+                            notifications.map((notif, idx) => (
+                              <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                                  <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
+                                <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
+                              No notifications yet
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Avatar dropdown ── */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -157,7 +223,7 @@ const Navbar = () => {
                     aria-expanded={dropdownOpen}
                   >
                     {/* Avatar square */}
-                    <div className="w-8 h-8 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white text-[11px] font-black flex-shrink-0">
+                    <div className="w-8 h-8 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white text-[11px] font-black shrink-0">
                       {initials}
                     </div>
                     <span className="text-[12px] font-bold text-black max-w-[80px] truncate hidden lg:block">
@@ -232,6 +298,15 @@ const Navbar = () => {
                             
                           </Link>
                         )}
+                        {role === "club-head" && (
+                          <Link
+                            to="/send-notification"
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                            role="menuitem"
+                          >
+                            <i className="ri-notification-badge-line text-orange-600"/> Send Notification
+                          </Link>
+                        )}
                       </div>
 
                       {/* Divider + logout */}
@@ -270,7 +345,7 @@ const Navbar = () => {
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            className="md:hidden w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer flex-shrink-0"
+            className="md:hidden w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
@@ -288,7 +363,7 @@ const Navbar = () => {
             {/* User card */}
             {user && (
               <div className="flex items-center gap-3 pb-4 mb-1 border-b-2 border-black">
-                <div className="w-11 h-11 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+                <div className="w-11 h-11 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white font-black text-sm shrink-0">
                   {initials}
                 </div>
                 <div>

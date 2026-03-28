@@ -48,7 +48,7 @@ const ClubsPage = ({ isHome = false }) => {
           >
             <div>
               <div className="flex justify-between items-start mb-4">
-                <div className="w-16 h-16 border-2 border-black bg-white flex items-center justify-center p-1 shadow-[4px_4px_0px_#000]">
+                <div className="w-16 h-16 border-2 border-black bg-white flex items-center justify-center p-1">
                   {club.clubLogo ? (
                     <img src={club.clubLogo} alt={club.clubName} className="w-full h-full object-contain" />
                   ) : (

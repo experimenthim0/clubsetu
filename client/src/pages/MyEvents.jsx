@@ -244,14 +244,25 @@ const MyEvents = () => {
             </div>
           ) : (
             <div className="grid gap-4">
-              {createdEvents.map(event => (
+              {createdEvents.map(event => {
+                const isPast = new Date(event.endTime) < new Date();
+                return (
                 <div
                   key={event._id}
                   className="bg-white border-2 border-black rounded-sm  overflow-hidden"
                 >
                   {/* Top stripe: title */}
-                  <div className="px-6 pt-5 pb-3 border-b border-gray-100">
+                  <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
                     <h3 className="text-lg font-bold text-black leading-tight">{event.title}</h3>
+                    <span
+                        className={`shrink-0 ml-4 px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-wider ${
+                          isPast
+                            ? 'bg-neutral-100 text-neutral-600 border border-neutral-300'
+                            : 'bg-green-100 text-green-700 border border-green-700'
+                        }`}
+                      >
+                        {isPast ? 'Past Event' : 'Upcoming'}
+                      </span>
                   </div>
 
                   {/* Bottom row: meta left | actions right */}
@@ -295,7 +306,7 @@ const MyEvents = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>

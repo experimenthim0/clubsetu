@@ -9,7 +9,7 @@ const FAQ = () => {
         <div className="space-y-6">
           
           {/* Email Verification Issues */}
-          <div className="bg-white border-2 border-black p-6 rounded-sm shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-black p-6 rounded-sm">
             <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
               <i className="ri-mail-close-line text-orange-600"></i>
               I didn't receive the verification email.
@@ -21,7 +21,7 @@ const FAQ = () => {
             </p>
           </div>
 
-          <div className="bg-white border-2 border-black p-6 rounded-sm shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-black p-6 rounded-sm">
             <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
               <i className="ri-error-warning-line text-red-600"></i>
               "Connection Refused" or "Localhost" error when verifying email.
@@ -33,7 +33,7 @@ const FAQ = () => {
           </div>
 
           {/* Event Issues */}
-          <div className="bg-white border-2 border-black p-6 rounded-sm shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-black p-6 rounded-sm">
             <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
               <i className="ri-calendar-event-line text-blue-600"></i>
               "Event Not Found" error.
@@ -50,7 +50,7 @@ const FAQ = () => {
           </div>
 
           {/* Login Issues */}
-           <div className="bg-white border-2 border-black p-6 rounded-sm shadow-[4px_4px_0px_#000]">
+           <div className="bg-white border-2 border-black p-6 rounded-sm">
             <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
               <i className="ri-login-circle-line text-purple-600"></i>
               I cannot login to my account.
