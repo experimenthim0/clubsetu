@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
-
+import { BellIcon } from "./ui/bell";
+import { UserIcon } from "./ui/user";
+import { CalendarDaysIcon } from "./ui/calendar-days";
+import { IndianRupeeIcon } from "./ui/indian-rupee";
+import { LogoutIcon } from "./ui/logout";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -109,10 +113,8 @@ const Navbar = () => {
 
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
-    `px-3.5 py-1.5 text-[12px] font-bold tracking-widest border-2 rounded-sm transition-colors duration-150 ${
-      isActive(path)
-        ? "border-gray-500 bg-neutral-100 text-black"
-        : "border-transparent text-black hover:border-black hover:bg-neutral-100"
+    `relative py-1 text-[12px] font-bold tracking-widest uppercase transition-all duration-300 group ${
+      isActive(path) ? "text-orange-600" : "text-black hover:text-orange-600"
     }`;
 
   return (
@@ -140,18 +142,22 @@ const Navbar = () => {
           </Link>
 
           {/* ── Desktop center links ──────────────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-6">
             <Link to="/" className={navLinkCls("/")}>
               Home
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/events" className={navLinkCls("/events")}>
               Events
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/clubs" className={navLinkCls("/clubs")}>
               Clubs
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/clubs") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/about-features" className={navLinkCls("/about-features")}>
               ClubSetu Features
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/about-features") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
           </div>
 
@@ -177,9 +183,10 @@ const Navbar = () => {
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
-                      className="relative p-2 rounded-sm border-2 border-transparent hover:border-black hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                      className="relative p-2 rounded-sm  border-transparent  hover:bg-neutral-200 transition-colors duration-150 cursor-pointer"
                     >
-                      <i className="ri-notification-3-line text-lg" />
+                     {/* <i className="ri-notification-3-line text-lg" /> */}
+                     <BellIcon />
                       {unreadCount > 0 && (
                         <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
                       )}
@@ -187,7 +194,7 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] z-50">
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm z-50">
                         <div className="px-4 py-3 border-b-2 border-black flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
                           <h3 className="text-[14px] font-black uppercase tracking-widest">Notifications</h3>
                         </div>
@@ -259,11 +266,13 @@ const Navbar = () => {
                       <div className="py-1">
                         <Link
                           to="/profile"
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2 text-[12px] font-bold text-black hover:bg-neutral-100 transition-colors"
                           role="menuitem"
                         >
-                          <i className="ri-user-line text-orange-600" /> My
+                          {/* <i className="ri-user-line text-orange-600" /> My */}
+                          <UserIcon size={18} >
                           Profile
+                          </UserIcon>
                         </Link>
 
                         {role === "student" && (
@@ -272,8 +281,10 @@ const Navbar = () => {
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
                             role="menuitem"
                           >
-                            <i className="ri-calendar-check-line text-orange-600" />{" "}
+                            {/* <i className="ri-calendar-check-line text-orange-600" />{" "} */}
+                            <CalendarDaysIcon size={18} >
                             My Events
+                            </CalendarDaysIcon>
                           </Link>
                         )}
 
@@ -294,7 +305,10 @@ const Navbar = () => {
                             role="menuitem"
                           >
                          
-                            <i className="ri-money-dollar-circle-line text-orange-600"/>Payments
+                            {/* <i className="ri-money-dollar-circle-line text-orange-600"/> */}
+                            <IndianRupeeIcon size={18} >
+                            Payments
+                            </IndianRupeeIcon>
                             
                           </Link>
                         )}
@@ -316,7 +330,11 @@ const Navbar = () => {
                           className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                           role="menuitem"
                         >
-                          <i className="ri-logout-box-r-line" /> Logout
+                          {/* <i className="ri-logout-box-r-line" /> */}
+                          <LogoutIcon size={18} >
+                            Logout
+                          </LogoutIcon>
+                           
                         </button>
                       </div>
                     </div>
@@ -327,9 +345,10 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="px-3.5 py-2 text-[11px] font-bold uppercase tracking-widest text-black border-2 border-transparent hover:border-black rounded-sm transition-colors"
+                  className="relative py-1 text-[11px] font-bold uppercase tracking-widest text-black group transition-colors hover:text-orange-600"
                 >
                   Login
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </Link>
                 <Link
                   to="/register"
@@ -345,7 +364,7 @@ const Navbar = () => {
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            className="md:hidden w-10 h-10 flex items-center justify-center border-2 border-black rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >

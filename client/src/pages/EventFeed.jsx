@@ -3,6 +3,8 @@ import axios from 'axios';
 import EventCard from '../components/EventCard';
 import { useNotification } from '../context/NotificationContext';
 import { Link } from 'react-router-dom';
+import EventCardSkeleton from '../components/skeletons/EventCardSkeleton';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const EventFeed = ({ limit, hideHeader = false }) => {
   const { showNotification } = useNotification();
@@ -63,12 +65,20 @@ const EventFeed = ({ limit, hideHeader = false }) => {
     }
   };
 
-  if (loading)
-  return (
-    <div className="text-center mt-16 text-gray-500">
-      Loading events...
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className={`max-w-7xl mx-auto px-6 ${hideHeader ? '' : 'py-12'}`}>
+        {!hideHeader && (
+          <Skeleton className="w-48 h-8 mb-6" />
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(limit || 6)].map((_, i) => (
+            <EventCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Apply filters
   let filtered = [...events];

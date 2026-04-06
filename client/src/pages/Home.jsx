@@ -4,7 +4,8 @@ import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
 import HomeFooter from '../components/HomeFooter';
 import Maintainance from './Maintainance';
-
+import ScrollReveal from '../components/ScrollReveal';
+import {ArrowRightIcon} from '../components/ui/arrow-right';
 // Ticker items
 const tickerItems = [
   'Workshops', 'Hackathons', 'Cultural Fests', 'Sports Meets',
@@ -54,59 +55,43 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
 
           {/* Top badges */}
-          <div className="flex items-center justify-between mb-14 flex-wrap gap-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* <span className="inline-flex items-center gap-2 bg-orange-600 text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
-                <i className="ri-fire-fill" /> Trending on Campus
-              </span> */}
-              <span className="inline-flex items-center gap-2 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
-                <i className="ri-school-line" /> Exclusively for NITJ
-              </span>
+          <ScrollReveal delay={0.1}>
+            <div className="flex items-center justify-between mb-14 flex-wrap gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="inline-flex items-center gap-2 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
+                  <i className="ri-school-line" /> Exclusively for NITJ
+                </span>
+              </div>
             </div>
-            {/* <span className="bg-yellow-400 border-2 border-black text-black text-[11px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-sm">
-              2026 Edition
-            </span> */}
-          </div>
+          </ScrollReveal>
 
           {/* Headline */}
-          <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black mb-0">
-  Discover<br />
-  <span className="text-orange-600">Clubs & Events</span><br />
-  at NITJ...
-</h1>
+          <ScrollReveal delay={0.2}>
+            <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black mb-0">
+              Discover<br />
+              <span className="text-orange-600">Clubs & Events</span><br />
+              at NITJ...
+            </h1>
+          </ScrollReveal>
 
           {/* Sub + CTAs */}
-          <div className="mt-12 flex flex-wrap items-end gap-10">
-           <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
-  ClubSetu connects NIT Jalandhar students with campus clubs and events in one place. 
-  Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
-</p>
-            <div className="flex gap-3 flex-wrap">
-              <BtnPrimary to="/events">
-  <i className="ri-calendar-event-line text-sm" /> Browse Events
-</BtnPrimary>
+          <ScrollReveal delay={0.3}>
+            <div className="mt-12 flex flex-wrap items-end gap-10">
+              <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
+                ClubSetu connects NIT Jalandhar students with campus clubs and events in one place. 
+                Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                <BtnPrimary to="/events">
+                  <i className="ri-calendar-event-line text-sm" /> Browse Events
+                </BtnPrimary>
 
-<BtnSecondary to="/clubs">
-  <i className="ri-group-line text-sm" /> Explore Clubs
-</BtnSecondary>
+                <BtnSecondary to="/clubs">
+                  <i className="ri-group-line text-sm" /> Explore Clubs
+                </BtnSecondary>
+              </div>
             </div>
-          </div>
-
-          {/* Hero image strip */}
-          {/* <div className="mt-14 border-2 border-black rounded-sm overflow-hidden relative">
-            <img
-              src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-              alt="Campus Life"
-              className="w-full h-72 object-cover object-[center_40%] block"
-              style={{ filter: 'saturate(0.8)' }}
-            />
-            <div className="absolute bottom-4 left-4 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-2 rounded-sm">
-              NIT Jalandhar
-            </div>
-            <div className="absolute bottom-4 right-4 bg-yellow-400 text-black text-[12px] font-black px-4 py-2 rounded-sm border-2 border-black">
-              10+ Events Hosted
-            </div>
-          </div> */}
+          </ScrollReveal>
         </div>
       </section>
 
@@ -135,36 +120,54 @@ const Home = () => {
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="mb-12">
-            <SectionLabel>Latest Happenings</SectionLabel>
-            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
-              What's Buzzing<br />on Campus
-            </h2>
-          </div>
-          <EventFeed limit={6} hideHeader={true} />
-          <div className="flex justify-center mt-12">
-            <BtnSecondary to="/events">
-              View All Events <i className="ri-arrow-right-line text-sm" />
-            </BtnSecondary>
-          </div>
+          <ScrollReveal direction="up">
+            <div className="mb-12">
+              <SectionLabel>Latest Happenings</SectionLabel>
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
+                What's Buzzing<br />on Campus
+              </h2>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <EventFeed limit={6} hideHeader={true} />
+          </ScrollReveal>
+          <ScrollReveal delay={0.3}>
+            <div className="flex justify-center mt-12">
+              <BtnSecondary to="/events">
+              <ArrowRightIcon >
+
+                View All Events 
+              </ArrowRightIcon>
+              </BtnSecondary>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="mb-12">
-            <SectionLabel>Our Clubs</SectionLabel>
-            <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
-              Find Your<br />Community
-            </h2>
-          </div>
-          <Clubspage isHome={true} />
-          <div className="flex justify-center mt-12">
-            <BtnSecondary to="/clubs">
-              View More <i className="ri-arrow-right-line text-sm" />
-            </BtnSecondary>
-          </div>
+          <ScrollReveal direction="up">
+            <div className="mb-12">
+              <SectionLabel>Our Clubs</SectionLabel>
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
+                Find Your<br />Community
+              </h2>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <Clubspage isHome={true} />
+          </ScrollReveal>
+          <ScrollReveal delay={0.3}>
+            <div className="flex justify-center mt-12">
+              <BtnSecondary to="/clubs">
+              <ArrowRightIcon >
+
+                View More 
+              </ArrowRightIcon>
+              </BtnSecondary>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -173,28 +176,32 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
 
           {/* Image */}
-          <div className="relative">
-            {/* Offset border */}
-            <div className="absolute -top-4 -left-4 w-full h-full border-2 border-orange-600 rounded-sm pointer-events-none" />
-            <img
-              src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-              alt="Student Life"
-              className="relative w-full h-[460px] object-cover rounded-sm border-2 border-black block"
-              style={{ filter: 'saturate(0.9)' }}
-            />
-            {/* Floating badge */}
-            <div className="absolute -bottom-5 -right-5 bg-yellow-400 border-2 border-black rounded-sm px-5 py-4 hidden md:block">
-              <div className="text-[22px] font-black leading-none">1-Click</div>
-              <div className="text-[12px] text-neutral-700 mt-1">Event Registration</div>
+          <ScrollReveal direction="right" delay={0.1}>
+            <div className="relative">
+              {/* Offset border */}
+              <div className="absolute -top-4 -left-4 w-full h-full border-2 border-orange-600 rounded-sm pointer-events-none" />
+              <img
+                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                alt="Student Life"
+                className="relative w-full h-[460px] object-cover rounded-sm border-2 border-black block"
+                style={{ filter: 'saturate(0.9)' }}
+              />
+              {/* Floating badge */}
+              <div className="absolute -bottom-5 -right-5 bg-yellow-400 border-2 border-black rounded-sm px-5 py-4 hidden md:block">
+                <div className="text-[22px] font-black leading-none">1-Click</div>
+                <div className="text-[12px] text-neutral-700 mt-1">Event Registration</div>
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Text */}
           <div>
-            <SectionLabel>For Students</SectionLabel>
-            <h2 className="font-black text-[clamp(32px,4vw,52px)] leading-[1.1] tracking-wide text-black mb-10">
-              Never Miss a<br />Campus Beat<br /><span className="text-orange-600">Again.</span>
-            </h2>
+            <ScrollReveal direction="up" delay={0.2}>
+              <SectionLabel>For Students</SectionLabel>
+              <h2 className="font-black text-[clamp(32px,4vw,52px)] leading-[1.1] tracking-wide text-black mb-10">
+                Never Miss a<br />Campus Beat<br /><span className="text-orange-600">Again.</span>
+              </h2>
+            </ScrollReveal>
 
             <div className="flex flex-col gap-7">
               {[
@@ -214,23 +221,27 @@ const Home = () => {
                   icon: 'ri-profile-line',
                 },
               ].map((item, i) => (
-                <div key={i} className="flex gap-4 items-start">
-                  <div className="w-11 h-11 flex-shrink-0 bg-orange-50 border-2 border-orange-600 rounded-sm flex items-center justify-center text-orange-600 text-lg">
-                    <i className={item.icon} />
+                <ScrollReveal key={i} direction="up" delay={0.3 + (i * 0.1)}>
+                  <div className="flex gap-4 items-start">
+                    <div className="w-11 h-11 flex-shrink-0 bg-orange-50 border-2 border-orange-600 rounded-sm flex items-center justify-center text-orange-600 text-lg">
+                      <i className={item.icon} />
+                    </div>
+                    <div>
+                      <div className="text-[12px] text-neutral-400 line-through tracking-wide mb-1">{item.problem}</div>
+                      <div className="text-[16px] font-bold text-black leading-snug">{item.solution}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[12px] text-neutral-400 line-through tracking-wide mb-1">{item.problem}</div>
-                    <div className="text-[16px] font-bold text-black leading-snug">{item.solution}</div>
-                  </div>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
 
-            <div className="mt-10">
-              <BtnPrimary to="/register">
-                <i className="ri-arrow-right-line text-sm" /> Join Now — It's Free
-              </BtnPrimary>
-            </div>
+            <ScrollReveal direction="up" delay={0.6}>
+              <div className="mt-10">
+                <BtnPrimary to="/register">
+                  <i className="ri-arrow-right-line text-sm" /> Join Now — It's Free
+                </BtnPrimary>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -241,15 +252,19 @@ const Home = () => {
 
           {/* Header */}
           <div className="flex items-end justify-between mb-14 flex-wrap gap-6">
-            <div>
-              <SectionLabel light>For Club Heads</SectionLabel>
-              <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black">
-                Less Logistics,<br /><span className="text-orange-500">More Impact.</span>
-              </h2>
-            </div>
-            <p className="text-[15px] text-neutral-700 max-w-xs leading-relaxed">
-              Stop wrestling with Google Forms and messy spreadsheets. We give you a command center for your entire event lifecycle.
-            </p>
+            <ScrollReveal direction="up">
+              <div>
+                <SectionLabel light>For Club Heads</SectionLabel>
+                <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black">
+                  Less Logistics,<br /><span className="text-orange-500">More Impact.</span>
+                </h2>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.2}>
+              <p className="text-[15px] text-neutral-700 max-w-xs leading-relaxed">
+                Stop wrestling with Google Forms and messy spreadsheets. We give you a command center for your entire event lifecycle.
+              </p>
+            </ScrollReveal>
           </div>
 
           {/* Feature grid */}
@@ -260,33 +275,36 @@ const Home = () => {
               { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-line' },
               { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.',   icon: 'ri-trophy-line' },
             ].map((item, i) => (
-              <div
-                key={i}
-                className=" border border-neutral-300 rounded-xl p-7 hover:border-orange-600 hover:-translate-y-1 transition-all group"
-              >
-                <div className="w-12 h-12 bg-orange-600 rounded-sm flex items-center justify-center text-white text-xl mb-5">
-                  <i className={item.icon} />
+              <ScrollReveal key={i} direction="up" delay={0.1 + (i * 0.1)}>
+                <div
+                  className=" border border-neutral-300 rounded-xl p-7 hover:border-orange-600 hover:-translate-y-1 transition-all group"
+                >
+                  <div className="w-12 h-12 bg-orange-600 rounded-sm flex items-center justify-center text-white text-xl mb-5">
+                    <i className={item.icon} />
+                  </div>
+                  <h3 className="text-black font-bold text-[18px] mb-2.5 tracking-wide">{item.title}</h3>
+                  <p className="text-neutral-700 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
-                <h3 className="text-black font-bold text-[18px] mb-2.5 tracking-wide">{item.title}</h3>
-                <p className="text-neutral-700 text-[14px] leading-relaxed">{item.desc}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
 
           {/* Quote strip */}
-          <div className="mt-5 border border-gray-300 overflow-hidden relative">
-            <img
-              src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Event Organizer"
-              className="w-full h-56 object-cover object-[center_50%] block"
-              style={{ filter: 'saturate(0) brightness(0.8)' }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center px-6">
-              <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-wide leading-snug max-w-2xl">
-                "Finally, no more manually checking 500 screenshots of payment proofs."
+          <ScrollReveal direction="up" delay={0.5}>
+            <div className="mt-5 border border-gray-300 overflow-hidden relative">
+              <img
+                src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                alt="Event Organizer"
+                className="w-full h-56 object-cover object-[center_50%] block"
+                style={{ filter: 'saturate(0) brightness(0.8)' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center px-6">
+                <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-wide leading-snug max-w-2xl">
+                  "Finally, no more manually checking 500 screenshots of payment proofs."
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
