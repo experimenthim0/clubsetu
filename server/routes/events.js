@@ -241,4 +241,97 @@ router.get(
   }
 );
 
+// PUT /api/events/:id — CLUB HEAD or ADMIN
+router.put(
+  "/:id",
+  verifyToken,
+  allowRoles("clubHead", "admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.user;
+
+      const event = await Event.findById(id);
+      if (!event) return res.status(404).json({ message: "Event not found" });
+
+      // Authorization Check
+      if (event.createdBy.toString() !== userId && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Unauthorized to update this event." });
+      }
+
+      // If title changes, update slug
+      if (req.body.title && req.body.title !== event.title) {
+        req.body.slug = slugify(req.body.title);
+      }
+
+      const updatedEvent = await Event.findByIdAndUpdate(
+        id,
+        { $set: req.body },
+        { new: true }
+      );
+
+      res.json(updatedEvent);
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
+);
+
+// DELETE /api/events/:id — CLUB HEAD or ADMIN
+router.delete(
+  "/:id",
+  verifyToken,
+  allowRoles("clubHead", "admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.user;
+
+      const event = await Event.findById(id);
+      if (!event) return res.status(404).json({ message: "Event not found" });
+
+      if (event.createdBy.toString() !== userId && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Unauthorized to delete this event." });
+      }
+
+      await Event.findByIdAndDelete(id);
+      // Clean up registrations
+      await Registration.deleteMany({ eventId: id });
+
+      res.json({ message: "Event deleted successfully." });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// DELETE /api/events/:id/register — MEMBER ONLY
+router.delete(
+  "/:id/register",
+  verifyToken,
+  allowRoles("member", "admin"),
+  async (req, res) => {
+    const { studentId } = req.body; // Sent from frontend
+    const eventId = req.params.id;
+
+    try {
+      const registration = await Registration.findOneAndDelete({ eventId, userId: studentId });
+      
+      if (!registration) {
+        return res.status(404).json({ message: "Registration not found." });
+      }
+
+      if (registration.status === "CONFIRMED") {
+        await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
+      } else {
+        await Event.findByIdAndUpdate(eventId, { $pull: { waitingList: registration._id } });
+      }
+
+      res.json({ message: "Deregistered successfully." });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 export default router;
