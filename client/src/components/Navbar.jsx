@@ -246,7 +246,7 @@ const Navbar = () => {
                   {/* ── Dropdown panel ── */}
                   {dropdownOpen && (
                     <div
-                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] z-50 overflow-hidden"
+                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm  z-50 overflow-hidden"
                       role="menu"
                     >
                       {/* User header */}
@@ -415,15 +415,58 @@ const Navbar = () => {
     </div>
   )}
 
-  {/* Hamburger Button */}
-  <button
-    onClick={() => setMobileOpen((o) => !o)}
-    className="w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
-    aria-label="Toggle menu"
-    aria-expanded={mobileOpen}
-  >
-    <i className={mobileOpen ? "ri-close-line" : "ri-menu-3-line"} />
-  </button>
+  <div className="md:hidden flex items-center gap-3">
+            {user && role === "student" && collegeConfig.enabledFeatures.includes("notifications") && (
+              <div className="relative" ref={notifDropdownRef}>
+                <button
+                  onClick={handleNotificationClick}
+                  className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                >
+                  <BellIcon size={22} className="text-black" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+                  )}
+                </button>
+
+                {/* Mobile Notification Dropdown */}
+                {notifDropdownOpen && (
+                  <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-400 rounded-sm z-50">
+                    <div className="px-4 py-3 border-b-2 border-gray-400 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                      <h3 className="text-[14px] font-black uppercase tracking-widest text-black">Notifications</h3>
+                    </div>
+                    <div className="divide-y divide-neutral-100">
+                      {notifications?.length > 0 ? (
+                        notifications.map((notif, idx) => (
+                          <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
+                              <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
+                            <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
+                          No notifications yet
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hamburger */}
+            <button
+              onClick={() => setMobileOpen((o) => !o)}
+              className="w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              <i className={mobileOpen ? "ri-close-line" : "ri-menu-3-line"} />
+            </button>
+          </div>
 </div>
           
         </div>
