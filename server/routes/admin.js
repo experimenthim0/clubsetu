@@ -190,6 +190,63 @@ router.get(
   },
 );
 
+// Event Data Export - ADMIN ONLY
+router.get(
+  "/event-data-export",
+  verifyToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const events = await Event.find({})
+        .populate("clubId", "clubName")
+        .populate("createdBy", "name clubName")
+        .sort({ startTime: -1 });
+
+      const exportedEvents = await Promise.all(
+        events.map(async (event) => {
+          const successfulRegistrations = await Registration.find({
+            eventId: event._id,
+            paymentStatus: "SUCCESS",
+          }).select("amountPaid");
+
+          let clubName = event.clubId?.clubName || "Unknown";
+
+          if (clubName === "Unknown" && event.createdBy?._id) {
+            const membership = await ClubMember.findOne({
+              userId: event.createdBy._id,
+              role: "head",
+            }).populate("clubId", "clubName");
+
+            clubName =
+              membership?.clubId?.clubName ||
+              event.createdBy.clubName ||
+              "Unknown";
+          }
+
+          return {
+            eventId: event._id,
+            eventName: event.title,
+            clubName,
+            totalRegistrations:
+              event.registeredCount || successfulRegistrations.length,
+            eventType: event.entryFee > 0 ? "Paid" : "Free",
+            eventDate: event.startTime,
+            totalAmountReceived: successfulRegistrations.reduce(
+              (sum, registration) => sum + (registration.amountPaid || 0),
+              0,
+            ),
+          };
+        }),
+      );
+
+      res.json({ events: exportedEvents });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to export event data" });
+    }
+  },
+);
+
 // Approve Club Head — ADMIN ONLY
 router.patch(
   "/approve-club-head/:id",

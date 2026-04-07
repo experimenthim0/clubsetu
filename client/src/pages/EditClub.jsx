@@ -3,12 +3,21 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
+const slugifyClubName = (value = '') =>
+    value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
 const EditClub = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [clubId, setClubId] = useState(id);
+    const [clubSlug, setClubSlug] = useState('');
     const [formData, setFormData] = useState({
         clubName: '',
         category: '',
@@ -26,33 +35,63 @@ const EditClub = () => {
     });
 
     useEffect(() => {
+        const applyClubData = (club) => {
+            setClubId(club._id);
+            setClubSlug(club.slug || '');
+            setFormData({
+                clubName: club.clubName || '',
+                category: club.category || '',
+                description: club.description || '',
+                clubLogo: club.clubLogo || '',
+                clubGallery: club.clubGallery?.join(', ') || '',
+                clubSponsors: club.clubSponsors?.join(', ') || '',
+                facultyCoordinators: club.facultyCoordinators?.join(', ') || '',
+                studentCoordinators: club.studentCoordinators?.join(', ') || '',
+                clubInstagram: club.clubInstagram || '',
+                clubLinkedin: club.clubLinkedin || '',
+                clubX: club.clubX || '',
+                clubWebsite: club.clubWebsite || '',
+                clubWhatsapp: club.clubWhatsapp || ''
+            });
+        };
+
         const fetchClub = async () => {
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${id}`);
-                const club = res.data.club;
-                setFormData({
-                    clubName: club.clubName || '',
-                    category: club.category || '',
-                    description: club.description || '',
-                    clubLogo: club.clubLogo || '',
-                    clubGallery: club.clubGallery?.join(', ') || '',
-                    clubSponsors: club.clubSponsors?.join(', ') || '',
-                    facultyCoordinators: club.facultyCoordinators?.join(', ') || '',
-                    studentCoordinators: club.studentCoordinators?.join(', ') || '',
-                    clubInstagram: club.clubInstagram || '',
-                    clubLinkedin: club.clubLinkedin || '',
-                    clubX: club.clubX || '',
-                    clubWebsite: club.clubWebsite || '',
-                    clubWhatsapp: club.clubWhatsapp || ''
-                });
+                applyClubData(res.data.club);
             } catch (err) {
+                if (err.response?.status === 404) {
+                    try {
+                        const storedUser = JSON.parse(localStorage.getItem('user'));
+                        const storedRole = localStorage.getItem('role');
+
+                        if (storedUser && ['clubHead', 'club-head'].includes(storedRole)) {
+                            const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs`);
+                            const matchedClub = clubsRes.data.find((club) =>
+                                club._id === storedUser.clubId ||
+                                (club.clubName || '').trim().toLowerCase() === (storedUser.clubName || '').trim().toLowerCase() ||
+                                club.slug === storedUser.clubSlug ||
+                                club.slug === slugifyClubName(storedUser.clubName)
+                            );
+
+                            if (matchedClub) {
+                                applyClubData(matchedClub);
+                                return;
+                            }
+                        }
+                    } catch (fallbackErr) {
+                        console.error('Fallback club lookup failed:', fallbackErr);
+                    }
+                }
+
                 showNotification('Failed to fetch club data', 'error');
             } finally {
                 setLoading(false);
             }
         };
+
         fetchClub();
-    }, [id]);
+    }, [id, showNotification]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,17 +108,21 @@ const EditClub = () => {
                 clubGallery: formData.clubGallery.split(',').map(s => s.trim()).filter(s => s !== ''),
                 clubSponsors: formData.clubSponsors.split(',').map(s => s.trim()).filter(s => s !== '')
             };
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/clubs/${id}`, processedData);
-            
-            // Sync updated club data back to local user object if it's the current user
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/clubs/${clubId}`, processedData);
+
             const storedUser = JSON.parse(localStorage.getItem('user'));
-            if (storedUser && storedUser._id === id) {
-              const updatedUser = { ...storedUser, ...res.data.club };
-              localStorage.setItem('user', JSON.stringify(updatedUser));
+            if (storedUser) {
+                const updatedUser = {
+                    ...storedUser,
+                    clubId: res.data.club._id,
+                    clubSlug: res.data.club.slug || '',
+                    clubName: res.data.club.clubName || storedUser.clubName
+                };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
             }
 
             showNotification('Club information updated successfully', 'success');
-            navigate(`/club/${res.data.club.slug || id}`);
+            navigate(`/club/${res.data.club.slug || clubSlug || clubId}`);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Update failed', 'error');
         } finally {
@@ -237,7 +280,7 @@ const EditClub = () => {
 
 
                 <div className="pt-8 flex gap-4">
-                    <button type="button" onClick={() => navigate(`/club/${id}`)} className="flex-1 py-4 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition shadow-[4px_4px_0px_#000]">Cancel</button>
+                    <button type="button" onClick={() => navigate(`/club/${clubSlug || clubId}`)} className="flex-1 py-4 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition shadow-[4px_4px_0px_#000]">Cancel</button>
                     <button type="submit" disabled={isSaving} className={`flex-1 py-4 text-white font-black uppercase tracking-widest transition shadow-[4px_4px_0px_#ea580c] disabled:shadow-none ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}>{isSaving ? 'Saving...' : 'Save Club Changes'}</button>
                 </div>
             </form>
