@@ -4,7 +4,7 @@ const notificationSchema = new mongoose.Schema(
   {
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ClubHead",
+      ref: "User",
       required: true,
     },
     targetType: {
@@ -20,7 +20,7 @@ const notificationSchema = new mongoose.Schema(
     recipients: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
+        ref: "User",
       },
     ],
     title: { type: String, required: true },
@@ -28,7 +28,7 @@ const notificationSchema = new mongoose.Schema(
     readBy: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
+        ref: "User",
       },
     ],
   },

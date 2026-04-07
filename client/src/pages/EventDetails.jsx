@@ -40,7 +40,7 @@ const EventDetails = () => {
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
-    if (!user || role !== 'student') {
+    if (!user || (role !== 'member' && role !== 'student')) {
       showNotification('Please login as a student to register.', 'warning');
       navigate('/login');
       return;
@@ -71,7 +71,7 @@ const EventDetails = () => {
         // 1. Create Order on backend
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: event._id,
-          studentId: user._id
+          studentId: user._id // The payment route still uses 'studentId' in req.body for now
         });
 
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
@@ -105,7 +105,7 @@ const EventDetails = () => {
           },
           prefill: {
             name: user.name,
-            email: user.email || user.collegeEmail,
+            email: user.email,
             contact: user.phone || ''
           },
           theme: {
@@ -130,7 +130,7 @@ const EventDetails = () => {
     // Free Event Registration
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        studentId: user._id,
+        userId: user._id,
       });
       showNotification(res.data.message, 'success');
       setTimeout(() => navigate('/my-events'), 1500);
@@ -203,7 +203,7 @@ const EventDetails = () => {
             },
             prefill: {
               name: updatedUser.name,
-              email: updatedUser.email || updatedUser.collegeEmail,
+              email: updatedUser.email,
               contact: updatedUser.phone || ''
             },
             theme: { color: '#EA580C' }
@@ -219,7 +219,7 @@ const EventDetails = () => {
 
       // Free Event Registration
       const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        studentId: updatedUser._id,
+        userId: updatedUser._id,
       });
       showNotification(regRes.data.message, 'success');
       setTimeout(() => navigate('/my-events'), 1500);
@@ -248,7 +248,7 @@ const EventDetails = () => {
         await loadRazorpay();
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: event._id,
-          studentId: user._id
+          studentId: user._id // The payment route still uses 'studentId' in req.body for now
         });
 
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
@@ -282,7 +282,7 @@ const EventDetails = () => {
           },
           prefill: {
             name: user.name,
-            email: user.email || user.collegeEmail,
+            email: user.email,
             contact: user.phone || ''
           },
           theme: { color: '#EA580C' }
@@ -299,7 +299,7 @@ const EventDetails = () => {
     // Free Event Registration
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        studentId: user._id,
+        userId: user._id,
         formResponses: customFormResponses,
       });
       showNotification(res.data.message, 'success');

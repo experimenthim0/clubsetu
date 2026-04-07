@@ -1,18 +1,19 @@
 import express from "express";
-import Admin from "../models/Admin.js";
+import User from "../models/User.js";
 import Registration from "../models/Registration.js";
 import Event from "../models/Event.js";
-import ClubHead from "../models/ClubHead.js";
-import Student from "../models/Student.js";
-import { generateToken, verifyToken, requireRole } from "../middleware/auth.js";
+import Club from "../models/Club.js";
+import ClubMember from "../models/ClubMember.js";
+import { verifyToken, allowRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Admin Login
+// NOTE: Global Admin Login is now handled in auth.js with role "admin".
+// This route is kept for backward compatibility if needed, but refactored to use User model.
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const admin = await Admin.findOne({ email });
+    const admin = await User.findOne({ email, role: "admin" });
     if (!admin) {
       return res.status(401).json({ message: "Invalid admin credentials" });
     }
@@ -22,6 +23,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid admin credentials" });
     }
 
+    const { generateToken } = await import("../middleware/auth.js");
     const token = generateToken(admin, "admin");
 
     res.json({
@@ -38,18 +40,16 @@ router.post("/login", async (req, res) => {
 router.get(
   "/dashboard-stats",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
-      const events = await Event.find({ entryFee: { $gt: 0 } }).populate(
-        "createdBy",
-      );
+      const events = await Event.find({ entryFee: { $gt: 0 } }).populate("createdBy");
 
       const registrations = await Registration.find({
         paymentStatus: "SUCCESS",
       });
 
-      const eventStats = events.map((event) => {
+      const eventStats = await Promise.all(events.map(async (event) => {
         const eventRegs = registrations.filter(
           (reg) => reg.eventId.toString() === event._id.toString(),
         );
@@ -58,10 +58,21 @@ router.get(
           0,
         );
 
+        // Fetch club name from Club model if clubId exists, else fallback to old logic
+        let clubName = "Unknown";
+        if (event.clubId) {
+            const club = await Club.findById(event.clubId);
+            clubName = club?.clubName || "Unknown";
+        } else if (event.createdBy) {
+            // Fallback: search for a club where this user is the head
+            const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
+            clubName = membership?.clubId?.clubName || "Unknown";
+        }
+
         return {
           eventId: event._id,
           title: event.title,
-          clubName: event.createdBy?.clubName || "Unknown",
+          clubName,
           clubHeadId: event.createdBy?._id,
           totalCollected,
           regCount: eventRegs.length,
@@ -70,15 +81,15 @@ router.get(
           registrationDeadline: event.registrationDeadline,
           startTime: event.startTime,
         };
-      });
+      }));
 
       const totalPlatformRevenue = registrations.reduce(
         (sum, reg) => sum + (reg.amountPaid || 0),
         0,
       );
 
-      const totalStudents = await Student.countDocuments();
-      const totalClubHeads = await ClubHead.countDocuments();
+      const totalStudents = await User.countDocuments({ role: "member" });
+      const totalClubHeads = await User.countDocuments({ role: "clubHead" });
       const totalEvents = await Event.countDocuments();
 
       res.json({
@@ -99,7 +110,7 @@ router.get(
 router.post(
   "/complete-payout/:eventId",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
       const { eventId } = req.params;
@@ -109,8 +120,7 @@ router.post(
       const deadline = event.registrationDeadline || event.startTime;
       if (new Date() < new Date(deadline)) {
         return res.status(400).json({
-          message:
-            "Payout can only be completed after the registration deadline has passed.",
+          message: "Payout can only be completed after the registration deadline has passed.",
         });
       }
 
@@ -124,27 +134,30 @@ router.post(
   },
 );
 
-// Fetch Club Head Bank Info — ADMIN ONLY
+// Fetch Club Head Info — ADMIN ONLY
 router.get(
   "/club-head/:id",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
-      const clubHead = await ClubHead.findById(req.params.id);
-      if (!clubHead)
+      const user = await User.findById(req.params.id);
+      if (!user || user.role !== "clubHead")
         return res.status(404).json({ message: "Club Head not found" });
 
+      // Find the club name
+      const membership = await ClubMember.findOne({ userId: user._id, role: "head" }).populate("clubId");
+
       res.json({
-        name: clubHead.name,
-        clubName: clubHead.clubName,
+        name: user.name,
+        clubName: membership?.clubId?.clubName || user.clubName || "Unknown",
         bankInfo: {
-          bankName: clubHead.bankName,
-          accountHolderName: clubHead.accountHolderName,
-          accountNumber: clubHead.accountNumber,
-          ifscCode: clubHead.ifscCode,
-          upiId: clubHead.upiId,
-          bankPhone: clubHead.bankPhone,
+          bankName: user.bankName,
+          accountHolderName: user.accountHolderName,
+          accountNumber: user.accountNumber,
+          ifscCode: user.ifscCode,
+          upiId: user.upiId,
+          bankPhone: user.bankPhone,
         },
       });
     } catch (error) {
@@ -157,11 +170,20 @@ router.get(
 router.get(
   "/club-heads-list",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
-      const clubHeads = await ClubHead.find().select("-password");
-      res.json(clubHeads);
+      const clubHeads = await User.find({ role: "clubHead" }).select("-password");
+      
+      // Enhance with club names
+      const headsWithClubs = await Promise.all(clubHeads.map(async (head) => {
+          const membership = await ClubMember.findOne({ userId: head._id, role: "head" }).populate("clubId");
+          const headObj = head.toObject();
+          headObj.clubName = membership?.clubId?.clubName || head.clubName || "Unknown";
+          return headObj;
+      }));
+      
+      res.json(headsWithClubs);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch club heads" });
     }
@@ -172,20 +194,20 @@ router.get(
 router.patch(
   "/approve-club-head/:id",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const clubHead = await ClubHead.findById(id);
-      if (!clubHead)
+      const user = await User.findById(id);
+      if (!user || user.role !== "clubHead")
         return res.status(404).json({ message: "Club Head not found" });
 
-      clubHead.isApproved = true;
-      await clubHead.save();
+      user.isApproved = true;
+      await user.save();
 
       res.json({
         success: true,
-        message: `Club Head for ${clubHead.clubName} approved successfully`,
+        message: `Club Head for approved successfully`,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to approve club head" });
@@ -197,64 +219,29 @@ router.patch(
 router.delete(
   "/reject-club-head/:id",
   verifyToken,
-  requireRole("admin"),
+  allowRoles("admin"),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const clubHead = await ClubHead.findById(id);
-      if (!clubHead)
+      const user = await User.findById(id);
+      if (!user || user.role !== "clubHead")
         return res.status(404).json({ message: "Club Head not found" });
 
-      const clubName = clubHead.clubName;
-      await ClubHead.findByIdAndDelete(id);
+      // Also clean up club and membership
+      const membership = await ClubMember.findOne({ userId: user._id, role: "head" });
+      if (membership) {
+          await Club.findByIdAndDelete(membership.clubId);
+          await ClubMember.deleteMany({ clubId: membership.clubId });
+      }
+      
+      await User.findByIdAndDelete(id);
 
       res.json({
         success: true,
-        message: `Club Head for ${clubName} rejected and deleted`,
+        message: `Club Head and associated data rejected and deleted`,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to reject club head" });
-    }
-  },
-);
-
-// Event Data Export — ADMIN ONLY
-router.get(
-  "/event-data-export",
-  verifyToken,
-  requireRole("admin"),
-  async (req, res) => {
-    try {
-      const events = await Event.find().populate("createdBy").sort({ startTime: -1 });
-
-      const registrations = await Registration.find({
-        paymentStatus: "SUCCESS",
-      });
-
-      const eventData = events.map((event) => {
-        const eventRegs = registrations.filter(
-          (reg) => reg.eventId.toString() === event._id.toString(),
-        );
-        const totalAmountReceived = eventRegs.reduce(
-          (sum, reg) => sum + (reg.amountPaid || 0),
-          0,
-        );
-
-        return {
-          eventName: event.title,
-          clubName: event.createdBy?.clubName || "Unknown",
-          totalRegistrations: event.registeredCount || 0,
-          eventDate: event.startTime,
-          eventType: event.entryFee > 0 ? "Paid" : "Free",
-          entryFee: event.entryFee || 0,
-          totalAmountReceived,
-        };
-      });
-
-      res.json({ events: eventData });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Failed to fetch event data" });
     }
   },
 );

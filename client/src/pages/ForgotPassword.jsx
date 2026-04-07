@@ -43,18 +43,18 @@ const ForgotPassword = () => {
             <div className="inline-flex border-2 border-black rounded-sm overflow-hidden">
               <button
                 type="button"
-                onClick={() => setRole('student')}
-                className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition ${
-                  role === 'student' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                onClick={() => setRole('member')}
+                className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
+                  role === 'member' || role === 'student' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
                 }`}
               >
                 Student
               </button>
               <button
                 type="button"
-                onClick={() => setRole('club-head')}
-                className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition ${
-                  role === 'club-head' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                onClick={() => setRole('clubHead')}
+                className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
+                  role === 'clubHead' || role === 'club-head' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
                 }`}
               >
                 Club Head

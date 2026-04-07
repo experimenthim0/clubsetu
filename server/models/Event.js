@@ -38,10 +38,15 @@ const eventSchema = new mongoose.Schema(
     ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ClubHead",
+      ref: "User",
       required: true,
       index: true,
-    }, // Reference to Club Head
+    }, // Reference to User (the one who created it)
+    clubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Club",
+      index: true,
+    }, // Reference to the Club
     payoutStatus: {
       type: String,
       enum: ["PENDING", "COMPLETED"],

@@ -19,8 +19,9 @@ const EventFeed = ({ limit, hideHeader = false }) => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
       setEvents(res.data);
-      if (user && localStorage.getItem('role') === 'student') {
-          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/student/${user._id}`);
+      const role = localStorage.getItem('role');
+      if (user && (role === 'member' || role === 'student')) {
+          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user._id}`);
           setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId._id));
       }
       setLoading(false);
@@ -49,14 +50,14 @@ const EventFeed = ({ limit, hideHeader = false }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
 
-    if (!user || role !== 'student') {
+    if (!user || (role !== 'member' && role !== 'student')) {
         showNotification('Please login as a student to register.', 'warning');
         return;
     }
 
     try {
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/register`, {
-            studentId: user._id
+            userId: user._id
         });
         showNotification(res.data.message, 'success');
         fetchEvents();

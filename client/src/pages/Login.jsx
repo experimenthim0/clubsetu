@@ -21,14 +21,17 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
+      // Mapping frontend role display to backend role enum
+      const backendRole = role === 'student' ? 'member' : 'clubHead';
+      
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         ...formData,
-        role
+        role: backendRole
       });
       
-      // Store user, token, role (JWT token is now also stored in localStorage for Authorization header)
+      // Store user, token, role
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('role', res.data.role);
+      localStorage.setItem('role', res.data.role); // 'member', 'clubHead', or 'admin'
       localStorage.setItem('token', res.data.token);
       
       navigate('/');

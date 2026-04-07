@@ -3,214 +3,114 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import Event from "../models/Event.js";
 import Registration from "../models/Registration.js";
+import User from "../models/User.js";
 import dotenv from "dotenv/config";
-import { verifyToken, requireRole } from "../middleware/auth.js";
+import { verifyToken, allowRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Initialize Razorpay instance with credentials from environment
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// ============================================================================
 // POST /api/payment/create-order
-// Create a Razorpay order for event registration payment
-// ============================================================================
 router.post(
   "/create-order",
   verifyToken,
-  requireRole("student"),
+  allowRoles("member", "clubHead", "admin"),
   async (req, res) => {
-    const { eventId, studentId } = req.body;
+    const { eventId, studentId } = req.body; // studentId is actually the userId
 
     try {
-      // Validate input
       if (!eventId || !studentId) {
-        return res
-          .status(400)
-          .json({ message: "Event ID and Student ID are required" });
+        return res.status(400).json({ message: "Event ID and User ID are required" });
       }
 
-      // SECURITY FIX: Prevent IDOR - User can only create orders for themselves
-      if (req.user.id !== studentId && req.user.role !== "admin") {
-         return res.status(403).json({ message: "Access denied. Cannot create orders for other students." });
+      if (req.user.userId !== studentId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied." });
       }
 
-      // Fetch event details
       const event = await Event.findById(eventId);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
+      if (!event) return res.status(404).json({ message: "Event not found" });
 
-      // Check if event requires payment
       if (!event.entryFee || event.entryFee === 0) {
-        return res
-          .status(400)
-          .json({ message: "This event is free, no payment required" });
+        return res.status(400).json({ message: "This event is free" });
       }
 
-      // Check if event is full (0 = unlimited seats)
-      if (event.totalSeats > 0 && event.registeredCount >= event.totalSeats) {
-        return res.status(400).json({ message: "Event is full" });
-      }
-
-      // Check registration deadline (Prefer registrationDeadline, fallback to startTime)
-      const deadline = event.registrationDeadline || event.startTime;
-      if (new Date() > new Date(deadline)) {
-        return res.status(400).json({
-          message: event.registrationDeadline
-            ? "Registration deadline has passed for this event."
-            : "Registration is closed as the event has already started.",
-        });
-      }
-
-      // Check if student already registered
-      const existingRegistration = await Registration.findOne({
-        eventId,
-        studentId,
-      });
-
+      const existingRegistration = await Registration.findOne({ eventId, userId: studentId });
       if (existingRegistration) {
-        return res
-          .status(400)
-          .json({ message: "You are already registered for this event" });
+        return res.status(400).json({ message: "Already registered" });
       }
 
-      // Create Razorpay order (amount must be in paise - multiply by 100)
       const amountInPaise = event.entryFee * 100;
-
       const receiptId = `reg_${eventId.toString().slice(-6)}_${studentId.slice(-6)}_${Date.now().toString().slice(-6)}`;
 
       const options = {
         amount: amountInPaise,
         currency: "INR",
         receipt: receiptId,
-        notes: {
-          eventId: eventId.toString(),
-          studentId: studentId,
-          eventTitle: event.title,
-        },
+        notes: { eventId: eventId.toString(), userId: studentId, eventTitle: event.title },
       };
 
       const order = await razorpay.orders.create(options);
 
-      // Return order details to frontend
       res.json({
         success: true,
         orderId: order.id,
-        amount: event.entryFee, // Amount in rupees for display
+        amount: event.entryFee,
         currency: "INR",
-        keyId: process.env.RAZORPAY_KEY_ID, // Public key for frontend
+        keyId: process.env.RAZORPAY_KEY_ID,
         eventTitle: event.title,
       });
     } catch (error) {
-      console.error("Error creating Razorpay order:", error);
-      res.status(500).json({
-        message: "Failed to create payment order",
-        error: error.message,
-      });
+      res.status(500).json({ message: "Payment order failed", error: error.message });
     }
   },
 );
 
-// ============================================================================
 // POST /api/payment/verify
-// Verify payment and create registration
-// CRITICAL: This is where we verify payment authenticity
-// ============================================================================
 router.post(
   "/verify",
   verifyToken,
-  requireRole("student"),
+  allowRoles("member", "clubHead", "admin"),
   async (req, res) => {
-    const { orderId, paymentId, signature, eventId, studentId, formResponses } =
-      req.body;
+    const { orderId, paymentId, signature, eventId, studentId, formResponses } = req.body;
 
     try {
-      // Validate all required fields
       if (!orderId || !paymentId || !signature || !eventId || !studentId) {
-        return res.status(400).json({
-          message: "Missing required payment verification data",
-        });
+        return res.status(400).json({ message: "Missing data" });
       }
 
-      // SECURITY FIX: Prevent IDOR - User can only verify payments for themselves
-      if (req.user.id !== studentId && req.user.role !== "admin") {
-         return res.status(403).json({ message: "Access denied. Cannot verify payments for other students." });
+      if (req.user.userId !== studentId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied." });
       }
 
-      // ========================================================================
-      // SECURITY: Verify payment signature using Razorpay's algorithm
-      // This prevents tampering and ensures payment actually went through
-      // ========================================================================
       const generatedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(`${orderId}|${paymentId}`)
         .digest("hex");
 
       if (generatedSignature !== signature) {
-        console.error("Payment signature verification failed");
-        return res.status(400).json({
-          message: "Payment verification failed. Invalid signature.",
-          success: false,
-        });
+        return res.status(400).json({ message: "Invalid signature", success: false });
       }
 
-      // Signature is valid, fetch payment details from Razorpay to double-check
       const payment = await razorpay.payments.fetch(paymentId);
-
-      // Verify payment status is captured
       if (payment.status !== "captured") {
-        return res.status(400).json({
-          message: "Payment not captured yet",
-          success: false,
-        });
+        return res.status(400).json({ message: "Payment not captured", success: false });
       }
 
-      // Verify amount matches event fee (payment.amount is in paise)
       const event = await Event.findById(eventId);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
+      if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const expectedAmountInPaise = event.entryFee * 100;
-      if (payment.amount !== expectedAmountInPaise) {
-        console.error("Payment amount mismatch");
-        return res.status(400).json({
-          message: "Payment amount does not match event fee",
-          success: false,
-        });
-      }
-
-      // Check if already registered (prevent duplicate registrations)
-      const existingRegistration = await Registration.findOne({
-        eventId,
-        studentId,
-      });
-
+      const existingRegistration = await Registration.findOne({ eventId, userId: studentId });
       if (existingRegistration) {
-        return res.status(400).json({
-          message: "Already registered for this event",
-          success: false,
-        });
+        return res.status(400).json({ message: "Already registered", success: false });
       }
 
-      // Check seat availability (0 = unlimited seats)
-      if (event.totalSeats > 0 && event.registeredCount >= event.totalSeats) {
-        return res.status(400).json({
-          message: "Event is full",
-          success: false,
-        });
-      }
-
-      // ========================================================================
-      // Payment verified successfully - Create registration
-      // ========================================================================
       const registration = new Registration({
         eventId,
-        studentId,
+        userId: studentId,
         status: "CONFIRMED",
         paymentId,
         orderId,
@@ -221,16 +121,11 @@ router.post(
       });
 
       await registration.save();
-
-      // Implement atomic increment for seat count
       await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
-
-      // Refresh event to get the updated title
-      const updatedEvent = await Event.findById(eventId).select("title entryFee");
 
       res.json({
         success: true,
-        message: "Payment verified and registration confirmed",
+        message: "Payment verified",
         registration: {
           id: registration._id,
           eventTitle: event.title,
@@ -239,71 +134,44 @@ router.post(
         },
       });
     } catch (error) {
-      console.error("Error verifying payment:", error);
-      res.status(500).json({
-        message: "Payment verification failed",
-        error: error.message,
-        success: false,
-      });
+      res.status(500).json({ message: "Verification failed", error: error.message, success: false });
     }
   },
 );
 
-// ============================================================================
 // GET /api/payment/event/:eventId/stats
-// Get payment statistics for an event (Club Head only)
-// ============================================================================
 router.get(
   "/event/:eventId/stats",
   verifyToken,
-  requireRole("club-head", "admin"),
+  allowRoles("clubHead", "admin"),
   async (req, res) => {
     const { eventId } = req.params;
 
     try {
-      const event = await Event.findById(eventId).populate("createdBy");
+      const event = await Event.findById(eventId);
+      if (!event) return res.status(404).json({ message: "Event not found" });
 
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-
-      // Get all successful registrations for this event
       const registrations = await Registration.find({
         eventId,
         paymentStatus: "SUCCESS",
-      }).populate("studentId", "name email rollNo");
+      }).populate("userId", "name email rollNo");
 
-      // Calculate total money collected
-      const totalMoneyCollected = registrations.reduce((sum, reg) => {
-        return sum + (reg.amountPaid || 0);
-      }, 0);
+      const totalMoneyCollected = registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0);
 
-      const stats = {
+      res.json({
         eventTitle: event.title,
-        entryFee: event.entryFee,
-        totalSeats: event.totalSeats,
-        registeredCount: event.registeredCount,
         totalCollected: totalMoneyCollected,
-        paidRegistrations: registrations.length,
-        clubName: event.createdBy?.clubName || "N/A",
         registrations: registrations.map((reg) => ({
-          studentName: reg.studentId?.name || "Unknown",
-          studentEmail: reg.studentId?.email || "N/A",
-          studentRollNo: reg.studentId?.rollNo || "N/A",
+          studentName: reg.userId?.name || "Unknown",
+          studentEmail: reg.userId?.email || "N/A",
+          studentRollNo: reg.userId?.rollNo || "N/A",
           paymentId: reg.paymentId || "N/A",
           amountPaid: reg.amountPaid || 0,
           paymentStatus: reg.paymentStatus,
-          paymentTimestamp: reg.paymentTimestamp,
         })),
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching payment stats:", error);
-      res.status(500).json({
-        message: "Failed to fetch payment statistics",
-        error: error.message,
       });
+    } catch (error) {
+      res.status(500).json({ message: "Stats failed", error: error.message });
     }
   },
 );

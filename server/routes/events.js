@@ -1,8 +1,10 @@
 import express from "express";
 import Event from "../models/Event.js";
-import Student from "../models/Student.js";
+import User from "../models/User.js";
 import Registration from "../models/Registration.js";
-import { verifyToken, requireRole } from "../middleware/auth.js";
+import Club from "../models/Club.js";
+import ClubMember from "../models/ClubMember.js";
+import { verifyToken, allowRoles } from "../middleware/auth.js";
 import { slugify } from "../utils/slugify.js";
 
 const router = express.Router();
@@ -11,8 +13,34 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const events = await Event.find()
-      .populate("createdBy", "clubName designation")
+      .populate("createdBy", "name")
       .sort({ startTime: 1 });
+    
+    // Enhance with club info if possible
+    const enhancedEvents = await Promise.all(events.map(async (event) => {
+        const eventObj = event.toObject();
+        if (event.clubId) {
+            const club = await Club.findById(event.clubId).select("name logo slug");
+            eventObj.club = club;
+        } else if (event.createdBy) {
+            const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
+            eventObj.club = membership?.clubId;
+        }
+        return eventObj;
+    }));
+
+    res.json(enhancedEvents);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/events/club/:clubId — PUBLIC
+router.get("/club/:clubId", async (req, res) => {
+  try {
+    const events = await Event.find({ clubId: req.params.clubId }).sort({
+      startTime: 1,
+    });
     res.json(events);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -31,23 +59,20 @@ router.get("/club-head/:clubHeadId", async (req, res) => {
   }
 });
 
-// GET /api/events/student/:studentId — STUDENT ONLY
+// GET /api/events/user/:userId — MEMBER ONLY (Previously student)
 router.get(
-  "/student/:studentId",
+  "/user/:userId",
   verifyToken,
-  requireRole("student"),
+  allowRoles("member", "admin"),
   async (req, res) => {
     try {
-      const studentId = req.params.studentId;
+      const { userId } = req.params;
       
-      // SECURITY FIX: Prevent IDOR. User can only view their own registrations
-      if (req.user.id !== studentId && req.user.role !== "admin") {
-         return res.status(403).json({ message: "Access denied. You can only view your own registrations." });
+      if (req.user.userId !== userId && req.user.role !== "admin") {
+         return res.status(403).json({ message: "Access denied." });
       }
 
-      const registrations = await Registration.find({ studentId }).populate(
-        "eventId",
-      );
+      const registrations = await Registration.find({ userId }).populate("eventId");
       res.json(registrations);
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -56,7 +81,7 @@ router.get(
 );
 
 // POST /api/events — CLUB HEAD ONLY
-router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
+router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) => {
   const {
     title,
     description,
@@ -68,27 +93,29 @@ router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
     imageUrl,
     requiredFields,
     customFields,
-    createdBy,
     allowedPrograms,
     allowedYears,
     registrationDeadline,
-    winners,
   } = req.body;
 
-  // Basic conflict check
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-
   try {
+    const { userId } = req.user;
+    
+    // Find the club this user manages
+    const membership = await ClubMember.findOne({ userId, role: "head" });
+    if (!membership && req.user.role !== "admin") {
+        return res.status(403).json({ message: "You must be a club head to create events." });
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
     const conflictingEvent = await Event.findOne({
       venue,
       $or: [{ startTime: { $lt: end }, endTime: { $gt: start } }],
     });
 
     if (conflictingEvent) {
-      return res
-        .status(409)
-        .json({ message: "Venue is already booked for this time slot." });
+      return res.status(409).json({ message: "Venue is already booked." });
     }
 
     const newEvent = new Event({
@@ -102,7 +129,8 @@ router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
       imageUrl: imageUrl || "",
       requiredFields: requiredFields || [],
       customFields: customFields || [],
-      createdBy,
+      createdBy: userId,
+      clubId: membership?.clubId,
       allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
       allowedYears: allowedYears || [],
       registrationDeadline: registrationDeadline || null,
@@ -120,175 +148,57 @@ router.post("/", verifyToken, requireRole("club-head"), async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    let query;
+    let query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
 
-    if (id.match(/^[0-9a-fA-F]{24}$/)) {
-      query = { _id: id };
-    } else {
-      query = { slug: id };
+    const event = await Event.findOne(query).populate("createdBy", "name");
+    if (!event) return res.status(404).json({ message: "Event not found" });
+    
+    const eventObj = event.toObject();
+    if (event.clubId) {
+        eventObj.club = await Club.findById(event.clubId);
+    } else if (event.createdBy) {
+         const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
+         eventObj.club = membership?.clubId;
     }
 
-    const event = await Event.findOne(query).populate("createdBy", "clubName description clubLogo slug");
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
+    res.json(eventObj);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET /api/events/slug/:slug — PUBLIC (Alternative explicit route if needed)
-router.get("/slug/:slug", async (req, res) => {
-  try {
-    const event = await Event.findOne({ slug: req.params.slug }).populate("createdBy", "clubName description clubLogo slug");
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// PUT /api/events/:id — CLUB HEAD ONLY
-router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      venue,
-      startTime,
-      endTime,
-      totalSeats,
-      entryFee,
-      imageUrl,
-      requiredFields,
-      customFields,
-      allowedPrograms,
-      allowedYears,
-      registrationDeadline,
-      winners,
-    } = req.body;
-
-    const updateData = {
-      title,
-      description,
-      venue,
-      startTime,
-      endTime,
-      totalSeats: totalSeats || 0,
-      entryFee,
-      imageUrl,
-      requiredFields,
-      customFields: customFields || [],
-      allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
-      allowedYears: allowedYears || [],
-      registrationDeadline: registrationDeadline || null,
-      winners: winners || [],
-    };
-
-    if (title) {
-      updateData.slug = slugify(title);
-    }
-
-    const event = await Event.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true },
-    );
-    res.json(event);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// POST /api/events/:id/register — STUDENT ONLY
+// POST /api/events/:id/register — MEMBER ONLY
 router.post(
   "/:id/register",
   verifyToken,
-  requireRole("student"),
+  allowRoles("member", "clubHead", "admin"),
   async (req, res) => {
-    const { studentId, formResponses } = req.body;
+    const { userId } = req.user;
     const eventId = req.params.id;
+    const { formResponses } = req.body;
 
     try {
       const event = await Event.findById(eventId);
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      if (event.status === "ENDED") {
-        return res.status(400).json({ message: "Event has ended." });
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found." });
+
+      // Eligibility checks
+      if (event.allowedPrograms?.length > 0 && !event.allowedPrograms.includes(user.program)) {
+        return res.status(403).json({ message: "Ineligible program." });
       }
 
-      // Check program and year eligibility
-      const student = await Student.findById(studentId);
-      if (!student) {
-        return res.status(404).json({ message: "Student not found." });
-      }
-
-      if (
-        event.allowedPrograms &&
-        event.allowedPrograms.length > 0 &&
-        !event.allowedPrograms.includes(student.program)
-      ) {
-        return res.status(403).json({
-          message: `This event is only open to ${event.allowedPrograms.join(" / ")} students.`,
-        });
-      }
-
-      if (
-        event.allowedYears &&
-        event.allowedYears.length > 0 &&
-        !event.allowedYears.includes(student.year)
-      ) {
-        return res.status(403).json({
-          message: `This event is only open to ${event.allowedYears.join(", ")} students.`,
-        });
-      }
-
-      // Check if event is full (0 = unlimited seats)
-      const isUnlimited = !event.totalSeats || event.totalSeats === 0;
-
-      if (!isUnlimited && event.registeredCount >= event.totalSeats) {
-        // Seats are full - will go to waitlist
-      }
-
-      // Check registration deadline (Prefer registrationDeadline, fallback to startTime)
-      const deadline = event.registrationDeadline || event.startTime;
-      if (new Date() > new Date(deadline)) {
-        return res.status(400).json({
-          message: event.registrationDeadline
-            ? "Registration deadline has passed for this event."
-            : "Registration is closed as the event has already started.",
-        });
-      }
-
-      const existingReg = await Registration.findOne({
-        eventId,
-        studentId,
-      });
+      const existingReg = await Registration.findOne({ eventId, userId });
       if (existingReg) {
-        return res
-          .status(400)
-          .json({ message: "You are already registered for this event." });
+        return res.status(400).json({ message: "Already registered." });
       }
 
-      let status = "CONFIRMED";
-      if (!isUnlimited && event.registeredCount >= event.totalSeats) {
-        status = "WAITLISTED";
-      }
-
-      // Validate required custom fields
-      if (event.customFields && event.customFields.length > 0) {
-        const requiredCustom = event.customFields.filter((f) => f.required);
-        for (const field of requiredCustom) {
-          if (!formResponses || !formResponses[field.label]) {
-            return res.status(400).json({
-              message: `"${field.label}" is required.`,
-            });
-          }
-        }
-      }
+      let status = (event.totalSeats > 0 && event.registeredCount >= event.totalSeats) ? "WAITLISTED" : "CONFIRMED";
 
       const registration = new Registration({
         eventId,
-        studentId,
+        userId,
         status,
         formResponses: formResponses || {},
       });
@@ -301,85 +211,7 @@ router.post(
         await Event.findByIdAndUpdate(eventId, { $push: { waitingList: registration._id } });
       }
 
-      res.json({
-        message:
-          status === "WAITLISTED"
-            ? "Added to waitlist"
-            : "Registration confirmed",
-        status,
-      });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  },
-);
-
-// DELETE /api/events/:id/register (Deregister) — STUDENT ONLY
-router.delete(
-  "/:id/register",
-  verifyToken,
-  requireRole("student"),
-  async (req, res) => {
-    const { studentId } = req.body;
-    const eventId = req.params.id;
-
-    try {
-      const event = await Event.findById(eventId);
-      if (!event) return res.status(404).json({ message: "Event not found." });
-
-      // Prevent deregistration if it's a paid event
-      if (event.entryFee > 0) {
-        return res.status(400).json({
-          message:
-            "Deregistration is not allowed for paid events. Please contact the administrator for refunds.",
-        });
-      }
-
-      const registration = await Registration.findOneAndDelete({
-        eventId,
-        studentId,
-      });
-
-      if (!registration) {
-        return res.status(404).json({ message: "Registration not found." });
-      }
-
-      if (event) {
-        if (registration.status === "CONFIRMED") {
-          await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: -1 } });
-        } else {
-          await Event.findByIdAndUpdate(eventId, { $pull: { waitingList: registration._id } });
-        }
-      }
-
-      res.json({ message: "Deregistered successfully" });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  },
-);
-
-// DELETE /api/events/:id (Delete event) — CLUB HEAD ONLY
-router.delete(
-  "/:id",
-  verifyToken,
-  requireRole("club-head"),
-  async (req, res) => {
-    try {
-      const event = await Event.findById(req.params.id);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-
-      // Delete all registrations for this event
-      await Registration.deleteMany({
-        eventId: req.params.id,
-      });
-
-      // Delete the event
-      await Event.findByIdAndDelete(req.params.id);
-
-      res.json({ message: "Event and all registrations deleted successfully" });
+      res.json({ message: "Registration successful", status });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -390,34 +222,23 @@ router.delete(
 router.get(
   "/:id/registrations",
   verifyToken,
-  requireRole("club-head", "admin"),
+  allowRoles("clubHead", "admin"),
   async (req, res) => {
     try {
-      const registrations = await Registration.find({
-        eventId: req.params.id,
-      }).populate({
-        path: "studentId",
-        select: "name email rollNo program year",
+      const registrations = await Registration.find({ eventId: req.params.id })
+        .populate("userId", "name email rollNo program year");
+
+      const data = registrations.map(reg => {
+          const r = reg.toObject();
+          r.student = r.userId; // compatibility with frontend
+          return r;
       });
 
-      const populatedRegistrations = registrations.map((reg) => {
-        const regObj = reg.toObject();
-        if (reg.formResponses instanceof Map) {
-          regObj.formResponses = Object.fromEntries(reg.formResponses);
-        }
-        return {
-          ...regObj,
-          student: reg.studentId
-            ? reg.studentId
-            : { name: "Unknown", email: "Unknown", rollNo: "Unknown" },
-        };
-      });
-
-      res.json(populatedRegistrations);
+      res.json(data);
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
-  },
+  }
 );
 
 export default router;

@@ -168,7 +168,7 @@ const Navbar = () => {
             {user ? (
               <>
                 {/* Create Event — club heads only */}
-                {role === "club-head" && (
+                {(role === "clubHead" || role === "club-head") && (
                   <Link
                     to="/create"
                     className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 border-2 border-black text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
@@ -178,8 +178,8 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* ── Notification Bell (Students Only) ── */}
-                {role === "student" && (
+                {/* ── Notification Bell (Members Only) ── */}
+                {(role === "member" || role === "student") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
@@ -258,7 +258,7 @@ const Navbar = () => {
                           {user.name}
                         </p>
                         <p className="text-[10px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
-                          {role === "club-head" ? "Club Head" : "Student"}
+                          {role === "clubHead" || role === "club-head" ? "Club Head" : role === "admin" ? "Admin" : "Student"}
                         </p>
                       </div>
 
@@ -275,7 +275,7 @@ const Navbar = () => {
                           </UserIcon>
                         </Link>
 
-                        {role === "student" && (
+                        {(role === "member" || role === "student") && (
                           <Link
                             to="/my-events"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
@@ -288,7 +288,7 @@ const Navbar = () => {
                           </Link>
                         )}
 
-                        {role === "club-head" && (
+                        {(role === "clubHead" || role === "club-head") && (
                           <Link
                             to="/my-events"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
@@ -298,7 +298,7 @@ const Navbar = () => {
                             Created Events
                           </Link>
                         )}
-                        {role === "club-head" && (
+                        {(role === "clubHead" || role === "club-head") && (
                           <Link
                             to="/payments"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
@@ -312,7 +312,7 @@ const Navbar = () => {
                             
                           </Link>
                         )}
-                        {role === "club-head" && (
+                        {(role === "clubHead" || role === "club-head") && (
                           <Link
                             to="/send-notification"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
@@ -362,14 +362,70 @@ const Navbar = () => {
           </div>
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
-          <button
-            onClick={() => setMobileOpen((o) => !o)}
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-          >
-            <i className={mobileOpen ? "ri-close-line" : "ri-menu-3-line"} />
-          </button>
+
+<div className="flex items-center gap-2 md:hidden">
+  {/* Notification Button */}
+  {role === "student" && (
+    <div className="relative" ref={notifDropdownRef}>
+      <button
+        onClick={handleNotificationClick}
+        className="relative w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
+      >
+        <BellIcon />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+        )}
+      </button>
+
+      {/* Notification Dropdown */}
+      {notifDropdownOpen && (
+        <div className="absolute top-[calc(100%+10px)] right-0 w-80 h-96 overflow-y-auto bg-white border-2 border-gray-400 rounded-sm z-50">
+          <div className="px-4 py-3 border-b-2 border-gray-400 flex justify-center items-center bg-neutral-100 sticky top-0 z-10 text-center">
+            <h3 className="text-[14px] font-black tracking-wider  ">Notifications</h3>
+          </div>
+          <div className="divide-y divide-gray-400">
+            {notifications?.length > 0 ? (
+              notifications.map((notif, idx) => (
+                <div
+                  key={idx}
+                  className={`p-4 ${
+                    !notif.readBy?.includes(user?._id || user?.id) ? "bg-orange-50" : ""
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">
+                      {notif.sender?.clubName || "ClubSetu"}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 whitespace-nowrap">
+                      {new Date(notif.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
+                  <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
+                No notifications yet
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* Hamburger Button */}
+  <button
+    onClick={() => setMobileOpen((o) => !o)}
+    className="w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
+    aria-label="Toggle menu"
+    aria-expanded={mobileOpen}
+  >
+    <i className={mobileOpen ? "ri-close-line" : "ri-menu-3-line"} />
+  </button>
+</div>
+          
         </div>
 
         {/* ── Mobile drawer ──────────────────────────────────────────────── */}

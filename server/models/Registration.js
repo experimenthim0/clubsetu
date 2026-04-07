@@ -7,9 +7,9 @@ const registrationSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  studentId: { 
+  userId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "Student",
+    ref: "User",
     required: true,
     index: true,
   },

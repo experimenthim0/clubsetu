@@ -24,9 +24,9 @@ const MyEvents = () => {
       setUser(storedUser);
       setRole(storedRole);
 
-      if (storedRole === 'student') {
+      if (storedRole === 'member' || storedRole === 'student') {
         fetchRegistrations(storedUser._id);
-      } else if (storedRole === 'club-head') {
+      } else if (storedRole === 'clubHead' || storedRole === 'club-head') {
         fetchCreatedEvents(storedUser._id);
       }
     } else {
@@ -36,7 +36,7 @@ const MyEvents = () => {
 
   const fetchRegistrations = async (studentId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/student/${studentId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${studentId}`);
       setRegistrations(res.data);
       setLoading(false);
     } catch (err) {
@@ -123,7 +123,7 @@ const MyEvents = () => {
       </div>
 
       {/* ── STUDENT VIEW ── */}
-      {role === 'student' && (
+      {(role === 'member' || role === 'student') && (
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Your Event History</h2>
 
@@ -219,7 +219,7 @@ const MyEvents = () => {
       )}
 
       {/* ── CLUB HEAD VIEW ── */}
-      {role === 'club-head' && (
+      {(role === 'clubHead' || role === 'club-head') && (
         <div>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-black">My Created Events</h2>

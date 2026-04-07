@@ -103,7 +103,7 @@ const EditProfile = () => {
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase">Email</label>
-                        <p className="font-mono text-gray-800 break-all">{role === 'student' ? user.email : user.collegeEmail}</p>
+                        <p className="font-mono text-gray-800 break-all">{user.email}</p>
                     </div>
                 </div>
 
@@ -191,7 +191,7 @@ const EditProfile = () => {
                     />
                 </div>
 
-                {role === 'club-head' && (
+                {(role === 'clubHead' || role === 'club-head') && (
                     <div className="pt-6 border-t border-gray-200 space-y-6">
                         <div className="flex items-center gap-2 mb-2">
                              <i className="ri-bank-card-line text-orange-600 text-lg" />

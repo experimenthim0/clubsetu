@@ -1,38 +1,28 @@
 import express from "express";
-import Student from "../models/Student.js";
-import ClubHead from "../models/ClubHead.js";
+import User from "../models/User.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // PUT /api/users/:role/:id — AUTHENTICATED USERS ONLY
 router.put("/:role/:id", verifyToken, async (req, res) => {
-  const { role, id } = req.params;
+  const { id } = req.params;
   const updates = req.body;
 
-  // Verify user is updating their own profile
-  if (req.user.id !== id) {
-    return res
-      .status(403)
-      .json({ message: "You can only update your own profile." });
+  // Verify user is updating their own profile (Unified userId)
+  if (req.user.userId !== id && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied." });
   }
 
   // Prevent updates to restricted fields
   delete updates.email;
   delete updates.rollNo;
-  delete updates.collegeEmail;
   delete updates.password;
+  delete updates.role;
+  delete updates.isApproved;
 
   try {
-    let user;
-    if (role === "student") {
-      user = await Student.findByIdAndUpdate(id, updates, { new: true });
-    } else if (role === "club-head") {
-      user = await ClubHead.findByIdAndUpdate(id, updates, { new: true });
-    } else {
-      return res.status(400).json({ message: "Invalid role" });
-    }
-
+    const user = await User.findByIdAndUpdate(id, updates, { new: true }).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

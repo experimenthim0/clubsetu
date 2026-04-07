@@ -1,16 +1,18 @@
 import express from "express";
-import ClubHead from "../models/ClubHead.js";
+import Club from "../models/Club.js";
+import ClubMember from "../models/ClubMember.js";
 import Event from "../models/Event.js";
+import User from "../models/User.js";
+import { verifyToken, allowRoles } from "../middleware/auth.js";
 import { slugify } from "../utils/slugify.js";
+import crypto from "crypto";
 
 const router = express.Router();
 
 // GET /api/clubs — PUBLIC
 router.get("/", async (req, res) => {
   try {
-    const clubs = await ClubHead.find({ isVerified: true, isClubAdded: true }).select(
-      "clubName description clubLogo clubGallery designation name facultyCoordinators studentCoordinators category clubInstagram clubLinkedin clubX clubWebsite clubWhatsapp clubUniqueId slug"
-    );
+    const clubs = await Club.find();
     res.json(clubs);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -22,22 +24,32 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     let query;
-    
-    // Check if ID is a valid MongoDB ObjectId
+
     if (id.match(/^[0-9a-fA-F]{24}$/)) {
       query = { _id: id };
     } else {
       query = { slug: id };
     }
 
-    const club = await ClubHead.findOne(query).select(
-      "-password -verificationToken -verificationTokenExpire"
-    );
+    const club = await Club.findOne(query);
     if (!club) {
       return res.status(404).json({ message: "Club not found" });
     }
 
-    const events = await Event.find({ createdBy: club._id }).sort({ startTime: 1 });
+    // Find events for this club
+    // We check either clubId or events createdBy the clubHead (fallback)
+    const membership = await ClubMember.findOne({ clubId: club._id, role: "head" });
+    let events = [];
+    if (membership) {
+        events = await Event.find({ 
+            $or: [
+                { clubId: club._id },
+                { createdBy: membership.userId }
+            ]
+        }).sort({ startTime: 1 });
+    } else {
+        events = await Event.find({ clubId: club._id }).sort({ startTime: 1 });
+    }
 
     res.json({ club, events });
   } catch (err) {
@@ -45,46 +57,32 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-import { verifyToken, requireRole } from "../middleware/auth.js";
-import crypto from "crypto";
-
-// PUT /api/clubs/:id — CLUB HEAD (OWNER) ONLY
-router.put("/:id", verifyToken, requireRole("club-head"), async (req, res) => {
+// PUT /api/clubs/:id — CLUB HEAD ONLY
+router.put("/:id", verifyToken, allowRoles("admin", "clubHead"), async (req, res) => {
   try {
     const clubId = req.params.id;
-    
-    // Security: Only allow updating your own club
-    if (req.user.id !== clubId) {
-      return res.status(403).json({ message: "You can only update your own club's information." });
+    const { userId } = req.user;
+
+    // Check if the user is a head of this club
+    const membership = await ClubMember.findOne({ 
+        userId, 
+        clubId, 
+        role: "head" 
+    });
+
+    if (!membership && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied. You are not the head of this club." });
     }
 
     const updates = req.body;
-    // Prevent updating sensitive authentication fields
-    delete updates.collegeEmail;
-    delete updates.password;
-    delete updates.rollNo;
-    delete updates.isVerified;
-
-    // Generate slug if clubName is updated
     if (updates.clubName) {
       updates.slug = slugify(updates.clubName);
     }
 
-    // Check if this is the first time adding club details
-    const currentClub = await ClubHead.findById(clubId);
-    if (currentClub && !currentClub.isClubAdded) {
-      updates.isClubAdded = true;
-      // Generate a unique club ID if not present
-      if (!currentClub.clubUniqueId) {
-        const randomId = crypto.randomBytes(3).toString('hex').toUpperCase();
-        updates.clubUniqueId = `CLUB-${randomId}`;
-      }
-    }
-
-    const club = await ClubHead.findByIdAndUpdate(clubId, updates, { new: true }).select("-password");
+    const club = await Club.findByIdAndUpdate(clubId, updates, { new: true });
     if (!club) return res.status(404).json({ message: "Club not found" });
 
-    res.json({ message: "Club information updated successfully", club });
+    res.json({ message: "Club updated successfully", club });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

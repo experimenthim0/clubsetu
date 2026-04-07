@@ -35,13 +35,12 @@ const Profile = () => {
         </div>
 
         <div>
-          <p className="text-sm text-gray-500">Email</p>
           <p className="font-medium text-lg">
-            {role === 'student' ? user.email : user.collegeEmail}
+            {user.email}
           </p>
         </div>
 
-        {role === 'student' && (
+        {(role === 'member' || role === 'student') && (
           <>
             <div>
               <p className="text-sm text-gray-500">Roll No</p>
@@ -56,7 +55,7 @@ const Profile = () => {
           </>
         )}
 
-        {role === 'club-head' && (
+        {(role === 'clubHead' || role === 'club-head') && (
           <>
             <div>
               <p className="text-sm text-gray-500">Club Name</p>
@@ -79,7 +78,7 @@ const Profile = () => {
       </div>
 
       {/* Bank Information — Club Head Only */}
-      {role === 'club-head' && (
+      {(role === 'clubHead' || role === 'club-head') && (
         <div className="mt-8 pt-6 border-t border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
             <i className="ri-bank-line text-orange-600" />
@@ -167,7 +166,7 @@ const Profile = () => {
       </div>
     </div>
 
-    {role === 'student' && (
+    {(role === 'member' || role === 'student') && (
       <div className="mt-8">
         <Link 
           to="/my-events" 
@@ -178,7 +177,7 @@ const Profile = () => {
       </div>
     )}
 
-    {role === 'club-head' && (
+    {(role === 'clubHead' || role === 'club-head') && (
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
