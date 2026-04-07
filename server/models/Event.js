@@ -56,10 +56,31 @@ const eventSchema = new mongoose.Schema(
     // status can be computed, but we might store it for caching if needed.
     // For now, we'll compute it or use a virtual.
   
-  winners:{
-    type:Array,
-    default:[],
-  },
+    winners: {
+      type: Array,
+      default: [],
+    },
+    showWinner: {
+      type: Boolean,
+      default: false,
+    },
+    provideCertificate: {
+      type: Boolean,
+      default: false,
+    },
+    certificateTemplate: {
+      imageUrl: String,
+      nameX: Number,
+      nameY: Number,
+      nameWidth: Number,
+      nameHeight: Number,
+      fontSize: Number,
+      color: String,
+      font: String,
+      align: String,
+      imageWidth: Number,
+      imageHeight: Number,
+    },
   },
   { timestamps: true },
 );

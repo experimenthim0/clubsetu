@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { loadRazorpay } from '../utils/razorpay';
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
-    const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline, slug } = event;
+    const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline, slug, showWinner } = event;
 
     const formattedTime = new Date(startTime).toLocaleString('en-US', {
         weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -55,10 +55,10 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     )}
                 </div>
                 {/* Club Badge */}
-                {event.createdBy?.clubName && (
+                {(event.club?.name || event.createdBy?.clubName) && (
                     <div className="absolute top-3 right-3">
                         <span className="bg-orange-600/80 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
-                            {event.createdBy.clubName}
+                            {event.club?.name || event.createdBy?.clubName}
                         </span>
                     </div>
                 )}
@@ -70,8 +70,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 <p className="text-[13px] text-neutral-500 mb-4 line-clamp-3 leading-relaxed">{description}</p>
 
                 {/* Info row */}
-                {isEnded ? (
-                    /* ONLY SHOW WINNERS WHEN ENDED */
+                {isEnded && showWinner ? (
+                    /* ONLY SHOW WINNERS WHEN ENDED AND showWinner is TRUE */
                     <div className="flex gap-2 mb-2 ">
                         {event.winners && event.winners.length > 0 ? (
                             <div className="flex flex-col gap-2 w-full">
@@ -124,7 +124,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     </div>
                 ) : (
                     
-                    /* SHOW DETAILS ONLY WHILE ACTIVE */
+                    /* SHOW DETAILS WHILE ACTIVE OR IF showWinner IS FALSE */
                     <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
                         <div className="flex items-center gap-2">
                             <i className="ri-time-line text-orange-600 text-sm" />
@@ -142,11 +142,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-orange-600">
-                            <i className="ri-timer-line text-sm" />
+                           <i className="ri-hourglass-fill text-sm" />
                             <span className="font-bold text-[11px] uppercase tracking-wide">
-                                Ends: {new Date(registrationDeadline || startTime).toLocaleString('en-US', {
+                                {isEnded ? 'Event Ended' : `Ends: ${new Date(registrationDeadline || startTime).toLocaleString('en-US', {
                                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                })}
+                                })}`}
                             </span>
                         </div>
                     </div>
@@ -177,16 +177,15 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            onClick={() => loadRazorpay()}
                             className={`flex-1 block text-center py-2 rounded-sm text-[11px] font-bold uppercase tracking-widest border-2 transition-all ${
                                 isEnded
-                                    ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                                    ? 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                                     : isFull
                                         ? 'bg-yellow-400 text-black border-black hover:bg-yellow-300'
                                         : 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                             }`}
                         >
-                            {isEnded ? 'Ended' : isFull ? 'Waitlist' : 'Register'}
+                            {isEnded ? 'View' : isFull ? 'Waitlist' : 'Register'}
                         </Link>
                     )}
                 </div>

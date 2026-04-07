@@ -24,6 +24,8 @@ const EditEvent = () => {
         allowedPrograms: ['BTECH', 'MTECH'],
         allowedYears: [],
         winners: [], // ← added
+        showWinner: false,
+        provideCertificate: false,
     });
     const isEventCompleted = formData.endTime && new Date(formData.endTime) < new Date();
     const [isFree, setIsFree] = useState(true);
@@ -57,6 +59,8 @@ const EditEvent = () => {
                         allowedPrograms: event.allowedPrograms || ['BTECH', 'MTECH'],
                         allowedYears: yearArr,
                         winners: event.winners || [], // ← added
+                        showWinner: event.showWinner || false,
+                        provideCertificate: event.provideCertificate || false,
                     });
                     setIsFree(!event.entryFee || event.entryFee === 0);
                     setIsUnlimited(unlimited);
@@ -384,6 +388,40 @@ const EditEvent = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Show Winners Toggle */}
+                    <div className="bg-orange-50 border-2 border-orange-200 p-4 rounded-sm">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="showWinner"
+                                checked={formData.showWinner}
+                                onChange={(e) => setFormData({ ...formData, showWinner: e.target.checked })}
+                                className="w-5 h-5 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                            />
+                            <div>
+                                <span className={labelCls + ' mb-0'}>Show Winners / Results</span>
+                                <p className="text-xs text-neutral-500">If enabled, winners will be shown on the event card after the event ends.</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    {/* Provide Certificate Toggle */}
+                    <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-sm">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="provideCertificate"
+                                checked={formData.provideCertificate}
+                                onChange={(e) => setFormData({ ...formData, provideCertificate: e.target.checked })}
+                                className="w-5 h-5 text-blue-600 border-neutral-300 rounded focus:ring-blue-600"
+                            />
+                            <div>
+                                <span className={labelCls + ' mb-0'}>Provide Certificates</span>
+                                <p className="text-xs text-neutral-500">If enabled, participants can download their certificates once the event ends. <span className="font-bold text-blue-700">You can design the certificate template anytime before the event ends.</span></p>
+                            </div>
+                        </label>
                     </div>
 
                     {/* Event Image URL */}

@@ -10,6 +10,7 @@ import paymentRoutes from "./routes/payment.js";
 import adminRoutes from "./routes/admin.js";
 import clubRoutes from "./routes/clubs.js";
 import notificationRoutes from "./routes/notifications.js";
+import certificateRoutes from "./routes/certificates.js";
 
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -68,6 +69,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/certificates", certificateRoutes);
 
 
 // Global Error Handler should be the last middleware

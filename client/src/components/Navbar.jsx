@@ -155,10 +155,10 @@ const Navbar = () => {
               Clubs
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/clubs") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-            <Link to="/about-features" className={navLinkCls("/about-features")}>
+            {/* <Link to="/about-features" className={navLinkCls("/about-features")}>
               ClubSetu Features
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/about-features") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </Link>
+            </Link> */}
           </div>
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}
@@ -362,61 +362,8 @@ const Navbar = () => {
           </div>
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
-
-<div className="flex items-center gap-2 md:hidden">
-  {/* Notification Button */}
-  {role === "student" && (
-    <div className="relative" ref={notifDropdownRef}>
-      <button
-        onClick={handleNotificationClick}
-        className="relative w-10 h-10 flex items-center justify-center rounded-sm bg-white hover:bg-neutral-100 transition-colors text-black text-xl cursor-pointer shrink-0"
-      >
-        <BellIcon />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
-        )}
-      </button>
-
-      {/* Notification Dropdown */}
-      {notifDropdownOpen && (
-        <div className="absolute top-[calc(100%+10px)] right-0 w-80 h-96 overflow-y-auto bg-white border-2 border-gray-400 rounded-sm z-50">
-          <div className="px-4 py-3 border-b-2 border-gray-400 flex justify-center items-center bg-neutral-100 sticky top-0 z-10 text-center">
-            <h3 className="text-[14px] font-black tracking-wider  ">Notifications</h3>
-          </div>
-          <div className="divide-y divide-gray-400">
-            {notifications?.length > 0 ? (
-              notifications.map((notif, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 ${
-                    !notif.readBy?.includes(user?._id || user?.id) ? "bg-orange-50" : ""
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">
-                      {notif.sender?.clubName || "ClubSetu"}
-                    </span>
-                    <span className="text-[10px] text-neutral-500 whitespace-nowrap">
-                      {new Date(notif.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
-                  <p className="text-[12px] text-neutral-600">{notif.message}</p>
-                </div>
-              ))
-            ) : (
-              <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
-                No notifications yet
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )}
-
-  <div className="md:hidden flex items-center gap-3">
-            {user && role === "student" && collegeConfig.enabledFeatures.includes("notifications") && (
+ <div className="md:hidden flex items-center gap-3">
+            {user && role === "student" && (
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={handleNotificationClick}
@@ -467,8 +414,7 @@ const Navbar = () => {
               <i className={mobileOpen ? "ri-close-line" : "ri-menu-3-line"} />
             </button>
           </div>
-</div>
-          
+
         </div>
 
         {/* ── Mobile drawer ──────────────────────────────────────────────── */}

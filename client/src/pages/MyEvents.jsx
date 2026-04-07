@@ -210,6 +210,18 @@ const MyEvents = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Prominent Certificate Button for Past Events */}
+                    {isPast && reg.status === 'CONFIRMED' && event.provideCertificate && (
+                      <div className="px-6 pb-4 pt-2 border-t border-gray-50 bg-neutral-50/50">
+                        <a
+                          href={`${import.meta.env.VITE_API_URL}/api/certificates/${event._id}/download`}
+                          className="flex items-center justify-center gap-2 w-full py-3 bg-orange-600 text-white hover:bg-orange-700 transition border-2 border-black rounded-sm font-black uppercase tracking-widest text-sm shadow-[4px_4px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                        >
+                          <i className="ri-award-fill text-lg" /> Get Certificate
+                        </a>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -236,7 +248,7 @@ const MyEvents = () => {
               <i className="ri-calendar-event-line text-6xl text-gray-300 mb-4" />
               <p className="text-gray-500 mb-4">You haven't created any events yet.</p>
               <Link
-                to="/events/create"
+                to="/create"
                 className="inline-flex items-center gap-2 px-6 py-2 bg-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors"
               >
                 <i className="ri-add-line" /> Create Your First Event
@@ -291,6 +303,14 @@ const MyEvents = () => {
                       >
                         Registrations
                       </Link>
+                      {event.provideCertificate && (
+                        <Link
+                          to={`/event/${event._id}/design-certificate`}
+                          className="px-4 py-2 bg-orange-100 text-orange-700 border-2 border-orange-700 rounded-sm hover:bg-orange-700 hover:text-white transition font-bold text-sm uppercase tracking-wider whitespace-nowrap"
+                        >
+                          Design Certificate
+                        </Link>
+                      )}
                       <Link
                         to={`/events/edit/${event._id}`}
                         className="px-4 py-2 bg-neutral-100 text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-sm uppercase tracking-wider"

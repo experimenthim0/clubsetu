@@ -73,6 +73,31 @@
 }
 
 @font-face {
+  font-family: 'DancingScript';
+  src: url('./assets/fonts/DancingScript.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Pacifico';
+  src: url('./assets/fonts/Pacifico.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'GreatVibes';
+  src: url('./assets/fonts/GreatVibes.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Sacramento';
+  src: url('./assets/fonts/Sacramento.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Allura';
+  src: url('./assets/fonts/Allura.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'PinyonScript';
+  src: url('./assets/fonts/PinyonScript.ttf') format('truetype');
+}
+
+@font-face {
   font-family: 'logofont';
   src: url('/fonts/organix.regular.otf') format('opentype');
   font-weight: normal;

@@ -7,6 +7,9 @@ import { generateToken, verifyToken } from "../middleware/auth.js";
 import sendEmail from "../utils/sendEmail.js";
 import { getClientUrl } from "../utils/corsConfig.js";
 import { slugify } from "../utils/slugify.js";
+import { sanitizeUser } from "../utils/sanitizeUser.js";
+import { generateResetToken } from "../utils/generateResetToken.js";
+import { checkPasswordRateLimit } from "../utils/checkPasswordRateLimit.js";
 
 const router = express.Router();
 
@@ -95,8 +98,7 @@ router.post("/register/student", async (req, res) => {
     }
 
     const token = generateToken(newUser, "member");
-    const userObj = newUser.toObject();
-    delete userObj.password;
+    const userObj = sanitizeUser(newUser);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -257,8 +259,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = generateToken(user, user.role);
-    const userObj = user.toObject();
-    delete userObj.password;
+    const userObj = sanitizeUser(user);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -312,12 +313,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ message: "If an account exists, a reset link has been sent." });
     }
 
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-
-    user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
-    await user.save();
+    const resetToken = await generateResetToken(user);
 
     const origin = req.headers.origin;
     const clientUrl = getClientUrl(origin);
@@ -378,6 +374,11 @@ router.post("/change-password", verifyToken, async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Rate limiting check
+    if (!checkPasswordRateLimit(user)) {
+      return res.status(429).json({ message: "Daily password change limit exceeded. Try again tomorrow." });
     }
 
     const isMatch = await user.comparePassword(currentPassword);

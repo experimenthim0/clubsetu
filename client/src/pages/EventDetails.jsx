@@ -128,6 +128,7 @@ const EventDetails = () => {
     }
 
     // Free Event Registration
+    setIsRegistering(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
         userId: user._id,
@@ -136,6 +137,8 @@ const EventDetails = () => {
       setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Registration failed', 'error');
+    } finally {
+        setIsRegistering(false);
     }
   };
 
@@ -143,6 +146,7 @@ const EventDetails = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
 
+    setIsRegistering(true);
     try {
       // Update profile with missing fields
       const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, modalInputs);
@@ -225,12 +229,15 @@ const EventDetails = () => {
       setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Failed to update profile', 'error');
+    } finally {
+        setIsRegistering(false);
     }
   };
 
   // ── Custom Form Submit (for events with customFields) ───────────────
   const handleCustomFormSubmit = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
+    setIsRegistering(true);
 
     // Validate required custom fields
     if (event.customFields) {
@@ -307,6 +314,8 @@ const EventDetails = () => {
       setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Registration failed', 'error');
+    } finally {
+        setIsRegistering(false);
     }
   };
 
@@ -352,9 +361,9 @@ const EventDetails = () => {
   const isDeadlinePassed = new Date() > new Date(deadline);
   const fillPct  = isUnlimited ? 0 : Math.min(100, Math.round((registeredCount / totalSeats) * 100));
 
-  // Winners: only show if event ended and winners array is non-empty
+  // Winners: only show if event ended, showWinner is true and winners array is non-empty
   const winners = (event.winners || []).filter(w => w.name);
-  const showWinners = isEnded && winners.length > 0;
+  const showWinners = isEnded && event.showWinner && winners.length > 0;
 
   // Medal colors for top 3 ranks
   const medalConfig = {
@@ -365,7 +374,7 @@ const EventDetails = () => {
 
   // ── Derived button state ─────────────────────────────────────────────────
   const btnConfig = isEnded
-    ? { label: 'Event has Ended',      cls: 'bg-neutral-100 text-neutral-600 cursor-not-allowed border-neutral-200',       disabled: true  }
+    ? { label: showWinners ? 'View Results' : 'Event Ended', cls: 'bg-neutral-800 text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false }
     : isDeadlinePassed
     ? { label: 'Deadline Passed',      cls: 'bg-neutral-100 text-neutral-600 cursor-not-allowed border-neutral-200',       disabled: true  }
     : isFull
@@ -470,10 +479,10 @@ const EventDetails = () => {
                   label: 'Venue',
                   value: venue,
                 },
-                event.createdBy?.clubName && {
+                (event.club?.name || event.createdBy?.clubName) && {
                   icon: 'ri-team-line',
                   label: 'Organized By',
-                  value: event.createdBy.clubName,
+                  value: event.club?.name || event.createdBy.clubName,
                 },
                 {
                   icon: 'ri-group-line',
@@ -532,7 +541,7 @@ const EventDetails = () => {
 
             {/* ── Winners Section (only when event ended and winners declared) ── */}
             {showWinners && (
-              <div className="mb-10">
+              <div id="winners-section" className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 shrink-0 bg-yellow-400 border-2 border-black rounded-sm flex items-center justify-center text-black text-lg">
                     <i className="ri-trophy-fill" />
@@ -602,11 +611,16 @@ const EventDetails = () => {
               </div>
 
               <button
-                onClick={!btnConfig.disabled ? handleRegister : undefined}
+                onClick={!btnConfig.disabled && !isRegistering ? (isEnded ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' }) : handleRegister) : undefined}
                 disabled={btnConfig.disabled || isRegistering}
-                className={`w-full py-4 px-6 text-[14px] font-black uppercase tracking-widest border-2 rounded-sm transition-all ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full py-4 px-6 text-[14px] font-black uppercase tracking-widest border-2 rounded-sm transition-all ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center gap-2`}
               >
-                {isRegistering ? 'Processing...' : btnConfig.label}
+                {isRegistering ? (
+                    <>
+                        <i className="ri-loader-4-line animate-spin text-lg" />
+                        Processing...
+                    </>
+                ) : btnConfig.label}
               </button>
 
               {entryFee>0 && (

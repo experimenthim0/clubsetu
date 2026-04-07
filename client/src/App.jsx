@@ -39,6 +39,7 @@ import Changelog from './pages/Changelog';
 // import ProtectedRoute from './components/ProtectedRoute';
 import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
+import CertificateDesigner from './pages/CertificateDesigner';
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
@@ -131,6 +132,7 @@ function App() {
             <Route path="/events/edit/:id" element={<EditEvent />} />
             <Route path="/send-notification" element={<SendNotification />} />
             <Route path="/event/:id/registrations" element={<EventRegistrations />} />
+            <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
             <Route path="/admin-secret-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

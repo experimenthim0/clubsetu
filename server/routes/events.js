@@ -13,7 +13,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const events = await Event.find()
-      .populate("createdBy", "name")
+      .populate("createdBy", "name clubName")
       .sort({ startTime: 1 });
     
     // Enhance with club info if possible
@@ -150,7 +150,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     let query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
 
-    const event = await Event.findOne(query).populate("createdBy", "name");
+    const event = await Event.findOne(query).populate("createdBy", "name clubName");
     if (!event) return res.status(404).json({ message: "Event not found" });
     
     const eventObj = event.toObject();
