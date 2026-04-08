@@ -37,19 +37,7 @@ router.get("/:id", async (req, res) => {
     }
 
     // Find events for this club
-    // We check either clubId or events createdBy the clubHead (fallback)
-    const membership = await ClubMember.findOne({ clubId: club._id, role: "head" });
-    let events = [];
-    if (membership) {
-        events = await Event.find({ 
-            $or: [
-                { clubId: club._id },
-                { createdBy: membership.userId }
-            ]
-        }).sort({ startTime: 1 });
-    } else {
-        events = await Event.find({ clubId: club._id }).sort({ startTime: 1 });
-    }
+    const events = await Event.find({ clubId: club._id }).sort({ startTime: 1 });
 
     res.json({ club, events });
   } catch (err) {

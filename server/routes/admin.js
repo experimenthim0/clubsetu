@@ -58,15 +58,11 @@ router.get(
           0,
         );
 
-        // Fetch club name from Club model if clubId exists, else fallback to old logic
+        // Fetch club name from Club model
         let clubName = "Unknown";
         if (event.clubId) {
             const club = await Club.findById(event.clubId);
             clubName = club?.clubName || "Unknown";
-        } else if (event.createdBy) {
-            // Fallback: search for a club where this user is the head
-            const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
-            clubName = membership?.clubId?.clubName || "Unknown";
         }
 
         return {
@@ -150,7 +146,7 @@ router.get(
 
       res.json({
         name: user.name,
-        clubName: membership?.clubId?.clubName || user.clubName || "Unknown",
+        clubName: membership?.clubId?.clubName || "Unknown",
         bankInfo: {
           bankName: user.bankName,
           accountHolderName: user.accountHolderName,
@@ -179,7 +175,7 @@ router.get(
       const headsWithClubs = await Promise.all(clubHeads.map(async (head) => {
           const membership = await ClubMember.findOne({ userId: head._id, role: "head" }).populate("clubId");
           const headObj = head.toObject();
-          headObj.clubName = membership?.clubId?.clubName || head.clubName || "Unknown";
+          headObj.clubName = membership?.clubId?.clubName || "Unknown";
           return headObj;
       }));
       
@@ -199,7 +195,7 @@ router.get(
     try {
       const events = await Event.find({})
         .populate("clubId", "clubName")
-        .populate("createdBy", "name clubName")
+        .populate("createdBy", "name")
         .sort({ startTime: -1 });
 
       const exportedEvents = await Promise.all(
@@ -210,18 +206,6 @@ router.get(
           }).select("amountPaid");
 
           let clubName = event.clubId?.clubName || "Unknown";
-
-          if (clubName === "Unknown" && event.createdBy?._id) {
-            const membership = await ClubMember.findOne({
-              userId: event.createdBy._id,
-              role: "head",
-            }).populate("clubId", "clubName");
-
-            clubName =
-              membership?.clubId?.clubName ||
-              event.createdBy.clubName ||
-              "Unknown";
-          }
 
           return {
             eventId: event._id,
