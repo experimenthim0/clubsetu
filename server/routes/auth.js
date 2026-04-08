@@ -175,7 +175,6 @@ router.post("/register/club-head", async (req, res) => {
       year,
       program,
       phone,
-      clubName,
       designation,
       isVerified: isDevMode,
       isApproved: false,
