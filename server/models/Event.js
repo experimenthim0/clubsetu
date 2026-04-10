@@ -53,6 +53,16 @@ const eventSchema = new mongoose.Schema(
       default: "PENDING",
     },
     registrationDeadline: { type: Date }, // Deadline for registrations
+    
+    // Review and Publication Workflow
+    reviewStatus: { 
+      type: String, 
+      enum: ["DRAFT", "PENDING", "PUBLISHED", "REJECTED"], 
+      default: "PENDING" 
+    },
+    reviewComment: { type: String },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    
     // status can be computed, but we might store it for caching if needed.
     // For now, we'll compute it or use a virtual.
   

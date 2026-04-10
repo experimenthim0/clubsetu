@@ -51,21 +51,26 @@ const Home = () => {
     <div className="myfont text-black bg-white">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="flex flex-col justify-center bg-white  border-black pt-16 pb-0">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
+      <section className="relative flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
+        {/* Background Image & Overlay */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <img 
+            // src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+            src="csh.jpeg" 
+            alt="University Campus" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-white/20 backdrop-blur-[3px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/90 to-transparent"></div>
+        </div>
 
-          {/* Top badges */}
-          <ScrollReveal delay={0.1}>
-            <div className="flex items-center justify-between mb-14 flex-wrap gap-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="inline-flex items-center gap-2 bg-black text-white text-[11px] font-bold uppercase tracking-[0.12em] px-4 py-1.5 rounded-full">
-                  <i className="ri-school-line" /> Exclusively for NITJ
-                </span>
-              </div>
-            </div>
-          </ScrollReveal>
+        <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
+
+         
 
           {/* Headline */}
+
           <ScrollReveal delay={0.2}>
             <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black mb-0">
               Discover<br />
@@ -76,19 +81,19 @@ const Home = () => {
 
           {/* Sub + CTAs */}
           <ScrollReveal delay={0.3}>
-            <div className="mt-12 flex flex-wrap items-end gap-10">
+            <div className="mt-12 flex flex-wrap items-end gap-10 justify-between">
               <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
                 ClubSetu connects NIT Jalandhar students with campus clubs and events in one place. 
                 Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
               </p>
               <div className="flex gap-3 flex-wrap">
-                <BtnPrimary to="/events">
-                  <i className="ri-calendar-event-line text-sm" /> Browse Events
-                </BtnPrimary>
+                <button to="/events" className='inline-flex items-center gap-2 px-6 py-1.5 bg-black text-white border-2 border-black text-[13px] font-bold tracking-widest rounded-xl hover:bg-orange-600 hover:border-orange-600 transition-all hover:-translate-y-px'>
+                  <i className="ri-calendar-event-line text-lg" /> Browse Events
+                </button>
 
-                <BtnSecondary to="/clubs">
-                  <i className="ri-group-line text-sm" /> Explore Clubs
-                </BtnSecondary>
+                <button to="/clubs" className='inline-flex items-center gap-2 px-6 py-1.5 bg-white text-black border-2 border-black text-[13px] font-bold tracking-widest rounded-xl hover:bg-yellow-400 hover:border-yellow-400 transition-all hover:-translate-y-px'>
+                  <i className="ri-group-line text-lg" /> Explore Clubs
+                </button>
               </div>
             </div>
           </ScrollReveal>
@@ -129,7 +134,7 @@ const Home = () => {
             </div>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
-            <EventFeed limit={6} hideHeader={true} />
+            <EventFeed limit={6} hideHeader={true} showFilters={false} onlyActive={true} />
           </ScrollReveal>
           <ScrollReveal delay={0.3}>
             <div className="flex justify-center mt-12">
@@ -179,7 +184,7 @@ const Home = () => {
           <ScrollReveal direction="right" delay={0.1}>
             <div className="relative">
               {/* Offset border */}
-              <div className="absolute -top-4 -left-4 w-full h-full border-2 border-orange-600 rounded-sm pointer-events-none" />
+              {/* <div className="absolute -top-4 -left-4 w-full h-full border-2 border-orange-600 rounded-sm pointer-events-none" /> */}
               <img
                 src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                 alt="Student Life"
@@ -238,7 +243,7 @@ const Home = () => {
             <ScrollReveal direction="up" delay={0.6}>
               <div className="mt-10">
                 <BtnPrimary to="/register">
-                  <i className="ri-arrow-right-line text-sm" /> Join Now — It's Free
+                  <i className="ri-arrow-right-line text-sm" /> Join Now
                 </BtnPrimary>
               </div>
             </ScrollReveal>
@@ -270,8 +275,8 @@ const Home = () => {
           {/* Feature grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {[
-              { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.(Coming Soon)',      icon: 'ri-broadcast-line' },
-              { title: 'Digital Attendance', desc: 'Scan QR codes to mark attendance instantly. (Coming Soon)',     icon: 'ri-qr-scan-2-line' },
+              { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.',      icon: 'ri-broadcast-line' },
+              { title: 'Digital E-certificates', desc: 'Automatic Digital E-certificates generation.',     icon: 'ri-qr-scan-2-line' },
               { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-line' },
               { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.',   icon: 'ri-trophy-line' },
             ].map((item, i) => (

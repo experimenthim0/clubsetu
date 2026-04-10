@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EventFeed from './pages/EventFeed';
 import RegisterStudent from './pages/RegisterStudent';
-import RegisterClubHead from './pages/RegisterClubHead';
+
 import Login from './pages/Login';
 import EventDetails from './pages/EventDetails';
 import CreateEvent from './pages/CreateEvent';
@@ -124,7 +124,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<RegisterLanding />} />
             <Route path="/register/student" element={<RegisterStudent />} />
-            <Route path="/register/club-head" element={<RegisterClubHead />} />
             <Route path="/create" element={<CreateEvent />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-events" element={<MyEvents />} />

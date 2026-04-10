@@ -8,6 +8,7 @@ export const allowedOrigins = [
   "http://localhost:5177",
   "http://localhost:5178",
   "http://localhost:5179",
+  "https://ambitious-designer.outray.app",
 ];
 
 export const getClientUrl = (origin) => {

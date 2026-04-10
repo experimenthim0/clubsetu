@@ -12,7 +12,7 @@ const ClubsPage = ({ isHome = false }) => {
     const fetchClubs = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs`);
-        setClubs(res.data);
+        setClubs(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Error fetching clubs:", err);
       } finally {
@@ -53,7 +53,7 @@ const ClubsPage = ({ isHome = false }) => {
 
       {/* Clubs Grid */}
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {clubsToShow.map((club, index) => (
+        {Array.isArray(clubsToShow) && clubsToShow.map((club, index) => (
           <ScrollReveal direction="up" delay={index % 3 * 0.1} key={club._id}>
             <div
               className="bg-white border-2 border-gray-300 rounded-sm  p-6 flex flex-col justify-between hover:translate-x-[-2px] hover:translate-y-[-2px]  transition-all h-full"
@@ -87,7 +87,9 @@ const ClubsPage = ({ isHome = false }) => {
                         Faculty Coordinator
                       </p>
                       <p className="text-[11px] text-black font-bold">
-                        {club.facultyCoordinators.join(", ")}
+                        {club.facultyCoordinators && club.facultyCoordinators.length > 0 
+                          ? club.facultyCoordinators.map(f => typeof f === 'object' ? f.name : f).join(", ") 
+                          : club.facultyName || "Coordinator Not Assigned"}
                       </p>
                     </div>
                   )}
@@ -105,24 +107,26 @@ const ClubsPage = ({ isHome = false }) => {
 
               <div className="mt-8 flex items-center gap-4 border-t-2 border-black pt-6">
                 <ul className="social-icons-list">
-                  {club.clubInstagram && (
-                    <li className="social-icon-item">
-                      <a href={club.clubInstagram} target="_blank" rel="noopener noreferrer" className="social-icon-btn instagram">
-                        <div className="social-icon-inner">
-                          <i className="ri-instagram-line" />
-                        </div>
-                      </a>
-                    </li>
-                  )}
-                  {club.clubLinkedin && (
-                    <li className="social-icon-item">
-                      <a href={club.clubLinkedin} target="_blank" rel="noopener noreferrer" className="social-icon-btn linkedin">
-                        <div className="social-icon-inner">
-                          <i className="ri-linkedin-fill" />
-                        </div>
-                      </a>
-                    </li>
-                  )}
+                  {club.socialLinks?.map(link => {
+                    const iconMap = {
+                      instagram: 'ri-instagram-line',
+                      linkedin: 'ri-linkedin-fill',
+                      x: 'ri-twitter-x-line',
+                      website: 'ri-global-line',
+                      whatsapp: 'ri-whatsapp-line'
+                    };
+                    return (
+                      <li key={link.platform} className="social-icon-item">
+                        <a href={link.platform === 'whatsapp' ? `https://wa.me/${link.url.replace(/\s+/g, '')}` : link.url} 
+                           target="_blank" rel="noopener noreferrer" 
+                           className={`social-icon-btn ${link.platform}`}>
+                          <div className="social-icon-inner">
+                            <i className={iconMap[link.platform] || 'ri-links-line'} />
+                          </div>
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <Link
                   to={`/club/${club.slug || club._id}`}
@@ -141,20 +145,7 @@ const ClubsPage = ({ isHome = false }) => {
         ))}
       </div>
 
-      {/* {!isHome && (
-        <p className="text-center mt-12 text-neutral-500 uppercase tracking-widest text-[10px] font-bold">
-          If you want to add your club or society, Click{" "}
-          <a
-            href="https://forms.gle/ZJKNhGXNrSkimWtG9"
-            className="text-orange-600 underline"
-          >
-            here
-          </a>
-          .
-        </p>
-      )} */}
- <p className="text-center mt-8 text-neutral-500 uppercase tracking-widest text-xs font-bold">If you want to add your club or society, Click <Link to="/register/club-head" className="text-orange-600 font-bold">here</Link></p>
-   
+      
 
 
     </div>

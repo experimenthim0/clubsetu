@@ -238,21 +238,21 @@ const EditEvent = () => {
         'block text-sm font-bold text-black mb-2';
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-12 px-4">
+        <div className="min-h-screen bg-neutral-50 py-8 md:py-12 px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-8 md:mb-10">
                     <button
                         onClick={() => navigate('/profile')}
-                        className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-black hover:text-orange-600 transition-colors mb-4"
+                        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-neutral-400 hover:text-black transition-colors mb-6"
                     >
-                        <i className="ri-arrow-left-line" /> Back to Profile
+                        <i className="ri-arrow-left-line text-lg" /> Back to Profile
                     </button>
-                    <h1 className="text-4xl font-black text-black">Edit Event</h1>
-                    <p className="text-neutral-600 mt-2">Update your event details below</p>
+                    <h1 className="text-3xl md:text-5xl font-black text-black  tracking-wide">Edit Event</h1>
+                    <p className="text-neutral-500 mt-2 font-medium">Refine your event details and registration requirements.</p>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-500 rounded-sm p-8 space-y-6 ">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-400 rounded-sm p-6 md:p-10 space-y-8">
                     
                     {/* Event Title */}
                     <div>
@@ -286,13 +286,13 @@ const EditEvent = () => {
                     </div>
 
                     {/* Date & Time */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
                             <label className={labelCls}>Start Time <span className="text-orange-600">*</span></label>
                             <input type="datetime-local" name="startTime" required className={inputCls}
                                 value={formData.startTime} onChange={handleChange} />
                         </div>
-                        <div>
+                        <div className="space-y-2">
                             <label className={labelCls}>End Time <span className="text-orange-600">*</span></label>
                             <input type="datetime-local" name="endTime" required className={inputCls}
                                 value={formData.endTime} onChange={handleChange} />
@@ -307,44 +307,48 @@ const EditEvent = () => {
                         <p className="text-xs text-neutral-500 mt-1">Optional: If left blank, registrations stay open until start time.</p>
                     </div>
 
-                    {/* Total Seats */}
-                    <div>
-                        <label className={labelCls}>Total Seats <span className="text-orange-600">*</span></label>
-                        <div className="flex items-center gap-4 mb-3">
-                            <label className="inline-flex items-center cursor-pointer gap-2">
-                                <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                    {/* Seats & Fee Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        {/* Total Seats */}
+                        <div className="space-y-4">
+                            <label className={labelCls}>Seat Availability <span className="text-orange-600">*</span></label>
+                            <div className="flex items-center gap-3">
+                                <input type="checkbox" id="unlimited-check" className="w-5 h-5 text-black border-2 border-black rounded-sm focus:ring-0 cursor-pointer"
                                     checked={isUnlimited} onChange={() => {
                                         setIsUnlimited(!isUnlimited);
                                         if (!isUnlimited) setFormData({ ...formData, totalSeats: '' });
                                     }} />
-                                <span className="text-sm font-medium text-neutral-700">Unlimited Seats</span>
-                            </label>
+                                <label htmlFor="unlimited-check" className="text-sm font-black uppercase tracking-widest text-neutral-700 cursor-pointer">Unlimited Seats</label>
+                            </div>
+                            {!isUnlimited && (
+                                <input type="number" name="totalSeats" required min="1" className={inputCls}
+                                    value={formData.totalSeats} onChange={handleChange} placeholder="Capacity" />
+                            )}
                         </div>
-                        {!isUnlimited && (
-                            <input type="number" name="totalSeats" required min="1" className={inputCls}
-                                value={formData.totalSeats} onChange={handleChange} placeholder="Number of seats" />
-                        )}
-                    </div>
 
-                    {/* Entry Fee */}
-                    <div>
-                        <label className={labelCls}>Entry Fee</label>
-                        <div className="flex items-center gap-6 mb-3">
-                            <label className="inline-flex items-center cursor-pointer">
-                                <input type="radio" className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
-                                    name="feeType" checked={isFree} onChange={() => { setIsFree(true); setFormData({ ...formData, entryFee: 0 }); }} />
-                                <span className="ml-2 text-sm font-medium text-neutral-700">Free</span>
-                            </label>
-                            <label className="inline-flex items-center cursor-pointer">
-                                <input type="radio" className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
-                                    name="feeType" checked={!isFree} onChange={() => setIsFree(false)} />
-                                <span className="ml-2 text-sm font-medium text-neutral-700">Paid</span>
-                            </label>
+                        {/* Entry Fee */}
+                        <div className="space-y-4">
+                            <label className={labelCls}>Ticket Price</label>
+                            <div className="flex items-center gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input type="radio" className="w-5 h-5 text-black border-2 border-black focus:ring-0 cursor-pointer"
+                                        name="feeType" checked={isFree} onChange={() => { setIsFree(true); setFormData({ ...formData, entryFee: 0 }); }} />
+                                    <span className="text-sm font-black uppercase tracking-widest text-neutral-700 group-hover:text-black">Free</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input type="radio" className="w-5 h-5 text-black border-2 border-black focus:ring-0 cursor-pointer"
+                                        name="feeType" checked={!isFree} onChange={() => setIsFree(false)} />
+                                    <span className="text-sm font-black uppercase tracking-widest text-neutral-700 group-hover:text-black">Paid</span>
+                                </label>
+                            </div>
+                            {!isFree && (
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-neutral-400">₹</span>
+                                    <input type="number" name="entryFee" min="1" placeholder="Amount"
+                                        className={inputCls + " pl-8 font-black"} value={formData.entryFee} onChange={handleChange} />
+                                </div>
+                            )}
                         </div>
-                        {!isFree && (
-                            <input type="number" name="entryFee" min="1" placeholder="Enter amount in ₹"
-                                className={inputCls} value={formData.entryFee} onChange={handleChange} />
-                        )}
                     </div>
 
                     {/* Allowed Programs */}
@@ -390,46 +394,48 @@ const EditEvent = () => {
                         )}
                     </div>
 
-                    {/* Show Winners Toggle */}
-                    <div className="bg-orange-50 border-2 border-orange-200 p-4 rounded-sm">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="showWinner"
-                                checked={formData.showWinner}
-                                onChange={(e) => setFormData({ ...formData, showWinner: e.target.checked })}
-                                className="w-5 h-5 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
-                            />
-                            <div>
-                                <span className={labelCls + ' mb-0'}>Show Winners / Results</span>
-                                <p className="text-xs text-neutral-500">If enabled, winners will be shown on the event card after the event ends.</p>
-                            </div>
-                        </label>
+                    {/* Status Toggles Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Show Winners Toggle */}
+                        <div className="bg-orange-50 border-2 border-gray-400 p-3 rounded-xl">
+                            <label className="flex items-start gap-4 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="showWinner"
+                                    checked={formData.showWinner}
+                                    onChange={(e) => setFormData({ ...formData, showWinner: e.target.checked })}
+                                    className="w-6 h-6 mt-1 text-black border-2 border-gray-400 rounded-sm focus:ring-0"
+                                />
+                                <div>
+                                    <span className="block font-black tracking-widest text-sm text-black">Display Results</span>
+                                    <p className="text-[10px] text-neutral-500 font-bold mt-1">Show winners on event card after completion.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Provide Certificate Toggle */}
+                        <div className="bg-blue-50 border-2 border-gray-400 rounded-xl p-3">
+                            <label className="flex items-start gap-4 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="provideCertificate"
+                                    checked={formData.provideCertificate}
+                                    onChange={(e) => setFormData({ ...formData, provideCertificate: e.target.checked })}
+                                    className="w-6 h-6 mt-1 text-black border-2 border-gray-400 rounded-sm focus:ring-0"
+                                />
+                                <div>
+                                    <span className="block font-black tracking-widest text-sm text-black">Digital Certificates</span>
+                                    <p className="text-[10px] text-neutral-500 font-bold  mt-1">Template can be designed anytime before event end.</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
-                    {/* Provide Certificate Toggle */}
-                    <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-sm">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="provideCertificate"
-                                checked={formData.provideCertificate}
-                                onChange={(e) => setFormData({ ...formData, provideCertificate: e.target.checked })}
-                                className="w-5 h-5 text-blue-600 border-neutral-300 rounded focus:ring-blue-600"
-                            />
-                            <div>
-                                <span className={labelCls + ' mb-0'}>Provide Certificates</span>
-                                <p className="text-xs text-neutral-500">If enabled, participants can download their certificates once the event ends. <span className="font-bold text-blue-700">You can design the certificate template anytime before the event ends.</span></p>
-                            </div>
-                        </label>
-                    </div>
-
-                    {/* Event Image URL */}
-                    <div>
-                        <label className={labelCls}>Event Image URL</label>
-                        <input type="url" name="imageUrl" placeholder="https://example.com/event-image.jpg"
-                            className={inputCls} value={formData.imageUrl} onChange={handleChange} />
-                        <p className="text-xs text-neutral-500 mt-1">Optional: Enter a URL for the event banner image</p>
+                    {/* Media */}
+                    <div className="space-y-2">
+                        <label className={labelCls}>Event Banner URL</label>
+                        <input type="url" name="imageUrl" placeholder="https://example.com/banner.jpg"
+                            className={inputCls + " font-mono text-xs"} value={formData.imageUrl} onChange={handleChange} />
                     </div>
 
                     {/* Required Fields */}
@@ -602,15 +608,15 @@ const EditEvent = () => {
                                     </div>
                                 ))}
                                 {formData.winners.length === 0 && (
-                                    <p className="text-sm text-neutral-400 italic text-center py-4">No winners declared yet.</p>
+                                    <p className="text-sm text-neutral-400 italic text-center py-4 ">No winners declared yet.</p>
                                 )}
                             </div>
                         </div>
                     ) : (
                         // Subtle info strip shown while event is still ongoing
-                        <div className="bg-amber-50 border-2 border-amber-200 px-5 py-4 flex items-center gap-3">
+                        <div className="mt-5 bg-amber-50 border-2 border-amber-200 px-5 py-4 flex items-center gap-3">
                             <i className="ri-trophy-line text-amber-500 text-xl flex-shrink-0" />
-                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+                            <p className="text-xs font-bold text-amber-700  tracking-wide">
                                 Winners can be declared once the event ends on{' '}
                                 {new Date(formData.endTime).toLocaleString([], {
                                     dateStyle: 'medium',
@@ -622,15 +628,15 @@ const EditEvent = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-4 pt-6 border-t-2 border-neutral-100">
+                    <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t-2 border-neutral-100">
                         <button type="button" onClick={() => navigate('/profile')}
-                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors">
-                            Cancel
+                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-black text-xs rounded-xl tracking-widest hover:bg-neutral-200 transition-colors order-2 sm:order-1">
+                            Discard Changes
                         </button>
                         <button type="submit"
                             disabled={isSaving}
-                            className={`flex-1 px-6 py-3 border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm transition-colors ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600 hover:border-orange-600'}`}>
-                            {isSaving ? 'Updating...' : 'Update Event'}
+                            className={`flex-1 px-6 py-3 border-2 border-black text-white font-black text-xs rounded-xl tracking-widest transition-all  active:translate-x-1 active:translate-y-1 active:shadow-none order-1 sm:order-2 ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600 hover:border-orange-600'}`}>
+                            {isSaving ? 'Syncing...' : 'Update Event Details'}
                         </button>
                     </div>
                 </form>

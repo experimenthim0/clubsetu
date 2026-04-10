@@ -2,7 +2,6 @@ import express from "express";
 import crypto from "crypto";
 import User from "../models/User.js";
 import Club from "../models/Club.js";
-import ClubMember from "../models/ClubMember.js";
 import { generateToken, verifyToken } from "../middleware/auth.js";
 import sendEmail from "../utils/sendEmail.js";
 import { getClientUrl } from "../utils/corsConfig.js";
@@ -118,120 +117,8 @@ router.post("/register/student", async (req, res) => {
   }
 });
 
-// POST /api/auth/register/club-head
-router.post("/register/club-head", async (req, res) => {
-  try {
-    const {
-      name,
-      clubName,
-      phone,
-      collegeEmail,
-      rollNo,
-      branch,
-      year,
-      program,
-      designation,
-      password,
-    } = req.body;
-
-    const origin = req.headers.origin;
-    const clientUrl = getClientUrl(origin);
-
-    // Check if club already exists
-    const slug = slugify(clubName);
-    const existingClub = await Club.findOne({ $or: [{ clubName: clubName }, { slug }] });
-    if (existingClub) {
-      return res.status(409).json({
-        message: `Club "${clubName}" already exists.`,
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: collegeEmail }, { rollNo }],
-    });
-    if (existingUser) {
-      return res.status(409).json({
-        message: "User already exists with this email or roll number.",
-      });
-    }
-
-    const isDevMode = process.env.SKIP_VERIFICATION === "true";
-    let verificationToken = undefined;
-    let verificationTokenExpire = undefined;
-
-    if (!isDevMode) {
-      verificationToken = crypto.randomBytes(20).toString("hex");
-      verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
-    }
-
-    const newUser = new User({
-      name,
-      email: collegeEmail,
-      password,
-      role: "clubHead",
-      rollNo,
-      branch,
-      year,
-      program,
-      phone,
-      clubName,
-      designation,
-      isVerified: isDevMode,
-      isApproved: false,
-      verificationToken,
-      verificationTokenExpire,
-    });
-
-    await newUser.save();
-
-    // Create Club
-    const newClub = new Club({
-      clubName: clubName,
-      slug,
-    });
-    await newClub.save();
-
-    // Create ClubMember link
-    await ClubMember.create({
-      userId: newUser._id,
-      clubId: newClub._id,
-      role: "head",
-    });
-
-    if (!isDevMode) {
-      const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
-      const message = `
-        <h2>Welcome to ClubSetu!</h2>
-        <p>Please verify your email address to get started:</p>
-        <a href="${verifyUrl}">${verifyUrl}</a>
-      `;
-
-      try {
-        await sendEmail({
-          email: collegeEmail,
-          subject: "Account Verification",
-          message,
-        });
-
-        return res.status(201).json({
-          message: "Registration successful. Please verify your email.",
-        });
-      } catch (error) {
-        await User.findByIdAndDelete(newUser._id);
-        await Club.findByIdAndDelete(newClub._id);
-        await ClubMember.deleteMany({ userId: newUser._id });
-        return res.status(500).json({ message: "Email could not be sent." });
-      }
-    }
-
-    res.status(201).json({
-      message: "Registered successfully. Pending admin approval.",
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// Club Head registration removed as per new requirements
+// Clubs and Faculty are now pre-seeded or added by Admin
 
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
@@ -247,15 +134,30 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Please verify your email to login." });
     }
 
-    if (user.role === "clubHead" && !user.isApproved) {
-      return res.status(403).json({
-        message: "Your account is pending admin approval.",
-      });
-    }
-
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if 2Step Verification is required
+    const sensitiveRoles = ["admin", "facultyCoordinator", "club"];
+    if (user.isTwoStepEnabled && sensitiveRoles.includes(user.role)) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otp = otp;
+      user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+      await user.save();
+
+      await sendEmail({
+        email: user.email,
+        subject: "Login Verification Code",
+        message: `<h1>Your Verification Code</h1><p>Your OTP for login is: <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
+
+      return res.json({
+        needs2FA: true,
+        email: user.email,
+        message: "Verification code sent to your email.",
+      });
     }
 
     const token = generateToken(user, user.role);
@@ -270,6 +172,47 @@ router.post("/login", async (req, res) => {
 
     return res.json({
       message: "Login successful",
+      user: userObj,
+      role: user.role,
+      token,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/auth/verify-2fa
+router.post("/verify-2fa", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({
+      email,
+      otp,
+      otpExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid or expired OTP." });
+    }
+
+    // Clear OTP after successful verification
+    user.otp = undefined;
+    user.otpExpire = undefined;
+    await user.save();
+
+    const token = generateToken(user, user.role);
+    const userObj = sanitizeUser(user);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      message: "Verification successful",
       user: userObj,
       role: user.role,
       token,

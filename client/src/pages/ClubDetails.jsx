@@ -116,7 +116,7 @@ const ClubDetails = () => {
                     {/* Coordinator cell — dark */}
                     <div className="bg-black text-white border-2 border-black p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">Faculty Coordinator</p>
-                        <p className="font-black text-base text-white">{club.facultyCoordinators}</p>
+                        <p className="font-black text-base text-white">{club.facultyName || "N/A"}</p>
                     </div>
                     <div className="bg-black text-white border-2 border-black p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">Student Lead</p>
@@ -128,36 +128,22 @@ const ClubDetails = () => {
                     <div className="col-span-2 bg-white border-2 border-gray-300 p-5 ">
                         <p className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-3">Connect with us</p>
                         <div className="flex flex-wrap gap-2">
-                            {club.clubInstagram && (
-                                <a href={club.clubInstagram} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                                    <i className="ri-instagram-line text-lg" />
-                                </a>
-                            )}
-                            {club.clubLinkedin && (
-                                <a href={club.clubLinkedin} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                                    <i className="ri-linkedin-fill text-lg" />
-                                </a>
-                            )}
-                            {club.clubX && (
-                                <a href={club.clubX} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                                    <i className="ri-twitter-x-line text-lg" />
-                                </a>
-                            )}
-                            {club.clubWebsite && (
-                                <a href={club.clubWebsite} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                                    <i className="ri-global-line text-lg" />
-                                </a>
-                            )}
-                            {club.clubWhatsapp && (
-                                <a href={`https://wa.me/${club.clubWhatsapp.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer"
-                                    className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                                    <i className="ri-whatsapp-line text-lg" />
-                                </a>
-                            )}
+                            {club.socialLinks?.map(link => {
+                                const iconMap = {
+                                    instagram: 'ri-instagram-line',
+                                    linkedin: 'ri-linkedin-fill',
+                                    x: 'ri-twitter-x-line',
+                                    website: 'ri-global-line',
+                                    whatsapp: 'ri-whatsapp-line'
+                                };
+                                const href = link.platform === 'whatsapp' ? `https://wa.me/${link.url.replace(/\s+/g, '')}` : link.url;
+                                return (
+                                    <a key={link.platform} href={href} target="_blank" rel="noopener noreferrer"
+                                        className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-all  hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
+                                        <i className={`${iconMap[link.platform] || 'ri-links-line'} text-lg`} />
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

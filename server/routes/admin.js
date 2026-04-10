@@ -3,7 +3,6 @@ import User from "../models/User.js";
 import Registration from "../models/Registration.js";
 import Event from "../models/Event.js";
 import Club from "../models/Club.js";
-import ClubMember from "../models/ClubMember.js";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -13,7 +12,10 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const admin = await User.findOne({ email, role: "admin" });
+    const admin = await User.findOne({ 
+      email, 
+      role: { $in: ["admin", "paymentAdmin"] } 
+    });
     if (!admin) {
       return res.status(401).json({ message: "Invalid admin credentials" });
     }
@@ -26,12 +28,20 @@ router.post("/login", async (req, res) => {
     const { generateToken } = await import("../middleware/auth.js");
     const token = generateToken(admin, "admin");
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
       success: true,
-      admin: { email: admin.email, role: "admin" },
+      admin: { email: admin.email, role: admin.role },
       token,
     });
   } catch (error) {
+    console.error("Admin login error:", error);
     res.status(500).json({ message: "Server error during admin login" });
   }
 });
@@ -40,7 +50,7 @@ router.post("/login", async (req, res) => {
 router.get(
   "/dashboard-stats",
   verifyToken,
-  allowRoles("admin"),
+  allowRoles("admin", "paymentAdmin"),
   async (req, res) => {
     try {
       const events = await Event.find({ entryFee: { $gt: 0 } }).populate("createdBy");
@@ -64,9 +74,9 @@ router.get(
             const club = await Club.findById(event.clubId);
             clubName = club?.clubName || "Unknown";
         } else if (event.createdBy) {
-            // Fallback: search for a club where this user is the head
-            const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
-            clubName = membership?.clubId?.clubName || "Unknown";
+            // Fallback: search for the user and get their clubId
+            const user = await User.findById(event.createdBy._id).populate("clubId");
+            clubName = user?.clubId?.clubName || user?.clubName || "Unknown";
         }
 
         return {
@@ -89,14 +99,28 @@ router.get(
       );
 
       const totalStudents = await User.countDocuments({ role: "member" });
-      const totalClubHeads = await User.countDocuments({ role: "clubHead" });
-      const totalEvents = await Event.countDocuments();
+      const totalClubs = await Club.countDocuments();
+      const totalEventsActive = await Event.countDocuments({ reviewStatus: "PUBLISHED" });
+      const totalEventsAll = await Event.countDocuments();
+
+      // Year-wise stats
+      const yearWiseStats = await Event.aggregate([
+        {
+          $group: {
+            _id: { $year: "$startTime" },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { "_id": -1 } }
+      ]);
 
       res.json({
         totalRevenue: totalPlatformRevenue,
         totalStudents,
-        totalClubHeads,
-        totalEvents,
+        totalClubs,
+        totalEvents: totalEventsActive,
+        totalEventsTillNow: totalEventsAll,
+        yearWiseEvents: yearWiseStats,
         eventStats,
       });
     } catch (error) {
@@ -110,7 +134,7 @@ router.get(
 router.post(
   "/complete-payout/:eventId",
   verifyToken,
-  allowRoles("admin"),
+  allowRoles("admin", "paymentAdmin"),
   async (req, res) => {
     try {
       const { eventId } = req.params;
@@ -134,23 +158,21 @@ router.post(
   },
 );
 
-// Fetch Club Head Info — ADMIN ONLY
+// Fetch Club/Faculty User Info — ADMIN ONLY
 router.get(
-  "/club-head/:id",
+  "/user-info/:id",
   verifyToken,
   allowRoles("admin"),
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
-      if (!user || user.role !== "clubHead")
-        return res.status(404).json({ message: "Club Head not found" });
-
-      // Find the club name
-      const membership = await ClubMember.findOne({ userId: user._id, role: "head" }).populate("clubId");
+      if (!user) return res.status(404).json({ message: "User not found" });
 
       res.json({
         name: user.name,
-        clubName: membership?.clubId?.clubName || user.clubName || "Unknown",
+        email: user.email,
+        role: user.role,
+        clubId: user.clubId,
         bankInfo: {
           bankName: user.bankName,
           accountHolderName: user.accountHolderName,
@@ -161,31 +183,22 @@ router.get(
         },
       });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching club head info" });
+      res.status(500).json({ message: "Error fetching user info" });
     }
   },
 );
 
-// Get All Club Heads List — ADMIN ONLY
+// Get All Clubs List — ADMIN ONLY
 router.get(
-  "/club-heads-list",
+  "/clubs-list",
   verifyToken,
   allowRoles("admin"),
   async (req, res) => {
     try {
-      const clubHeads = await User.find({ role: "clubHead" }).select("-password");
-      
-      // Enhance with club names
-      const headsWithClubs = await Promise.all(clubHeads.map(async (head) => {
-          const membership = await ClubMember.findOne({ userId: head._id, role: "head" }).populate("clubId");
-          const headObj = head.toObject();
-          headObj.clubName = membership?.clubId?.clubName || head.clubName || "Unknown";
-          return headObj;
-      }));
-      
-      res.json(headsWithClubs);
+      const clubs = await Club.find({}).populate("facultyCoordinators", "name email");
+      res.json(clubs);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch club heads" });
+      res.status(500).json({ message: "Failed to fetch clubs" });
     }
   },
 );
@@ -197,7 +210,31 @@ router.get(
   allowRoles("admin"),
   async (req, res) => {
     try {
-      const events = await Event.find({})
+      const { month, year, clubId } = req.query;
+      let query = {};
+
+      if (month && month !== "all") {
+        const m = parseInt(month);
+        query.startTime = { 
+          ...query.startTime,
+          $expr: { $eq: [{ $month: "$startTime" }, m] } 
+        };
+      }
+      
+      if (year && year !== "all") {
+        const y = parseInt(year);
+        // We can't use $expr easily with other filters in find(), 
+        // but we can use $gte and $lte for year.
+        const startOfYear = new Date(y, 0, 1);
+        const endOfYear = new Date(y, 11, 31, 23, 59, 59);
+        query.startTime = { ...query.startTime, $gte: startOfYear, $lte: endOfYear };
+      }
+
+      if (clubId && clubId !== "all") {
+        query.clubId = clubId;
+      }
+
+      const events = await Event.find(query)
         .populate("clubId", "clubName")
         .populate("createdBy", "name clubName")
         .sort({ startTime: -1 });
@@ -212,15 +249,8 @@ router.get(
           let clubName = event.clubId?.clubName || "Unknown";
 
           if (clubName === "Unknown" && event.createdBy?._id) {
-            const membership = await ClubMember.findOne({
-              userId: event.createdBy._id,
-              role: "head",
-            }).populate("clubId", "clubName");
-
-            clubName =
-              membership?.clubId?.clubName ||
-              event.createdBy.clubName ||
-              "Unknown";
+            const user = await User.findById(event.createdBy._id).populate("clubId");
+            clubName = user?.clubId?.clubName || user?.clubName || "Unknown";
           }
 
           return {
@@ -247,60 +277,68 @@ router.get(
   },
 );
 
-// Approve Club Head — ADMIN ONLY
-router.patch(
-  "/approve-club-head/:id",
+// Create New Club and Associated Users — ADMIN ONLY
+router.post(
+  "/clubs",
   verifyToken,
   allowRoles("admin"),
   async (req, res) => {
     try {
-      const { id } = req.params;
-      const user = await User.findById(id);
-      if (!user || user.role !== "clubHead")
-        return res.status(404).json({ message: "Club Head not found" });
+      const { clubName, facultyName, facultyEmail, clubEmail } = req.body;
+      const { slugify } = await import("../utils/slugify.js");
+      const bcrypt = await import("bcryptjs");
 
-      user.isApproved = true;
-      await user.save();
-
-      res.json({
-        success: true,
-        message: `Club Head for approved successfully`,
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to approve club head" });
-    }
-  },
-);
-
-// Reject/Delete Club Head — ADMIN ONLY
-router.delete(
-  "/reject-club-head/:id",
-  verifyToken,
-  allowRoles("admin"),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const user = await User.findById(id);
-      if (!user || user.role !== "clubHead")
-        return res.status(404).json({ message: "Club Head not found" });
-
-      // Also clean up club and membership
-      const membership = await ClubMember.findOne({ userId: user._id, role: "head" });
-      if (membership) {
-          await Club.findByIdAndDelete(membership.clubId);
-          await ClubMember.deleteMany({ clubId: membership.clubId });
-      }
+      const slug = slugify(clubName);
       
-      await User.findByIdAndDelete(id);
+      // 1. Create Club
+      const newClub = new Club({
+        clubName,
+        slug,
+        facultyName,
+        facultyEmail,
+        clubEmail
+      });
+      await newClub.save();
 
-      res.json({
-        success: true,
-        message: `Club Head and associated data rejected and deleted`,
+      const commonPassword = `${slug}@him0148`;
+
+      // 2. Create Club User
+      const clubUser = new User({
+        name: clubName.toUpperCase(),
+        email: clubEmail,
+        password: commonPassword,
+        role: "club",
+        clubId: newClub._id,
+        isVerified: true,
+        isTwoStepEnabled: true
+      });
+      await clubUser.save();
+
+      // 3. Create Faculty User
+      const facultyUser = new User({
+        name: facultyName,
+        email: facultyEmail,
+        password: commonPassword,
+        role: "facultyCoordinator",
+        clubId: newClub._id,
+        isVerified: true,
+        isTwoStepEnabled: true
+      });
+      await facultyUser.save();
+
+      // 4. Update Club with Faculty reference
+      newClub.facultyCoordinators.push(facultyUser._id);
+      await newClub.save();
+
+      res.status(201).json({ 
+        message: "Club and associated users created successfully", 
+        club: newClub 
       });
     } catch (error) {
-      res.status(500).json({ message: "Failed to reject club head" });
+        console.error(error);
+        res.status(500).json({ message: error.message || "Failed to create club" });
     }
-  },
+  }
 );
 
 export default router;

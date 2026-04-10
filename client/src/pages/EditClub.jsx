@@ -25,13 +25,22 @@ const EditClub = () => {
         clubSponsors: '',
         description: '',
         clubLogo: '',
-        facultyCoordinators: '',
         studentCoordinators: '',
         clubInstagram: '',
         clubLinkedin: '',
         clubX: '',
         clubWebsite: '',
-        clubWhatsapp: ''
+        clubWhatsapp: '',
+        clubEmail: '',
+        facultyEmail: '',
+        facultyName: '',
+        // Financial Info
+        bankName: '',
+        accountHolderName: '',
+        accountNumber: '',
+        ifscCode: '',
+        upiId: '',
+        bankPhone: '',
     });
 
     useEffect(() => {
@@ -43,35 +52,52 @@ const EditClub = () => {
                 category: club.category || '',
                 description: club.description || '',
                 clubLogo: club.clubLogo || '',
+                studentCoordinators: club.studentCoordinators?.join(', ') || '',
                 clubGallery: club.clubGallery?.join(', ') || '',
                 clubSponsors: club.clubSponsors?.join(', ') || '',
-                facultyCoordinators: club.facultyCoordinators?.join(', ') || '',
-                studentCoordinators: club.studentCoordinators?.join(', ') || '',
-                clubInstagram: club.clubInstagram || '',
-                clubLinkedin: club.clubLinkedin || '',
-                clubX: club.clubX || '',
-                clubWebsite: club.clubWebsite || '',
-                clubWhatsapp: club.clubWhatsapp || ''
+                clubInstagram: club.socialLinks?.find(l => l.platform === 'instagram')?.url || '',
+                clubLinkedin: club.socialLinks?.find(l => l.platform === 'linkedin')?.url || '',
+                clubX: club.socialLinks?.find(l => l.platform === 'x')?.url || '',
+                clubWebsite: club.socialLinks?.find(l => l.platform === 'website')?.url || '',
+                clubWhatsapp: club.socialLinks?.find(l => l.platform === 'whatsapp')?.url || '',
+                clubEmail: club.clubEmail || '',
+                facultyEmail: club.facultyEmail || '',
+                facultyName: club.facultyName || '',
+                bankName: club.bankName || '',
+                accountHolderName: club.accountHolderName || '',
+                accountNumber: club.accountNumber || '',
+                ifscCode: club.ifscCode || '',
+                upiId: club.upiId || '',
+                bankPhone: club.bankPhone || ''
             });
         };
 
         const fetchClub = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${id}`);
+                // If id is 'id' or undefined, try to get from logged in user
+                let targetId = id === 'id' ? null : id;
+                if (!targetId) {
+                    const storedUser = JSON.parse(localStorage.getItem('user'));
+                    targetId = storedUser?.clubId;
+                }
+
+                if (!targetId) {
+                    throw new Error('No club ID found.');
+                }
+
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${targetId}`);
                 applyClubData(res.data.club);
             } catch (err) {
-                if (err.response?.status === 404) {
+                if (err.response?.status === 404 || err.message === 'No club ID found.') {
                     try {
                         const storedUser = JSON.parse(localStorage.getItem('user'));
                         const storedRole = localStorage.getItem('role');
 
-                        if (storedUser && ['clubHead', 'club-head'].includes(storedRole)) {
+                        if (storedUser && storedRole === 'club') {
                             const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/clubs`);
                             const matchedClub = clubsRes.data.find((club) =>
                                 club._id === storedUser.clubId ||
-                                (club.clubName || '').trim().toLowerCase() === (storedUser.clubName || '').trim().toLowerCase() ||
-                                club.slug === storedUser.clubSlug ||
-                                club.slug === slugifyClubName(storedUser.clubName)
+                                (club.clubName || '').trim().toLowerCase() === (storedUser.clubName || '').trim().toLowerCase()
                             );
 
                             if (matchedClub) {
@@ -101,13 +127,29 @@ const EditClub = () => {
         e.preventDefault();
         setIsSaving(true);
         try {
+            // Pack social links into array for the backend
+            const socialLinks = [
+                { platform: 'instagram', url: formData.clubInstagram },
+                { platform: 'linkedin', url: formData.clubLinkedin },
+                { platform: 'x', url: formData.clubX },
+                { platform: 'website', url: formData.clubWebsite },
+                { platform: 'whatsapp', url: formData.clubWhatsapp },
+            ].filter(link => link.url && link.url.trim() !== '');
+
             const processedData = {
                 ...formData,
-                facultyCoordinators: formData.facultyCoordinators.split(',').map(s => s.trim()).filter(s => s !== ''),
-                studentCoordinators: formData.studentCoordinators.split(',').map(s => s.trim()).filter(s => s !== ''),
+                socialLinks,
                 clubGallery: formData.clubGallery.split(',').map(s => s.trim()).filter(s => s !== ''),
-                clubSponsors: formData.clubSponsors.split(',').map(s => s.trim()).filter(s => s !== '')
+                clubSponsors: formData.clubSponsors.split(',').map(s => s.trim()).filter(s => s !== ''),
+                studentCoordinators: formData.studentCoordinators.split(',').map(s => s.trim()).filter(s => s !== '')
             };
+            
+            // Cleanup the flattened fields before sending
+            delete processedData.clubInstagram;
+            delete processedData.clubLinkedin;
+            delete processedData.clubX;
+            delete processedData.clubWebsite;
+            delete processedData.clubWhatsapp;
             const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/clubs/${clubId}`, processedData);
 
             const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -133,155 +175,245 @@ const EditClub = () => {
     if (loading) return <div className="text-center py-20">Loading...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto px-6 py-12">
-            <h1 className="text-3xl font-black uppercase tracking-wide mb-8">Edit Club Information</h1>
-            <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-500 p-8 space-y-8">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+            <div className="flex justify-between items-center mb-6 md:mb-10">
+                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-black">Edit Club Profile</h1>
+                <button 
+                    onClick={() => navigate(`/club/${clubSlug || clubId}`)}
+                    className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-black transition-colors"
+                >
+                    Cancel
+                </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="bg-white border-2 border-black p-6 md:p-10 space-y-10 shadow-[8px_8px_0px_#0D0D0D]">
                 
                 {/* Basic Info Section */}
                 <div className="space-y-6">
-                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">
-                        <i className="ri-information-line text-orange-600" /> Basic Details
+                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-3 flex items-center gap-3">
+                        <i className="ri-information-fill text-orange-600 text-lg" /> Core Identity
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Name</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Club Name</label>
                             <input 
                                 type="text" 
                                 name="clubName" 
                                 value={formData.clubName} 
                                 onChange={handleChange}
-                                className="w-full p-3 border-2 border-gray-500 focus:bg-orange-50 outline-none font-bold"
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Category</label>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Category</label>
                             <input 
                                 type="text" 
                                 name="category" 
                                 value={formData.category} 
                                 onChange={handleChange}
-                                placeholder="e.g. Technical, Cultural, Sports"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
+                                placeholder="Technical, Cultural, Sports..."
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Club Contact Email</label>
+                            <input 
+                                type="email" 
+                                name="clubEmail" 
+                                value={formData.clubEmail} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Faculty Contact Name</label>
+                            <input 
+                                type="text" 
+                                name="facultyName" 
+                                value={formData.facultyName} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Student Coordinators (Comma separated names)</label>
+                            <input 
+                                type="text" 
+                                name="studentCoordinators" 
+                                value={formData.studentCoordinators} 
+                                onChange={handleChange}
+                                placeholder="Name 1, Name 2, Name 3"
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Description</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Club Mission / Description</label>
                         <textarea 
                             name="description" 
                             value={formData.description} 
-                            onChange={handleChange}
-                            rows="4"
-                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
+                            onChange={handleChange} 
+                            rows="5" 
+                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-medium leading-relaxed transition-colors"
                         ></textarea>
                     </div>
                 </div>
 
-                {/* Media & Coordinators */}
+                {/* Visuals & Media */}
                 <div className="space-y-6">
-                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">
-                        <i className="ri-image-line text-orange-600" /> Identity & Coordinators
+                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-3 flex items-center gap-3">
+                        <i className="ri-image-fill text-orange-600 text-lg" /> Media & Visuals
                     </h3>
                     <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Logo URL</label>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Club Logo URL</label>
                         <input 
                             type="url" 
                             name="clubLogo" 
                             value={formData.clubLogo} 
                             onChange={handleChange}
                             placeholder="https://example.com/logo.png"
-                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-mono text-sm"
+                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-mono text-xs"
                         />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Faculty Coordinators (Comma separated)</label>
-                            <textarea 
-                                name="facultyCoordinators" 
-                                value={formData.facultyCoordinators} 
-                                onChange={handleChange}
-                                placeholder="Dr. XYZ, Dr. ABC"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Student Coordinators (Comma separated)</label>
-                            <textarea 
-                                name="studentCoordinators" 
-                                value={formData.studentCoordinators} 
-                                onChange={handleChange}
-                                placeholder="John Doe, Jane Smith"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
-                            ></textarea>
-                        </div>
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Gallery Images (Comma separated URLs)</label>
+                        <textarea 
+                            name="clubGallery" 
+                            value={formData.clubGallery} 
+                            onChange={handleChange}
+                            placeholder="https://url1.jpg, https://url2.jpg..."
+                            rows="4"
+                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-mono text-xs"
+                        ></textarea>
                     </div>
-               
-</div>
- <div className="space-y-6">
-                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">
-                        <i className="ri-image-line text-orange-600" /> Club Gallery & Sponsors
-                    </h3>
+                    <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Club Sponsors (Comma separated URLs)</label>
+                        <textarea 
+                            name="clubSponsors" 
+                            value={formData.clubSponsors} 
+                            onChange={handleChange}
+                            placeholder="https://sponsor1-logo.jpg, https://sponsor2-logo.jpg..."
+                            rows="4"
+                            className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-mono text-xs"
+                        ></textarea>
+                    </div>
+                </div>
 
-                {/* Club Gallery */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Gallery (Comma separated)</label>
-                            <textarea 
-                                name="clubGallery" 
-                                value={formData.clubGallery} 
-                                onChange={handleChange}
-                                placeholder="https://himanshu.me/image1.jpg, https://nikhim.me/img.jpg"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
-                            ></textarea>
-                        </div>
-                       
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Sponsors (Comma separated)</label>
-                            <textarea 
-                                name="clubSponsors" 
-                                value={formData.clubSponsors} 
-                                onChange={handleChange}
-                                placeholder="https://himanshu.me/sponsor1.jpg, https://nikhim.me/sponsor2.jpg"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold"
-                            ></textarea>
-                        </div>
-                        </div> 
- </div>
                 {/* Social Links */}
                 <div className="space-y-6">
-                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-2 flex items-center gap-2">
-                        <i className="ri-share-line text-orange-600" /> Club Social Links
+                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-3 flex items-center gap-3">
+                        <i className="ri-share-fill text-orange-600 text-lg" /> Public Presence
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Instagram URL</label>
-                            <input type="url" name="clubInstagram" value={formData.clubInstagram} onChange={handleChange} className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold" />
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Instagram URL</label>
+                            <input type="url" name="clubInstagram" value={formData.clubInstagram} onChange={handleChange} placeholder="https://instagram.com/club" className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold text-xs" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club LinkedIn URL</label>
-                            <input type="url" name="clubLinkedin" value={formData.clubLinkedin} onChange={handleChange} className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold" />
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">LinkedIn URL</label>
+                            <input type="url" name="clubLinkedin" value={formData.clubLinkedin} onChange={handleChange} placeholder="https://linkedin.com/company/club" className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold text-xs" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club X (Twitter) URL</label>
-                            <input type="url" name="clubX" value={formData.clubX} onChange={handleChange} className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold" />
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">X / Twitter URL</label>
+                            <input type="url" name="clubX" value={formData.clubX} onChange={handleChange} placeholder="https://x.com/club" className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold text-xs" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club Website URL</label>
-                            <input type="url" name="clubWebsite" value={formData.clubWebsite} onChange={handleChange} className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold" />
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Website URL</label>
+                            <input type="url" name="clubWebsite" value={formData.clubWebsite} onChange={handleChange} placeholder="https://club.com" className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold text-xs" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Club WhatsApp Number</label>
-                            <input type="text" name="clubWhatsapp" value={formData.clubWhatsapp} onChange={handleChange} className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold" />
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">WhatsApp Group/No.</label>
+                            <input type="text" name="clubWhatsapp" value={formData.clubWhatsapp} onChange={handleChange} placeholder="Contact number or group link" className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold text-xs" />
                         </div>
                     </div>
                 </div>
 
+                {/* Financial Info */}
+                <div className="space-y-6">
+                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-3 flex items-center gap-3">
+                        <i className="ri-bank-card-fill text-orange-600 text-lg" /> Financial Info (For Payments)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Bank Name</label>
+                            <input 
+                                type="text" 
+                                name="bankName" 
+                                value={formData.bankName} 
+                                onChange={handleChange}
+                                placeholder="e.g. State Bank of India"
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Account Holder Name</label>
+                            <input 
+                                type="text" 
+                                name="accountHolderName" 
+                                value={formData.accountHolderName} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Account Number</label>
+                            <input 
+                                type="text" 
+                                name="accountNumber" 
+                                value={formData.accountNumber} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">IFSC Code</label>
+                            <input 
+                                type="text" 
+                                name="ifscCode" 
+                                value={formData.ifscCode} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">UPI ID (Optional)</label>
+                            <input 
+                                type="text" 
+                                name="upiId" 
+                                value={formData.upiId} 
+                                onChange={handleChange}
+                                placeholder="name@upi"
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Phone Linked to Bank</label>
+                            <input 
+                                type="text" 
+                                name="bankPhone" 
+                                value={formData.bankPhone} 
+                                onChange={handleChange}
+                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
+                            />
+                        </div>
+                    </div>
+                </div>
 
-
-
-                <div className="pt-8 flex gap-4">
-                    <button type="button" onClick={() => navigate(`/club/${clubSlug || clubId}`)} className="flex-1 py-4 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition shadow-[4px_4px_0px_#000]">Cancel</button>
-                    <button type="submit" disabled={isSaving} className={`flex-1 py-4 text-white font-black uppercase tracking-widest transition shadow-[4px_4px_0px_#ea580c] disabled:shadow-none ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}>{isSaving ? 'Saving...' : 'Save Club Changes'}</button>
+                <div className="pt-8 flex flex-col sm:flex-row gap-4">
+                    <button 
+                        type="button" 
+                        onClick={() => navigate(`/club/${clubSlug || clubId}`)} 
+                        className="flex-1 py-4 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-50 transition-colors rounded-sm"
+                    >
+                        Discard
+                    </button>
+                    <button 
+                        type="submit" 
+                        disabled={isSaving} 
+                        className={`flex-1 py-4 text-white font-black uppercase tracking-widest transition-all rounded-sm shadow-[6px_6px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}
+                    >
+                        {isSaving ? 'Syncing...' : 'Update Club'}
+                    </button>
                 </div>
             </form>
         </div>

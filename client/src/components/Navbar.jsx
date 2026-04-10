@@ -121,7 +121,7 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white border-b-2 border-gray-400 transition-shadow duration-200 myfont ${
+        className={`sticky top-0 z-50 bg-white transition-shadow duration-200 myfont ${
           scrolled ? "shadow-sm" : ""
         }`}
       >
@@ -147,13 +147,13 @@ const Navbar = () => {
               Home
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-            <Link to="/events" className={navLinkCls("/events")}>
-              Events
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </Link>
             <Link to="/clubs" className={navLinkCls("/clubs")}>
               Clubs
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/clubs") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+            </Link>
+            <Link to="/events" className={navLinkCls("/events")}>
+              Events
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             {/* <Link to="/about-features" className={navLinkCls("/about-features")}>
               ClubSetu Features
@@ -167,8 +167,8 @@ const Navbar = () => {
 
             {user ? (
               <>
-                {/* Create Event — club heads only */}
-                {(role === "clubHead" || role === "club-head") && (
+                {/* Create Event — club only */}
+                {(role === "clubHead" || role === "club-head" || role === "club") && (
                   <Link
                     to="/create"
                     className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 border-2 border-black text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
@@ -178,8 +178,8 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* ── Notification Bell (Members Only) ── */}
-                {(role === "member" || role === "student") && (
+                {/* ── Notification Bell (Members, Faculty, Clubs) ── */}
+                {(role === "member" || role === "student" || role === "facultyCoordinator" || role === "club") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
@@ -194,7 +194,7 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm z-50">
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm z-50 mt-1">
                         <div className="px-4 py-3 border-b-2 border-black flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
                           <h3 className="text-[14px] font-black uppercase tracking-widest">Notifications</h3>
                         </div>
@@ -225,7 +225,7 @@ const Navbar = () => {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((o) => !o)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm border-2 border-transparent hover:border-black hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm border-2 border-transparent hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
                     aria-haspopup="true"
                     aria-expanded={dropdownOpen}
                   >
@@ -246,7 +246,7 @@ const Navbar = () => {
                   {/* ── Dropdown panel ── */}
                   {dropdownOpen && (
                     <div
-                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm  z-50 overflow-hidden"
+                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm  z-50 overflow-hidden mt-2"
                       role="menu"
                     >
                       {/* User header */}
@@ -258,7 +258,7 @@ const Navbar = () => {
                           {user.name}
                         </p>
                         <p className="text-[10px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
-                          {role === "clubHead" || role === "club-head" ? "Club Head" : role === "admin" ? "Admin" : "Student"}
+                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
                         </p>
                       </div>
 
@@ -288,38 +288,42 @@ const Navbar = () => {
                           </Link>
                         )}
 
-                        {(role === "clubHead" || role === "club-head") && (
+                        {(role === "clubHead" || role === "club-head" || role === "club" || role === "facultyCoordinator") && (
                           <Link
                             to="/my-events"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
                             role="menuitem"
                           >
                             <i className="ri-calendar-event-line text-orange-600" />{" "}
-                            Created Events
+                            {role === "facultyCoordinator" ? "Review Events" : "Club Events"}
                           </Link>
                         )}
-                        {(role === "clubHead" || role === "club-head") && (
-                          <Link
-                            to="/payments"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
-                            role="menuitem"
-                          >
-                         
-                            {/* <i className="ri-money-dollar-circle-line text-orange-600"/> */}
-                            <IndianRupeeIcon size={18} >
-                            Payments
-                            </IndianRupeeIcon>
-                            
-                          </Link>
-                        )}
-                        {(role === "clubHead" || role === "club-head") && (
-                          <Link
-                            to="/send-notification"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
-                            role="menuitem"
-                          >
-                            <i className="ri-notification-badge-line text-orange-600"/> Send Notification
-                          </Link>
+                        {(role === "clubHead" || role === "club-head" || role === "club") && (
+                          <>
+                            <Link
+                                to="/payments"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                role="menuitem"
+                            >
+                                <IndianRupeeIcon size={18} >
+                                Payments
+                                </IndianRupeeIcon>
+                            </Link>
+                            <Link
+                                to="/send-notification"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                role="menuitem"
+                            >
+                                <i className="ri-notification-badge-line text-orange-600"/> Send Notification
+                            </Link>
+                            <Link
+                                to={`/club/edit/${user.clubId}`}
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                role="menuitem"
+                            >
+                                <i className="ri-settings-4-line text-orange-600"/> Manage Club Profile
+                            </Link>
+                          </>
                         )}
                       </div>
 
@@ -362,8 +366,8 @@ const Navbar = () => {
           </div>
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
- <div className="md:hidden flex items-center gap-3">
-            {user && role === "student" && (
+          <div className="md:hidden flex items-center gap-3">
+            {user && (role === "student" || role === "member" || role === "facultyCoordinator" || role === "club") && (
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={handleNotificationClick}
@@ -386,7 +390,7 @@ const Navbar = () => {
                         notifications.map((notif, idx) => (
                           <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
+                              <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
                               <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
                             </div>
                             <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
@@ -435,7 +439,7 @@ const Navbar = () => {
                     {user.name}
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
-                    {role === "club-head" ? "Club Head" : "Student"}
+                    {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
                   </p>
                 </div>
               </div>
@@ -472,14 +476,22 @@ const Navbar = () => {
             <div className="flex flex-col gap-2.5 mt-5">
               {user ? (
                 <>
-                  {role === "club-head" && (
-                    <Link
-                      to="/create"
-                      className="flex items-center justify-center gap-2 py-3.5 bg-yellow-400 border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all"
-                    >
-                      <i className="ri-add-line" /> Create Event
-                    </Link>
-                  )}
+                    {(role === "clubHead" || role === "club-head" || role === "club") && (
+                      <>
+                        <Link
+                          to="/create"
+                          className="flex items-center justify-center gap-2 py-3.5 bg-yellow-400 border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all font-black"
+                        >
+                          <i className="ri-add-line" /> Create Event
+                        </Link>
+                        <Link
+                          to={`/club/edit/${user.clubId}`}
+                          className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full font-black"
+                        >
+                          <i className="ri-settings-4-line" /> Manage Club Profile
+                        </Link>
+                      </>
+                    )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full"

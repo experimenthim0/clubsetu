@@ -3,16 +3,15 @@ import Event from "../models/Event.js";
 import User from "../models/User.js";
 import Registration from "../models/Registration.js";
 import Club from "../models/Club.js";
-import ClubMember from "../models/ClubMember.js";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
 import { slugify } from "../utils/slugify.js";
 
 const router = express.Router();
 
-// GET /api/events — PUBLIC
+// GET /api/events — PUBLIC (ONLY PUBLISHED)
 router.get("/", async (req, res) => {
   try {
-    const events = await Event.find()
+    const events = await Event.find({ reviewStatus: "PUBLISHED" })
       .populate("createdBy", "name clubName")
       .sort({ startTime: 1 });
     
@@ -20,11 +19,8 @@ router.get("/", async (req, res) => {
     const enhancedEvents = await Promise.all(events.map(async (event) => {
         const eventObj = event.toObject();
         if (event.clubId) {
-            const club = await Club.findById(event.clubId).select("name logo slug");
+            const club = await Club.findById(event.clubId).select("clubName clubLogo slug");
             eventObj.club = club;
-        } else if (event.createdBy) {
-            const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
-            eventObj.club = membership?.clubId;
         }
         return eventObj;
     }));
@@ -44,6 +40,84 @@ router.get("/club/:clubId", async (req, res) => {
     res.json(events);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/events/club-manage/:clubId — AUTH REQUIRED (CLUB/FACULTY ONLY)
+router.get("/club-manage/:clubId", verifyToken, allowRoles("club", "facultyCoordinator", "admin"), async (req, res) => {
+  try {
+    const { clubId, role } = req.user;
+    const targetClubId = req.params.clubId;
+
+    // Authorization Check: Must be the assigned club or an admin
+    if (role !== "admin" && clubId?.toString() !== targetClubId) {
+        return res.status(403).json({ message: "Access denied. You can only view events for your assigned club." });
+    }
+
+    const events = await Event.find({ clubId: targetClubId })
+        .populate("createdBy", "name")
+        .populate("reviewedBy", "name")
+        .sort({ startTime: -1 });
+        
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/events/club-manage/:clubId/export — CLUB/FACULTY DATA EXPORT
+router.get("/club-manage/:clubId/export", verifyToken, allowRoles("club", "facultyCoordinator", "admin"), async (req, res) => {
+  try {
+    const { clubId, role } = req.user;
+    const targetClubId = req.params.clubId;
+
+    if (role !== "admin" && clubId?.toString() !== targetClubId) {
+        return res.status(403).json({ message: "Access denied." });
+    }
+
+    const { month, year } = req.query;
+
+    let query = { clubId: targetClubId };
+
+    if (month && month !== "all") {
+        const m = parseInt(month);
+        query.startTime = { ...query.startTime, $expr: { $eq: [{ $month: "$startTime" }, m] } };
+    }
+
+    if (year && year !== "all") {
+        const y = parseInt(year);
+        const startOfYear = new Date(y, 0, 1);
+        const endOfYear = new Date(y, 11, 31, 23, 59, 59);
+        query.startTime = { ...query.startTime, $gte: startOfYear, $lte: endOfYear };
+    }
+
+    const events = await Event.find(query)
+      .populate("clubId", "clubName")
+      .sort({ startTime: -1 });
+
+    const exportedEvents = await Promise.all(
+      events.map(async (event) => {
+        const successfulRegistrations = await Registration.find({
+          eventId: event._id,
+          paymentStatus: "SUCCESS",
+        }).select("amountPaid");
+
+        return {
+          eventName: event.title,
+          clubName: event.clubId?.clubName || "Your Club",
+          totalRegistrations: event.registeredCount || successfulRegistrations.length,
+          eventDate: event.startTime,
+          totalAmountReceived: successfulRegistrations.reduce(
+            (sum, reg) => sum + (reg.amountPaid || 0),
+            0,
+          ),
+        };
+      })
+    );
+
+    res.json({ events: exportedEvents });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to export club event data" });
   }
 });
 
@@ -80,8 +154,8 @@ router.get(
   },
 );
 
-// POST /api/events — CLUB HEAD ONLY
-router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) => {
+// POST /api/events — CLUB ONLY (REQUIRES REVIEW)
+router.post("/", verifyToken, allowRoles("club", "admin"), async (req, res) => {
   const {
     title,
     description,
@@ -99,12 +173,10 @@ router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) 
   } = req.body;
 
   try {
-    const { userId } = req.user;
+    const { userId, clubId, role } = req.user;
     
-    // Find the club this user manages
-    const membership = await ClubMember.findOne({ userId, role: "head" });
-    if (!membership && req.user.role !== "admin") {
-        return res.status(403).json({ message: "You must be a club head to create events." });
+    if (!clubId && role !== "admin") {
+        return res.status(403).json({ message: "You must be associated with a club to create events." });
     }
 
     const start = new Date(startTime);
@@ -112,6 +184,7 @@ router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) 
     const conflictingEvent = await Event.findOne({
       venue,
       $or: [{ startTime: { $lt: end }, endTime: { $gt: start } }],
+      reviewStatus: "PUBLISHED" // Only conflict with published events
     });
 
     if (conflictingEvent) {
@@ -130,11 +203,12 @@ router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) 
       requiredFields: requiredFields || [],
       customFields: customFields || [],
       createdBy: userId,
-      clubId: membership?.clubId,
+      clubId: clubId || req.body.clubId, // Use token clubId, fallback to body only if Admin
       allowedPrograms: allowedPrograms || ["BTECH", "MTECH"],
       allowedYears: allowedYears || [],
       registrationDeadline: registrationDeadline || null,
       slug: slugify(title),
+      reviewStatus: "PENDING", // Initial status is PENDING
     });
 
     const savedEvent = await newEvent.save();
@@ -144,7 +218,37 @@ router.post("/", verifyToken, allowRoles("clubHead", "admin"), async (req, res) 
   }
 });
 
-// GET /api/events/:id — PUBLIC
+// PUT /api/events/:id/review — FACULTY ONLY
+router.put("/:id/review", verifyToken, allowRoles("facultyCoordinator", "admin"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, comment } = req.body;
+    const { userId, clubId, role } = req.user;
+
+    const event = await Event.findById(id);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    // Authorization: Faculty must be linked to the same club as the event
+    if (role !== "admin" && event.clubId.toString() !== clubId?.toString()) {
+        return res.status(403).json({ message: "You can only review events for your assigned club." });
+    }
+
+    if (!["PUBLISHED", "REJECTED"].includes(status)) {
+        return res.status(400).json({ message: "Invalid review status." });
+    }
+
+    event.reviewStatus = status;
+    event.reviewComment = comment;
+    event.reviewedBy = userId;
+    await event.save();
+
+    res.json({ message: `Event ${status.toLowerCase()} successfully`, event });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/events/:id — PUBLIC (WITH STATUS CHECK)
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -152,13 +256,31 @@ router.get("/:id", async (req, res) => {
 
     const event = await Event.findOne(query).populate("createdBy", "name clubName");
     if (!event) return res.status(404).json({ message: "Event not found" });
+
+    // If not published, check if user is authorized to view it (Admin, Creator, or assigned Faculty)
+    if (event.reviewStatus !== "PUBLISHED") {
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(403).json({ message: "This event is currently under review." });
+
+        try {
+            const decoded = verifyTokenInternal(token); // Helper or inline check
+            const user = await User.findById(decoded.userId);
+            
+            const isCreator = event.createdBy._id.toString() === user._id.toString();
+            const isAdmin = user.role === "admin";
+            const isAssignedFaculty = user.role === "facultyCoordinator" && event.clubId?.toString() === user.clubId?.toString();
+
+            if (!isCreator && !isAdmin && !isAssignedFaculty) {
+                return res.status(403).json({ message: "This event is currently under review." });
+            }
+        } catch (err) {
+            return res.status(403).json({ message: "This event is currently under review." });
+        }
+    }
     
     const eventObj = event.toObject();
     if (event.clubId) {
         eventObj.club = await Club.findById(event.clubId);
-    } else if (event.createdBy) {
-         const membership = await ClubMember.findOne({ userId: event.createdBy._id, role: "head" }).populate("clubId");
-         eventObj.club = membership?.clubId;
     }
 
     res.json(eventObj);
@@ -167,11 +289,17 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Internal helper for inline token verification
+const verifyTokenInternal = (token) => {
+    const jwt = require("jsonwebtoken");
+    return jwt.verify(token, process.env.JWT_SECRET);
+};
+
 // POST /api/events/:id/register — MEMBER ONLY
 router.post(
   "/:id/register",
   verifyToken,
-  allowRoles("member", "clubHead", "admin"),
+  allowRoles("member", "club", "facultyCoordinator", "admin"),
   async (req, res) => {
     const { userId } = req.user;
     const eventId = req.params.id;
@@ -222,7 +350,7 @@ router.post(
 router.get(
   "/:id/registrations",
   verifyToken,
-  allowRoles("clubHead", "admin"),
+  allowRoles("club", "facultyCoordinator", "admin"),
   async (req, res) => {
     try {
       const registrations = await Registration.find({ eventId: req.params.id })
@@ -245,7 +373,7 @@ router.get(
 router.put(
   "/:id",
   verifyToken,
-  allowRoles("clubHead", "admin"),
+  allowRoles("club", "admin"),
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -281,7 +409,7 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  allowRoles("clubHead", "admin"),
+  allowRoles("club", "admin"),
   async (req, res) => {
     try {
       const { id } = req.params;

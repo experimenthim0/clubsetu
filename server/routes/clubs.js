@@ -1,6 +1,5 @@
 import express from "express";
 import Club from "../models/Club.js";
-import ClubMember from "../models/ClubMember.js";
 import Event from "../models/Event.js";
 import User from "../models/User.js";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
@@ -12,7 +11,7 @@ const router = express.Router();
 // GET /api/clubs — PUBLIC
 router.get("/", async (req, res) => {
   try {
-    const clubs = await Club.find();
+    const clubs = await Club.find().populate("facultyCoordinators", "name");
     res.json(clubs);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -36,20 +35,11 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "Club not found" });
     }
 
-    // Find events for this club
-    // We check either clubId or events createdBy the clubHead (fallback)
-    const membership = await ClubMember.findOne({ clubId: club._id, role: "head" });
-    let events = [];
-    if (membership) {
-        events = await Event.find({ 
-            $or: [
-                { clubId: club._id },
-                { createdBy: membership.userId }
-            ]
-        }).sort({ startTime: 1 });
-    } else {
-        events = await Event.find({ clubId: club._id }).sort({ startTime: 1 });
-    }
+    // Find ONLY PUBLISHED events for this club
+    const events = await Event.find({ 
+        clubId: club._id,
+        reviewStatus: "PUBLISHED"
+    }).sort({ startTime: 1 });
 
     res.json({ club, events });
   } catch (err) {
@@ -57,21 +47,15 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// PUT /api/clubs/:id — CLUB HEAD ONLY
-router.put("/:id", verifyToken, allowRoles("admin", "clubHead"), async (req, res) => {
+// PUT /api/clubs/:id — CLUB ONLY
+router.put("/:id", verifyToken, allowRoles("admin", "club"), async (req, res) => {
   try {
-    const clubId = req.params.id;
-    const { userId } = req.user;
+    const targetClubId = req.params.id;
+    const { userId, clubId, role } = req.user;
 
-    // Check if the user is a head of this club
-    const membership = await ClubMember.findOne({ 
-        userId, 
-        clubId, 
-        role: "head" 
-    });
-
-    if (!membership && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. You are not the head of this club." });
+    // Authorization: User must be linked to this club or be an Admin
+    if (role !== "admin" && clubId?.toString() !== targetClubId) {
+      return res.status(403).json({ message: "Access denied. You can only update your own club." });
     }
 
     const updates = req.body;
@@ -79,7 +63,7 @@ router.put("/:id", verifyToken, allowRoles("admin", "clubHead"), async (req, res
       updates.slug = slugify(updates.clubName);
     }
 
-    const club = await Club.findByIdAndUpdate(clubId, updates, { new: true });
+    const club = await Club.findByIdAndUpdate(targetClubId, updates, { new: true });
     if (!club) return res.status(404).json({ message: "Club not found" });
 
     res.json({ message: "Club updated successfully", club });

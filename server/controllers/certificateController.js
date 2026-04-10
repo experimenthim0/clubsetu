@@ -111,8 +111,12 @@ export const saveTemplate = async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    // Authorization: Only the creator (clubHead) can update the template
-    if (event.createdBy.toString() !== req.user.userId) {
+    // Authorization: Admin, Creator (Club), or assigned Faculty
+    const isCreator = event.createdBy.toString() === req.user.userId;
+    const isAdmin = req.user.role === "admin";
+    const isAssignedFaculty = req.user.role === "facultyCoordinator" && event.clubId?.toString() === req.user.clubId?.toString();
+
+    if (!isCreator && !isAdmin && !isAssignedFaculty) {
       return res.status(403).json({ message: "Unauthorized to update this event's template." });
     }
 

@@ -9,7 +9,12 @@ if (!JWT_SECRET) {
 // Generate JWT token
 export const generateToken = (user, role) => {
   return jwt.sign(
-    { userId: user._id, role, email: user.email },
+    { 
+      userId: user._id, 
+      role, 
+      email: user.email,
+      clubId: user.clubId // Include clubId for authorization checks
+    },
     JWT_SECRET,
     { expiresIn: "1d" },
   );

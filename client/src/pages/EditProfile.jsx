@@ -22,7 +22,8 @@ const EditProfile = () => {
         upiId: '',
         bankPhone: '',
         instagramProfile: '',
-        whatsappNumber: ''
+        whatsappNumber: '',
+        isTwoStepEnabled: false
     });
 
     useEffect(() => {
@@ -44,7 +45,8 @@ const EditProfile = () => {
                 upiId: storedUser.upiId || '',
                 bankPhone: storedUser.bankPhone || '',
                 instagramProfile: storedUser.instagramProfile || '',
-                whatsappNumber: storedUser.whatsappNumber || ''
+                whatsappNumber: storedUser.whatsappNumber || '',
+                isTwoStepEnabled: storedUser.isTwoStepEnabled || false
             });
         }
     }, []);
@@ -91,236 +93,262 @@ const EditProfile = () => {
     if (!user) return <div className="text-center mt-10">Loading...</div>;
 
     return (
-        <div className="max-w-xl mx-auto px-6 py-12">
-            <h1 className="text-2xl font-bold mb-8">Edit Profile</h1>
-            <form onSubmit={handleSubmit} className="bg-white p-8 border border-gray-200 rounded-xl shadow-sm space-y-6">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+                <h1 className="text-2xl md:text-3xl font-black text-black">Edit Profile</h1>
+                <button 
+                    onClick={() => navigate('/profile')}
+                    className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-black transition-colors"
+                >
+                    Back
+                </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] space-y-6">
                 
                 {/* Read Only Fields */}
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50 p-4 border border-neutral-200">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Roll No</label>
-                        <p className="font-mono text-gray-800">{user.rollNo}</p>
+                        <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest">Roll No</label>
+                        <p className="font-mono text-neutral-800 text-sm">{user.rollNo}</p>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Email</label>
-                        <p className="font-mono text-gray-800 break-all">{user.email}</p>
+                        <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest">Email</label>
+                        <p className="font-mono text-neutral-800 text-sm break-all">{user.email}</p>
                     </div>
                 </div>
 
                 {/* Editable Fields */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        value={formData.name} 
-                        onChange={handleChange}
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Full Name</label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            value={formData.name} 
+                            onChange={handleChange}
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">GitHub Profile URL</label>
-                    <input 
-                        type="url" 
-                        name="githubProfile" 
-                        value={formData.githubProfile} 
-                        onChange={handleChange}
-                        placeholder="https://github.com/username"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">GitHub URL</label>
+                        <input 
+                            type="url" 
+                            name="githubProfile" 
+                            value={formData.githubProfile} 
+                            onChange={handleChange}
+                            placeholder="https://github.com/username"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Profile URL</label>
-                    <input 
-                        type="url" 
-                        name="linkedinProfile" 
-                        value={formData.linkedinProfile} 
-                        onChange={handleChange}
-                        placeholder="https://linkedin.com/in/username"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">LinkedIn URL</label>
+                        <input 
+                            type="url" 
+                            name="linkedinProfile" 
+                            value={formData.linkedinProfile} 
+                            onChange={handleChange}
+                            placeholder="https://linkedin.com/in/username"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">X (Twitter) Profile URL</label>
-                    <input 
-                        type="url" 
-                        name="xProfile" 
-                        value={formData.xProfile} 
-                        onChange={handleChange}
-                        placeholder="https://x.com/username"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">X (Twitter) URL</label>
+                        <input 
+                            type="url" 
+                            name="xProfile" 
+                            value={formData.xProfile} 
+                            onChange={handleChange}
+                            placeholder="https://x.com/username"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Portfolio Website</label>
-                    <input 
-                        type="url" 
-                        name="portfolioUrl" 
-                        value={formData.portfolioUrl} 
-                        onChange={handleChange}
-                        placeholder="https://myportfolio.com"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Portfolio Website</label>
+                        <input 
+                            type="url" 
+                            name="portfolioUrl" 
+                            value={formData.portfolioUrl} 
+                            onChange={handleChange}
+                            placeholder="https://myportfolio.com"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Instagram Profile URL</label>
-                    <input 
-                        type="url" 
-                        name="instagramProfile" 
-                        value={formData.instagramProfile} 
-                        onChange={handleChange}
-                        placeholder="https://instagram.com/username"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
-                </div>
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Instagram URL</label>
+                        <input 
+                            type="url" 
+                            name="instagramProfile" 
+                            value={formData.instagramProfile} 
+                            onChange={handleChange}
+                            placeholder="https://instagram.com/username"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-                    <input 
-                        type="tel" 
-                        name="whatsappNumber" 
-                        value={formData.whatsappNumber} 
-                        onChange={handleChange}
-                        placeholder="+91 XXXXX XXXXX"
-                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
-                    />
+                    <div>
+                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">WhatsApp Number</label>
+                        <input 
+                            type="tel" 
+                            name="whatsappNumber" 
+                            value={formData.whatsappNumber} 
+                            onChange={handleChange}
+                            placeholder="+91 XXXXX XXXXX"
+                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                        />
+                    </div>
                 </div>
 
                 {(role === 'clubHead' || role === 'club-head') && (
-                    <div className="pt-6 border-t border-gray-200 space-y-6">
-                        <div className="flex items-center gap-2 mb-2">
-                             <i className="ri-bank-card-line text-orange-600 text-lg" />
-                             <h3 className="font-bold text-gray-800">Bank Information (For Payment Settlements)</h3>
+                    <div className="pt-8 md:pt-10 border-t-2 border-neutral-100 space-y-6">
+                        <div className="flex items-center gap-3">
+                             <i className="ri-bank-card-fill text-orange-600 text-xl" />
+                             <h3 className="font-black text-black uppercase tracking-tight">Financial Information</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Bank Name</label>
                                 <input 
                                     type="text" 
                                     name="bankName" 
                                     value={formData.bankName} 
                                     onChange={handleChange}
                                     placeholder="e.g. HDFC Bank"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Account Holder</label>
                                 <input 
                                     type="text" 
                                     name="accountHolderName" 
                                     value={formData.accountHolderName} 
                                     onChange={handleChange}
-                                    placeholder="Full name as in bank"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Account Number</label>
                                 <input 
                                     type="password" 
                                     name="accountNumber" 
                                     value={formData.accountNumber} 
                                     onChange={handleChange}
-                                    placeholder="Enter account number"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-mono"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">IFSC Code</label>
                                 <input 
                                     type="text" 
                                     name="ifscCode" 
                                     value={formData.ifscCode} 
                                     onChange={handleChange}
-                                    placeholder="ABCD0123456"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none uppercase font-mono"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none uppercase font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">UPI ID</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">UPI ID</label>
                                 <input 
                                     type="text" 
                                     name="upiId" 
                                     value={formData.upiId} 
                                     onChange={handleChange}
-                                    placeholder="yourname@upi"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Linked Phone</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Linked Phone</label>
                                 <input 
                                     type="tel" 
                                     name="bankPhone" 
                                     value={formData.bankPhone} 
                                     onChange={handleChange}
-                                    placeholder="+91 XXXXX XXXXX"
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                                 />
                             </div>
                         </div>
-                        <p className="text-[11px] text-gray-400 italic">
-                            * This information is used for payouts and will not be displayed publicly.
+                        <p className="text-[10px] text-neutral-400 italic">
+                            * Private information used only for event settlements.
                         </p>
                     </div>
                 )}
 
                 {/* Change Password Section */}
-                <div className="pt-6 border-t-2 border-black space-y-6">
-                    <div className="flex items-center gap-2 mb-2">
-                         <i className="ri-lock-password-line text-orange-600 text-lg" />
-                         <h3 className="font-bold text-gray-800 uppercase tracking-tight">Security (Change Password)</h3>
+                <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">
+                    <div className="flex items-center gap-3">
+                         <i className="ri-lock-2-fill text-orange-600 text-xl" />
+                         <h3 className="font-black text-black uppercase tracking-tight">Security & Auth</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                            <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Current Password</label>
                             <input 
                                 type="password" 
                                 name="currentPassword" 
                                 value={formData.currentPassword || ''} 
                                 onChange={handleChange}
-                                placeholder="Enter current password"
-                                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">New Password (Optional)</label>
                             <input 
                                 type="password" 
                                 name="newPassword" 
                                 value={formData.newPassword || ''} 
                                 onChange={handleChange}
-                                placeholder="Enter new password (optional)"
-                                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none"
                             />
                         </div>
                     </div>
-                    <p className="text-[11px] text-gray-400 italic">
-                        * Leave New Password blank if you don't want to change it. Password changes are limited to 2 times per day.
+                    <p className="text-[10px] text-neutral-400 italic">
+                        * Limit: 2 password updates per 24 hours.
                     </p>
+
+                    {/* 2FA Toggle */}
+                    <div className="pt-6 border-t border-neutral-100">
+                        <label className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-200 rounded-sm cursor-pointer group hover:border-orange-600 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <i className="ri-shield-check-line text-2xl text-orange-600" />
+                                <div>
+                                    <p className="text-sm font-black text-black uppercase tracking-tight">2-Step Verification</p>
+                                    <p className="text-[10px] text-neutral-600">Requires an email OTP code every time you login.</p>
+                                </div>
+                            </div>
+                            <div className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={formData.isTwoStepEnabled}
+                                    onChange={(e) => setFormData({ ...formData, isTwoStepEnabled: e.target.checked })}
+                                    className="sr-only peer" 
+                                />
+                                <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
-                <div className="pt-4 flex gap-4">
+                <div className="pt-6 flex flex-col sm:flex-row gap-4">
                     <button 
                         type="button" 
                         onClick={() => navigate('/profile')}
-                        className="flex-1 py-3 border border-gray-300 rounded font-bold hover:bg-gray-50 transition"
+                        className="flex-1 py-4 border-2 border-black text-black font-black uppercase tracking-widest rounded-sm hover:bg-neutral-50 transition-colors"
                     >
-                        Cancel
+                        Discard
                     </button>
                     <button 
                         type="submit" 
                         disabled={isSaving}
-                        className={`flex-1 py-3 text-white rounded font-bold transition ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}
+                        className={`flex-1 py-4 text-white font-black uppercase tracking-widest rounded-sm transition-all shadow-[4px_4px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}
                     >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
+                        {isSaving ? 'Saving…' : 'Update Profile'}
                     </button>
                 </div>
             </form>

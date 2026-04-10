@@ -64,13 +64,13 @@ const SendNotification = () => {
   return (
     <div className="max-w-[800px] mx-auto px-5 lg:px-8 py-10 myfont">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-black">Send Notification</h1>
+        <h1 className="text-3xl font-black text-black tracking-wide">Send Notification</h1>
         <p className="text-neutral-500 text-sm mt-1">
           Broadcast a real-time message to your audience.
         </p>
       </div>
 
-      <div className="bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] p-6 pr-8">
+      <div className="bg-white border-2 border-gray-400 rounded-sm  p-6 pr-8">
         {successMsg && (
           <div className="mb-6 p-4 bg-green-50 border-2 border-green-600 font-bold text-green-700 text-[13px] rounded-sm flex items-center gap-2">
             <i className="ri-checkbox-circle-fill text-lg"></i>
@@ -177,8 +177,8 @@ const SendNotification = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 bg-orange-600 border-2 border-black text-white font-black text-[14px] uppercase tracking-widest rounded-sm hover:bg-yellow-400 hover:text-black transition-all duration-200 mt-2 ${
-              loading ? "opacity-70 cursor-not-allowed" : "hover:-translate-y-1 shadow-[4px_4px_0px_#0D0D0D] hover:shadow-[6px_6px_0px_#0D0D0D]"
+            className={`w-full py-4 bg-orange-600 border-2 border-gray-400 text-white font-black text-[14px] uppercase tracking-widest rounded-sm hover:bg-yellow-400 hover:text-black transition-all duration-200 mt-2 ${
+              loading ? "opacity-70 cursor-not-allowed" : "hover:-translate-y-1 "
             }`}
           >
             {loading ? (
@@ -186,7 +186,7 @@ const SendNotification = () => {
                 <i className="ri-loader-4-line animate-spin text-lg" /> Sending...
               </span>
             ) : (
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-2 tracking-wide">
                 <i className="ri-send-plane-fill text-lg" /> Send Notification
               </span>
             )}
@@ -197,7 +197,7 @@ const SendNotification = () => {
       <div className="mt-12">
         <h2 className="text-2xl font-black text-black mb-6">Notification History</h2>
         {history.length === 0 ? (
-          <div className="bg-white border-2 border-black rounded-sm p-8 text-center text-neutral-500 font-bold uppercase tracking-widest text-[12px]">
+          <div className="bg-white border-2 border-gray-400 rounded-sm p-8 text-center text-neutral-500 font-bold uppercase tracking-widest text-[12px]">
             No notifications sent yet.
           </div>
         ) : (

@@ -8,11 +8,19 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "clubHead", "member"],
+      enum: ["admin", "facultyCoordinator", "club", "member", "paymentAdmin"],
       required: true,
       default: "member",
     },
-    // Common student/clubhead fields
+    // Reference to the club (for faculty and club roles)
+    clubId: { type: mongoose.Schema.Types.ObjectId, ref: "Club" },
+    
+    // 2FA Fields
+    otp: { type: String },
+    otpExpire: { type: Date },
+    isTwoStepEnabled: { type: Boolean, default: false }, // Default disabled, users can opt-in
+    
+    // Common student fields
     rollNo: { type: String, unique: true, sparse: true },
     branch: { type: String },
     year: { type: String },

@@ -19,6 +19,7 @@ const CreateEvent = () => {
         customFields: [],
         registrationDeadline: '',
         createdBy: JSON.parse(localStorage.getItem('user'))?._id,
+        clubId: JSON.parse(localStorage.getItem('user'))?.clubId,
         allowedPrograms: ['BTECH', 'MTECH'],
         allowedYears: [],
         showWinner: false,
