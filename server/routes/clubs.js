@@ -41,6 +41,7 @@ router.get("/:id", async (req, res) => {
         reviewStatus: "PUBLISHED"
     }).sort({ startTime: 1 });
 
+
     res.json({ club, events });
   } catch (err) {
     res.status(500).json({ message: err.message });

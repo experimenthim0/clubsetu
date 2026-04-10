@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
       .populate("createdBy", "name clubName")
       .sort({ startTime: 1 });
     
-    // Enhance with club info if possible
+    // Enhance with club info
     const enhancedEvents = await Promise.all(events.map(async (event) => {
         const eventObj = event.toObject();
         if (event.clubId) {
@@ -254,7 +254,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     let query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { slug: id };
 
-    const event = await Event.findOne(query).populate("createdBy", "name clubName");
+    const event = await Event.findOne(query).populate("createdBy", "name");
     if (!event) return res.status(404).json({ message: "Event not found" });
 
     // If not published, check if user is authorized to view it (Admin, Creator, or assigned Faculty)
@@ -308,6 +308,10 @@ router.post(
     try {
       const event = await Event.findById(eventId);
       if (!event) return res.status(404).json({ message: "Event not found" });
+
+      if (event.entryFee > 0) {
+        return res.status(400).json({ message: "This is a paid event. Please register through the payment flow." });
+      }
 
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ message: "User not found." });
@@ -443,6 +447,10 @@ router.delete(
     const eventId = req.params.id;
 
     try {
+      if (req.user.userId !== studentId && req.user.role !== "admin") {
+        return res.status(403).json({ message: "Unauthorized to deregister this user." });
+      }
+
       const registration = await Registration.findOneAndDelete({ eventId, userId: studentId });
       
       if (!registration) {

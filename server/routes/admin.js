@@ -68,7 +68,7 @@ router.get(
           0,
         );
 
-        // Fetch club name from Club model if clubId exists, else fallback to old logic
+        // Fetch club name from Club model
         let clubName = "Unknown";
         if (event.clubId) {
             const club = await Club.findById(event.clubId);
@@ -236,7 +236,7 @@ router.get(
 
       const events = await Event.find(query)
         .populate("clubId", "clubName")
-        .populate("createdBy", "name clubName")
+        .populate("createdBy", "name")
         .sort({ startTime: -1 });
 
       const exportedEvents = await Promise.all(

@@ -28,7 +28,6 @@ const userSchema = new mongoose.Schema(
     phone: { type: String },
     
     // ClubHead/Club specific
-    clubName: { type: String },
     designation: { type: String },
     isApproved: { type: Boolean, default: false }, // For clubHead approval
     

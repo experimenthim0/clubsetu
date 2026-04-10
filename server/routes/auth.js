@@ -120,6 +120,7 @@ router.post("/register/student", async (req, res) => {
 // Club Head registration removed as per new requirements
 // Clubs and Faculty are now pre-seeded or added by Admin
 
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {

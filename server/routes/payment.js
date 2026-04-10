@@ -34,6 +34,14 @@ router.post(
       const event = await Event.findById(eventId);
       if (!event) return res.status(404).json({ message: "Event not found" });
 
+      const user = await User.findById(studentId);
+      if (!user) return res.status(404).json({ message: "User not found." });
+
+      // Eligibility checks
+      if (event.allowedPrograms?.length > 0 && !event.allowedPrograms.includes(user.program)) {
+        return res.status(403).json({ message: "Ineligible program." });
+      }
+
       if (!event.entryFee || event.entryFee === 0) {
         return res.status(400).json({ message: "This event is free" });
       }
