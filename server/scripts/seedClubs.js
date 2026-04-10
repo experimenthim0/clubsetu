@@ -22,7 +22,7 @@ const seed = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log("Connected to MongoDB.");
 
-        const clubsMdPath = path.join(__dirname, "../../../clubs.md");
+        const clubsMdPath = path.join(__dirname, "../../clubs.md");
         const data = fs.readFileSync(clubsMdPath, "utf-8");
         const lines = data.split("\n").filter(line => line.trim() !== "");
 
