@@ -31,7 +31,9 @@ const eventSchema = z.object({
   }).passthrough()
 });
 
-const eventUpdateSchema = eventSchema.deepPartial();
+const eventUpdateSchema = z.object({
+  body: eventSchema.shape.body.partial()
+});
 
 const eventInclude = {
   createdBy: {
