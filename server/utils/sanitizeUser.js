@@ -1,8 +1,9 @@
 /**
- * Strips sensitive fields from a Mongoose user document before sending to client.
+ * Strips sensitive fields from a user record before sending it to the client.
  */
 export function sanitizeUser(userDoc) {
-  const obj = userDoc.toObject();
+  const obj =
+    typeof userDoc?.toObject === "function" ? userDoc.toObject() : { ...userDoc };
   [
     "password",
     "verificationToken",

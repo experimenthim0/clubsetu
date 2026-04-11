@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { EVENT_VENUES } from '../constants/eventVenues';
+import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
 
@@ -20,7 +22,7 @@ const CreateEvent = () => {
         registrationDeadline: '',
         createdBy: JSON.parse(localStorage.getItem('user'))?._id,
         clubId: JSON.parse(localStorage.getItem('user'))?.clubId,
-        allowedPrograms: ['BTECH', 'MTECH'],
+        allowedPrograms: ['BTECH', 'MTECH', 'OTHER'],
         allowedYears: [],
         showWinner: false,
         provideCertificate: false,
@@ -184,21 +186,9 @@ const CreateEvent = () => {
                         <label className={labelCls}>Venue <span className="text-orange-600">*</span></label>
                         <select name="venue" required className={inputCls} value={formData.venue} onChange={handleChange}>
                             <option value="">Select Venue</option>
-                            <option value="Student Activity Centre">Student Activity Centre</option>
-                            <option value="Snackers">Snackers</option>
-                            <option value="IT Building - Lab 1">IT Building</option>
-                            <option value="Central Lawn">Central Lawn</option>
-                            <option value="Mega Ground">Mega Ground</option>
-                            <option value="MBH Ground">MBH Ground</option>
-                            <option value="OAT">OAT</option>
-                            <option value="CSH">CSH</option>
-                            <option value="VCH">VCH</option>
-                            <option value="Science Block">Science Block</option>
-                            <option value="Community Center">Community Center</option>
-                            <option value="NITJ Temple">NITJ Temple</option>
-                            <option value="LT">LT</option>
-                            <option value="Online">Online</option>
-                            <option value="Department Building">Department Building</option>
+                            {EVENT_VENUES.map((venue) => (
+                                <option key={venue} value={venue}>{venue}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -269,12 +259,12 @@ const CreateEvent = () => {
                         <label className={labelCls}>Allowed Programs</label>
                         <p className="text-xs text-neutral-500 mb-3">Select which programs can register for this event</p>
                         <div className="flex items-center gap-6">
-                            {['BTECH', 'MTECH'].map(prog => (
+                            {PROGRAM_OPTIONS.map((prog) => (
                                 <label key={prog} className="inline-flex items-center cursor-pointer gap-2">
                                     <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
                                         checked={formData.allowedPrograms.includes(prog)}
                                         onChange={() => handleProgramToggle(prog)} />
-                                    <span className="text-sm font-medium text-neutral-700">{prog}</span>
+                                    <span className="text-sm font-medium text-neutral-700">{PROGRAM_LABELS[prog]}</span>
                                 </label>
                             ))}
                         </div>

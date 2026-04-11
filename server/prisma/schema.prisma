@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  facultyCoordinator
+  club
+  member
+  paymentAdmin
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  WAITLISTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PayoutStatus {
+  PENDING
+  COMPLETED
+}
+
+enum ReviewStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum NotificationTargetType {
+  ALL_STUDENTS
+  REGISTERED_STUDENTS
+}
+
+model User {
+  id                      String    @id @db.VarChar(24)
+  name                    String
+  email                   String    @unique
+  password                String
+  role                    UserRole  @default(member)
+  clubId                  String?   @db.VarChar(24)
+  otp                     String?
+  otpExpire               DateTime?
+  isTwoStepEnabled        Boolean   @default(false)
+  rollNo                  String?   @unique
+  branch                  String?
+  year                    String?
+  program                 String?
+  phone                   String?
+  designation             String?
+  isApproved              Boolean   @default(false)
+  githubProfile           String?
+  linkedinProfile         String?
+  xProfile                String?
+  instagramProfile        String?
+  portfolioUrl            String?
+  whatsappNumber          String?
+  bankName                String?
+  accountHolderName       String?
+  accountNumber           String?
+  ifscCode                String?
+  upiId                   String?
+  bankPhone               String?
+  isVerified              Boolean   @default(false)
+  verificationToken       String?
+  verificationTokenExpire DateTime?
+  resetPasswordToken      String?
+  resetPasswordExpire     DateTime?
+  passwordChangeCount     Int       @default(0)
+  lastPasswordChangeDate  DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  club                Club?    @relation("UserClub", fields: [clubId], references: [id], onDelete: SetNull)
+  createdEvents       Event[]  @relation("EventCreatedBy")
+  reviewedEvents      Event[]  @relation("EventReviewedBy")
+  registrations       Registration[]
+  sentNotifications   Notification[]
+
+  @@index([clubId])
+  @@index([role])
+}
+
+model Club {
+  id                  String   @id @db.VarChar(24)
+  clubName            String
+  slug                String   @unique
+  description         String?
+  category            String?
+  uniqueId            String?  @unique
+  clubEmail           String?  @unique
+  facultyEmail        String?
+  facultyName         String?
+  socialLinks         Json?    @db.JsonB
+  clubLogo            String?
+  clubGallery         String[] @default([])
+  clubSponsors        String[] @default([])
+  bankName            String?
+  accountHolderName   String?
+  accountNumber       String?
+  ifscCode            String?
+  upiId               String?
+  bankPhone           String?
+  facultyCoordinatorIds String[] @default([])
+  studentCoordinators String[] @default([])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  users  User[]  @relation("UserClub")
+  events Event[]
+}
+
+model Event {
+  id                   String             @id @db.VarChar(24)
+  title                String
+  slug                 String?            @unique
+  description          String?
+  venue                String
+  startTime            DateTime
+  endTime              DateTime
+  totalSeats           Int                @default(0)
+  entryFee             Float              @default(0)
+  allowedPrograms      String[]           @default(["BTECH", "MTECH", "OTHER"])
+  allowedYears         String[]           @default([])
+  imageUrl             String             @default("")
+  registeredCount      Int                @default(0)
+  waitingListIds       String[]           @default([])
+  requiredFields       String[]           @default([])
+  customFields         Json?             @db.JsonB
+  createdById          String             @db.VarChar(24)
+  clubId               String?            @db.VarChar(24)
+  payoutStatus         PayoutStatus       @default(PENDING)
+  registrationDeadline DateTime?
+  reviewStatus         ReviewStatus       @default(PENDING)
+  reviewComment        String?
+  reviewedById         String?            @db.VarChar(24)
+  winners              Json?             @db.JsonB
+  showWinner           Boolean            @default(false)
+  provideCertificate   Boolean            @default(false)
+  certificateTemplate  Json?             @db.JsonB
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  createdBy     User           @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  club          Club?          @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  reviewedBy    User?          @relation("EventReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  registrations Registration[]
+
+  @@index([clubId])
+  @@index([createdById])
+  @@index([reviewStatus])
+  @@index([startTime])
+}
+
+model Registration {
+  id               String             @id @db.VarChar(24)
+  eventId          String             @db.VarChar(24)
+  userId           String             @db.VarChar(24)
+  status           RegistrationStatus @default(CONFIRMED)
+  paymentId        String?
+  orderId          String?
+  paymentStatus    PaymentStatus      @default(SUCCESS)
+  amountPaid       Float              @default(0)
+  paymentTimestamp DateTime?
+  formResponses    Json?              @db.JsonB
+  timestamp        DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Notification {
+  id         String                 @id @db.VarChar(24)
+  senderId   String                 @db.VarChar(24)
+  targetType NotificationTargetType
+  eventId    String?                @db.VarChar(24)
+  recipients String[]               @default([])
+  title      String
+  message    String
+  readBy     String[]               @default([])
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([eventId])
+}

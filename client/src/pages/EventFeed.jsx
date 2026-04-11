@@ -15,6 +15,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   const [filterClub, setFilterClub] = useState('ALL');
   const [filterMonth, setFilterMonth] = useState('ALL');
   const [filterYear, setFilterYear] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
   
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -147,6 +148,16 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
     });
   }
 
+  if (searchQuery.trim() !== '') {
+    const query = searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(e => {
+      const titleMatch = e.title?.toLowerCase().includes(query);
+      const clubMatch = (e.club?.clubName || e.createdBy?.clubName || '').toLowerCase().includes(query);
+      const categoryMatch = (e.club?.category || '').toLowerCase().includes(query);
+      return titleMatch || clubMatch || categoryMatch;
+    });
+  }
+
   // Sort events by status priority: LIVE first, then UPCOMING, then ENDED
   let liveEvents = filtered.filter(e => e.status === 'LIVE');
   let upcomingEvents = filtered.filter(e => e.status === 'UPCOMING');
@@ -194,117 +205,133 @@ return (
 
     {!hideHeader && (
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Upcoming Events
+        Events
         </h1>
     )}
 
     {/* ── FILTER BAR ── */}
-    {(!hideHeader || showFilters) && (
-      <div className="mb-10 bg-white border-2 border-neutral-300 rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            {/* Status toggle buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 mr-2 lg:block hidden">Status:</span>
-              {statusButtons.map(btn => (
-                <button
-                  key={btn.key}
-                  onClick={() => setFilterStatus(btn.key)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-lg border-2 transition-all duration-200 ${
-                    filterStatus === btn.key
-                      ? btn.key === 'LIVE'
-                        ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-200'
-                        : btn.key === 'UPCOMING'
-                          ? 'bg-orange-600 text-white border-orange-600 shadow-lg shadow-orange-200'
-                          : btn.key === 'ENDED'
-                            ? 'bg-neutral-800 text-white border-neutral-800 shadow-lg shadow-neutral-200'
-                            : 'bg-black text-white border-black shadow-lg shadow-neutral-300'
-                      : 'bg-white text-neutral-600 border-neutral-100 hover:border-orange-600 hover:text-orange-600'
-                  }`}
-                >
-                  <i className={`${btn.icon} text-sm`} />
-                  {btn.label}
-                </button>
-              ))}
-            </div>
+  {(!hideHeader || showFilters) && (
+  <div className="mb-6 bg-white border-2 border-neutral-200 rounded-2xl p-3.5 shadow-sm">
+    
+    {/* Row 1: Search */}
+    <div className="relative group">
+      <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-base transition-colors pointer-events-none" />
+      <input
+        type="text"
+        placeholder="Search by title, club, or category..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-9 pr-9 py-2.5 bg-neutral-50 border-2 border-neutral-100 rounded-xl focus:bg-white focus:border-orange-600 transition-all outline-none text-sm font-medium"
+      />
+      {searchQuery && (
+        <button
+          onClick={() => setSearchQuery('')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-orange-600 transition-colors"
+        >
+          <i className="ri-close-circle-fill text-base" />
+        </button>
+      )}
+    </div>
 
-            {/* Time and Club filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 lg:block hidden">Time:</span>
-                {/* Year Dropdown */}
-                <div className="relative group">
-                  <i className="ri-calendar-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 transition-colors" />
-                  <select
-                    value={filterYear}
-                    onChange={(e) => setFilterYear(e.target.value)}
-                    className="pl-9 pr-8 py-2.5 text-[12px] font-bold uppercase tracking-wider border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none min-w-[100px]"
-                  >
-                    <option value="ALL">All Years</option>
-                    {availableYears.map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                  <i className="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-                </div>
+    {/* Row 2: Status + Selects */}
+    <div className="flex flex-wrap items-center gap-2 mt-2.5">
+      
+      {/* Status buttons */}
+      <div className="flex flex-wrap gap-1.5">
+        {statusButtons.map(btn => (
+          <button
+            key={btn.key}
+            onClick={() => setFilterStatus(btn.key)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border-2 transition-all duration-150 ${
+              filterStatus === btn.key
+                ? btn.key === 'LIVE'
+                  ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-100'
+                  : btn.key === 'UPCOMING'
+                    ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100'
+                    : btn.key === 'ENDED'
+                      ? 'bg-neutral-800 text-white border-neutral-800'
+                      : 'bg-black text-white border-black'
+                : 'bg-white text-neutral-500 border-neutral-100 hover:border-orange-600 hover:text-orange-600'
+            }`}
+          >
+            <i className={`${btn.icon} text-xs`} />
+            {btn.label}
+          </button>
+        ))}
+      </div>
 
-                {/* Month Dropdown */}
-                <div className="relative group">
-                  <i className="ri-time-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 transition-colors" />
-                  <select
-                    value={filterMonth}
-                    onChange={(e) => setFilterMonth(e.target.value)}
-                    className="pl-9 pr-8 py-2.5 text-[12px] font-bold uppercase tracking-wider border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none min-w-[120px]"
-                  >
-                    <option value="ALL">All Months</option>
-                    {monthNames.map((m, i) => (
-                      <option key={m} value={i + 1}>{m}</option>
-                    ))}
-                  </select>
-                  <i className="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-                </div>
-              </div>
+      {/* Vertical divider — hidden on small screens */}
+      <div className="hidden sm:block h-6 w-px bg-neutral-100 mx-0.5" />
 
-              <div className="h-8 w-px bg-neutral-100 mx-1 hidden sm:block" />
-
-              {/* Club name dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 lg:block hidden">Organized By:</span>
-                <div className="relative group">
-                  <i className="ri-building-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 transition-colors" />
-                  <select
-                    value={filterClub}
-                    onChange={(e) => setFilterClub(e.target.value)}
-                    className="pl-9 pr-8 py-2.5 text-[12px] font-bold uppercase tracking-wider border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none min-w-[160px]"
-                  >
-                    <option value="ALL">All Clubs</option>
-                    {clubNames.map(name => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                  <i className="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Selects */}
+      <div className="flex flex-wrap gap-1.5 flex-1">
+        {/* Year */}
+        <div className="relative group flex-1 min-w-[100px] max-w-[130px]">
+          <i className="ri-calendar-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+          >
+            <option value="ALL">All Years</option>
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
         </div>
 
-        {/* Active filter summary */}
-        {(filterStatus !== 'ALL' || filterClub !== 'ALL' || filterMonth !== 'ALL' || filterYear !== 'ALL') && (
-          <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
-            <span className="text-[11px] text-neutral-500 uppercase tracking-wider font-bold">
-              {totalFiltered} event{totalFiltered !== 1 ? 's' : ''} found
-            </span>
-            <button
-              onClick={() => { setFilterStatus('ALL'); setFilterClub('ALL'); setFilterMonth('ALL'); setFilterYear('ALL'); }}
-              className="text-[11px] font-bold uppercase tracking-wider text-orange-600 hover:text-black transition-colors flex items-center gap-1"
-            >
-              <i className="ri-close-line" /> Clear Filters
-            </button>
-          </div>
-        )}
+        {/* Month */}
+        <div className="relative group flex-1 min-w-[110px] max-w-[140px]">
+          <i className="ri-time-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+          >
+            <option value="ALL">All Months</option>
+            {monthNames.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+          </select>
+          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
+        </div>
+
+        {/* Club */}
+        <div className="relative group flex-1 min-w-[130px] max-w-[180px]">
+          <i className="ri-building-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+          <select
+            value={filterClub}
+            onChange={(e) => setFilterClub(e.target.value)}
+            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+          >
+            <option value="ALL">All Clubs</option>
+            {clubNames.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
+          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
+        </div>
+      </div>
+    </div>
+
+    {/* Active filter summary */}
+    {(filterStatus !== 'ALL' || filterClub !== 'ALL' || filterMonth !== 'ALL' || filterYear !== 'ALL' || searchQuery !== '') && (
+      <div className="mt-2.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
+        <span className="text-[11px] text-neutral-500 uppercase tracking-wider font-bold">
+          {totalFiltered} event{totalFiltered !== 1 ? 's' : ''} found
+          {searchQuery && <span className="text-orange-600 ml-1.5">for "{searchQuery}"</span>}
+        </span>
+        <button
+          onClick={() => {
+            setFilterStatus('ALL');
+            setFilterClub('ALL');
+            setFilterMonth('ALL');
+            setFilterYear('ALL');
+            setSearchQuery('');
+          }}
+          className="text-[10px] font-bold uppercase tracking-wider text-orange-600 hover:text-black transition-colors flex items-center gap-1"
+        >
+          <i className="ri-close-line" /> Clear
+        </button>
       </div>
     )}
+  </div>
+)}
 
     {/* If No Events At All */}
     {totalFiltered === 0 && (

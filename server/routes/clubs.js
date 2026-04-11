@@ -1,73 +1,105 @@
 import express from "express";
-import Club from "../models/Club.js";
-import Event from "../models/Event.js";
-import User from "../models/User.js";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
 import { slugify } from "../utils/slugify.js";
-import crypto from "crypto";
+import prisma from "../lib/prisma.js";
+import { serializeEvent } from "../utils/postgresEventSerializer.js";
 
 const router = express.Router();
 
-// GET /api/clubs — PUBLIC
 router.get("/", async (req, res) => {
   try {
-    const clubs = await Club.find().populate("facultyCoordinators", "name");
-    res.json(clubs);
+    const clubs = await prisma.club.findMany({
+      include: {
+        users: {
+          where: { role: "facultyCoordinator" },
+          select: { id: true, name: true, email: true },
+        },
+      },
+      orderBy: { clubName: "asc" },
+    });
+
+    res.json(
+      clubs.map((club) => ({
+        ...club,
+        _id: club.id,
+        facultyCoordinators: club.users.map((user) => ({
+          ...user,
+          _id: user.id,
+        })),
+      })),
+    );
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET /api/clubs/:id — PUBLIC
 router.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    let query;
+    const club = await prisma.club.findFirst({
+      where: {
+        OR: [{ id: req.params.id }, { slug: req.params.id }],
+      },
+    });
 
-    if (id.match(/^[0-9a-fA-F]{24}$/)) {
-      query = { _id: id };
-    } else {
-      query = { slug: id };
-    }
-
-    const club = await Club.findOne(query);
     if (!club) {
       return res.status(404).json({ message: "Club not found" });
     }
 
-    // Find ONLY PUBLISHED events for this club
-    const events = await Event.find({ 
-        clubId: club._id,
-        reviewStatus: "PUBLISHED"
-    }).sort({ startTime: 1 });
+    const events = await prisma.event.findMany({
+      where: {
+        clubId: club.id,
+        reviewStatus: "PUBLISHED",
+      },
+      include: {
+        club: {
+          select: {
+            id: true,
+            clubName: true,
+            clubLogo: true,
+            slug: true,
+            category: true,
+          },
+        },
+        createdBy: { select: { id: true, name: true } },
+        reviewedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { startTime: "asc" },
+    });
 
-
-    res.json({ club, events });
+    res.json({
+      club: { ...club, _id: club.id },
+      events: events.map(serializeEvent),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// PUT /api/clubs/:id — CLUB ONLY
 router.put("/:id", verifyToken, allowRoles("admin", "club"), async (req, res) => {
   try {
     const targetClubId = req.params.id;
-    const { userId, clubId, role } = req.user;
+    const { clubId, role } = req.user;
 
-    // Authorization: User must be linked to this club or be an Admin
     if (role !== "admin" && clubId?.toString() !== targetClubId) {
-      return res.status(403).json({ message: "Access denied. You can only update your own club." });
+      return res.status(403).json({
+        message: "Access denied. You can only update your own club.",
+      });
     }
 
-    const updates = req.body;
+    const updates = { ...req.body };
     if (updates.clubName) {
       updates.slug = slugify(updates.clubName);
     }
 
-    const club = await Club.findByIdAndUpdate(targetClubId, updates, { new: true });
-    if (!club) return res.status(404).json({ message: "Club not found" });
+    const club = await prisma.club.update({
+      where: { id: targetClubId },
+      data: updates,
+    });
 
-    res.json({ message: "Club updated successfully", club });
+    res.json({
+      message: "Club updated successfully",
+      club: { ...club, _id: club.id },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

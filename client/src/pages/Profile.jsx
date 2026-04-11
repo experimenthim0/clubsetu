@@ -35,6 +35,7 @@ const Profile = () => {
         </div>
 
         <div>
+          <p className="text-sm text-gray-500">Email</p>
           <p className="font-medium text-lg">
             {user.email}
           </p>
@@ -55,30 +56,24 @@ const Profile = () => {
           </>
         )}
 
-        {(role === 'clubHead' || role === 'club-head') && (
+        {/* {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
           <>
             <div>
               <p className="text-sm text-gray-500">Club Name</p>
-              <p className="font-medium">{user.clubName}</p>
+              <p className="font-medium">{user.name}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Designation</p>
-              <p className="font-medium">{user.designation}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Roll No</p>
-              <p className="font-medium">{user.rollNo}</p>
-            </div>
+           
+          
             <div>
               <p className="text-sm text-gray-500">Phone</p>
               <p className="font-medium">{user.phone}</p>
             </div>
           </>
-        )}
+        )} */}
       </div>
 
       {/* Bank Information — Club Head Only */}
-      {(role === 'clubHead' || role === 'club-head') && (
+      {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
         <div className="mt-8 pt-6 border-t border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
             <i className="ri-bank-line text-orange-600" />
@@ -170,18 +165,18 @@ const Profile = () => {
       <div className="mt-8">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-sm  hover:bg-gray-300  transition-colors"
         >
           <i className="ri-calendar-event-line" /> View My Events
         </Link>
       </div>
     )}
 
-    {(role === 'clubHead' || role === 'club-head') && (
+    {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-gray-300  transition-colors"
         >
           <i className="ri-calendar-event-line" /> My Events
         </Link>

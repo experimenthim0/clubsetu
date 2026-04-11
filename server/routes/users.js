@@ -1,6 +1,6 @@
 import express from "express";
-import User from "../models/User.js";
 import { verifyToken } from "../middleware/auth.js";
+import prisma from "../lib/prisma.js";
 
 const router = express.Router();
 
@@ -22,12 +22,19 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
   delete updates.isApproved;
 
   try {
-    const user = await User.findByIdAndUpdate(id, updates, { new: true }).select("-password");
+    const user = await prisma.user.update({
+      where: { id },
+      data: updates,
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "Profile updated successfully", user });
+    const safeUser = Object.fromEntries(
+      Object.entries(user).filter(([key]) => key !== "password"),
+    );
+
+    res.json({ message: "Profile updated successfully", user: safeUser });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

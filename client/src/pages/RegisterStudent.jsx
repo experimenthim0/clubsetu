@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
-const PROGRAMS = ['BTECH', 'MTECH'];
 
 const RegisterStudent = () => {
   const navigate = useNavigate();
@@ -21,9 +21,22 @@ const RegisterStudent = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isOtherProgram = formData.program === 'OTHER';
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'program' && value === 'OTHER') {
+      setFormData({
+        ...formData,
+        program: value,
+        branch: '',
+        year: '',
+      });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -58,20 +71,20 @@ const RegisterStudent = () => {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
 
       {/* Header */}
-      <div className="w-full max-w-md mb-8">
+      <div className="w-full max-w-2xl mb-8">
         <div className="flex items-center gap-2 mb-3 text-orange-600">
-          <span className="block w-6 h-0.5 bg-orange-600" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.15em]">New Account</span>
+       
+          {/* <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-center">New Account</span> */}
         </div>
         <h1 className="font-black text-[clamp(28px,5vw,40px)] leading-[1.1] tracking-tight text-black">
-          Student<br />
+          ClubSetu User<br />
           <span className="text-orange-600">Registration</span>
         </h1>
         <p className="text-[14px] text-neutral-500 mt-2">Sign up to discover and register for campus events.</p>
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] p-8">
+      <div className="w-full max-w-2xl bg-white border-2 border-gray-300 rounded-sm  p-8">
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 
@@ -91,9 +104,9 @@ const RegisterStudent = () => {
 
           {/* Roll Number */}
           <div>
-            <label htmlFor="rollNo" className={labelCls}>Roll Number</label>
-            <input id="rollNo" name="rollNo" type="text" required className={inputCls}
-              placeholder="Enter your roll number" value={formData.rollNo} onChange={handleChange} />
+            <label htmlFor="rollNo" className={labelCls}>{isOtherProgram ? 'Roll Number / Employee ID' : 'Roll Number'}</label>
+            <input id="rollNo" name="rollNo" type="text" required={!isOtherProgram} className={inputCls}
+              placeholder={isOtherProgram ? 'Optional for Other category' : 'Enter your roll number'} value={formData.rollNo} onChange={handleChange} />
           </div>
 
           {/* Program + Branch in a row */}
@@ -103,12 +116,16 @@ const RegisterStudent = () => {
               <select id="program" name="program" required className={inputCls}
                 value={formData.program} onChange={handleChange}>
                 <option value="">Select</option>
-                {PROGRAMS.map(p => <option key={p} value={p}>{p}</option>)}
+                {PROGRAM_OPTIONS.map((program) => (
+                  <option key={program} value={program}>
+                    {PROGRAM_LABELS[program]}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label htmlFor="branch" className={labelCls}>Branch</label>
-              <select id="branch" name="branch" required className={inputCls}
+              <select id="branch" name="branch" required={!isOtherProgram} className={inputCls}
                 value={formData.branch} onChange={handleChange}>
                 <option value="">Select</option>
                 {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
@@ -119,7 +136,7 @@ const RegisterStudent = () => {
           {/* Year */}
           <div>
             <label htmlFor="year" className={labelCls}>Year</label>
-            <select id="year" name="year" required className={inputCls}
+            <select id="year" name="year" required={!isOtherProgram} className={inputCls}
               value={formData.year} onChange={handleChange}>
               <option value="">Select Year</option>
               {YEARS.map(y => <option key={y} value={y}>{y}</option>)}

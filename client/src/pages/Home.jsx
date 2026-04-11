@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
@@ -6,11 +6,45 @@ import HomeFooter from '../components/HomeFooter';
 import Maintainance from './Maintainance';
 import ScrollReveal from '../components/ScrollReveal';
 import {ArrowRightIcon} from '../components/ui/arrow-right';
+import { InstagramIcon } from '@/components/ui/instagram';
+import { GithubIcon } from '@/components/ui/github';
+import { LinkedinIcon } from '@/components/ui/linkedin';
 // Ticker items
 const tickerItems = [
   'Workshops', 'Hackathons', 'Cultural Fests', 'Sports Meets',
   'Guest Lectures', 'Club Recruitments', 'Tech Talks', 'Campus Events',
 ];
+
+
+
+
+// Icons are handled by Remix Icons (ri-)
+
+const studentItems = [
+  {
+    icon: <i className="ri-chat-1-line" />,
+    problem: "Cluttered WhatsApp groups",
+    solution: "One clean feed for all technical, cultural, and sports events.",
+  },
+  {
+    icon: <i className="ri-time-line" />,
+    problem: "Missed registration deadlines",
+    solution: "Instant alerts and one-click registration before seats fill.",
+  },
+  {
+    icon: <i className="ri-user-line" />,
+    problem: "Zero track record",
+    solution: "Auto-build your profile with every event you participate in.",
+  },
+];
+
+const clubFeatures = [
+  { icon: <i className="ri-broadcast-line" />, title: "Reach everyone", desc: "Push to students interested in your domain." },
+  { icon: <i className="ri-file-text-line" />, title: "E-certificates", desc: "Auto-generated for every participant." },
+  { icon: <i className="ri-bar-chart-line" />, title: "Real-time analytics", desc: "See registrations by branch, live." },
+  { icon: <i className="ri-award-line" />, title: "Club showcase", desc: "Dedicated profile for your past achievements." },
+];
+
 
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
@@ -42,6 +76,16 @@ const BtnSecondary = ({ to, children }) => (
 
 const Home = () => {
 
+ const [tab, setTab] = useState("students");
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--x-px", `${x}px`);
+    e.currentTarget.style.setProperty("--y-px", `${y}px`);
+  };
+  
    const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
   if (isMaintenance) {
     return <Maintainance />;
@@ -119,7 +163,27 @@ const Home = () => {
             </span>
           ))}
         </div>
-        <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+        <style>{`
+          @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          .feature-card { position: relative; }
+          .feature-card::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            background: radial-gradient(
+              300px circle at var(--x-px) var(--y-px),
+              rgba(244, 87, 52, 0.25),
+              transparent 30%
+            );
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          .feature-card:hover::before {
+            opacity: 1;
+          }
+        `}</style>
       </div>
 
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
@@ -154,9 +218,9 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <ScrollReveal direction="up">
             <div className="mb-12">
-              <SectionLabel>Our Clubs</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
-                Find Your<br />Community
+             
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide text-center">
+                NITJ Clubs & Societies
               </h2>
             </div>
           </ScrollReveal>
@@ -177,267 +241,258 @@ const Home = () => {
       </section>
 
       {/* ── FOR STUDENTS ─────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-neutral-300">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+         <section className="py-20 bg-[#fefce8]/30 border-b border-neutral-200">
+      <div className="max-w-6xl mx-auto px-6">
 
-          {/* Image */}
-          <ScrollReveal direction="right" delay={0.1}>
-            <div className="relative">
-              {/* Offset border */}
-              {/* <div className="absolute -top-4 -left-4 w-full h-full border-2 border-orange-600 rounded-sm pointer-events-none" /> */}
+        {/* Tab switcher */}
+        <div className="flex border-b border-neutral-200 mb-12">
+          {["students", "clubs"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px
+                ${tab === t
+                  ? "border-orange-600 text-orange-600"
+                  : "border-transparent text-neutral-400 hover:text-neutral-600"
+                }`}
+            >
+              {t === "students" ? "For Students" : "For Club Heads"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── STUDENTS ── */}
+        {tab === "students" && (
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+
+            {/* Left: text */}
+            <div>
+              <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                Students
+              </p>
+              <h2 className="text-4xl font-black leading-tight tracking-tight text-black mb-8">
+                Never miss a<br />campus beat{" "}
+                <span className="text-orange-600">again.</span>
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                {studentItems.map((item, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
+                      {item.icon}
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="text-xs text-neutral-400 line-through mb-0.5">{item.problem}</p>
+                      <p className="text-sm font-semibold text-black leading-snug">{item.solution}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button className="mt-8 inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-5 py-2.5 rounded-lg">
+                Join now
+                <i className="ri-arrow-right-line" />
+              </button>
+            </div>
+
+            {/* Right: image */}
+            <div className="relative hidden md:block">
               <img
-                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Student Life"
-                className="relative w-full h-[460px] object-cover rounded-sm border-2 border-black block"
-                style={{ filter: 'saturate(0.9)' }}
+                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80"
+                alt="Student life"
+                className="w-full h-[400px] object-cover rounded-xl border border-neutral-200"
+                style={{ filter: "saturate(0.9)" }}
               />
-              {/* Floating badge */}
-              <div className="absolute -bottom-5 -right-5 bg-yellow-400 border-2 border-black rounded-sm px-5 py-4 hidden md:block">
-                <div className="text-[22px] font-black leading-none">1-Click</div>
-                <div className="text-[12px] text-neutral-700 mt-1">Event Registration</div>
+              <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-200 rounded-lg px-4 py-3">
+                <p className="text-lg font-black leading-none">1-Click</p>
+                <p className="text-[11px] text-neutral-700 mt-0.5">Event Registration</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CLUB HEADS ── */}
+        {tab === "clubs" && (
+          <div>
+            <div className="mb-10">
+              <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                Club heads
+              </p>
+              <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
+                Less logistics,{" "}
+                <span className="text-orange-600">more impact.</span>
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {clubFeatures.map((f, i) => (
+                <div
+                  key={i}
+                  className="p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
+                >
+                  <div className="w-9 h-9 bg-orange-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:bg-orange-700 transition-colors">
+                    {f.icon}
+                  </div>
+                  <p className="text-sm font-semibold text-black mb-1">{f.title}</p>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Quote */}
+            <div className="border-l-4 border-orange-600 pl-5 py-1">
+              <p className="text-base font-semibold text-black leading-snug">
+                "Finally, no more manually checking 500 screenshots of payment proofs."
+              </p>
+              <p className="text-xs text-neutral-400 mt-1">— Club head, Engineering fest</p>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </section>
+
+
+    
+
+      {/* ---- ABOUT CLUBSETU ---- */}
+     <section className="py-24 bg-[#fefce8]/30 border-b border-neutral-300">
+  <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <ScrollReveal direction="left">
+        <div>
+          <SectionLabel>Our Vision</SectionLabel>
+          <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black mb-8">
+            The Digital Pulse of<br /><span className="text-orange-600">NITJ Campus Life.</span>
+          </h2>
+          <div className="space-y-6 text-neutral-700 leading-relaxed text-[17px]">
+            <p>
+              ClubSetu is the unified digital gateway designed specifically for the NIT Jalandhar community. We eliminate the chaos of multiple WhatsApp groups and scattered posters by providing a single, seamless platform where clubs can thrive and students can discover their passions.
+            </p>
+            <p>
+              By centralizing event registrations, club memberships, and campus updates, we are building a more connected and engaged student body. Our mission is to ensure that no opportunity at NITJ goes unnoticed and every talent finds its stage.
+            </p>
+          </div>
+
+          {/* Stats - Updated for Campus Scope */}
+          <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-neutral-200">
+            <div>
+              <div className="text-4xl font-black text-black">25+</div>
+              <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
+            </div>
+            <div>
+              <div className="text-4xl font-black text-black">5k+</div>
+              <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
+            </div>
+            <div>
+              <div className="text-4xl font-black text-black">100%</div>
+              <div className="text-[11px] font-bold  tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      <ScrollReveal direction="right" delay={0.2}>
+        <div className="flex gap-4 items-center justify-center lg:justify-end">
+          {/* Visual placeholders for App Mockups or Campus Photos */}
+          <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-100 overflow-hidden translate-y-8 ">
+             <div className="w-full h-full flex items-center justify-center text-neutral-300">
+               {/* <i className="ri-smartphone-line text-6xl" /> */}
+               <img src="mainbuilding.jpeg" alt="oh not found" className="w-full h-full object-cover"/>
+             </div>
+          </div>
+          <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-200 overflow-hidden -translate-y-4 ">
+            <div className="w-full h-full flex items-center justify-center text-neutral-400">
+             <img src="itbuilding.jpeg" alt="ohhhhhh not found yaar" className="w-full h-full object-cover"/>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+    </div>
+  </div>
+</section>
+
+      {/* ── FACULTY & TEAM ────────────────────────────────────────────────── */}
+      <section id="team" className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300 scroll-mt-20">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
+          <ScrollReveal direction="up">
+  <div className="mb-16">
+    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black mb-4">
+      The Minds Behind <span className="border-b-4 border-orange-600">ClubSetu</span>
+    </h2>
+    <p className="text-neutral-600 max-w-2xl mx-auto text-[18px] leading-relaxed">
+      We are a team of passionate student developers and campus leaders dedicated to 
+      bridging the gap between NITJ clubs and students through seamless digital experiences.
+    </p>
+  </div>
+</ScrollReveal>
+
+          {/* Faculty Coordinator */}
+          <ScrollReveal direction="up" delay={0.1}>
+            <div className="mb-20">
+              <div className="inline-block relative">
+              
+                <div 
+                  onMouseMove={handleMouseMove}
+                  className="feature-card relative border-2 rounded-sm  border-gray-200 bg-white p-8 max-w-md mx-auto group hover:-translate-y-1 transition-all"
+                >
+                  <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-24 h-24 shrink-0  border-2 border-gray-500 bg-neutral-500 overflow-hidden flex items-center justify-center">
+                      <i className="ri-user-star-line text-4xl text-neutral-300" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-[11px] font-semibold tracking-[0.2em] text-orange-600 mb-1">Faculty Coordinator</div>
+                      <h3 className="text-2xl font-black text-black mb-2">Himanshu Yadav</h3>
+                      <div className="flex gap-3 text-neutral-700">
+                        <a href="#" className="hover:text-orange-600"><i className="ri-linkedin-box-fill text-xl" /></a>
+                        <a href="#" className="hover:text-orange-600"><i className="ri-mail-fill text-xl" /></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </ScrollReveal>
 
-          {/* Text */}
-          <div>
-            <ScrollReveal direction="up" delay={0.2}>
-              <SectionLabel>For Students</SectionLabel>
-              <h2 className="font-black text-[clamp(32px,4vw,52px)] leading-[1.1] tracking-wide text-black mb-10">
-                Never Miss a<br />Campus Beat<br /><span className="text-orange-600">Again.</span>
-              </h2>
-            </ScrollReveal>
-
-            <div className="flex flex-col gap-7">
-              {[
-                {
-                  problem: 'Cluttered WhatsApp Groups',
-                  solution: 'One clean feed for all technical, cultural, and sports events.',
-                  icon: 'ri-whatsapp-line',
-                },
-                {
-                  problem: 'Missed Registration Deadlines',
-                  solution: 'Get instant opportunities and register with a single click.',
-                  icon: 'ri-timer-flash-line',
-                },
-                {
-                  problem: 'Zero Track Record',
-                  solution: 'Build your profile. We track every event you participate in.',
-                  icon: 'ri-profile-line',
-                },
-              ].map((item, i) => (
-                <ScrollReveal key={i} direction="up" delay={0.3 + (i * 0.1)}>
-                  <div className="flex gap-4 items-start">
-                    <div className="w-11 h-11 flex-shrink-0 bg-orange-50 border-2 border-orange-600 rounded-sm flex items-center justify-center text-orange-600 text-lg">
-                      <i className={item.icon} />
-                    </div>
-                    <div>
-                      <div className="text-[12px] text-neutral-400 line-through tracking-wide mb-1">{item.problem}</div>
-                      <div className="text-[16px] font-bold text-black leading-snug">{item.solution}</div>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-
-            <ScrollReveal direction="up" delay={0.6}>
-              <div className="mt-10">
-                <BtnPrimary to="/register">
-                  <i className="ri-arrow-right-line text-sm" /> Join Now
-                </BtnPrimary>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOR CLUB HEADS ───────────────────────────────────────────────── */}
-      <section className="py-24 bg-white border-b-2 border-gray-300">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-
-          {/* Header */}
-          <div className="flex items-end justify-between mb-14 flex-wrap gap-6">
-            <ScrollReveal direction="up">
-              <div>
-                <SectionLabel light>For Club Heads</SectionLabel>
-                <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black">
-                  Less Logistics,<br /><span className="text-orange-500">More Impact.</span>
-                </h2>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.2}>
-              <p className="text-[15px] text-neutral-700 max-w-xs leading-relaxed">
-                Stop wrestling with Google Forms and messy spreadsheets. We give you a command center for your entire event lifecycle.
-              </p>
-            </ScrollReveal>
-          </div>
-
-          {/* Feature grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {/* Team Members Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: 'Reach Everyone',     desc: 'Push notifications to students interested in your domain.',      icon: 'ri-broadcast-line' },
-              { title: 'Digital E-certificates', desc: 'Automatic Digital E-certificates generation.',     icon: 'ri-qr-scan-2-line' },
-              { title: 'Real-time Analytics',desc: 'See who is registering and from which branch.',                 icon: 'ri-bar-chart-line' },
-              { title: 'Showcase Legacy',    desc: 'A dedicated club profile to showcase your past achievements.',   icon: 'ri-trophy-line' },
-            ].map((item, i) => (
-              <ScrollReveal key={i} direction="up" delay={0.1 + (i * 0.1)}>
-                <div
-                  className=" border border-neutral-300 rounded-xl p-7 hover:border-orange-600 hover:-translate-y-1 transition-all group"
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+            ].map((member, i) => (
+              <ScrollReveal key={i} direction="up" delay={0.1 + (i * 0.05)}>
+                <div 
+                  onMouseMove={handleMouseMove}
+                  className="feature-card border-2 border-gray-200 bg-white rounded-sm overflow-hidden flex transition-all group"
                 >
-                  <div className="w-12 h-12 bg-orange-600 rounded-sm flex items-center justify-center text-white text-xl mb-5">
-                    <i className={item.icon} />
+                  <div className="relative z-10 flex w-full">
+                    <div className="w-1/3 aspect-[3/4] bg-neutral-100 border-r-2 border-gray-100 flex items-center justify-center text-neutral-300 overflow-hidden">
+                      <i className="ri-user-3-line text-4xl" />
+                    </div>
+                    <div className="w-2/3 p-4 flex flex-col justify-center text-left">
+                      <h3 className="font-bold text-[18px] text-black leading-tight mb-1 transition-colors tracking-wider">{member.name}</h3>
+                      <p className="text-[12px] font-medium text-neutral-500 mb-4">{member.role}</p>
+                      <div className="flex gap-2.5 mt-auto">
+                        <a href={member.github} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
+                          {/* <i className="ri-github-fill" /> */}
+                         <GithubIcon/>
+                        </a>
+                        <a href={member.linkedin} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
+                          <LinkedinIcon/>
+                        </a>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-black font-bold text-[18px] mb-2.5 tracking-wide">{item.title}</h3>
-                  <p className="text-neutral-700 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
               </ScrollReveal>
             ))}
           </div>
-
-          {/* Quote strip */}
-          <ScrollReveal direction="up" delay={0.5}>
-            <div className="mt-5 border border-gray-300 overflow-hidden relative">
-              <img
-                src="https://plus.unsplash.com/premium_photo-1691699251519-6f2ec51a3a37?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                alt="Event Organizer"
-                className="w-full h-56 object-cover object-[center_50%] block"
-                style={{ filter: 'saturate(0) brightness(0.8)' }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center px-6">
-                <div className="bg-orange-600 text-white font-black text-[clamp(16px,2.5vw,30px)] px-8 py-4 rounded-sm text-center tracking-wide leading-snug max-w-2xl">
-                  "Finally, no more manually checking 500 screenshots of payment proofs."
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
         </div>
       </section>
-
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      {/* <section className="py-24 bg-yellow-50 border-black">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-
-          <div className="flex items-center justify-between mb-16 flex-wrap gap-4">
-            <h2 className="font-black text-[clamp(28px,4vw,48px)] text-black leading-none tracking-tight">
-              How It Works
-            </h2>
-            <span className="bg-yellow-400 border-2 border-black text-[11px] font-bold uppercase tracking-[0.1em] px-4 py-2 rounded-sm">
-              3 Simple Steps
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 border-2 border-black rounded-sm overflow-hidden">
-            {[
-              { step: '01', title: 'Discover',    desc: 'Browse a curated feed of events, cultural fests, and hackathons happening on campus.', icon: 'ri-compass-3-line' },
-              { step: '02', title: 'Register',    desc: 'Sign up for events instantly. Get a personalized dashboard to track your participation.', icon: 'ri-edit-circle-line' },
-              { step: '03', title: 'Participate', desc: 'Show up with your digital pass and build a track record that lasts beyond graduation.',   icon: 'ri-user-heart-line' },
-            ].map((card, i) => (
-              <div
-                key={i}
-                className={`bg-white p-12 relative ${i < 2 ? 'border-r-2 border-black' : ''} `}
-              >
-               
-                <span className="absolute top-3 right-4 font-black text-[72px] leading-none text-neutral-300 select-none pointer-events-none">
-                  {card.step}
-                </span>
-                <div className="w-13 h-13 w-[52px] h-[52px] bg-black rounded-sm flex items-center justify-center text-white text-[22px] mb-6">
-                  <i className={card.icon} />
-                </div>
-                <h3 className="font-black text-[26px] text-black mb-3 relative z-10">{card.title}</h3>
-                <p className="text-[15px] text-neutral-600 leading-relaxed relative z-10">{card.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
-      {/* <section className="py-20 bg-white border-t-2 border-black">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <SectionLabel>Testimonials</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,48px)] text-black leading-none tracking-tight">
-                What Our Community Says
-              </h2>
-            </div>
-            <div className="hidden md:flex items-center gap-3">
-              <button className="w-12 h-12 border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors">
-                <i className="ri-arrow-left-line text-lg" />
-              </button>
-              <button className="w-12 h-12 border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors">
-                <i className="ri-arrow-right-line text-lg" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Yash Sharma",
-                role: "Computer Science Student",
-                quote: "This platform transformed how I experience campus life. I never miss a hackathon now!",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
-              },
-              {
-                name: "Ajeet Yadav",
-                role: "Kabbadi Club Head",
-                quote: "Managing events has never been easier. The analytics dashboard is a game-changer.",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
-              },
-              {
-                name: "Himanshu Yadav",
-                role: "Student",
-                quote: "From discovery to participation, the entire flow is seamless. Highly recommended!",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
-              }
-            
-            ].map((t, i) => (
-              <div
-                key={i}
-                className="border-2 border-black bg-white p-8 relative hover:shadow-lg transition-shadow"
-              >
-                <div className="absolute top-4 right-4 text-orange-600 text-2xl">
-                  <i className="ri-double-quotes-r" />
-                </div>
-                <p className="text-neutral-600 italic mb-6 text-lg leading-relaxed">
-                  "{t.quote}"
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="w-12 h-12 rounded-full border-2 border-black object-cover"
-                  />
-                  <div>
-                    <div className="font-bold text-black">{t.name}</div>
-                    <div className="text-sm text-neutral-500">{t.role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section> */}
-
-     {/* <section className="py-20 bg-yellow-50 border-t-2 border-black">
-  <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-    <div className="flex items-center justify-center mb-12">
-      <div className=" p-8 text-center">
-        <h2 className="font-black text-[clamp(28px,4vw,48px)] text-black leading-none tracking-tight text-center relative inline-block after:content-[''] after:block after:w-16 after:h-1 after:bg-black after:mx-auto after:mt-2">
-          Request for more features
-        </h2>
-        
-        <a 
-          href="mailto:clubsetu@nikhim.me" 
-          className="text-2xl text-orange-600 font-bold p-4 hover:text-gray-600 transition-colors duration-300 block"
-        >
-          clubsetu@nikhim.me
-        </a>
-      </div>
-    </div>
-  </div>
-</section> */}
 
       {/* Home Footer */}
       <HomeFooter />

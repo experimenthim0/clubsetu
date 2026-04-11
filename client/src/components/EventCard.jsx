@@ -14,17 +14,17 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const isUnlimited = !totalSeats || totalSeats === 0;
     const isFull = !isUnlimited && registeredCount >= totalSeats;
     const seatsText = isUnlimited
-        ? `${registeredCount} Registered`
-        : `${registeredCount} / ${totalSeats}`;
+        ? ` `
+        : `${totalSeats-registeredCount} left`;
 
     const DEFAULT_IMAGE = '/CLUBSETU.png';
     const displayImage = event.imageUrl || DEFAULT_IMAGE;
 
     return (
-        <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
+        <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
-            <div className="h-64 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-300">
+            <div className="h-64 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-200">
                 <img
   src={displayImage}
   alt={title}
@@ -38,30 +38,22 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 {/* Status Badge */}
                 <div className="absolute top-3 left-3">
                     {isLive && (
-                        <span className="inline-flex items-center gap-1.5 bg-orange-600 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-sm animate-pulse">
+                        <span className="inline-flex items-center gap-1.5 bg-orange-600 text-white text-[10px] font-bold  tracking-widest px-3 py-1 rounded-sm animate-pulse">
                             <span className="w-1.5 h-1.5 bg-white rounded-full" />
-                            LIVE
+                            Live
                         </span>
                     )}
                     {!isLive && status === 'UPCOMING' && (
-                        <span className="inline-flex items-center bg-yellow-400 text-black text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-sm border border-black">
-                            UPCOMING
+                        <span className="inline-flex items-center bg-yellow-400 text-black text-[10px] font-bold  tracking-widest px-3 py-1 rounded-sm border border-gray-300">
+                            Upcoming
                         </span>
                     )}
                     {isEnded && (
-                        <span className="inline-flex items-center bg-neutral-200 text-neutral-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-sm">
-                            ENDED
+                        <span className="inline-flex items-center bg-neutral-200 text-neutral-600 text-[10px] font-bold  tracking-widest px-3 py-1 rounded-sm">
+                            Ended
                         </span>
                     )}
                 </div>
-                {/* Club Badge */}
-                {(event.club?.name || event.createdBy?.clubName) && (
-                    <div className="absolute top-3 right-3">
-                        <span className="bg-orange-600/80 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm backdrop-blur-sm">
-                            {event.club?.name || event.createdBy?.clubName}
-                        </span>
-                    </div>
-                )}
             </div>
 
             {/* Body */}
@@ -82,7 +74,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             </div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <i className="ri-trophy-fill text-orange-600 text-base" />
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-orange-600">Winners</span>
+                                    <span className="text-[12px] font-black tracking-widest text-orange-600">Winners</span>
                                 </div>
                                 {/* Winner Rows */}
                                 {event.winners.map((winner, index) => (
@@ -126,6 +118,13 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     
                     /* SHOW DETAILS WHILE ACTIVE OR IF showWinner IS FALSE */
                     <div className="space-y-1.5 text-[12px] text-neutral-600 mb-2">
+                        {(event.club?.clubName || event.createdBy?.clubName) && (
+                            <div className="flex items-center gap-2   tracking-wider text-[11px] mb-1">
+                                {/* <i className="ri-building-line text-sm text-orange-600" /> By */}
+                                <span className='text-orange-500 text-[12px] font-semibold'>By</span>
+                                <span className='text-black'>{event.club?.clubName || event.createdBy?.clubName}</span>
+                            </div>
+                        )}
                         <div className="flex items-center gap-2">
                             <i className="ri-time-line text-orange-600 text-sm" />
                             <span className="font-medium">{formattedTime}</span>
@@ -138,12 +137,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             <i className="ri-group-line text-orange-600 text-sm" />
                             <span className="font-medium">
                                 {seatsText}
-                                {isUnlimited && <span className="ml-1 text-[10px] text-orange-600 font-bold">(Unlimited)</span>}
+                                {isUnlimited && <span className=" text-[12px] ">Unlimited Seats</span>}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-orange-600">
                            <i className="ri-hourglass-fill text-sm" />
-                            <span className="font-bold text-[11px] uppercase tracking-wide">
+                            <span className="font-bold text-[11px] tracking-wide">
                                 {isEnded ? 'Event Ended' : `Ends: ${new Date(registrationDeadline || startTime).toLocaleString('en-US', {
                                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                                 })}`}
@@ -157,17 +156,13 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             <div className="px-5 pb-3">
                 <div className="flex items-center gap-3 border-t-2 border-neutral-100 pt-2">
                     {/* Entry fee badge */}
-                    <span className={`inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm border-2 shrink-0 ${
-                        !entryFee || entryFee === 0
-                            ? 'bg-green-50 text-green-700 border-green-300'
-                            : 'bg-yellow-50 text-yellow-800 border-yellow-300'
-                    }`}>
-                        {!entryFee || entryFee === 0 ? (
-                            <><i className="ri-gift-line" /> Free</>
-                        ) : (
-                            <><i className="ri-money-rupee-circle-line" /> ₹{entryFee}</>
-                        )}
-                    </span>
+                   {entryFee !== 0 && (
+  <span
+    className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm border-2 shrink-0 bg-yellow-50 text-yellow-800 border-yellow-300"
+  >
+    <i className="ri-money-rupee-circle-line" /> ₹{entryFee}
+  </span>
+ )}
 
                     {/* Action button */}
                     {isRegistered ? (

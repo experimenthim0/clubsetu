@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -8,12 +7,15 @@ if (!JWT_SECRET) {
 
 // Generate JWT token
 export const generateToken = (user, role) => {
+  const userId = user?.id;
+  const clubId = user?.clubId ?? null;
+
   return jwt.sign(
     { 
-      userId: user._id, 
+      userId, 
       role, 
       email: user.email,
-      clubId: user.clubId // Include clubId for authorization checks
+      clubId // Include clubId for authorization checks
     },
     JWT_SECRET,
     { expiresIn: "1d" },

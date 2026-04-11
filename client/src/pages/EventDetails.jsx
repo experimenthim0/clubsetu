@@ -582,33 +582,24 @@ const EventDetails = () => {
             )}
 
             {/* CTA */}
-            <div className="border-t-2 border-black pt-8">
-              {/* Entry Fee Display */}
-              <div className="mb-6 flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-600 rounded-sm">
-                <div className="flex items-center gap-3">
-                    <i className="ri-money-rupee-circle-line text-2xl text-orange-600" />
-                    <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600">Entry Fee</p>
-                        <p className="text-xl font-black text-black">
-                            {entryFee > 0 ? `₹${entryFee}` : 'FREE'}
-                        </p>
-                    </div>
-                </div>
-                {!isDeadlinePassed && !isEnded && (
-                    <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Time Left</p>
-                        <p className="text-sm font-bold text-black uppercase">
-                            {(() => {
-                                const diff = new Date(deadline) - new Date();
-                                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                if (days > 0) return `${days}d ${hours}h left`;
-                                return `${hours}h left`;
-                            })()}
-                        </p>
-                    </div>
-                )}
-              </div>
+       {entryFee > 0 && (
+  <div className="border-t-2 border-black pt-8">
+    {/* Entry Fee Display */}
+    <div className="mb-6 flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-600 rounded-sm">
+      <div className="flex items-center gap-3">
+        <i className="ri-money-rupee-circle-line text-2xl text-orange-600" />
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600">
+            Entry Fee
+          </p>
+          <p className="text-xl font-black text-black">
+            ₹{entryFee}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
               <button
                 onClick={!btnConfig.disabled && !isRegistering ? (isEnded ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' }) : handleRegister) : undefined}
@@ -631,9 +622,6 @@ const EventDetails = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ── Missing Fields Modal ───────────────────────────────────────── */}
       {missingFieldsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="bg-white border-2 border-black rounded-sm max-w-md w-full shadow-[8px_8px_0px_#0D0D0D]">

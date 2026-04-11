@@ -15,7 +15,7 @@ const PaymentTracking = () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const storedRole = localStorage.getItem('role');
 
-    if (!storedUser || storedRole !== 'club-head') {
+    if (!storedUser || !(storedRole === 'club-head' || storedRole === 'club' || storedRole === 'clubHead')) {
       navigate('/login');
       return;
     }
@@ -61,7 +61,7 @@ const PaymentTracking = () => {
     );
   }
 
-  if (!user || role !== 'club-head') {
+  if (!user || !(role === 'club-head' || role === 'club' || role === 'clubHead')) {
     return <div className="text-center mt-10">Access restricted to club heads.</div>;
   }
 

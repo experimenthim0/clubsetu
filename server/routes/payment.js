@@ -1,11 +1,9 @@
 import express from "express";
 import crypto from "crypto";
 import Razorpay from "razorpay";
-import Event from "../models/Event.js";
-import Registration from "../models/Registration.js";
-import User from "../models/User.js";
-import dotenv from "dotenv/config";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
+import prisma from "../lib/prisma.js";
+import { createObjectId } from "../utils/objectId.js";
 
 const router = express.Router();
 
@@ -14,13 +12,12 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// POST /api/payment/create-order
 router.post(
   "/create-order",
   verifyToken,
-  allowRoles("member", "clubHead", "admin"),
+  allowRoles("member", "clubHead", "club", "admin"),
   async (req, res) => {
-    const { eventId, studentId } = req.body; // studentId is actually the userId
+    const { eventId, studentId } = req.body;
 
     try {
       if (!eventId || !studentId) {
@@ -28,17 +25,20 @@ router.post(
       }
 
       if (req.user.userId !== studentId && req.user.role !== "admin") {
-         return res.status(403).json({ message: "Access denied." });
+        return res.status(403).json({ message: "Access denied." });
       }
 
-      const event = await Event.findById(eventId);
+      const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const user = await User.findById(studentId);
+      const user = await prisma.user.findUnique({ where: { id: studentId } });
       if (!user) return res.status(404).json({ message: "User not found." });
 
-      // Eligibility checks
-      if (event.allowedPrograms?.length > 0 && !event.allowedPrograms.includes(user.program)) {
+      if (
+        event.allowedPrograms?.length > 0 &&
+        user.program &&
+        !event.allowedPrograms.includes(user.program)
+      ) {
         return res.status(403).json({ message: "Ineligible program." });
       }
 
@@ -46,22 +46,20 @@ router.post(
         return res.status(400).json({ message: "This event is free" });
       }
 
-      const existingRegistration = await Registration.findOne({ eventId, userId: studentId });
+      const existingRegistration = await prisma.registration.findFirst({
+        where: { eventId, userId: studentId },
+      });
       if (existingRegistration) {
         return res.status(400).json({ message: "Already registered" });
       }
 
-      const amountInPaise = event.entryFee * 100;
-      const receiptId = `reg_${eventId.toString().slice(-6)}_${studentId.slice(-6)}_${Date.now().toString().slice(-6)}`;
-
-      const options = {
-        amount: amountInPaise,
+      const receiptId = `reg_${eventId.slice(-6)}_${studentId.slice(-6)}_${Date.now().toString().slice(-6)}`;
+      const order = await razorpay.orders.create({
+        amount: event.entryFee * 100,
         currency: "INR",
         receipt: receiptId,
-        notes: { eventId: eventId.toString(), userId: studentId, eventTitle: event.title },
-      };
-
-      const order = await razorpay.orders.create(options);
+        notes: { eventId, userId: studentId, eventTitle: event.title },
+      });
 
       res.json({
         success: true,
@@ -77,11 +75,10 @@ router.post(
   },
 );
 
-// POST /api/payment/verify
 router.post(
   "/verify",
   verifyToken,
-  allowRoles("member", "clubHead", "admin"),
+  allowRoles("member", "clubHead", "club", "admin"),
   async (req, res) => {
     const { orderId, paymentId, signature, eventId, studentId, formResponses } = req.body;
 
@@ -91,7 +88,7 @@ router.post(
       }
 
       if (req.user.userId !== studentId && req.user.role !== "admin") {
-         return res.status(403).json({ message: "Access denied." });
+        return res.status(403).json({ message: "Access denied." });
       }
 
       const generatedSignature = crypto
@@ -108,71 +105,93 @@ router.post(
         return res.status(400).json({ message: "Payment not captured", success: false });
       }
 
-      const event = await Event.findById(eventId);
+      const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const existingRegistration = await Registration.findOne({ eventId, userId: studentId });
+      const existingRegistration = await prisma.registration.findFirst({
+        where: { eventId, userId: studentId },
+      });
       if (existingRegistration) {
         return res.status(400).json({ message: "Already registered", success: false });
       }
 
-      const registration = new Registration({
-        eventId,
-        userId: studentId,
-        status: "CONFIRMED",
-        paymentId,
-        orderId,
-        paymentStatus: "SUCCESS",
-        amountPaid: event.entryFee,
-        paymentTimestamp: new Date(),
-        formResponses: formResponses || {},
-      });
+      const registrationId = createObjectId();
 
-      await registration.save();
-      await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
+      await prisma.$transaction(async (tx) => {
+        await tx.registration.create({
+          data: {
+            id: registrationId,
+            eventId,
+            userId: studentId,
+            status: "CONFIRMED",
+            paymentId,
+            orderId,
+            paymentStatus: "SUCCESS",
+            amountPaid: event.entryFee,
+            paymentTimestamp: new Date(),
+            formResponses: formResponses || {},
+          },
+        });
+
+        await tx.event.update({
+          where: { id: eventId },
+          data: { registeredCount: { increment: 1 } },
+        });
+      });
 
       res.json({
         success: true,
         message: "Payment verified",
         registration: {
-          id: registration._id,
+          id: registrationId,
           eventTitle: event.title,
           amountPaid: event.entryFee,
-          status: registration.status,
+          status: "CONFIRMED",
         },
       });
     } catch (error) {
-      res.status(500).json({ message: "Verification failed", error: error.message, success: false });
+      res.status(500).json({
+        message: "Verification failed",
+        error: error.message,
+        success: false,
+      });
     }
   },
 );
 
-// GET /api/payment/event/:eventId/stats
 router.get(
   "/event/:eventId/stats",
   verifyToken,
-  allowRoles("clubHead", "admin"),
+  allowRoles("clubHead", "club", "admin"),
   async (req, res) => {
-    const { eventId } = req.params;
-
     try {
-      const event = await Event.findById(eventId);
+      const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const registrations = await Registration.find({
-        eventId,
-        paymentStatus: "SUCCESS",
-      }).populate("userId", "name email rollNo");
+      const registrations = await prisma.registration.findMany({
+        where: {
+          eventId: req.params.eventId,
+          paymentStatus: "SUCCESS",
+        },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, rollNo: true },
+          },
+        },
+      });
 
-      const totalMoneyCollected = registrations.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0);
+      const totalMoneyCollected = registrations.reduce(
+        (sum, reg) => sum + (reg.amountPaid || 0),
+        0,
+      );
 
       res.json({
         eventTitle: event.title,
         totalCollected: totalMoneyCollected,
         registrations: registrations.map((reg) => ({
-          studentName: reg.userId?.name || "Unknown",
-          studentEmail: reg.userId?.email || "N/A",
-          studentRollNo: reg.userId?.rollNo || "N/A",
+          studentName: reg.user?.name || "Unknown",
+          studentEmail: reg.user?.email || "N/A",
+          studentRollNo: reg.user?.rollNo || "N/A",
           paymentId: reg.paymentId || "N/A",
           amountPaid: reg.amountPaid || 0,
           paymentStatus: reg.paymentStatus,

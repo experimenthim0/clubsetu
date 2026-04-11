@@ -1,0 +1,18 @@
+export const EVENT_VENUES = [
+  "Student Activity Centre",
+  "Snackers",
+  "IT Building - Lab 1",
+  "Central Lawn",
+  "Mega Ground",
+  "MBH Ground",
+  "OAT",
+  "CSH",
+  "VCH",
+  "Science Block",
+  "Community Center",
+  "NITJ Temple",
+  "LT",
+  "Online",
+  "Department Building",
+  "Others",
+];

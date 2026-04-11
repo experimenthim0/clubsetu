@@ -34,12 +34,6 @@ const EditClub = () => {
         clubEmail: '',
         facultyEmail: '',
         facultyName: '',
-        // Financial Info
-        bankName: '',
-        accountHolderName: '',
-        accountNumber: '',
-        ifscCode: '',
-        upiId: '',
         bankPhone: '',
     });
 
@@ -63,12 +57,6 @@ const EditClub = () => {
                 clubEmail: club.clubEmail || '',
                 facultyEmail: club.facultyEmail || '',
                 facultyName: club.facultyName || '',
-                bankName: club.bankName || '',
-                accountHolderName: club.accountHolderName || '',
-                accountNumber: club.accountNumber || '',
-                ifscCode: club.ifscCode || '',
-                upiId: club.upiId || '',
-                bankPhone: club.bankPhone || ''
             });
         };
 
@@ -328,76 +316,7 @@ const EditClub = () => {
                     </div>
                 </div>
 
-                {/* Financial Info */}
-                <div className="space-y-6">
-                    <h3 className="font-black uppercase tracking-widest text-xs border-b-2 border-neutral-100 pb-3 flex items-center gap-3">
-                        <i className="ri-bank-card-fill text-orange-600 text-lg" /> Financial Info (For Payments)
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Bank Name</label>
-                            <input 
-                                type="text" 
-                                name="bankName" 
-                                value={formData.bankName} 
-                                onChange={handleChange}
-                                placeholder="e.g. State Bank of India"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Account Holder Name</label>
-                            <input 
-                                type="text" 
-                                name="accountHolderName" 
-                                value={formData.accountHolderName} 
-                                onChange={handleChange}
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Account Number</label>
-                            <input 
-                                type="text" 
-                                name="accountNumber" 
-                                value={formData.accountNumber} 
-                                onChange={handleChange}
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">IFSC Code</label>
-                            <input 
-                                type="text" 
-                                name="ifscCode" 
-                                value={formData.ifscCode} 
-                                onChange={handleChange}
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">UPI ID (Optional)</label>
-                            <input 
-                                type="text" 
-                                name="upiId" 
-                                value={formData.upiId} 
-                                onChange={handleChange}
-                                placeholder="name@upi"
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-2">Phone Linked to Bank</label>
-                            <input 
-                                type="text" 
-                                name="bankPhone" 
-                                value={formData.bankPhone} 
-                                onChange={handleChange}
-                                className="w-full p-3 border-2 border-black focus:bg-orange-50 outline-none font-bold transition-colors"
-                            />
-                        </div>
-                    </div>
-                </div>
+
 
                 <div className="pt-8 flex flex-col sm:flex-row gap-4">
                     <button 

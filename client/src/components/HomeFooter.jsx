@@ -20,10 +20,10 @@ const HomeFooter = () => {
   ];
 
   return (
-    <footer className="bg-white text-black">
+    <footer className="bg-[#fefce8]/30 text-black">
       {/* Main footer */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x-2 border-gray-300">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
 
           {/* Brand column */}
           <div>
@@ -35,8 +35,30 @@ const HomeFooter = () => {
             </div>
             {/* <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
              ClubSetu is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}
-           <p className='text-[14px] text-neutral-700 leading-relaxed mb-4'>Built with
-roommates and Crafted between classes, deadlines, and hostel Wi-Fi.</p>
+            <div className=''>
+         <div className="flex items-center gap-3">
+                {[
+                  { icon: <LinkedinIcon/>, href: 'https://github.com/experimenthim0' },
+                  { icon: <InstagramIcon/>, href: 'https://instagram.com/nikhim.me' },
+                  { icon: <TwitterIcon/>, href: 'https://x.com/Nikhil0148' },
+                ].map((social) => (
+                  <a
+                    key={social.href}
+                    href={social.href}
+                    className="w-9 h-9  rounded-sm flex items-center justify-center text-black  transition-colors  "
+                  >
+                    {/* <i className={`${social.icon} text-base`} /> */}
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+             <p className="text-[13px] text-neutral-500 mt-4">
+              Have any questions or suggestion? Reach out to us at{' '}
+              <a href="mailto:clubsetu@nikhim.me" className="text-orange-500 hover:underline font-medium">
+                clubsetu@nikhim.me
+              </a>
+            </p>
+        </div>
             
              
           </div>
@@ -62,30 +84,7 @@ roommates and Crafted between classes, deadlines, and hostel Wi-Fi.</p>
 
           
           {/* About */}
-          <div className=''>
-         <div className="flex items-center gap-3">
-                {[
-                  { icon: <LinkedinIcon/>, href: 'https://github.com/experimenthim0' },
-                  { icon: <InstagramIcon/>, href: 'https://instagram.com/nikhim.me' },
-                  { icon: <TwitterIcon/>, href: 'https://x.com/Nikhil0148' },
-                ].map((social) => (
-                  <a
-                    key={social.href}
-                    href={social.href}
-                    className="w-9 h-9  rounded-sm flex items-center justify-center text-black  transition-colors  "
-                  >
-                    {/* <i className={`${social.icon} text-base`} /> */}
-                    {social.icon}
-                  </a>
-                ))}
-              </div>
-             <p className="text-[13px] text-neutral-500 mt-4">
-              Have any questions or suggestion? Reach out to us at{' '}
-              <a href="mailto:clubsetu@nikhim.me" className="text-orange-500 hover:underline font-medium">
-                clubsetu@nikhim.me
-              </a>
-            </p>
-        </div>
+        
       </div>
       </div>
 

@@ -98,22 +98,22 @@ const EditProfile = () => {
                 <h1 className="text-2xl md:text-3xl font-black text-black">Edit Profile</h1>
                 <button 
                     onClick={() => navigate('/profile')}
-                    className="text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-black transition-colors"
+                    className="text-[14px] font-bold  tracking-widest text-neutral-400 hover:text-black transition-colors"
                 >
-                    Back
+                   Go Back
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border-2 border-black rounded-sm shadow-[4px_4px_0px_#0D0D0D] space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border-2 border-gray-300 rounded-sm space-y-6">
                 
                 {/* Read Only Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50 p-4 border border-neutral-200">
                     <div>
-                        <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest">Roll No</label>
+                        <label className="block text-[10px] font-black text-neutral-400  tracking-widest">Roll No</label>
                         <p className="font-mono text-neutral-800 text-sm">{user.rollNo}</p>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest">Email</label>
+                        <label className="block text-[10px] font-black text-neutral-400  tracking-widest">Email</label>
                         <p className="font-mono text-neutral-800 text-sm break-all">{user.email}</p>
                     </div>
                 </div>
@@ -121,7 +121,7 @@ const EditProfile = () => {
                 {/* Editable Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Full Name</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Full Name</label>
                         <input 
                             type="text" 
                             name="name" 
@@ -132,88 +132,88 @@ const EditProfile = () => {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">GitHub URL</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">GitHub URL</label>
                         <input 
                             type="url" 
                             name="githubProfile" 
                             value={formData.githubProfile} 
                             onChange={handleChange}
-                            placeholder="https://github.com/username"
+                            placeholder="https://github.com/experimenthim0"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">LinkedIn URL</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">LinkedIn URL</label>
                         <input 
                             type="url" 
                             name="linkedinProfile" 
                             value={formData.linkedinProfile} 
                             onChange={handleChange}
-                            placeholder="https://linkedin.com/in/username"
+                            placeholder="https://linkedin.com/in/nikhilydv0148"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">X (Twitter) URL</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">X (Twitter) URL</label>
                         <input 
                             type="url" 
                             name="xProfile" 
                             value={formData.xProfile} 
                             onChange={handleChange}
-                            placeholder="https://x.com/username"
+                            placeholder="https://x.com/nikhil0148"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Portfolio Website</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Portfolio Website</label>
                         <input 
                             type="url" 
                             name="portfolioUrl" 
                             value={formData.portfolioUrl} 
                             onChange={handleChange}
-                            placeholder="https://myportfolio.com"
+                            placeholder="https://nikhim.me"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">Instagram URL</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Instagram URL</label>
                         <input 
                             type="url" 
                             name="instagramProfile" 
                             value={formData.instagramProfile} 
                             onChange={handleChange}
-                            placeholder="https://instagram.com/username"
+                            placeholder="https://instagram.com/jankaritag.in"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700 uppercase tracking-widest mb-2">WhatsApp Number</label>
+                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">WhatsApp Number</label>
                         <input 
                             type="tel" 
                             name="whatsappNumber" 
                             value={formData.whatsappNumber} 
                             onChange={handleChange}
-                            placeholder="+91 XXXXX XXXXX"
+                            placeholder="+91 98765 43210"
                             className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
                         />
                     </div>
                 </div>
 
-                {(role === 'clubHead' || role === 'club-head') && (
+                {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
                     <div className="pt-8 md:pt-10 border-t-2 border-neutral-100 space-y-6">
                         <div className="flex items-center gap-3">
                              <i className="ri-bank-card-fill text-orange-600 text-xl" />
-                             <h3 className="font-black text-black uppercase tracking-tight">Financial Information</h3>
+                             <h3 className="font-black text-black  tracking-tight">Financial Information</h3>
                         </div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Bank Name</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Bank Name</label>
                                 <input 
                                     type="text" 
                                     name="bankName" 
@@ -224,7 +224,7 @@ const EditProfile = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Account Holder</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Account Holder</label>
                                 <input 
                                     type="text" 
                                     name="accountHolderName" 
@@ -234,7 +234,7 @@ const EditProfile = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Account Number</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Account Number</label>
                                 <input 
                                     type="password" 
                                     name="accountNumber" 
@@ -244,17 +244,17 @@ const EditProfile = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">IFSC Code</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">IFSC Code</label>
                                 <input 
                                     type="text" 
                                     name="ifscCode" 
                                     value={formData.ifscCode} 
                                     onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none uppercase font-mono"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none  font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">UPI ID</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">UPI ID</label>
                                 <input 
                                     type="text" 
                                     name="upiId" 
@@ -264,7 +264,7 @@ const EditProfile = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Linked Phone</label>
+                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Linked Phone</label>
                                 <input 
                                     type="tel" 
                                     name="bankPhone" 
@@ -284,11 +284,11 @@ const EditProfile = () => {
                 <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">
                     <div className="flex items-center gap-3">
                          <i className="ri-lock-2-fill text-orange-600 text-xl" />
-                         <h3 className="font-black text-black uppercase tracking-tight">Security & Auth</h3>
+                         <h3 className="font-black text-black  tracking-tight">Security & Auth</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         <div>
-                            <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">Current Password</label>
+                            <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Current Password</label>
                             <input 
                                 type="password" 
                                 name="currentPassword" 
@@ -298,7 +298,7 @@ const EditProfile = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2">New Password (Optional)</label>
+                            <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">New Password (Optional)</label>
                             <input 
                                 type="password" 
                                 name="newPassword" 
@@ -318,7 +318,7 @@ const EditProfile = () => {
                             <div className="flex items-center gap-3">
                                 <i className="ri-shield-check-line text-2xl text-orange-600" />
                                 <div>
-                                    <p className="text-sm font-black text-black uppercase tracking-tight">2-Step Verification</p>
+                                    <p className="text-sm font-black text-black  tracking-tight">2-Step Verification</p>
                                     <p className="text-[10px] text-neutral-600">Requires an email OTP code every time you login.</p>
                                 </div>
                             </div>
@@ -339,14 +339,14 @@ const EditProfile = () => {
                     <button 
                         type="button" 
                         onClick={() => navigate('/profile')}
-                        className="flex-1 py-4 border-2 border-black text-black font-black uppercase tracking-widest rounded-sm hover:bg-neutral-50 transition-colors"
+                        className="flex-1 py-4 border-2 border-black text-black font-black  tracking-widest rounded-sm transition-colors hover:bg-gray-300/40 cursor-pointer"
                     >
                         Discard
                     </button>
                     <button 
                         type="submit" 
                         disabled={isSaving}
-                        className={`flex-1 py-4 text-white font-black uppercase tracking-widest rounded-sm transition-all shadow-[4px_4px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}
+                        className={`flex-1 py-4 text-white font-black cursor-pointer tracking-widest rounded-sm transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}
                     >
                         {isSaving ? 'Saving…' : 'Update Profile'}
                     </button>

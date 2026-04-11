@@ -6,7 +6,10 @@ import { BellIcon } from "./ui/bell";
 import { UserIcon } from "./ui/user";
 import { CalendarDaysIcon } from "./ui/calendar-days";
 import { IndianRupeeIcon } from "./ui/indian-rupee";
+import { SettingsIcon } from "./ui/settings";
+import { ConciergeBellIcon } from "./ui/concierge-bell";
 import { LogoutIcon } from "./ui/logout";
+import { CalendarCogIcon } from "./ui/calendar-cog";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -113,7 +116,7 @@ const Navbar = () => {
 
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
-    `relative py-1 text-[12px] font-bold tracking-widest uppercase transition-all duration-300 group ${
+    `relative py-1 text-[14px] font-bold tracking-widest transition-all duration-300 group ${
       isActive(path) ? "text-orange-600" : "text-black hover:text-orange-600"
     }`;
 
@@ -155,10 +158,10 @@ const Navbar = () => {
               Events
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-            {/* <Link to="/about-features" className={navLinkCls("/about-features")}>
-              ClubSetu Features
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/about-features") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </Link> */}
+            <a href="/#team" className={navLinkCls("/team")}>
+              Team
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/team") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+            </a>
           </div>
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}
@@ -171,7 +174,7 @@ const Navbar = () => {
                 {(role === "clubHead" || role === "club-head" || role === "club") && (
                   <Link
                     to="/create"
-                    className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 border-2 border-black text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
+                    className="flex items-center gap-1.5 px-4 py-2  border-2 border-gray-400 text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-gray-400 hover:text-white hover:border-gray-400 transition-all duration-150 hover:-translate-y-px"
                   >
                     <i className="ri-add-line text-sm" />
                     Create Event
@@ -194,9 +197,9 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-black rounded-sm z-50 mt-1">
-                        <div className="px-4 py-3 border-b-2 border-black flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
-                          <h3 className="text-[14px] font-black uppercase tracking-widest">Notifications</h3>
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-gray-300 rounded-sm z-50 mt-1">
+                        <div className="px-4 py-3 border-b-2 border-gray-300 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                          <h3 className="text-[14px] font-black  tracking-widest">Notifications</h3>
                         </div>
                         <div className="divide-y divide-neutral-100">
                           {notifications?.length > 0 ? (
@@ -230,9 +233,9 @@ const Navbar = () => {
                     aria-expanded={dropdownOpen}
                   >
                     {/* Avatar square */}
-                    <div className="w-8 h-8 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white text-[11px] font-black shrink-0">
+                    {/* <div className="w-8 h-8 border-2 border-black rounded-sm flex items-center justify-center text-black text-[11px] font-black shrink-0">
                       {initials}
-                    </div>
+                    </div> */}
                     <span className="text-[12px] font-bold text-black max-w-[80px] truncate hidden lg:block">
                       {user.name?.split(" ")[0]}
                     </span>
@@ -251,13 +254,13 @@ const Navbar = () => {
                     >
                       {/* User header */}
                       <div className="px-4 pt-3 pb-2 border-b border-neutral-100">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-0.5">
+                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-0.5">
                           Logged in as
                         </p>
                         <p className="text-[14px] font-black text-black truncate">
                           {user.name}
                         </p>
-                        <p className="text-[10px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
+                        <p className="text-[10px]  tracking-widest text-orange-600 font-bold mt-0.5">
                           {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
                         </p>
                       </div>
@@ -266,7 +269,7 @@ const Navbar = () => {
                       <div className="py-1">
                         <Link
                           to="/profile"
-                          className="flex items-center gap-2.5 px-4 py-2 text-[12px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2 text-[12px]  text-black hover:bg-neutral-100 transition-colors"
                           role="menuitem"
                         >
                           {/* <i className="ri-user-line text-orange-600" /> My */}
@@ -278,7 +281,7 @@ const Navbar = () => {
                         {(role === "member" || role === "student") && (
                           <Link
                             to="/my-events"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
                             role="menuitem"
                           >
                             {/* <i className="ri-calendar-check-line text-orange-600" />{" "} */}
@@ -291,18 +294,20 @@ const Navbar = () => {
                         {(role === "clubHead" || role === "club-head" || role === "club" || role === "facultyCoordinator") && (
                           <Link
                             to="/my-events"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-black hover:bg-neutral-100 transition-colors"
                             role="menuitem"
                           >
-                            <i className="ri-calendar-event-line text-orange-600" />{" "}
+                            {/* <i className="ri-calendar-event-line text-orange-600" />{" "} */}
+                            <CalendarCogIcon size={18} >
                             {role === "facultyCoordinator" ? "Review Events" : "Club Events"}
+                            </CalendarCogIcon>
                           </Link>
                         )}
                         {(role === "clubHead" || role === "club-head" || role === "club") && (
                           <>
                             <Link
                                 to="/payments"
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
                                 role="menuitem"
                             >
                                 <IndianRupeeIcon size={18} >
@@ -311,17 +316,21 @@ const Navbar = () => {
                             </Link>
                             <Link
                                 to="/send-notification"
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
                                 role="menuitem"
                             >
-                                <i className="ri-notification-badge-line text-orange-600"/> Send Notification
+                                <ConciergeBellIcon size={18} >
+                                 Send Notification
+                                </ConciergeBellIcon>
                             </Link>
                             <Link
                                 to={`/club/edit/${user.clubId}`}
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-bold text-black hover:bg-neutral-100 transition-colors"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
                                 role="menuitem"
                             >
-                                <i className="ri-settings-4-line text-orange-600"/> Manage Club Profile
+                                <SettingsIcon size={18} >
+                                Manage Club Profile
+                                </SettingsIcon>
                             </Link>
                           </>
                         )}
@@ -349,14 +358,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="relative py-1 text-[11px] font-bold uppercase tracking-widest text-black group transition-colors hover:text-orange-600"
+                  className="relative py-1 text-[11px] font-bold  tracking-widest text-black group transition-colors hover:text-orange-600"
                 >
                   Login
                   <span className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </Link>
                 <Link
-                  to="/register"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-black text-white border-2 border-black text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
+                  to="/register/student"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-black text-white border-2 border-black text-[11px] font-bold  tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
                 >
                   <i className="ri-user-add-line text-sm" />
                   Register
@@ -383,14 +392,14 @@ const Navbar = () => {
                 {notifDropdownOpen && (
                   <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-400 rounded-sm z-50">
                     <div className="px-4 py-3 border-b-2 border-gray-400 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
-                      <h3 className="text-[14px] font-black uppercase tracking-widest text-black">Notifications</h3>
+                      <h3 className="text-[14px] font-black  tracking-widest text-black">Notifications</h3>
                     </div>
                     <div className="divide-y divide-neutral-100">
                       {notifications?.length > 0 ? (
                         notifications.map((notif, idx) => (
                           <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                              <span className="text-[10px] font-bold text-orange-600  tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
                               <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
                             </div>
                             <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
@@ -398,7 +407,7 @@ const Navbar = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
+                        <div className="p-6 text-center text-neutral-500 text-[12px] font-bold  tracking-widest">
                           No notifications yet
                         </div>
                       )}
@@ -451,24 +460,36 @@ const Navbar = () => {
                 { to: "/", label: "Home" },
                 { to: "/events", label: "Events" },
                 { to: "/clubs", label: "Clubs" },
+                { to: "/#team", label: "Team", isHash: true },
                 ...(user
                   ? [
                       { to: "/profile", label: "Profile" },
                       { to: "/my-events", label: "My Events" },
                     ]
                   : []),
-              ].map(({ to, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`py-4 border-b border-neutral-100 text-[20px] font-black tracking-tight transition-all duration-150 ${
-                    isActive(to)
-                      ? "text-orange-600 pl-2"
-                      : "text-black hover:text-orange-600 hover:pl-2"
-                  }`}
-                >
-                  {label}
-                </Link>
+              ].map(({ to, label, isHash }) => (
+                isHash ? (
+                   <a
+                    key={to}
+                    href={to}
+                    onClick={() => setMobileOpen(false)}
+                    className={`py-4 border-b border-neutral-100 text-[20px] font-black tracking-tight transition-all duration-150 text-black hover:text-orange-600 hover:pl-2`}
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`py-4 border-b border-neutral-100 text-[20px] font-black tracking-tight transition-all duration-150 ${
+                      isActive(to)
+                        ? "text-orange-600 pl-2"
+                        : "text-black hover:text-orange-600 hover:pl-2"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                )
               ))}
             </nav>
 
@@ -480,13 +501,13 @@ const Navbar = () => {
                       <>
                         <Link
                           to="/create"
-                          className="flex items-center justify-center gap-2 py-3.5 bg-yellow-400 border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all font-black"
+                          className="flex items-center justify-center gap-2 py-3.5 bg-yellow-400 border-2 border-black text-black font-bold text-[12px] tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all font-black"
                         >
                           <i className="ri-add-line" /> Create Event
                         </Link>
                         <Link
                           to={`/club/edit/${user.clubId}`}
-                          className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full font-black"
+                          className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px]  tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full font-black"
                         >
                           <i className="ri-settings-4-line" /> Manage Club Profile
                         </Link>
