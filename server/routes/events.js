@@ -18,8 +18,8 @@ const eventSchema = z.object({
     title: z.string().min(3),
     description: z.string().optional(),
     venue: z.string().optional(),
-    startTime: z.string().datetime(),
-    endTime: z.string().datetime(),
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
     totalSeats: z.number().int().optional(),
     entryFee: z.number().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
@@ -27,7 +27,7 @@ const eventSchema = z.object({
     customFields: z.array(z.any()).optional(),
     allowedPrograms: z.array(z.string()).optional(),
     allowedYears: z.array(z.string()).optional(),
-    registrationDeadline: z.string().datetime().optional().nullable()
+    registrationDeadline: z.coerce.date().optional().nullable()
   }).passthrough()
 });
 
