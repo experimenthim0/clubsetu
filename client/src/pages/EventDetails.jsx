@@ -21,7 +21,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${slug}`);
         setEvent(res.data);
         // Pre-load Razorpay if it's a paid event
         if (res.data.entryFee > 0) {
@@ -130,7 +130,7 @@ const EventDetails = () => {
     // Free Event Registration
     setIsRegistering(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, {
         userId: user.id,
       });
       showNotification(res.data.message, 'success');
@@ -222,7 +222,7 @@ const EventDetails = () => {
       }
 
       // Free Event Registration
-      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
+      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, {
         userId: updatedUser.id,
       });
       showNotification(regRes.data.message, 'success');
@@ -305,7 +305,7 @@ const EventDetails = () => {
 
     // Free Event Registration
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, {
         userId: user.id,
         formResponses: customFormResponses,
       });

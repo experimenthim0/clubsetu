@@ -39,7 +39,7 @@ const EditEvent = () => {
     useEffect(() => {
         const fetchEvent = async () => {
              try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${id}`);
                 const event = res.data;
                 if (event) {
                     const start = new Date(event.startTime).toISOString().slice(0, 16);
@@ -213,7 +213,7 @@ const EditEvent = () => {
 
         setIsSaving(true);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${id}`, payload);
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/club-events/${id}`, payload);
             showNotification('Event updated successfully!', 'success');
             navigate('/profile');
         } catch (err) {

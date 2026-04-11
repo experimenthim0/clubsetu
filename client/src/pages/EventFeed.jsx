@@ -22,11 +22,11 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events`);
       setEvents(Array.isArray(res.data) ? res.data : []);
       const role = localStorage.getItem('role');
       if (user && role === 'member') {
-          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user._id}`);
+          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/user/${user._id}`);
           setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId._id));
       }
       setLoading(false);
@@ -98,7 +98,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
     }
 
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/register`, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${eventId}/register`, {
             userId: user._id
         });
         showNotification(res.data.message, 'success');

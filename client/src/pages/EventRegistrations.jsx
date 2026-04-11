@@ -15,9 +15,9 @@ const EventRegistrations = () => {
         const fetchData = async () => {
             try {
                 const [regRes, statsRes, eventRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${id}/registrations`),
                     axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${id}/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${id}`),
                 ]);
                 setRegistrations(regRes.data);
                 setStats(statsRes.data);

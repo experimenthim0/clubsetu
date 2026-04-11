@@ -27,7 +27,7 @@ const PaymentTracking = () => {
       try {
         // Fetch club head's events
         const eventsRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/events/club-head/${storedUser._id}`
+          `${import.meta.env.VITE_API_URL}/api/club-events/club-head/${storedUser._id}`
         );
         const paidEvents = eventsRes.data.filter(e => e.entryFee > 0);
         setEvents(paidEvents);

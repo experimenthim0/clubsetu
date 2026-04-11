@@ -39,7 +39,7 @@ const MyEvents = () => {
 
   const fetchRegistrations = async (userId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${userId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/user/${userId}`);
       setRegistrations(res.data);
       setLoading(false);
     } catch (err) {
@@ -57,7 +57,7 @@ const MyEvents = () => {
           setLoading(false);
           return;
       }
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/club-manage/${clubId}`);
       setCreatedEvents(res.data);
       setLoading(false);
     } catch (err) {
@@ -73,7 +73,7 @@ const MyEvents = () => {
             setLoading(false);
             return;
         }
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/club-manage/${clubId}`);
         setCreatedEvents(res.data);
         setLoading(false);
     } catch (err) {
@@ -85,7 +85,7 @@ const MyEvents = () => {
 
   const handleReview = async (eventId, status, comment = '') => {
     try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/review`, { status, comment });
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/club-events/${eventId}/review`, { status, comment });
         showNotification(`Event ${status === 'PUBLISHED' ? 'Approved' : 'Rejected'} successfully`, 'success');
         // Refresh list
         if (role === 'facultyCoordinator') {
@@ -105,7 +105,7 @@ const MyEvents = () => {
     if (!eventToDeregister) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDeregister}/register`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/club-events/${eventToDeregister}/register`, {
         data: { studentId: user.id }
       });
 
@@ -130,7 +130,7 @@ const MyEvents = () => {
     if (!eventToDelete) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/club-events/${eventToDelete}`);
       setCreatedEvents(createdEvents.filter(e => e._id !== eventToDelete));
       showNotification('Event deleted successfully', 'success');
       setDeleteModalOpen(false);
@@ -150,7 +150,7 @@ const MyEvents = () => {
       if (!clubId) return;
 
       const query = new URLSearchParams(exportFilters).toString();
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}/export?${query}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/club-manage/${clubId}/export?${query}`);
       const exportData = res.data.events;
 
       if (!exportData || exportData.length === 0) {

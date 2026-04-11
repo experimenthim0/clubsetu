@@ -132,7 +132,7 @@ const CreateEvent = () => {
         };
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events`, payload);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');

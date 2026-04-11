@@ -17,7 +17,9 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server } from "socket.io";
+
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
@@ -59,7 +61,7 @@ app.get("/", (req, res) => {
   res.send("ClubSetu API Running");
 });
 
-app.use("/api/events", eventRoutes);
+app.use("/api/club-events", eventRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/payment", paymentRoutes);
