@@ -18,10 +18,10 @@ const SendNotification = () => {
   const user = userString && userString !== "undefined" ? JSON.parse(userString) : null;
 
   useEffect(() => {
-    if (user && user._id) {
+    if (user && user.id) {
       // Fetch events for this club head
       axios
-        .get(`${API_URL}/api/events/club-head/${user._id}`)
+        .get(`${API_URL}/api/events/club-co/${user.id}`)
         .then((res) => {
           setEvents(res.data);
         })

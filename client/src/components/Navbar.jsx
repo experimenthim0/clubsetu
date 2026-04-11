@@ -171,7 +171,7 @@ const Navbar = () => {
             {user ? (
               <>
                 {/* Create Event — club only */}
-                {(role === "clubHead" || role === "club-head" || role === "club") && (
+                {(role === "club") && (
                   <Link
                     to="/create"
                     className="flex items-center gap-1.5 px-4 py-2  border-2 border-gray-400 text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-gray-400 hover:text-white hover:border-gray-400 transition-all duration-150 hover:-translate-y-px"
@@ -182,7 +182,7 @@ const Navbar = () => {
                 )}
 
                 {/* ── Notification Bell (Members, Faculty, Clubs) ── */}
-                {(role === "member" || role === "student" || role === "facultyCoordinator" || role === "club") && (
+                {(role === "member" || role === "facultyCoordinator" || role === "club") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
@@ -278,7 +278,7 @@ const Navbar = () => {
                           </UserIcon>
                         </Link>
 
-                        {(role === "member" || role === "student") && (
+                        {(role === "member") && (
                           <Link
                             to="/my-events"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
@@ -291,7 +291,7 @@ const Navbar = () => {
                           </Link>
                         )}
 
-                        {(role === "clubHead" || role === "club-head" || role === "club" || role === "facultyCoordinator") && (
+                        {(role === "club" || role === "facultyCoordinator") && (
                           <Link
                             to="/my-events"
                             className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-black hover:bg-neutral-100 transition-colors"
@@ -303,7 +303,7 @@ const Navbar = () => {
                             </CalendarCogIcon>
                           </Link>
                         )}
-                        {(role === "clubHead" || role === "club-head" || role === "club") && (
+                        {(role === "club") && (
                           <>
                             <Link
                                 to="/payments"
@@ -376,7 +376,7 @@ const Navbar = () => {
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <div className="md:hidden flex items-center gap-3">
-            {user && (role === "student" || role === "member" || role === "facultyCoordinator" || role === "club") && (
+            {user && (role === "member" || role === "facultyCoordinator" || role === "club") && (
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={handleNotificationClick}
@@ -497,7 +497,7 @@ const Navbar = () => {
             <div className="flex flex-col gap-2.5 mt-5">
               {user ? (
                 <>
-                    {(role === "clubHead" || role === "club-head" || role === "club") && (
+                    {(role === "club") && (
                       <>
                         <Link
                           to="/create"

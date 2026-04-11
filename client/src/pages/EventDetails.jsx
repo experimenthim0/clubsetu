@@ -40,7 +40,7 @@ const EventDetails = () => {
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
-    if (!user || (role !== 'member' && role !== 'student')) {
+    if (!user || role !== 'member') {
       showNotification('Please login as a student to register.', 'warning');
       navigate('/login');
       return;
@@ -71,7 +71,7 @@ const EventDetails = () => {
         // 1. Create Order on backend
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: event._id,
-          studentId: user._id // The payment route still uses 'studentId' in req.body for now
+          studentId: user.id // The payment route still uses 'studentId' in req.body for now
         });
 
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
@@ -92,7 +92,7 @@ const EventDetails = () => {
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
                 eventId: event._id,
-                studentId: user._id
+                studentId: user.id
               });
 
               if (verifyRes.data.success) {
@@ -131,7 +131,7 @@ const EventDetails = () => {
     setIsRegistering(true);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        userId: user._id,
+        userId: user.id,
       });
       showNotification(res.data.message, 'success');
       setTimeout(() => navigate('/my-events'), 1500);
@@ -149,7 +149,7 @@ const EventDetails = () => {
     setIsRegistering(true);
     try {
       // Update profile with missing fields
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, modalInputs);
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user.id}`, modalInputs);
       
       // Update localStorage with new user data
       const updatedUser = res.data.user;
@@ -175,7 +175,7 @@ const EventDetails = () => {
           await loadRazorpay();
           const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
             eventId: event._id,
-            studentId: updatedUser._id
+            studentId: updatedUser.id
           });
 
           const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
@@ -194,7 +194,7 @@ const EventDetails = () => {
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
                   eventId: event._id,
-                  studentId: updatedUser._id
+                  studentId: updatedUser.id
                 });
 
                 if (verifyRes.data.success) {
@@ -223,7 +223,7 @@ const EventDetails = () => {
 
       // Free Event Registration
       const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        userId: updatedUser._id,
+        userId: updatedUser.id,
       });
       showNotification(regRes.data.message, 'success');
       setTimeout(() => navigate('/my-events'), 1500);
@@ -255,7 +255,7 @@ const EventDetails = () => {
         await loadRazorpay();
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
           eventId: event._id,
-          studentId: user._id // The payment route still uses 'studentId' in req.body for now
+          studentId: user.id // The payment route still uses 'studentId' in req.body for now
         });
 
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
@@ -274,7 +274,7 @@ const EventDetails = () => {
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
                 eventId: event._id,
-                studentId: user._id,
+                studentId: user.id,
                 formResponses: customFormResponses,
               });
 
@@ -306,7 +306,7 @@ const EventDetails = () => {
     // Free Event Registration
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/register`, {
-        userId: user._id,
+        userId: user.id,
         formResponses: customFormResponses,
       });
       showNotification(res.data.message, 'success');

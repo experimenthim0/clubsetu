@@ -73,7 +73,7 @@ const Profile = () => {
       </div>
 
       {/* Bank Information — Club Head Only */}
-      {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
+      {(role === 'club') && (
         <div className="mt-8 pt-6 border-t border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
             <i className="ri-bank-line text-orange-600" />
@@ -172,7 +172,7 @@ const Profile = () => {
       </div>
     )}
 
-    {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
+    {(role === 'club') && (
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
@@ -193,7 +193,7 @@ const Profile = () => {
           <i className="ri-add-line" /> Create Event
         </Link>
         <Link 
-          to={`/club/edit/${user.clubId || user._id}`} 
+          to={`/club/edit/${user.clubId || user.id}`} 
           className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:translate-y-[-2px] transition-all hover:cursor-pointer"
         >
           <i className="ri-community-line" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}

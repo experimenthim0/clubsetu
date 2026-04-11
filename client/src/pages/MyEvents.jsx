@@ -26,9 +26,9 @@ const MyEvents = () => {
       setRole(storedRole);
 
       if (storedRole === 'member' || storedRole === 'student') {
-        fetchRegistrations(storedUser.userId);
-      } else if (storedRole === 'clubHead' || storedRole === 'club') {
-        fetchCreatedEvents(storedUser.userId);
+        fetchRegistrations(storedUser.id);
+      } else if (storedRole === 'club') {
+        fetchCreatedEvents(storedUser.id);
       } else if (storedRole === 'facultyCoordinator') {
         fetchFacultyEvents(storedUser.clubId);
       }
@@ -37,9 +37,9 @@ const MyEvents = () => {
     }
   }, []);
 
-  const fetchRegistrations = async (studentId) => {
+  const fetchRegistrations = async (userId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${studentId}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${userId}`);
       setRegistrations(res.data);
       setLoading(false);
     } catch (err) {
@@ -106,7 +106,7 @@ const MyEvents = () => {
 
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDeregister}/register`, {
-        data: { studentId: user.userId }
+        data: { studentId: user.id }
       });
 
       setRegistrations(registrations.filter(r => r.eventId?._id !== eventToDeregister));
@@ -311,7 +311,7 @@ const MyEvents = () => {
       )}
 
       {/* ── CLUB / FACULTY VIEW ── */}
-      {(role === 'clubHead' || role === 'club' || role === 'facultyCoordinator') && (
+      {(role === 'club' || role === 'facultyCoordinator' || role === 'admin') && (
         <div>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
             <h2 className="text-xl md:text-2xl font-black text-black uppercase tracking-tight">

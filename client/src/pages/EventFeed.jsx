@@ -25,7 +25,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
       setEvents(Array.isArray(res.data) ? res.data : []);
       const role = localStorage.getItem('role');
-      if (user && (role === 'member' || role === 'student')) {
+      if (user && role === 'member') {
           const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user._id}`);
           setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId._id));
       }

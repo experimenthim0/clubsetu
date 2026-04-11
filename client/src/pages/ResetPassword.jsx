@@ -57,16 +57,16 @@ const ResetPassword = () => {
                 type="button"
                 onClick={() => setRole('member')}
                 className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
-                  role === 'member' || role === 'student' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                  role === 'member' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
                 }`}
               >
                 Student
               </button>
               <button
                 type="button"
-                onClick={() => setRole('clubHead')}
+                onClick={() => setRole('club')}
                 className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
-                  role === 'clubHead' || role === 'club-head' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                  role === 'club' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
                 }`}
               >
                 Club Head

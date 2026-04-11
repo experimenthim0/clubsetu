@@ -76,7 +76,7 @@ router.get(
           eventId: event.id,
           title: event.title,
           clubName: event.club?.clubName || "Unknown",
-          clubHeadId: event.createdBy?.id || null,
+          creatorId: event.createdBy?.id || null,
           totalCollected: eventRegs.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0),
           regCount: eventRegs.length,
           entryFee: event.entryFee,

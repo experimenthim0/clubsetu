@@ -163,10 +163,10 @@ router.get(
   },
 );
 
-router.get("/club-head/:clubHeadId", async (req, res) => {
+router.get("/club-co/:id", async (req, res) => {
   try {
     const events = await prisma.event.findMany({
-      where: { createdById: req.params.clubHeadId },
+      where: { createdById: req.params.id },
       include: eventInclude,
       orderBy: { startTime: "asc" },
     });

@@ -5,7 +5,7 @@ import { createObjectId } from "../utils/objectId.js";
 
 const router = express.Router();
 
-router.post("/", verifyToken, allowRoles("clubHead"), async (req, res) => {
+router.post("/", verifyToken, allowRoles("club"), async (req, res) => {
   try {
     const { targetType, eventId, title, message } = req.body;
     const { userId: sender } = req.user;
@@ -65,39 +65,44 @@ router.post("/", verifyToken, allowRoles("clubHead"), async (req, res) => {
   }
 });
 
-router.get("/", verifyToken, allowRoles("member", "clubHead", "admin"), async (req, res) => {
-  try {
-    const { userId } = req.user;
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+router.get(
+  "/",
+  verifyToken,
+  allowRoles("member", "club", "admin"),
+  async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    const notifications = await prisma.notification.findMany({
-      where: {
-        OR: [
-          { targetType: "ALL_STUDENTS", createdAt: { gte: user.createdAt } },
-          { targetType: "REGISTERED_STUDENTS", recipients: { has: userId } },
-        ],
-      },
-      include: {
-        sender: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+      const notifications = await prisma.notification.findMany({
+        where: {
+          OR: [
+            { targetType: "ALL_STUDENTS", createdAt: { gte: user.createdAt } },
+            { targetType: "REGISTERED_STUDENTS", recipients: { has: userId } },
+          ],
+        },
+        include: {
+          sender: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
 
-    res.json(
-      notifications.map((notification) => ({
-        ...notification,
-        _id: notification.id,
-        sender: notification.sender
-          ? { ...notification.sender, _id: notification.sender.id }
-          : null,
-      })),
-    );
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+      res.json(
+        notifications.map((notification) => ({
+          ...notification,
+          _id: notification.id,
+          sender: notification.sender
+            ? { ...notification.sender, _id: notification.sender.id }
+            : null,
+        })),
+      );
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  },
+);
 
-router.get("/sent", verifyToken, allowRoles("clubHead"), async (req, res) => {
+router.get("/sent", verifyToken, allowRoles("club"), async (req, res) => {
   try {
     const notifications = await prisma.notification.findMany({
       where: { senderId: req.user.userId },
@@ -121,59 +126,69 @@ router.get("/sent", verifyToken, allowRoles("clubHead"), async (req, res) => {
   }
 });
 
-router.put("/:id/read", verifyToken, allowRoles("member", "clubHead"), async (req, res) => {
-  try {
-    const { userId } = req.user;
-    const notification = await prisma.notification.findUnique({
-      where: { id: req.params.id },
-    });
+router.put(
+  "/:id/read",
+  verifyToken,
+  allowRoles("member", "club"),
+  async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const notification = await prisma.notification.findUnique({
+        where: { id: req.params.id },
+      });
 
-    if (!notification) return res.status(404).json({ message: "Not found" });
+      if (!notification) return res.status(404).json({ message: "Not found" });
 
-    const readBy = notification.readBy.includes(userId)
-      ? notification.readBy
-      : [...notification.readBy, userId];
+      const readBy = notification.readBy.includes(userId)
+        ? notification.readBy
+        : [...notification.readBy, userId];
 
-    const updated = await prisma.notification.update({
-      where: { id: req.params.id },
-      data: { readBy },
-    });
+      const updated = await prisma.notification.update({
+        where: { id: req.params.id },
+        data: { readBy },
+      });
 
-    res.json({ ...updated, _id: updated.id });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+      res.json({ ...updated, _id: updated.id });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  },
+);
 
-router.put("/read-all", verifyToken, allowRoles("member", "clubHead"), async (req, res) => {
-  try {
-    const { userId } = req.user;
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+router.put(
+  "/read-all",
+  verifyToken,
+  allowRoles("member", "club"),
+  async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    const notifications = await prisma.notification.findMany({
-      where: {
-        OR: [
-          { targetType: "ALL_STUDENTS", createdAt: { gte: user.createdAt } },
-          { targetType: "REGISTERED_STUDENTS", recipients: { has: userId } },
-        ],
-      },
-    });
+      const notifications = await prisma.notification.findMany({
+        where: {
+          OR: [
+            { targetType: "ALL_STUDENTS", createdAt: { gte: user.createdAt } },
+            { targetType: "REGISTERED_STUDENTS", recipients: { has: userId } },
+          ],
+        },
+      });
 
-    await Promise.all(
-      notifications
-        .filter((notification) => !notification.readBy.includes(userId))
-        .map((notification) =>
-          prisma.notification.update({
-            where: { id: notification.id },
-            data: { readBy: [...notification.readBy, userId] },
-          }),
-        ),
-    );
+      await Promise.all(
+        notifications
+          .filter((notification) => !notification.readBy.includes(userId))
+          .map((notification) =>
+            prisma.notification.update({
+              where: { id: notification.id },
+              data: { readBy: [...notification.readBy, userId] },
+            }),
+          ),
+      );
 
-    res.json({ message: "All notifications marked as read" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+      res.json({ message: "All notifications marked as read" });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  },
+);
 
 export default router;

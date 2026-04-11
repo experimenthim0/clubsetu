@@ -11,5 +11,9 @@ export function sanitizeUser(userDoc) {
     "resetPasswordToken",
     "resetPasswordExpire",
   ].forEach((k) => delete obj[k]);
+
+  // Compatibility alias for frontend
+  obj._id = obj.id;
+  
   return obj;
 }

@@ -15,7 +15,7 @@ const razorpay = new Razorpay({
 router.post(
   "/create-order",
   verifyToken,
-  allowRoles("member", "clubHead", "club", "admin"),
+  allowRoles("member", "club", "admin"),
   async (req, res) => {
     const { eventId, studentId } = req.body;
 
@@ -78,7 +78,7 @@ router.post(
 router.post(
   "/verify",
   verifyToken,
-  allowRoles("member", "clubHead", "club", "admin"),
+  allowRoles("member", "club", "admin"),
   async (req, res) => {
     const { orderId, paymentId, signature, eventId, studentId, formResponses } = req.body;
 
@@ -162,7 +162,7 @@ router.post(
 router.get(
   "/event/:eventId/stats",
   verifyToken,
-  allowRoles("clubHead", "club", "admin"),
+  allowRoles("club", "admin"),
   async (req, res) => {
     try {
       const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });

@@ -79,7 +79,7 @@ const EditProfile = () => {
             delete updateData.currentPassword;
             delete updateData.newPassword;
 
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user._id}`, updateData);
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user.id}`, updateData);
             localStorage.setItem('user', JSON.stringify(res.data.user)); // Update local storage
             showNotification('Profile updated successfully', 'success');
             navigate('/profile');
@@ -204,7 +204,7 @@ const EditProfile = () => {
                     </div>
                 </div>
 
-                {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
+                {role === 'club' && (
                     <div className="pt-8 md:pt-10 border-t-2 border-neutral-100 space-y-6">
                         <div className="flex items-center gap-3">
                              <i className="ri-bank-card-fill text-orange-600 text-xl" />
