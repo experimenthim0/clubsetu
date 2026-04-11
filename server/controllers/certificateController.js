@@ -67,6 +67,10 @@ export const downloadCertificate = async (req, res) => {
     doc.pipe(res);
 
     try {
+      const parsedUrl = new URL(template.imageUrl);
+      if (parsedUrl.hostname !== "res.cloudinary.com") {
+         throw new Error("Untrusted image source");
+      }
       const response = await fetch(template.imageUrl);
       const buffer = Buffer.from(await response.arrayBuffer());
       doc.image(buffer, 0, 0, { width: docSize[0], height: docSize[1] });

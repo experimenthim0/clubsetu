@@ -53,7 +53,7 @@ router.post("/register/student", async (req, res) => {
       });
     }
 
-    const isDevMode = process.env.SKIP_VERIFICATION === "true";
+    const isDevMode = process.env.NODE_ENV !== "production" && process.env.SKIP_VERIFICATION === "true";
     const verificationToken = isDevMode
       ? null
       : crypto.randomBytes(20).toString("hex");

@@ -24,17 +24,14 @@ export const generateToken = (user, role) => {
 
 // Verify JWT token middleware (unified 'auth')
 export const verifyToken = async (req, res, next) => {
-  // Check token in cookies first, fallback to Auth header if needed
-  let token = req.cookies.token;
-  
-  if (!token) {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
-    } else if (authHeader) {
-       // Simple fallback for non-Bearer auth header
-       token = authHeader;
-    }
+  // Strictly enforce Header-Based Authorization to mitigate CSRF
+  let token = null;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (authHeader) {
+     // Simple fallback for non-Bearer auth header
+     token = authHeader;
   }
 
   if (!token) {

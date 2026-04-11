@@ -151,7 +151,7 @@ router.get("/user-info/:id", verifyToken, allowRoles("admin"), async (req, res) 
       bankInfo: {
         bankName: user.bankName,
         accountHolderName: user.accountHolderName,
-        accountNumber: user.accountNumber,
+        accountNumber: user.accountNumber ? user.accountNumber.slice(-4).padStart(user.accountNumber.length, 'X') : null,
         ifscCode: user.ifscCode,
         upiId: user.upiId,
         bankPhone: user.bankPhone,

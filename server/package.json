@@ -10,6 +10,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.1",
@@ -18,7 +20,8 @@
     "prisma": "^7.7.0",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
-    "socketio": "^1.0.0"
+    "socketio": "^1.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

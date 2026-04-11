@@ -13,6 +13,8 @@ import certificateRoutes from "./routes/certificates.js";
 
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server } from "socket.io";
 const app = express();
@@ -37,20 +39,22 @@ io.on("connection", (socket) => {
     socket.join(userId);
     console.log(`User ${userId} joined their personal room`);
   });
-
   socket.on("disconnect", () => {
     console.log("Socket disconnected:", socket.id);
   });
 });
 
+app.use(helmet());
 app.use(cors(corsOptions));
+
+// Rate limiter for auth route
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+app.use("/api/auth/login", authLimiter);
 
 app.use(express.json());
 app.use(cookieParser());
 
 console.log("Using PostgreSQL via Prisma");
-
-// Routes
 app.get("/", (req, res) => {
   res.send("ClubSetu API Running");
 });

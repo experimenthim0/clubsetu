@@ -8,8 +8,30 @@ import {
   serializeRegistration,
 } from "../utils/postgresEventSerializer.js";
 import { createObjectId } from "../utils/objectId.js";
+import { z } from "zod";
+import { validate } from "../middleware/validate.js";
 
 const router = express.Router();
+
+const eventSchema = z.object({
+  body: z.object({
+    title: z.string().min(3),
+    description: z.string().optional(),
+    venue: z.string().optional(),
+    startTime: z.string().datetime(),
+    endTime: z.string().datetime(),
+    totalSeats: z.number().int().optional(),
+    entryFee: z.number().optional(),
+    imageUrl: z.string().url().optional().or(z.literal("")),
+    requiredFields: z.array(z.string()).optional(),
+    customFields: z.array(z.any()).optional(),
+    allowedPrograms: z.array(z.string()).optional(),
+    allowedYears: z.array(z.string()).optional(),
+    registrationDeadline: z.string().datetime().optional().nullable()
+  }).passthrough()
+});
+
+const eventUpdateSchema = eventSchema.deepPartial();
 
 const eventInclude = {
   createdBy: {
@@ -45,10 +67,16 @@ const getAuthorizedUserFromRequest = async (req) => {
 
 router.get("/", async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+
     const events = await prisma.event.findMany({
       where: { reviewStatus: "PUBLISHED" },
       include: eventInclude,
       orderBy: { startTime: "asc" },
+      skip,
+      take: limit,
     });
 
     res.json(events.map(serializeEvent));
@@ -163,8 +191,12 @@ router.get(
   },
 );
 
-router.get("/club-co/:id", async (req, res) => {
+router.get("/club-co/:id", verifyToken, allowRoles("admin", "facultyCoordinator", "club"), async (req, res) => {
   try {
+    if (req.user.role !== "admin" && req.user.userId !== req.params.id) {
+       return res.status(403).json({ message: "Access denied." });
+    }
+
     const events = await prisma.event.findMany({
       where: { createdById: req.params.id },
       include: eventInclude,
@@ -201,7 +233,7 @@ router.get("/user/:userId", verifyToken, allowRoles("member", "admin"), async (r
   }
 });
 
-router.post("/", verifyToken, allowRoles("club", "admin"), async (req, res) => {
+router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema), async (req, res) => {
   try {
     const {
       title,
@@ -415,6 +447,13 @@ router.get(
   allowRoles("club", "facultyCoordinator", "admin"),
   async (req, res) => {
     try {
+      const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+      if (!event) return res.status(404).json({ message: "Event not found" });
+
+      if (req.user.role !== "admin" && event.clubId?.toString() !== req.user.clubId?.toString()) {
+        return res.status(403).json({ message: "Access denied. You can only view registrations for your own club's events." });
+      }
+
       const registrations = await prisma.registration.findMany({
         where: { eventId: req.params.id },
         include: {
@@ -444,7 +483,7 @@ router.get(
   },
 );
 
-router.put("/:id", verifyToken, allowRoles("club", "admin"), async (req, res) => {
+router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdateSchema), async (req, res) => {
   try {
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
