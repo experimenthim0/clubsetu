@@ -23,7 +23,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid admin credentials" });
     }
 
-    const token = generateToken(admin, "admin");
+    const token = generateToken(admin, admin.role);
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,

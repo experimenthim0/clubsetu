@@ -117,7 +117,7 @@ export const saveTemplate = async (req, res) => {
     const isAdmin = req.user.role === "admin";
     const isAssignedFaculty =
       req.user.role === "facultyCoordinator" &&
-      event.clubId?.toString() === req.user.clubId?.toString();
+      event.clubId === req.user.clubId;
 
     if (!isCreator && !isAdmin && !isAssignedFaculty) {
       return res.status(403).json({

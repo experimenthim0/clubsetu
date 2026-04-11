@@ -28,11 +28,15 @@ const eventSchema = z.object({
     allowedPrograms: z.array(z.string()).optional(),
     allowedYears: z.array(z.string()).optional(),
     registrationDeadline: z.coerce.date().optional().nullable()
-  }).passthrough()
+  }).passthrough(),
+  query: z.object({}).passthrough().optional(),
+  params: z.object({}).passthrough().optional(),
 });
 
 const eventUpdateSchema = z.object({
-  body: eventSchema.shape.body.partial()
+  body: eventSchema.shape.body.partial(),
+  query: z.object({}).passthrough().optional(),
+  params: z.object({}).passthrough().optional(),
 });
 
 const eventInclude = {
@@ -108,7 +112,7 @@ router.get(
   async (req, res) => {
     try {
       const targetClubId = req.params.clubId;
-      if (req.user.role !== "admin" && req.user.clubId?.toString() !== targetClubId) {
+      if (req.user.role !== "admin" && req.user.clubId !== targetClubId) {
         return res.status(403).json({
           message: "Access denied. You can only view events for your assigned club.",
         });
@@ -134,7 +138,7 @@ router.get(
   async (req, res) => {
     try {
       const targetClubId = req.params.clubId;
-      if (req.user.role !== "admin" && req.user.clubId?.toString() !== targetClubId) {
+      if (req.user.role !== "admin" && req.user.clubId !== targetClubId) {
         return res.status(403).json({ message: "Access denied." });
       }
 
@@ -319,7 +323,7 @@ router.put(
       const event = await prisma.event.findUnique({ where: { id: req.params.id } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      if (req.user.role !== "admin" && event.clubId?.toString() !== req.user.clubId?.toString()) {
+      if (req.user.role !== "admin" && event.clubId !== req.user.clubId) {
         return res.status(403).json({
           message: "You can only review events for your assigned club.",
         });
@@ -356,7 +360,7 @@ router.get("/:id", async (req, res) => {
       const isAdmin = user?.role === "admin";
       const isAssignedFaculty =
         user?.role === "facultyCoordinator" &&
-        event.clubId?.toString() === user.clubId?.toString();
+        event.clubId === user.clubId;
 
       if (!isCreator && !isAdmin && !isAssignedFaculty) {
         return res.status(403).json({ message: "This event is currently under review." });
@@ -452,7 +456,7 @@ router.get(
       const event = await prisma.event.findUnique({ where: { id: req.params.id } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      if (req.user.role !== "admin" && event.clubId?.toString() !== req.user.clubId?.toString()) {
+      if (req.user.role !== "admin" && event.clubId !== req.user.clubId) {
         return res.status(403).json({ message: "Access denied. You can only view registrations for your own club's events." });
       }
 
@@ -490,7 +494,7 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (event.createdById.toString() !== req.user.userId && req.user.role !== "admin") {
+    if (event.createdById !== req.user.userId && req.user.role !== "admin") {
       return res.status(403).json({ message: "Unauthorized to update this event." });
     }
 
@@ -517,7 +521,7 @@ router.delete("/:id", verifyToken, allowRoles("club", "admin"), async (req, res)
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (event.createdById.toString() !== req.user.userId && req.user.role !== "admin") {
+    if (event.createdById !== req.user.userId && req.user.role !== "admin") {
       return res.status(403).json({ message: "Unauthorized to delete this event." });
     }
 

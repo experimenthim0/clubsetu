@@ -2,8 +2,7 @@
  * Strips sensitive fields from a user record before sending it to the client.
  */
 export function sanitizeUser(userDoc) {
-  const obj =
-    typeof userDoc?.toObject === "function" ? userDoc.toObject() : { ...userDoc };
+  const obj = { ...userDoc };
   [
     "password",
     "verificationToken",
@@ -17,3 +16,4 @@ export function sanitizeUser(userDoc) {
   
   return obj;
 }
+

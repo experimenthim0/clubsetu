@@ -126,35 +126,8 @@ router.get("/sent", verifyToken, allowRoles("club"), async (req, res) => {
   }
 });
 
-router.put(
-  "/:id/read",
-  verifyToken,
-  allowRoles("member", "club"),
-  async (req, res) => {
-    try {
-      const { userId } = req.user;
-      const notification = await prisma.notification.findUnique({
-        where: { id: req.params.id },
-      });
-
-      if (!notification) return res.status(404).json({ message: "Not found" });
-
-      const readBy = notification.readBy.includes(userId)
-        ? notification.readBy
-        : [...notification.readBy, userId];
-
-      const updated = await prisma.notification.update({
-        where: { id: req.params.id },
-        data: { readBy },
-      });
-
-      res.json({ ...updated, _id: updated.id });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  },
-);
-
+// IMPORTANT: /read-all must come BEFORE /:id/read to avoid Express
+// matching "read-all" as an :id parameter.
 router.put(
   "/read-all",
   verifyToken,
@@ -191,4 +164,34 @@ router.put(
   },
 );
 
+router.put(
+  "/:id/read",
+  verifyToken,
+  allowRoles("member", "club"),
+  async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const notification = await prisma.notification.findUnique({
+        where: { id: req.params.id },
+      });
+
+      if (!notification) return res.status(404).json({ message: "Not found" });
+
+      const readBy = notification.readBy.includes(userId)
+        ? notification.readBy
+        : [...notification.readBy, userId];
+
+      const updated = await prisma.notification.update({
+        where: { id: req.params.id },
+        data: { readBy },
+      });
+
+      res.json({ ...updated, _id: updated.id });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  },
+);
+
 export default router;
+

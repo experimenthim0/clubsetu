@@ -370,8 +370,8 @@ router.post("/change-password", verifyToken, async (req, res) => {
       where: { id: user.id },
       data: {
         password: await bcrypt.hash(newPassword, 10),
-        passwordChangeCount: user.passwordChangeCount,
-        lastPasswordChangeDate: user.lastPasswordChangeDate,
+        passwordChangeCount: user.passwordChangeCount + 1,
+        lastPasswordChangeDate: new Date(),
       },
     });
 

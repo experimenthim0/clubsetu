@@ -168,6 +168,11 @@ router.get(
       const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
+      // IDOR check: club users can only view stats for their own club's events
+      if (req.user.role === "club" && event.clubId !== req.user.clubId) {
+        return res.status(403).json({ message: "Access denied. You can only view stats for your own club's events." });
+      }
+
       const registrations = await prisma.registration.findMany({
         where: {
           eventId: req.params.eventId,

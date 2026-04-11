@@ -5,10 +5,9 @@ export const validate = (schema) => (req, res, next) => {
       query: req.query,
       params: req.params,
     });
-    // Replace request data with validated/sanitized data
-    req.body = validData.body;
-    req.query = validData.query;
-    req.params = validData.params;
+    // Only overwrite req.body — Express 5 makes req.query and req.params
+    // read-only getters, so assigning to them throws TypeError.
+    if (validData.body) req.body = validData.body;
     next();
   } catch (error) {
     if (error.name === "ZodError") {

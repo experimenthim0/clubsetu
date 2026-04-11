@@ -80,7 +80,7 @@ router.put("/:id", verifyToken, allowRoles("admin", "club"), async (req, res) =>
     const targetClubId = req.params.id;
     const { clubId, role } = req.user;
 
-    if (role !== "admin" && clubId?.toString() !== targetClubId) {
+    if (role !== "admin" && clubId !== targetClubId) {
       return res.status(403).json({
         message: "Access denied. You can only update your own club.",
       });
