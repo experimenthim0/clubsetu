@@ -436,18 +436,15 @@ const Navbar = () => {
             mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="px-5 pt-4 pb-6 flex flex-col gap-0">
+          <div className="px-5 pt-4 pb-2 flex flex-col gap-0">
             {/* User card */}
             {user && (
-              <div className="flex items-center gap-3 pb-4 mb-1 border-b-2 border-black">
-                <div className="w-11 h-11 bg-orange-600 border-2 border-black rounded-sm flex items-center justify-center text-white font-black text-sm shrink-0">
-                  {initials}
-                </div>
+              <div className="flex items-center gap-3 pb-2 mb-1 border-b-2 border-black">
                 <div>
-                  <p className="font-black text-[15px] text-black leading-tight">
+                  <p className="font-black text-[13px] text-black leading-tight">
                     {user.name}
                   </p>
-                  <p className="text-[10px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
+                  <p className="text-[8px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
                     {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
                   </p>
                 </div>
@@ -455,88 +452,88 @@ const Navbar = () => {
             )}
 
             {/* Nav links */}
-            <nav className="flex flex-col">
-              {[
-                { to: "/", label: "Home" },
-                { to: "/events", label: "Events" },
-                { to: "/clubs", label: "Clubs" },
-                { to: "/#team", label: "Team", isHash: true },
-                ...(user
-                  ? [
-                      { to: "/profile", label: "Profile" },
-                      { to: "/my-events", label: "My Events" },
-                    ]
-                  : []),
-              ].map(({ to, label, isHash }) => (
-                isHash ? (
-                   <a
-                    key={to}
-                    href={to}
-                    onClick={() => setMobileOpen(false)}
-                    className={`py-4 border-b border-neutral-100 text-[20px] font-black tracking-tight transition-all duration-150 text-black hover:text-orange-600 hover:pl-2`}
-                  >
-                    {label}
-                  </a>
-                ) : (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`py-4 border-b border-neutral-100 text-[20px] font-black tracking-tight transition-all duration-150 ${
-                      isActive(to)
-                        ? "text-orange-600 pl-2"
-                        : "text-black hover:text-orange-600 hover:pl-2"
-                    }`}
-                  >
-                    {label}
-                  </Link>
-                )
-              ))}
-            </nav>
+           
+<nav className="flex flex-col gap-1 mb-3">
 
-            {/* Action buttons */}
-            <div className="flex flex-col gap-2.5 mt-5">
-              {user ? (
-                <>
-                    {(role === "club") && (
-                      <>
-                        <Link
-                          to="/create"
-                          className="flex items-center justify-center gap-2 py-3.5 bg-yellow-400 border-2 border-black text-black font-bold text-[12px] tracking-widest rounded-sm hover:bg-orange-600 hover:text-white hover:border-orange-600 transition-all font-black"
-                        >
-                          <i className="ri-add-line" /> Create Event
-                        </Link>
-                        <Link
-                          to={`/club/edit/${user.clubId}`}
-                          className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px]  tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full font-black"
-                        >
-                          <i className="ri-settings-4-line" /> Manage Club Profile
-                        </Link>
-                      </>
-                    )}
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer w-full"
-                  >
-                    <i className="ri-logout-box-r-line" /> Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/register"
-                    className="flex items-center justify-center gap-2 py-3.5 bg-black border-2 border-black text-white font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all"
-                  >
-                    <i className="ri-user-add-line" /> Register
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="flex items-center justify-center py-3.5 bg-white border-2 border-black text-black font-bold text-[12px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors"
-                  >
-                    Login
-                  </Link>
-                </>
-              )}
-            </div>
+
+  {/* 2-column grid for nav links */}
+  <div className="grid grid-cols-2 gap-1">
+    {[
+      { to: "/", label: "Home" },
+      { to: "/events", label: "Events" },
+      { to: "/clubs", label: "Clubs" },
+      { to: "/#team", label: "Team", isHash: true },
+      ...(user ? [
+        { to: "/profile", label: "Profile" },
+        { to: "/my-events", label: role === "club" ? "Club Events" : role === "facultyCoordinator" ? "Review Events" : "My Events" },
+        ...(role === "club" ? [
+          { to: "/payments", label: "Payments" },
+          { to: "/send-notification", label: "Notify" }
+        ] : [])
+      ] : []),
+    ].map(({ to, label, isHash }) =>
+      isHash ? (
+        <a key={to} href={to} onClick={() => setMobileOpen(false)}
+          className="py-2 px-2.5 text-[13px] font-semibold rounded-sm border border-neutral-200 text-black hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-all">
+          {label}
+        </a>
+      ) : (
+        <Link key={to} to={to} onClick={() => setMobileOpen(false)}
+          className={`py-2 px-2.5 text-[13px] font-semibold rounded-sm border transition-all
+            ${isActive(to)
+              ? "text-orange-600 bg-orange-50 border-orange-300 border-l-[3px]"
+              : "text-black border-neutral-200 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-300"
+            }`}>
+          {label}
+        </Link>
+      )
+    )}
+  </div>
+</nav>
+
+{/* Action buttons */}
+<div className="border-t border-neutral-100 pt-3 flex flex-col gap-1.5">
+  {user ? (
+    <>
+      {role === "club" && (
+        <Link to="/create"
+          className="flex items-center justify-center gap-1.5 py-2.5 bg-yellow-400 border-2 border-black text-black font-black text-[11px] tracking-widest rounded-sm hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all">
+          <i className="ri-add-line" /> Create Event
+        </Link>
+      )}
+      <div className="grid grid-cols-2 gap-1.5">
+        {role === "club" && (
+          <Link to={`/club/edit/${user.clubId}`}
+            className="flex items-center justify-center gap-1 py-2.5 bg-white border border-neutral-200 text-black font-semibold text-[11px] tracking-wide rounded-sm hover:bg-neutral-100 transition-colors text-center">
+            <i className="ri-settings-4-line text-[13px]" /> Manage Club
+          </Link>
+        )}
+        <button onClick={handleLogout}
+          className={`flex items-center justify-center gap-1 py-2.5 bg-white border border-neutral-200 text-black font-semibold text-[11px] tracking-wide rounded-sm hover:bg-neutral-100 transition-colors ${role === "club" ? "" : "col-span-2"}`}>
+          <i className="ri-logout-box-r-line text-[13px]" /> Logout
+        </button>
+      </div>
+    </>
+  ) : (
+    <div className="grid grid-cols-2 gap-1.5">
+      <Link to="/login"
+        className="flex items-center justify-center py-2.5 bg-white border border-neutral-300 text-black font-bold text-[11px] uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors">
+        Login
+      </Link>
+      <Link to="/register"
+        className="flex items-center justify-center gap-1 py-2.5 bg-black border-2 border-black text-white font-bold text-[11px] uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all">
+        <i className="ri-user-add-line" /> Register
+      </Link>
+    </div>
+  )}
+</div>
+
+
+
+
+
+
+
           </div>
         </div>
       </nav>
