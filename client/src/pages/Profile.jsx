@@ -114,7 +114,7 @@ const Profile = () => {
         </div>
       )}
 
-{!user.isTwoFactorAuthEnabled && (
+{(!['member', 'student'].includes(role)) && !user.isTwoStepEnabled && (
   <p className='text-black mt-4 text-sm '> <i className="ri-error-warning-line mr-1" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Enable it</Link></p>
 )}
    

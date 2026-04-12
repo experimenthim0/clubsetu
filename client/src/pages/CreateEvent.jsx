@@ -148,7 +148,7 @@ const CreateEvent = () => {
 
     return (
         <div className="min-h-screen bg-neutral-50 py-12 px-4">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <button
@@ -161,7 +161,7 @@ const CreateEvent = () => {
                     <p className="text-neutral-600 mt-2">Fill in the details to publish a new event</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-400 rounded-sm p-8 space-y-6 ">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-300 rounded-sm p-8 space-y-6 ">
                     {error && (
                         <div className="flex items-center gap-2 bg-red-50 border-2 border-red-400 text-red-700 text-[13px] font-bold px-4 py-3 rounded-sm">
                             <i className="ri-error-warning-line text-lg" />
@@ -179,8 +179,15 @@ const CreateEvent = () => {
                     {/* Description */}
                     <div>
                         <label className={labelCls}>Description</label>
-                        <textarea name="description" rows="4" className={`${inputCls} resize-none`}
+                        <textarea name="description" rows="4" className={`${inputCls} resize-y`}
                             value={formData.description} onChange={handleChange} placeholder="Describe your event..." />
+                    </div>
+
+                     <div>
+                        <label className={labelCls}>Event Poster URL</label>
+                        <input type="url" name="imageUrl" placeholder="https://example.com/event-image.jpg"
+                            className={inputCls} value={formData.imageUrl} onChange={handleChange} />
+                        {/* <p className="text-xs text-neutral-500 mt-1">Optional: Enter a URL for the event banner image</p> */}
                     </div>
 
                     {/* Venue */}
@@ -221,7 +228,7 @@ const CreateEvent = () => {
                         <label className={labelCls}>Total Seats <span className="text-orange-600">*</span></label>
                         <div className="flex items-center gap-4 mb-3">
                             <label className="inline-flex items-center cursor-pointer gap-2">
-                                <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
                                     checked={isUnlimited} onChange={() => {
                                         setIsUnlimited(!isUnlimited);
                                         if (!isUnlimited) setFormData({ ...formData, totalSeats: '' });
@@ -236,25 +243,48 @@ const CreateEvent = () => {
                     </div>
 
                     {/* Entry Fee */}
-                    <div>
-                        <label className={labelCls}>Entry Fee</label>
-                        <div className="flex items-center gap-6 mb-3">
-                            <label className="inline-flex items-center cursor-pointer">
-                                <input type="radio" className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
-                                    name="feeType" checked={isFree} onChange={() => { setIsFree(true); setFormData({ ...formData, entryFee: 0 }); }} />
-                                <span className="ml-2 text-sm font-medium text-neutral-700">Free</span>
-                            </label>
-                            <label className="inline-flex items-center cursor-pointer">
-                                <input type="radio" className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
-                                    name="feeType" checked={!isFree} onChange={() => setIsFree(false)} />
-                                <span className="ml-2 text-sm font-medium text-neutral-700">Paid</span>
-                            </label>
-                        </div>
-                        {!isFree && (
-                            <input type="number" name="entryFee" min="1" placeholder="Enter amount in ₹"
-                                className={inputCls} value={formData.entryFee} onChange={handleChange} />
-                        )}
-                    </div>
+                   <div>
+  <label className={labelCls}>Entry Fee</label>
+  <div className="flex items-center gap-6 mb-3">
+    <label className="inline-flex items-center cursor-pointer">
+      <input
+        type="radio"
+        className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
+        name="feeType"
+        checked={isFree}
+        onChange={() => {
+          setIsFree(true);
+          setFormData({ ...formData, entryFee: 0 });
+        }}
+      />
+      <span className="ml-2 text-sm font-medium text-neutral-700">Free</span>
+    </label>
+    <label className="inline-flex items-center cursor-not-allowed opacity-50">
+      <input
+        type="radio"
+        className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
+        name="feeType"
+        checked={!isFree}
+        disabled // 🔒 disables the Paid option
+        onChange={() => setIsFree(false)}
+      />
+      <span className="ml-2 text-sm font-medium text-neutral-700">Paid(Coming Soon)</span>
+    </label>
+  </div>
+
+  {!isFree && (
+    <input
+      type="number"
+      name="entryFee"
+      min="1"
+      placeholder="Enter amount in ₹"
+      className={inputCls}
+      value={formData.entryFee}
+      onChange={handleChange}
+    />
+  )}
+</div>
+
 
                     {/* Allowed Programs */}
                     <div>
@@ -263,7 +293,7 @@ const CreateEvent = () => {
                         <div className="flex items-center gap-6">
                             {PROGRAM_OPTIONS.map((prog) => (
                                 <label key={prog} className="inline-flex items-center cursor-pointer gap-2">
-                                    <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
                                         checked={formData.allowedPrograms.includes(prog)}
                                         onChange={() => handleProgramToggle(prog)} />
                                     <span className="text-sm font-medium text-neutral-700">{PROGRAM_LABELS[prog]}</span>
@@ -277,7 +307,7 @@ const CreateEvent = () => {
                         <label className={labelCls}>Allowed Years</label>
                         <div className="flex items-center gap-4 mb-3">
                             <label className="inline-flex items-center cursor-pointer gap-2">
-                                <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
                                     checked={allYears} onChange={() => {
                                         setAllYears(!allYears);
                                         if (!allYears) setFormData({ ...formData, allowedYears: [] });
@@ -307,7 +337,7 @@ const CreateEvent = () => {
                                 name="showWinner"
                                 checked={formData.showWinner}
                                 onChange={(e) => setFormData({ ...formData, showWinner: e.target.checked })}
-                                className="w-5 h-5 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                className="w-5 h-5 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
                             />
                             <div>
                                 <span className={labelCls + ' mb-0'}>Show Winners / Results</span>
@@ -324,7 +354,7 @@ const CreateEvent = () => {
                                 name="provideCertificate"
                                 checked={formData.provideCertificate}
                                 onChange={(e) => setFormData({ ...formData, provideCertificate: e.target.checked })}
-                                className="w-5 h-5 text-blue-600 border-neutral-300 rounded focus:ring-blue-600"
+                                className="w-5 h-5 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
                             />
                             <div>
                                 <span className={labelCls + ' mb-0'}>Provide Certificates</span>
@@ -334,12 +364,7 @@ const CreateEvent = () => {
                     </div>
 
                     {/* Event Image URL */}
-                    <div>
-                        <label className={labelCls}>Event Image URL</label>
-                        <input type="url" name="imageUrl" placeholder="https://example.com/event-image.jpg"
-                            className={inputCls} value={formData.imageUrl} onChange={handleChange} />
-                        <p className="text-xs text-neutral-500 mt-1">Optional: Enter a URL for the event banner image</p>
-                    </div>
+                   
 
                     {/* Required Student Information */}
                     <div>
@@ -364,7 +389,7 @@ const CreateEvent = () => {
                                                     : prev.requiredFields.filter(f => f !== field.value)
                                             }));
                                         }}
-                                        className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600" />
+                                        className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600" />
                                     <span className="text-sm text-neutral-700">{field.label}</span>
                                 </label>
                             ))}

@@ -313,6 +313,7 @@ const EditProfile = () => {
                     </p>
 
                     {/* 2FA Toggle */}
+                    {(!['member', 'student'].includes(role)) && (
                     <div className="pt-6 border-t border-neutral-100">
                         <label className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-200 rounded-sm cursor-pointer group hover:border-orange-600 transition-colors">
                             <div className="flex items-center gap-3">
@@ -333,6 +334,7 @@ const EditProfile = () => {
                             </div>
                         </label>
                     </div>
+                    )}
                 </div>
 
                 <div className="pt-6 flex flex-col sm:flex-row gap-4">

@@ -36,6 +36,34 @@ const EventDetails = () => {
     fetchEvent();
   }, [slug]);
 
+  useEffect(() => {
+    if (event) {
+      document.title = `${event.title} - ClubSetu`;
+      
+      const setMetaTag = (selector, propertyAttr, propertyVal, content) => {
+        let element = document.querySelector(selector);
+        if (!element) {
+          element = document.createElement('meta');
+          element.setAttribute(propertyAttr, propertyVal);
+          document.head.appendChild(element);
+        }
+        element.setAttribute('content', content);
+      };
+
+      const defaultImg = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
+      
+      setMetaTag("meta[property='og:title']", 'property', 'og:title', `${event.title} | ClubSetu`);
+      setMetaTag("meta[property='og:description']", 'property', 'og:description', event.description || "Join this amazing event on ClubSetu!");
+      setMetaTag("meta[property='og:image']", 'property', 'og:image', event.imageUrl || defaultImg);
+      setMetaTag("meta[property='og:url']", 'property', 'og:url', window.location.href);
+      setMetaTag("meta[property='og:type']", 'property', 'og:type', "website");
+      
+      setMetaTag("meta[name='twitter:card']", 'name', 'twitter:card', "summary_large_image");
+      setMetaTag("meta[name='twitter:title']", 'name', 'twitter:title', `${event.title} | ClubSetu`);
+      setMetaTag("meta[name='twitter:description']", 'name', 'twitter:description', event.description || "Join this amazing event on ClubSetu!");
+      setMetaTag("meta[name='twitter:image']", 'name', 'twitter:image', event.imageUrl || defaultImg);
+    }
+  }, [event]);
 
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -45,6 +73,11 @@ const EventDetails = () => {
       navigate('/login');
       return;
     }
+
+
+
+
+
 
     // Check for required fields
     if (event.requiredFields && event.requiredFields.length > 0) {
@@ -352,6 +385,11 @@ const EventDetails = () => {
     );
   }
 
+
+
+
+  
+
   const { title, description, venue, startTime, endTime, totalSeats, registeredCount, status, registrationDeadline, entryFee } = event;
   const isUnlimited = !totalSeats || totalSeats === 0;
   const isFull   = !isUnlimited && registeredCount >= totalSeats;
@@ -372,6 +410,36 @@ const EventDetails = () => {
     3: { bg: 'bg-orange-400',  border: 'border-orange-500',  icon: 'ri-medal-line', label: '3rd' },
   };
 
+
+
+
+const handleShare = () => {
+  const message = `*_Event Alert 🚨_*\n
+*${event.title}*
+*Venue*: ${event.venue}
+*Date*: ${new Date(event.startTime).toLocaleDateString('en-IN')}
+*Time*: ${new Date(event.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} 
+*Entry Fee*: ${event.entryFee ? event.entryFee : 'Free'}
+*Event By*: ${event.club?.clubName || event.createdBy?.clubName}
+*Hosted On*: *_ClubSetu_*\n\n
+*More Info*: `;
+
+  if (navigator.share) {
+    navigator.share({
+      title: `${event.title} - ClubSetu`,
+      text: message,
+      url: window.location.href,
+    }).catch((error) => console.error('Error sharing:', error));
+  } else {
+    navigator.clipboard.writeText(message).then(() => {
+      showNotification('Event details copied to clipboard', 'success');
+    }).catch((error) => console.error('Clipboard error:', error));
+  }
+};
+
+
+
+ 
   // ── Derived button state ─────────────────────────────────────────────────
   const btnConfig = isEnded
     ? { label: showWinners ? 'View Results' : 'Event Ended', cls: 'bg-neutral-800 text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false }
@@ -387,7 +455,7 @@ const EventDetails = () => {
     <div className="min-h-screen bg-neutral-50">
 
       {/* ── Back bar ────────────────────────────────────────────────────── */}
-      <div className="">
+      <div className=" ">
         <div className="max-w-[900px] mx-auto px-6 lg:px-8 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -396,7 +464,14 @@ const EventDetails = () => {
             <i className="ri-arrow-left-line" /> Back
           </button>
           <span className="text-[16px] font-bold uppercase tracking-widest text-neutral-600">Event Details</span>
+       <a onClick={handleShare}
+  className="text-[16px] font-bold uppercase tracking-widest text-neutral-600"
+>
+  <i className="ri-share-line" /> Share
+</a>
+
         </div>
+
       </div>
 
       <div className="max-w-[900px] mx-auto px-6 lg:px-8 py-12">
@@ -463,8 +538,12 @@ const EventDetails = () => {
               {title}
             </h1>
 
+            <div>
+              <p className="text-orange-600 text-[14px] mb-6 font-bold">By <span className="font-medium text-black">{event.club?.clubName || event.createdBy?.clubName}</span></p>
+            </div>
+
             {/* Meta grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-2 border-gray-400 rounded-sm overflow-hidden mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-2 border-gray-300 rounded-sm overflow-hidden mb-10">
               {[
                 {
                   icon: 'ri-time-line',
@@ -501,7 +580,7 @@ const EventDetails = () => {
               ].filter(Boolean).map((meta, i) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-4 p-5 ${i % 2 === 0 ? 'border-r border-gray-400' : ''} ${i < 4 ? 'border-b-2 border-gray-400' : ''}`}
+                  className={`flex items-start gap-4 p-5 ${i % 2 === 0 ? 'border-r border-gray-300' : ''} ${i < 4 ? 'border-b border-gray-300' : ''}`}
                 >
                   <div className=" bg-white rounded-sm flex items-center justify-center text-orange-600 text-2xl">
                     <i className={meta.icon} />

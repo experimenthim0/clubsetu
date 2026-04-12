@@ -9,6 +9,9 @@ import {ArrowRightIcon} from '../components/ui/arrow-right';
 import { InstagramIcon } from '@/components/ui/instagram';
 import { GithubIcon } from '@/components/ui/github';
 import { LinkedinIcon } from '@/components/ui/linkedin';
+import { MailIcon } from 'lucide-react';
+import { AtSignIcon } from '@/components/ui/at-sign';
+import { EarthIcon } from '@/components/ui/earth';
 // Ticker items
 const tickerItems = [
   'Workshops', 'Hackathons', 'Cultural Fests', 'Sports Meets',
@@ -280,7 +283,7 @@ const Home = () => {
                   : "border-transparent text-neutral-400 hover:text-neutral-600"
                 }`}
             >
-              {t === "students" ? "For Students" : "For Club Heads"}
+              {t === "students" ? "For Students" : "For Club Coordinators"}
             </button>
           ))}
         </div>
@@ -340,7 +343,7 @@ const Home = () => {
           <div>
             <div className="mb-10">
               <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
-                Club heads
+                Club Coordinators
               </p>
               <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
                 Less logistics,{" "}
@@ -364,12 +367,12 @@ const Home = () => {
             </div>
 
             {/* Quote */}
-            <div className="border-l-4 border-orange-600 pl-5 py-1">
+            {/* <div className="border-l-4 border-orange-600 pl-5 py-1">
               <p className="text-base font-semibold text-black leading-snug">
                 "Finally, no more manually checking 500 screenshots of payment proofs."
               </p>
-              <p className="text-xs text-neutral-400 mt-1">— Club head, Engineering fest</p>
-            </div>
+              <p className="text-xs text-neutral-400 mt-1">— Club Coordinator, Engineering fest</p>
+            </div> */}
           </div>
         )}
 
@@ -465,11 +468,15 @@ const Home = () => {
                       <i className="ri-user-star-line text-4xl text-neutral-300" />
                     </div>
                     <div className="text-left">
-                      <div className="text-[11px] font-semibold tracking-[0.2em] text-orange-600 mb-1">Faculty Coordinator</div>
+                      <div className="text-[11px] font-semibold tracking-[0.2em] text-orange-600 mb-1"> Coordinator</div>
                       <h3 className="text-2xl font-black text-black mb-2">Himanshu Yadav</h3>
                       <div className="flex gap-3 text-neutral-700">
-                        <a href="#" className="hover:text-orange-600"><i className="ri-linkedin-box-fill text-xl" /></a>
-                        <a href="#" className="hover:text-orange-600"><i className="ri-mail-fill text-xl" /></a>
+                        <a href="#" className="hover:text-orange-600">
+                          <LinkedinIcon/>
+                          </a>
+                        <a href="#" className="hover:text-orange-600">
+                         <AtSignIcon />
+                          </a>
                       </div>
                     </div>
                   </div>
@@ -481,7 +488,7 @@ const Home = () => {
           {/* Team Members Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
+              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#",portfolio:"#" },
               { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
               { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
               { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
@@ -508,6 +515,11 @@ const Home = () => {
                         <a href={member.linkedin} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
                           <LinkedinIcon/>
                         </a>
+                        {member.portfolio && (
+                        <a href={member.portfolio} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
+                          <EarthIcon/>
+                        </a>
+                        )}
                       </div>
                     </div>
                   </div>
