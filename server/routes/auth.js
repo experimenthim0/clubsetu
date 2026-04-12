@@ -81,9 +81,46 @@ router.post("/register/student", async (req, res) => {
     if (!isDevMode) {
       const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
-        <h1>Email Verification</h1>
-        <p>Please click the link below to verify your account:</p>
-        <a href="${verifyUrl}" clicktracking=off>${verifyUrl}</a>
+       <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
+  
+  <h1 style="color: #FF4400; text-align: center;">
+    Welcome to <span style="color:#000;">Club</span>Setu!
+  </h1>
+
+  <p style="font-size: 16px; text-align: center;">
+    Hi ${name}, <br><br>
+    Thank you for signing up. To complete your registration, please verify your email address.
+  </p>
+
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="${verifyUrl}" 
+       style="background-color: #FF4400; color: white; padding: 12px 24px; 
+              text-decoration: none; border-radius: 5px; font-size: 16px; 
+              display: inline-block;">
+      Verify My Account
+    </a>
+  </div>
+
+  <p style="font-size: 14px; text-align: center; color: #777;">
+    This link will expire in 24 hours for security reasons.
+  </p>
+
+  <p style="font-size: 14px; text-align: center; color: #777;">
+    If the button doesn’t work, copy and paste this link into your browser:<br>
+    <a href="${verifyUrl}" style="color: #FF7518;">${verifyUrl}</a>
+  </p>
+
+  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+  <p style="font-size: 12px; text-align: center; color: #999;">
+    If you didn’t create an account on ClubSetu, you can safely ignore this email.
+  </p>
+
+  <p style="font-size: 12px; text-align: center; color: #999;">
+    This is an automated message, please do not reply.
+  </p>
+
+</div>
       `;
 
       try {
@@ -160,7 +197,49 @@ router.post("/login", async (req, res) => {
       await sendEmail({
         email: user.email,
         subject: "Login Verification Code",
-        message: `<h1>Your Verification Code</h1><p>Your OTP for login is: <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+        message: `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; text-align: center;">
+
+  <!-- Brand -->
+  <h1 style="color: #FF4400;">
+    <span style="color:#000;">Club</span>Setu
+  </h1>
+
+  <h2>Your Verification Code</h2>
+
+  <p style="font-size: 16px;">
+    Use the following OTP to login to your ClubSetu account:
+  </p>
+
+  <!-- OTP Box -->
+  <div style="margin: 30px 0;">
+    <span style="font-size: 28px; letter-spacing: 6px; font-weight: bold; background: #f4f4f4; padding: 10px 20px; border-radius: 8px; display: inline-block;">
+      ${otp}
+    </span>
+  </div>
+
+  <p style="font-size: 14px; color: #777;">
+    This OTP will expire in <strong>5 minutes</strong>.
+  </p>
+
+  <p style="font-size: 14px; color: #777;">
+    Do not share this code with anyone.
+  </p>
+
+  <p style="font-size: 14px; color: #777;">
+    If you didn’t request this, please ignore this email.
+  </p>
+
+  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+  <p style="font-size: 12px; color: #999;">
+    © 2026 ClubSetu. All rights reserved.
+  </p>
+
+  <p style="font-size: 12px; color: #999;">
+    This is an automated message, please do not reply.
+  </p>
+
+</div>`,
       });
 
       return res.json({
@@ -297,7 +376,60 @@ router.post("/forgot-password", async (req, res) => {
     });
 
     const resetUrl = `${getClientUrl(req.headers.origin)}/reset-password/${resetToken}`;
-    const message = `<h2>Reset Password</h2><p>Click below to reset:</p><a href="${resetUrl}">${resetUrl}</a>`;
+    const message = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
+
+  <!-- Brand Header -->
+  <h1 style="color: #FF4400; text-align: center;">
+    <span style="color:#000;">Club</span>Setu
+  </h1>
+
+  <h2 style="text-align: center;">Reset Your Password</h2>
+
+  <p style="font-size: 16px; text-align: center;">
+    We received a request to reset your ClubSetu account password.
+  </p>
+
+  <p style="font-size: 16px; text-align: center;">
+    Click the button below to set a new password:
+  </p>
+
+  <!-- Button -->
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="${resetUrl}" 
+       style="background-color: #FF4400; color: white; padding: 12px 24px; 
+              text-decoration: none; border-radius: 5px; font-size: 16px; 
+              display: inline-block;">
+      Reset Password
+    </a>
+  </div>
+
+  <!-- Security Info -->
+  <p style="font-size: 14px; text-align: center; color: #777;">
+    This link will expire in 15 minutes for security reasons.
+  </p>
+
+  <p style="font-size: 14px; text-align: center; color: #777;">
+    If you didn’t request this, please ignore this email or secure your account.
+  </p>
+
+  <!-- Fallback -->
+  <p style="font-size: 14px; text-align: center; color: #777;">
+    If the button doesn’t work, copy and paste this link into your browser:<br>
+    <a href="${resetUrl}" style="color: #FF7518;">${resetUrl}</a>
+  </p>
+
+  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+  <!-- Footer -->
+  <p style="font-size: 12px; text-align: center; color: #999;">
+    © 2026 ClubSetu. All rights reserved.
+  </p>
+
+  <p style="font-size: 12px; text-align: center; color: #999;">
+    This is an automated message, please do not reply.
+  </p>
+
+</div>`;
 
     try {
       await sendEmail({

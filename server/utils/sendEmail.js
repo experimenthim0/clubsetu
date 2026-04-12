@@ -13,7 +13,7 @@ const sendEmail = async (options) => {
 
   const msg = {
     to: options.email,
-    from: `${process.env.EMAIL_FROM_NAME || "Club Event Support"} <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`, // Use a verified sender email
+    from: `${process.env.EMAIL_FROM_NAME || "ClubSetu Support"} <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`, // Use a verified sender email
     subject: options.subject,
     html: options.message,
   };
