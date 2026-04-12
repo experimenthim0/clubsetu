@@ -143,6 +143,15 @@ const MyEvents = () => {
     }
   };
 
+  const clearFilters = () => setExportFilters({ month: 'all', year: 'all' });
+
+  const filteredEvents = createdEvents.filter(event => {
+    const eventDate = new Date(event.startTime);
+    const mMatch = exportFilters.month === 'all' || (eventDate.getMonth() + 1).toString() === exportFilters.month.toString();
+    const yMatch = exportFilters.year === 'all' || eventDate.getFullYear().toString() === exportFilters.year.toString();
+    return mMatch && yMatch;
+  });
+
   const handleExportClubData = async () => {
     try {
       const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -195,7 +204,7 @@ const MyEvents = () => {
         >
           <i className="ri-arrow-left-line text-lg" /> Back to Profile
         </Link>
-        <h1 className="text-2xl md:text-4xl font-black text-black uppercase tracking-tight">My Events</h1>
+        <h1 className="text-2xl md:text-4xl font-black text-black  tracking-wide">My Events</h1>
       </div>
 
       {/* ── STUDENT VIEW ── */}
@@ -219,7 +228,9 @@ const MyEvents = () => {
               {registrations.map(reg => {
                 const event = reg.eventId;
                 if (!event) return null;
-                const isPast = new Date(event.endTime) < new Date();
+                const now = new Date();
+                const isPast = new Date(event.endTime) < now;
+                const isLive = new Date(event.startTime) <= now && new Date(event.endTime) > now;
 
                 return (
                   <div
@@ -235,13 +246,15 @@ const MyEvents = () => {
                         </Link>
                       </h3>
                       <span
-                        className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black  tracking-wider w-fit ${
+                        className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black  tracking-wider w-fit border-2 ${
                           isPast
-                            ? 'bg-neutral-100 text-neutral-600 border-2 border-neutral-200'
-                            : 'bg-green-100 text-green-700 border-2 border-green-600'
+                            ? 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                            : isLive
+                            ? 'bg-red-100 text-red-700 border-red-600'
+                            : 'bg-green-100 text-green-700 border-green-600'
                         }`}
                       >
-                        {isPast ? 'Past Event' : 'Upcoming'}
+                        {isPast ? 'Past Event' : isLive ? 'Live Now' : 'Upcoming'}
                       </span>
                     </div>
 
@@ -314,7 +327,7 @@ const MyEvents = () => {
       {(role === 'club' || role === 'facultyCoordinator' || role === 'admin') && (
         <div>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-            <h2 className="text-xl md:text-2xl font-black text-black uppercase tracking-tight">
+            <h2 className="text-xl md:text-2xl font-black text-black  tracking-wide">
                 {role === 'facultyCoordinator' ? 'Club Events Review' : 'Events You Organized'}
             </h2>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -323,7 +336,7 @@ const MyEvents = () => {
                         <select 
                             value={exportFilters.month}
                             onChange={(e) => setExportFilters({ ...exportFilters, month: e.target.value })}
-                            className="p-3 border-2 border-black rounded-full text-[10px] font-black uppercase tracking-wider bg-white focus:outline-none"
+                            className="p-1 border-2 border-black rounded-full text-[10px] font-black uppercase tracking-wider bg-white focus:outline-none hover:cursor-pointer hover:bg-gray-100"
                         >
                             <option value="all">Month</option>
                             {[...Array(12)].map((_, i) => (
@@ -333,14 +346,22 @@ const MyEvents = () => {
                         <select 
                             value={exportFilters.year}
                             onChange={(e) => setExportFilters({ ...exportFilters, year: e.target.value })}
-                            className="p-3 border-2 border-black rounded-full text-[10px] font-black uppercase tracking-wider bg-white focus:outline-none"
+                            className="p-1 border-2 border-black rounded-full text-[10px] font-black uppercase tracking-wider bg-white focus:outline-none hover:cursor-pointer hover:bg-gray-100"
                         >
                             <option value="all">Year</option>
                             {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
+                        {(exportFilters.month !== 'all' || exportFilters.year !== 'all') && (
+                            <button
+                                onClick={clearFilters}
+                                className="text-[10px] font-black uppercase tracking-widest text-red-600 hover:text-red-700 transition-colors px-2"
+                            >
+                                Clear
+                            </button>
+                        )}
                         <button
                             onClick={handleExportClubData}
-                            className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-black text-black font-black text-sm tracking-wide rounded-full hover:bg-neutral-100 transition-all active:translate-x-1 active:translate-y-1"
+                            className="inline-flex items-center justify-center gap-2 px-3 py-1 bg-green-500 text-white font-black text-sm tracking-wide rounded-full hover:bg-green-400 transition-all active:translate-x-1 active:translate-y-1 hover:cursor-pointer"
                         >
                             <i className="ri-download-2-line text-lg" /> Export
                         </button>
@@ -349,9 +370,9 @@ const MyEvents = () => {
                 {role === 'club' && (
                     <Link
                     to="/create"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black text-white font-black text-sm tracking-wide  rounded-full hover:bg-orange-600 transition-all  active:shadow-none active:translate-x-1 active:translate-y-1"
+                    className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-4xl"
                     >
-                    <i className="ri-add-line text-lg" /> Create New Event
+                    <i className="ri-add-line text-xl mr-2" /> Create New Event
                     </Link>
                 )}
             </div>
@@ -370,10 +391,23 @@ const MyEvents = () => {
                   </Link>
               )}
             </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="bg-white border-2 border-dashed border-gray-300 rounded-sm p-12 text-center">
+              <i className="ri-filter-off-line text-5xl text-gray-300 mb-4" />
+              <p className="text-gray-500 mb-2">No events match your selected filters.</p>
+              <button 
+                onClick={clearFilters}
+                className="text-xs font-black uppercase tracking-widest text-orange-600 hover:underline"
+              >
+                Clear Filters
+              </button>
+            </div>
           ) : (
             <div className="grid gap-4">
-              {createdEvents.map(event => {
-                const isPast = new Date(event.endTime) < new Date();
+              {filteredEvents.map(event => {
+                const now = new Date();
+                const isPast = new Date(event.endTime) < now;
+                const isLive = new Date(event.startTime) <= now && new Date(event.endTime) > now;
                 const statusColors = {
                     'PENDING': 'bg-yellow-100 text-yellow-700 border-yellow-600',
                     'PUBLISHED': 'bg-green-100 text-green-700 border-green-600',
@@ -384,21 +418,25 @@ const MyEvents = () => {
                 return (
                 <div
                   key={event._id}
-                  className="bg-white border-2 border-black rounded-sm  overflow-hidden"
+                  className="bg-white border-2 border-gray-300 rounded-sm  overflow-hidden"
                 >
                   {/* Top stripe: title */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 md:px-6 pt-5 pb-3 border-b border-neutral-100 gap-3">
-                    <h3 className="text-lg font-black text-black leading-tight">
+                    <h3 className="text-lg font-black text-black leading-wide">
                         <Link to={`/event/${event.slug || event._id}`} className="hover:text-orange-600 transition-colors">
                             {event.title}
                         </Link>
                     </h3>
                     <div className="flex gap-2">
-                        <span className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-wider border-2 border-black ${statusColors[event.reviewStatus] || 'bg-white'}`}>
+                        <span className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black tracking-wider border-2 border-black ${statusColors[event.reviewStatus] || 'bg-white'}`}>
                             {event.reviewStatus}
                         </span>
-                        <span className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-wider border-2 border-black ${isPast ? 'bg-neutral-100 text-neutral-600' : 'bg-green-100 text-green-700'}`}>
-                            {isPast ? 'Past' : 'Upcoming'}
+                        <span className={`inline-block px-3 py-1 rounded-sm text-[10px] font-black tracking-wider border-2 ${
+                          isPast ? 'bg-neutral-100 text-neutral-600 border-neutral-200' :
+                          isLive ? 'bg-red-100 text-red-700 border-red-600' :
+                          'bg-green-100 text-green-700 border-green-600'
+                        }`}>
+                            {isPast ? 'Past' : isLive ? 'Live Now' : 'Upcoming'}
                         </span>
                     </div>
                   </div>
@@ -445,14 +483,14 @@ const MyEvents = () => {
                           <>
                             <Link
                                 to={`/event/${event._id}/registrations`}
-                                className="px-4 py-2 bg-blue-100 text-blue-700 border-2 border-blue-700 rounded-sm hover:bg-blue-700 hover:text-white transition font-bold text-sm uppercase tracking-wider whitespace-nowrap"
+                                className="px-3 py-2 bg-blue-100 text-blue-700 border-2 border-blue-700 rounded-sm hover:bg-blue-700 hover:text-white transition font-bold text-sm tracking-wider whitespace-nowrap"
                             >
                                 Registrations
                             </Link>
                             {role === 'club' && event.provideCertificate && (
                                 <Link
                                     to={`/event/${event._id}/design-certificate`}
-                                    className="px-4 py-2 bg-orange-100 text-orange-700 border-2 border-orange-700 rounded-sm hover:bg-orange-700 hover:text-white transition font-bold text-sm uppercase tracking-wider whitespace-nowrap"
+                                    className="px-3 py-2 bg-orange-100 text-orange-700 border-2 border-orange-700 rounded-sm hover:bg-orange-700 hover:text-white transition font-bold text-sm tracking-wider whitespace-nowrap"
                                 >
                                     Design Certificate
                                 </Link>
@@ -460,9 +498,9 @@ const MyEvents = () => {
                             {role === 'club' && !isPast && (
                                 <Link
                                     to={`/events/edit/${event._id}`}
-                                    className="px-4 py-2 bg-neutral-100 text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-sm uppercase tracking-wider"
+                                    className="px-3 py-1 bg-neutral-100 text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-sm  tracking-wider"
                                 >
-                                    Edit
+                                  <i className="ri-edit-line text-lg" />
                                 </Link>
                             )}
                           </>

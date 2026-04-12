@@ -127,7 +127,9 @@ const CreateEvent = () => {
 
         const payload = {
             ...formData,
+            entryFee: Number(formData.entryFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
+            registrationDeadline: formData.registrationDeadline ? formData.registrationDeadline : null,
             allowedYears: allYears ? [] : formData.allowedYears,
         };
 

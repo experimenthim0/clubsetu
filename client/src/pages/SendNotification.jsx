@@ -154,7 +154,7 @@ const SendNotification = () => {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="e.g., Important Venue Change"
-              className="w-full border-2 border-black rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400"
+              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400"
             />
           </div>
 
@@ -169,7 +169,7 @@ const SendNotification = () => {
               required
               rows={4}
               placeholder="Write your message here..."
-              className="w-full border-2 border-black rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400 resize-y"
+              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400 resize-y"
             />
           </div>
 
@@ -186,7 +186,7 @@ const SendNotification = () => {
                 <i className="ri-loader-4-line animate-spin text-lg" /> Sending...
               </span>
             ) : (
-              <span className="flex items-center justify-center gap-2 tracking-wide">
+              <span className="flex items-center justify-center gap-2 tracking-wide hover:cursor-pointer">
                 <i className="ri-send-plane-fill text-lg" /> Send Notification
               </span>
             )}
@@ -203,7 +203,7 @@ const SendNotification = () => {
         ) : (
           <div className="flex flex-col gap-4">
             {history.map((notif) => (
-              <div key={notif._id} className="bg-white border-2 border-black rounded-sm p-5 shadow-[4px_4px_0px_#0D0D0D]">
+              <div key={notif._id} className="bg-white border-2 border-gray-300 rounded-sm p-5">
                 <div className="flex justify-between items-start mb-2">
                   <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm ${notif.targetType === 'ALL_STUDENTS' ? 'bg-orange-100 text-orange-700 border border-orange-700' : 'bg-blue-100 text-blue-700 border border-blue-700'}`}>
                     {notif.targetType === 'ALL_STUDENTS' ? 'All Students' : `Event: ${notif.eventId?.title || 'Unknown Event'}`}

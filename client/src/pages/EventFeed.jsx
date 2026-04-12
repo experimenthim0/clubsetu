@@ -201,7 +201,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   ];
 
 return (
-  <div className={`max-w-7xl mx-auto px-6 ${hideHeader ? '' : 'py-12'}`}>
+  <div className={`max-w-7xl mx-auto px-3 ${hideHeader ? '' : 'py-12'}`}>
 
     {!hideHeader && (
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">
@@ -351,8 +351,8 @@ return (
         {!hideHeader && (
              <h2 className="text-lg font-semibold text-primary mb-6 flex items-center gap-2">
              <span className="relative flex h-3 w-3">
-                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                 <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
              </span>
              Happening Now
              </h2>

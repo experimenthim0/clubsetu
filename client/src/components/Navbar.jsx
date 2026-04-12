@@ -33,6 +33,7 @@ const Navbar = () => {
   const { notifications, unreadCount, setUnreadCount, setNotifications } = useSocket() || {};
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifDropdownRef = useRef(null);
+  const notifMobileDropdownRef = useRef(null);
 
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -56,7 +57,11 @@ const Navbar = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
-      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target)) {
+      if (
+        notifDropdownRef.current && 
+        !notifDropdownRef.current.contains(e.target) &&
+        (!notifMobileDropdownRef.current || !notifMobileDropdownRef.current.contains(e.target))
+      ) {
         setNotifDropdownOpen(false);
       }
     };
@@ -116,9 +121,34 @@ const Navbar = () => {
 
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
-    `relative py-1 text-[14px] font-bold tracking-widest transition-all duration-300 group ${
+    `relative py-1 text-[14px] font-medium tracking-widest transition-all duration-300 group ${
       isActive(path) ? "text-orange-600" : "text-black hover:text-orange-600"
     }`;
+
+
+    // format date and time
+    const formatDate = (dateString) => {
+  const date = new Date(dateString);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
+
+  const day = date.getDate();
+
+  const month = date.toLocaleString('default', { month: 'short' });
+
+  const year = date.getFullYear();
+
+  const time = date.toLocaleString('default', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  return `${time}, ${day} ${month} ${year} `;
+};
+
 
   return (
     <>
@@ -145,7 +175,7 @@ const Navbar = () => {
           </Link>
 
           {/* ── Desktop center links ──────────────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6 ">
             <Link to="/" className={navLinkCls("/")}>
               Home
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
@@ -197,17 +227,17 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-gray-300 rounded-sm z-50 mt-1">
-                        <div className="px-4 py-3 border-b-2 border-gray-300 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50 mt-1">
+                        <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
                           <h3 className="text-[14px] font-black  tracking-widest">Notifications</h3>
                         </div>
                         <div className="divide-y divide-neutral-100">
                           {notifications?.length > 0 ? (
-                            notifications.map((notif, idx) => (
+                            notifications.slice(0, 4).map((notif, idx) => (
                               <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                                 <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
-                                  <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                                  <span className="text-[10px] font-medium text-orange-600  tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                                  <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt)}</span>
                                 </div>
                                 <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
                                 <p className="text-[12px] text-neutral-600">{notif.message}</p>
@@ -219,6 +249,14 @@ const Navbar = () => {
                             </div>
                           )}
                         </div>
+                        <Link
+                          to="/notifications"
+                          onClick={() => setNotifDropdownOpen(false)}
+                          className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 border-t-2 border-gray-300 hover:bg-orange-50 transition-colors"
+                        >
+                          See all notifications
+                          <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -260,8 +298,8 @@ const Navbar = () => {
                         <p className="text-[14px] font-black text-black truncate">
                           {user.name}
                         </p>
-                        <p className="text-[10px]  tracking-widest text-orange-600 font-bold mt-0.5">
-                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
+                        <p className="text-[10px]  tracking-widest text-orange-600 font-medium mt-0.5">
+                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator - ${user.clubName || ""}` : role === "admin" ? "Admin" : "Student"}
                         </p>
                       </div>
 
@@ -377,7 +415,7 @@ const Navbar = () => {
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <div className="md:hidden flex items-center gap-3">
             {user && (role === "member" || role === "facultyCoordinator" || role === "club") && (
-              <div className="relative" ref={notifDropdownRef}>
+              <div className="relative" ref={notifMobileDropdownRef}>
                 <button
                   onClick={handleNotificationClick}
                   className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
@@ -390,17 +428,17 @@ const Navbar = () => {
 
                 {/* Mobile Notification Dropdown */}
                 {notifDropdownOpen && (
-                  <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-400 rounded-sm z-50">
-                    <div className="px-4 py-3 border-b-2 border-gray-400 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                  <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50">
+                    <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
                       <h3 className="text-[14px] font-black  tracking-widest text-black">Notifications</h3>
                     </div>
                     <div className="divide-y divide-neutral-100">
                       {notifications?.length > 0 ? (
-                        notifications.map((notif, idx) => (
+                        notifications.slice(0, 4).map((notif, idx) => (
                           <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold text-orange-600  tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
-                              <span className="text-[10px] text-neutral-500 whitespace-nowrap">{new Date(notif.createdAt).toLocaleDateString()}</span>
+                              <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                              <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
                             </div>
                             <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
                             <p className="text-[12px] text-neutral-600">{notif.message}</p>
@@ -412,6 +450,17 @@ const Navbar = () => {
                         </div>
                       )}
                     </div>
+                    <Link
+                      to="/notifications"
+                      onClick={() => {
+                        setNotifDropdownOpen(false);
+                        setMobileOpen(false);
+                      }}
+                      className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium  tracking-widest text-orange-600 border-t-2 border-gray-200 bg-neutral-100 hover:bg-orange-50 transition-colors"
+                    >
+                      See all notifications
+                      <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
+                    </Link>
                   </div>
                 )}
               </div>
@@ -444,8 +493,8 @@ const Navbar = () => {
                   <p className="font-black text-[13px] text-black leading-tight">
                     {user.name}
                   </p>
-                  <p className="text-[8px] uppercase tracking-widest text-orange-600 font-bold mt-0.5">
-                    {role === "club" ? "Club Account" : role === "facultyCoordinator" ? "Faculty Coordinator" : role === "admin" ? "Admin" : "Student"}
+                  <p className="text-[9px] uppercase tracking-widest text-orange-600 font-medium mt-0.5">
+                    {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator - ${user.clubName}` : role === "admin" ? "Admin" : "Student"}
                   </p>
                 </div>
               </div>
@@ -465,6 +514,7 @@ const Navbar = () => {
       { to: "/#team", label: "Team", isHash: true },
       ...(user ? [
         { to: "/profile", label: "Profile" },
+        { to: "/notifications", label: "Notifications" },
         { to: "/my-events", label: role === "club" ? "Club Events" : role === "facultyCoordinator" ? "Review Events" : "My Events" },
         ...(role === "club" ? [
           { to: "/payments", label: "Payments" },
@@ -474,12 +524,12 @@ const Navbar = () => {
     ].map(({ to, label, isHash }) =>
       isHash ? (
         <a key={to} href={to} onClick={() => setMobileOpen(false)}
-          className="py-2 px-2.5 text-[13px] font-semibold rounded-sm border border-neutral-200 text-black hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-all">
+          className="py-2 px-2.5 text-[13px] font-medium rounded-sm border border-neutral-200 text-black hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-all">
           {label}
         </a>
       ) : (
         <Link key={to} to={to} onClick={() => setMobileOpen(false)}
-          className={`py-2 px-2.5 text-[13px] font-semibold rounded-sm border transition-all
+          className={`py-2 px-2.5 text-[13px] font-medium rounded-sm border transition-all
             ${isActive(to)
               ? "text-orange-600 bg-orange-50 border-orange-300 border-l-[3px]"
               : "text-black border-neutral-200 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-300"
@@ -497,7 +547,7 @@ const Navbar = () => {
     <>
       {role === "club" && (
         <Link to="/create"
-          className="flex items-center justify-center gap-1.5 py-2.5 bg-yellow-400 border-2 border-black text-black font-black text-[11px] tracking-widest rounded-sm hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all">
+          className="flex items-center justify-center gap-1.5 py-2 bg-black border-2 border-black text-white font-black text-[13px] tracking-widest rounded-sm hover:bg-black/70 hover:text-white hover:border-black transition-all">
           <i className="ri-add-line" /> Create Event
         </Link>
       )}
@@ -509,7 +559,7 @@ const Navbar = () => {
           </Link>
         )}
         <button onClick={handleLogout}
-          className={`flex items-center justify-center gap-1 py-2.5 bg-white border border-neutral-200 text-black font-semibold text-[11px] tracking-wide rounded-sm hover:bg-neutral-100 transition-colors ${role === "club" ? "" : "col-span-2"}`}>
+          className={`flex items-center justify-center gap-1 py-2 bg-[#ff0000] border border-neutral-200 text-white font-semibold text-[13px] tracking-wide rounded-sm hover:bg-red-600 hover:cursor-pointer transition-colors ${role === "club" ? "" : "col-span-2"}`}>
           <i className="ri-logout-box-r-line text-[13px]" /> Logout
         </button>
       </div>

@@ -78,7 +78,7 @@ const AdminDashboard = () => {
 
     const handleFetchPayoutInfo = async (clubHeadId, eventId) => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/club-head/${clubHeadId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/user-info/${clubHeadId}`);
             setSelectedClub(res.data);
             setSelectedEventId(eventId);
             setModalOpen(true);
@@ -156,12 +156,12 @@ const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
-                        <h1 className="text-4xl font-black text-black tracking-tight uppercase">Admin Panel</h1>
-                        <p className="text-neutral-500 text-sm mt-1 uppercase tracking-widest font-bold">Manage Platform Payouts & Revenue</p>
+                        <h1 className="text-4xl font-black text-black tracking-tight ">Admin Panel</h1>
+                        <p className="text-neutral-500 text-sm mt-1  tracking-widest font-medium">Manage Platform Payouts & Revenue</p>
                     </div>
                     <button 
                         onClick={handleLogout}
-                        className="px-6 py-2 border-2 border-black text-black font-bold text-xs uppercase tracking-widest rounded-sm hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="px-6 py-2 border-2 border-black text-white font-medium text-xs  tracking-widest rounded-sm bg-red-500 hover:bg-red-300 hover:text-black transition-colors"
                     >
                         Secure Logout
                     </button>
@@ -169,19 +169,19 @@ const AdminDashboard = () => {
 
                 {/* Stats Cards */}
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                      <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Total Students</p>
                           <p className="text-2xl font-black text-black">{stats?.totalStudents || 0}</p>
                       </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Active Events</p>
                           <p className="text-2xl font-black text-black">{stats?.totalEvents || 0}</p>
                       </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Total Clubs</p>
                           <p className="text-2xl font-black text-black">{stats?.totalClubs || 0}</p>
                       </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-sm shadow-[4px_4px_0px_#000]">
+                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
                           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Events (Till Today)</p>
                           <p className="text-2xl font-black text-black">{stats?.totalEventsTillNow || 0}</p>
                       </div>
@@ -191,7 +191,7 @@ const AdminDashboard = () => {
                      <div className="flex justify-end mb-6">
                         <button 
                             onClick={() => setShowYearWise(!showYearWise)}
-                            className="text-[10px] font-black uppercase tracking-widest px-4 py-2 border-2 border-black rounded-sm hover:bg-neutral-100 transition-colors"
+                            className="text-[10px] font-black uppercase tracking-widest px-4 py-2 border-2 border-black rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer"
                         >
                             {showYearWise ? 'Hide Yearly Stats' : 'Show Year-wise Total Events'}
                         </button>
@@ -245,28 +245,83 @@ const AdminDashboard = () => {
                     )}
                 </div>
 
-                {(activeTab === 'overview' || activeTab === 'payouts') && (
-                    <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
+                {/* ── OVERVIEW TAB ── All events general info */}
+                {activeTab === 'overview' && (
+                    <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y-2 divide-black">
+                            <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-neutral-100">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Event Title</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Amount</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Registrations</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Deadline</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">#</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Title</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Club</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Registrations</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Date</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Type</th>
+                                        <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {stats?.eventStats?.slice().sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-neutral-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400 font-bold border-r border-gray-200">{idx + 1}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.title}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r border-gray-200">{item.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.registeredCount || item.regCount} students</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-200 uppercase tracking-wide">
+                                                {new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap border-r border-gray-200">
+                                                <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm border ${
+                                                    item.entryFee > 0
+                                                        ? 'bg-orange-50 text-orange-700 border-orange-300'
+                                                        : 'bg-green-50 text-green-700 border-green-300'
+                                                }`}>
+                                                    {item.entryFee > 0 ? `Paid (₹${item.entryFee})` : 'Free'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-black font-mono">
+                                                {item.totalCollected > 0 
+                                                    ? <span className="text-orange-600">₹{item.totalCollected}</span>
+                                                    : <span className="text-neutral-300">—</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!stats?.eventStats || stats.eventStats.length === 0) && (
+                                        <tr>
+                                            <td colSpan="7" className="px-6 py-12 text-center text-neutral-500 text-sm">No events found.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── PAYOUTS TAB ── Only paid events with payout actions */}
+                {activeTab === 'payouts' && (
+                    <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-neutral-100">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Club Name</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Title</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Amount</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Registrations</th>
+                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Deadline</th>
                                         <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y-2 divide-black">
-                                    {stats?.eventStats?.map((item, idx) => (
+                                <tbody className="divide-y divide-gray-200">
+                                    {stats?.eventStats?.filter(item => item.entryFee > 0).map((item, idx) => (
                                         <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{item.clubName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-gray-400">{item.title}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r-2 border-gray-400">₹{item.totalCollected}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{item.regCount} students</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-gray-400 uppercase tracking-tighter">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.clubName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r border-gray-200">{item.title}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r border-gray-200">₹{item.totalCollected}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.regCount} students</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-200 uppercase tracking-tighter">
                                                 {item.registrationDeadline 
                                                     ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
                                                     : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
@@ -310,6 +365,11 @@ const AdminDashboard = () => {
                                             </td>
                                         </tr>
                                     ))}
+                                    {(!stats?.eventStats || stats.eventStats.filter(item => item.entryFee > 0).length === 0) && (
+                                        <tr>
+                                            <td colSpan="6" className="px-6 py-12 text-center text-neutral-500 text-sm">No paid events found for payout.</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -319,8 +379,8 @@ const AdminDashboard = () => {
                 {activeTab === 'club-heads' && (
                     <div className="space-y-8">
                         {/* Add New Club Form */}
-                        <div className="bg-white border-2 border-black p-6 rounded-sm shadow-[6px_6px_0px_#000]">
-                            <h3 className="text-xl font-black uppercase tracking-tight mb-4">Add New Club</h3>
+                        <div className="bg-white border-2 border-gray-300 p-6 rounded-sm ">
+                            <h3 className="text-xl font-medium  tracking-wide mb-4">Add New Club</h3>
                             <form onSubmit={handleCreateClub} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <input name="clubName" placeholder="Club Name" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
                                 <input name="facultyName" placeholder="Faculty Coordinator" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
@@ -375,7 +435,7 @@ const AdminDashboard = () => {
                             <select 
                                 value={filters.clubId}
                                 onChange={(e) => setFilters({ ...filters, clubId: e.target.value })}
-                                className="p-2 border-2 border-black rounded-sm text-xs font-bold uppercase"
+                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
                             >
                                 <option value="all">All Clubs</option>
                                 {clubHeads.map(c => <option key={c._id} value={c._id}>{c.clubName}</option>)}
@@ -383,7 +443,7 @@ const AdminDashboard = () => {
                             <select 
                                 value={filters.month}
                                 onChange={(e) => setFilters({ ...filters, month: e.target.value })}
-                                className="p-2 border-2 border-black rounded-sm text-xs font-bold uppercase"
+                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
                             >
                                 <option value="all">All Months</option>
                                 {[...Array(12)].map((_, i) => (
@@ -393,7 +453,7 @@ const AdminDashboard = () => {
                             <select 
                                 value={filters.year}
                                 onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                                className="p-2 border-2 border-black rounded-sm text-xs font-bold uppercase"
+                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
                             >
                                 <option value="all">All Years</option>
                                 {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
@@ -415,28 +475,28 @@ const AdminDashboard = () => {
                         </div>
                         <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y-2 divide-black">
+                                <table className="min-w-full divide-y-2 divide-gray-300">
                                     <thead className="bg-neutral-100">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Event Name</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Organising Club</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event Date</th>
-                                            {role === 'admin' && <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Type</th>}
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-400">Event Name</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Organising Club</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Registrations</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Event Date</th>
+                                            {role === 'admin' && <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Type</th>}
                                             <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Amount Received</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y-2 divide-black">
+                                    <tbody className="divide-y-2 divide-gray-300">
                                         {eventData.map((item, idx) => (
                                             <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.eventName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r-2 border-black">{item.clubName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-black">{item.totalRegistrations}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r-2 border-black uppercase tracking-wide">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-300">{item.eventName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r border-gray-300">{item.clubName}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-300">{item.totalRegistrations}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-300 uppercase tracking-wide">
                                                     {new Date(item.eventDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                                                 </td>
                                                 {role === 'admin' && (
-                                                    <td className="px-6 py-4 whitespace-nowrap border-r-2 border-gray-400">
+                                                    <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                                                         <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 ${
                                                             item.eventType === 'Paid'
                                                                 ? 'bg-orange-50 text-orange-700 border-orange-300'

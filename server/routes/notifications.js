@@ -39,7 +39,14 @@ router.post("/", verifyToken, allowRoles("club"), async (req, res) => {
         message,
       },
       include: {
-        sender: { select: { id: true, name: true, email: true } },
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            club: { select: { clubName: true } },
+          },
+        },
       },
     });
 
@@ -47,7 +54,12 @@ router.post("/", verifyToken, allowRoles("club"), async (req, res) => {
       ...notification,
       _id: notification.id,
       sender: notification.sender
-        ? { ...notification.sender, _id: notification.sender.id }
+        ? {
+            ...notification.sender,
+            _id: notification.sender.id,
+            clubName:
+              notification.sender.club?.clubName || notification.sender.name,
+          }
         : null,
     };
 
@@ -68,7 +80,7 @@ router.post("/", verifyToken, allowRoles("club"), async (req, res) => {
 router.get(
   "/",
   verifyToken,
-  allowRoles("member", "club", "admin"),
+  allowRoles("member", "club", "admin", "facultyCoordinator"),
   async (req, res) => {
     try {
       const { userId } = req.user;
@@ -82,7 +94,13 @@ router.get(
           ],
         },
         include: {
-          sender: { select: { id: true, name: true } },
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              club: { select: { clubName: true } },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -92,7 +110,13 @@ router.get(
           ...notification,
           _id: notification.id,
           sender: notification.sender
-            ? { ...notification.sender, _id: notification.sender.id }
+            ? {
+                ...notification.sender,
+                _id: notification.sender.id,
+                clubName:
+                  notification.sender.club?.clubName ||
+                  notification.sender.name,
+              }
             : null,
         })),
       );
@@ -107,7 +131,14 @@ router.get("/sent", verifyToken, allowRoles("club"), async (req, res) => {
     const notifications = await prisma.notification.findMany({
       where: { senderId: req.user.userId },
       include: {
-        sender: { select: { id: true, name: true, email: true } },
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            club: { select: { clubName: true } },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -117,7 +148,12 @@ router.get("/sent", verifyToken, allowRoles("club"), async (req, res) => {
         ...notification,
         _id: notification.id,
         sender: notification.sender
-          ? { ...notification.sender, _id: notification.sender.id }
+          ? {
+              ...notification.sender,
+              _id: notification.sender.id,
+              clubName:
+                notification.sender.club?.clubName || notification.sender.name,
+            }
           : null,
       })),
     );
@@ -131,7 +167,7 @@ router.get("/sent", verifyToken, allowRoles("club"), async (req, res) => {
 router.put(
   "/read-all",
   verifyToken,
-  allowRoles("member", "club"),
+  allowRoles("member", "club", "admin", "facultyCoordinator"),
   async (req, res) => {
     try {
       const { userId } = req.user;
@@ -167,7 +203,7 @@ router.put(
 router.put(
   "/:id/read",
   verifyToken,
-  allowRoles("member", "club"),
+  allowRoles("member", "club", "admin", "facultyCoordinator"),
   async (req, res) => {
     try {
       const { userId } = req.user;

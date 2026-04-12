@@ -207,7 +207,9 @@ const EditEvent = () => {
 
         const payload = {
             ...formData,
+            entryFee: Number(formData.entryFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
+            registrationDeadline: formData.registrationDeadline ? formData.registrationDeadline : null,
             allowedYears: allYears ? [] : formData.allowedYears,
         };
 
@@ -215,7 +217,7 @@ const EditEvent = () => {
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/club-events/${id}`, payload);
             showNotification('Event updated successfully!', 'success');
-            navigate('/profile');
+            navigate('/my-events');
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to update event', 'error');
         } finally {
@@ -237,7 +239,7 @@ const EditEvent = () => {
     const inputCls =
         'w-full px-4 py-3 border-2 border-neutral-200 rounded-sm focus:border-orange-600 focus:outline-none transition-colors';
     const labelCls =
-        'block text-sm font-bold text-black mb-2';
+        'block text-sm font-bold tracking-wide text-black mb-2';
 
     return (
         <div className="min-h-screen bg-neutral-50 py-8 md:py-12 px-4 md:px-6">
@@ -254,7 +256,7 @@ const EditEvent = () => {
                     <p className="text-neutral-500 mt-2 font-medium">Refine your event details and registration requirements.</p>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-400 rounded-sm p-6 md:p-10 space-y-8">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-300 rounded-sm p-6 md:p-10 space-y-8">
                     
                     {/* Event Title */}
                     <div>
@@ -279,6 +281,14 @@ const EditEvent = () => {
                                 <option key={venue} value={venue}>{venue}</option>
                             ))}
                         </select>
+                    </div>
+
+
+
+                     <div className="space-y-2">
+                        <label className={labelCls}>Event Banner URL <span className="text-orange-600">*</span></label>
+                        <input type="url" name="imageUrl" placeholder="https://example.com/banner.jpg"
+                            className={inputCls + " font-mono text-xs"} value={formData.imageUrl} onChange={handleChange} />
                     </div>
 
                     {/* Date & Time */}
@@ -314,7 +324,7 @@ const EditEvent = () => {
                                         setIsUnlimited(!isUnlimited);
                                         if (!isUnlimited) setFormData({ ...formData, totalSeats: '' });
                                     }} />
-                                <label htmlFor="unlimited-check" className="text-sm font-black uppercase tracking-widest text-neutral-700 cursor-pointer">Unlimited Seats</label>
+                                <label htmlFor="unlimited-check" className="text-sm font-medium uppercase tracking-widest text-neutral-700 cursor-pointer">Unlimited Seats</label>
                             </div>
                             {!isUnlimited && (
                                 <input type="number" name="totalSeats" required min="1" className={inputCls}
@@ -329,19 +339,19 @@ const EditEvent = () => {
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input type="radio" className="w-5 h-5 text-black border-2 border-black focus:ring-0 cursor-pointer"
                                         name="feeType" checked={isFree} onChange={() => { setIsFree(true); setFormData({ ...formData, entryFee: 0 }); }} />
-                                    <span className="text-sm font-black uppercase tracking-widest text-neutral-700 group-hover:text-black">Free</span>
+                                    <span className="text-sm font-medium uppercase tracking-widest text-neutral-700 group-hover:text-black">Free</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input type="radio" className="w-5 h-5 text-black border-2 border-black focus:ring-0 cursor-pointer"
                                         name="feeType" checked={!isFree} onChange={() => setIsFree(false)} />
-                                    <span className="text-sm font-black uppercase tracking-widest text-neutral-700 group-hover:text-black">Paid</span>
+                                    <span className="text-sm font-medium uppercase tracking-widest text-neutral-700 group-hover:text-black">Paid</span>
                                 </label>
                             </div>
                             {!isFree && (
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-neutral-400">₹</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-neutral-400">₹</span>
                                     <input type="number" name="entryFee" min="1" placeholder="Amount"
-                                        className={inputCls + " pl-8 font-black"} value={formData.entryFee} onChange={handleChange} />
+                                        className={inputCls + " pl-8 font-medium"} value={formData.entryFee} onChange={handleChange} />
                                 </div>
                             )}
                         </div>
@@ -400,11 +410,11 @@ const EditEvent = () => {
                                     name="showWinner"
                                     checked={formData.showWinner}
                                     onChange={(e) => setFormData({ ...formData, showWinner: e.target.checked })}
-                                    className="w-6 h-6 mt-1 text-black border-2 border-gray-400 rounded-sm focus:ring-0"
+                                    className="w-6 h-6 mt-1 text-black border-2 border-gray-400 rounded-2xl focus:ring-0"
                                 />
                                 <div>
-                                    <span className="block font-black tracking-widest text-sm text-black">Display Results</span>
-                                    <p className="text-[10px] text-neutral-500 font-bold mt-1">Show winners on event card after completion.</p>
+                                    <span className="block font-medium tracking-widest text-md text-black">Display Results</span>
+                                    <p className="text-[10px] text-neutral-500 font-medium mt-1">Show winners on event card after completion.</p>
                                 </div>
                             </label>
                         </div>
@@ -420,19 +430,15 @@ const EditEvent = () => {
                                     className="w-6 h-6 mt-1 text-black border-2 border-gray-400 rounded-sm focus:ring-0"
                                 />
                                 <div>
-                                    <span className="block font-black tracking-widest text-sm text-black">Digital Certificates</span>
-                                    <p className="text-[10px] text-neutral-500 font-bold  mt-1">Template can be designed anytime before event end.</p>
+                                    <span className="block font-medium tracking-widest text-md text-black">Digital Certificates</span>
+                                    <p className="text-[10px] text-neutral-500 font-medium  mt-1">Template can be designed anytime before event end.</p>
                                 </div>
                             </label>
                         </div>
                     </div>
 
                     {/* Media */}
-                    <div className="space-y-2">
-                        <label className={labelCls}>Event Banner URL</label>
-                        <input type="url" name="imageUrl" placeholder="https://example.com/banner.jpg"
-                            className={inputCls + " font-mono text-xs"} value={formData.imageUrl} onChange={handleChange} />
-                    </div>
+                   
 
                     {/* Required Fields */}
                     <div>

@@ -115,7 +115,7 @@ const EventRegistrations = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
                     <h1 className="text-3xl font-black text-black tracking-tight">{stats?.eventTitle || 'Event Registrations'}</h1>
-                    <p className="text-neutral-500 text-sm mt-1 uppercase tracking-widest font-bold">Manage your event participants</p>
+                    <p className="text-neutral-500 text-sm mt-1 tracking-widest">Manage your event participants</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -125,34 +125,55 @@ const EventRegistrations = () => {
                     >
                         <i className="ri-file-excel-2-line text-base" /> Export Excel
                     </button>
-                    <Link to="/my-events" className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-black text-black font-bold text-xs uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors">
+                    <Link to="/my-events" className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-black font-bold text-xs uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors">
                         <i className="ri-arrow-left-line" /> Back
                     </Link>
                 </div>
             </div>
 
             {/* ── Stats Cards ─────────────────────────────────────────────── */}
-            {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div className="bg-white p-6 border-2 border-black rounded-sm ">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Registered</p>
-                        <p className="text-3xl font-black text-black">{stats.registeredCount}</p>
-                        <p className="text-[11px] text-neutral-500 mt-2">out of {stats.totalSeats} seats</p>
-                    </div>
-                    <div className="bg-white p-6 border-2 border-black rounded-sm ">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Money Collected</p>
-                        <p className="text-3xl font-black text-orange-600">₹{stats.totalCollected ?? stats.totalMoneyCollected ?? 0}</p>
-                        <p className="text-[11px] text-neutral-500 mt-2">from {stats.paidRegistrations} paid entries</p>
-                    </div>
-                    <div className="bg-orange-600 p-6 border-2 border-black rounded-sm  text-white">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Entry Fee</p>
-                        <p className="text-3xl font-black">₹{stats.entryFee}</p>
-                        <p className="text-[11px] opacity-80 mt-2">per student</p>
-                    </div>
-                </div>
-            )}
+          {stats && (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div className="bg-white p-6 border-2 border-gray-300 rounded-sm ">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+        Total Registered
+      </p>
+      <p className="text-3xl font-black text-black">{stats.registeredCount}</p>
+      <p className="text-[11px] text-neutral-500 mt-2">
+        out of {stats.totalSeats} seats
+      </p>
+    </div>
+
+    {stats.entryFee > 0 && (
+      <>
+        <div className="bg-white p-6 border-2 border-gray-300 rounded-sm ">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+            Money Collected
+          </p>
+          <p className="text-3xl font-black text-orange-600">
+            ₹{stats.totalCollected ?? stats.totalMoneyCollected ?? 0}
+          </p>
+          <p className="text-[11px] text-neutral-500 mt-2">
+            from {stats.paidRegistrations} paid entries
+          </p>
+        </div>
+
+        <div className="bg-orange-600 p-6 border-2 border-gray rounded-sm text-white">
+          <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">
+            Entry Fee
+          </p>
+          <p className="text-3xl font-black">₹{stats.entryFee}</p>
+          <p className="text-[11px] opacity-80 mt-2">per student</p>
+        </div>
+      </>
+    )}
+  </div>
+)}
+
 
             {/* ── Settlement Banner ───────────────────────────────────────── */}
+
+               {stats.entryFee > 0 && (
             <div className="bg-yellow-50 border-2 border-yellow-400 p-4 rounded-sm flex gap-4 items-start mb-8">
                 <i className="ri-information-fill text-yellow-600 text-xl" />
                 <div>
@@ -163,6 +184,7 @@ const EventRegistrations = () => {
                     </p>
                 </div>
             </div>
+               )}
 
             {/* ── Search Bar ──────────────────────────────────────────────── */}
             {registrations.length > 0 && (

@@ -375,6 +375,8 @@ const EventDetails = () => {
   // ── Derived button state ─────────────────────────────────────────────────
   const btnConfig = isEnded
     ? { label: showWinners ? 'View Results' : 'Event Ended', cls: 'bg-neutral-800 text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false }
+    : isLive
+    ? { label: 'Event is Live',      cls: 'bg-orange-600 text-white border-orange-600 cursor-not-allowed',       disabled: true  }
     : isDeadlinePassed
     ? { label: 'Deadline Passed',      cls: 'bg-neutral-100 text-neutral-600 cursor-not-allowed border-neutral-200',       disabled: true  }
     : isFull
@@ -457,7 +459,7 @@ const EventDetails = () => {
           <div className="p-8 md:p-12">
 
             {/* Title */}
-            <h1 className="font-black text-[clamp(26px,4vw,42px)] text-black leading-tight tracking-tight mb-8">
+            <h1 className="font-medium text-3xl text-black leading-tight tracking-tight mb-8">
               {title}
             </h1>
 
@@ -488,7 +490,7 @@ const EventDetails = () => {
                   icon: 'ri-group-line',
                   label: 'Seats',
                   value: isUnlimited
-                    ? `${registeredCount} Registered (Unlimited)`
+                    ? "Unlimited"
                     : `${registeredCount} / ${totalSeats} Registered`,
                 },
                 {
@@ -505,8 +507,8 @@ const EventDetails = () => {
                     <i className={meta.icon} />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-0.5">{meta.label}</div>
-                    <div className="text-[15px] font-bold text-black leading-snug">{meta.value}</div>
+                    <div className="text-[10px] font-bold  tracking-widest text-neutral-500 mb-0.5">{meta.label}</div>
+                    <div className="text-[15px] font-medium text-black leading-snug">{meta.value}</div>
                   </div>
                 </div>
               ))}

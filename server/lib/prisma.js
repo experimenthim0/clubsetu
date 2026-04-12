@@ -9,11 +9,15 @@ if (!connectionString) {
 }
 
 // Address the pg library SECURITY WARNING for SSL modes
-if (connectionString.includes('sslmode=require') && !connectionString.includes('uselibpqcompat=true')) {
-  connectionString = connectionString.replace('sslmode=require', 'uselibpqcompat=true&sslmode=require');
-} else if (!connectionString.includes('sslmode=')) {
-  const separator = connectionString.includes('?') ? '&' : '?';
-  connectionString += separator + 'uselibpqcompat=true&sslmode=require';
+const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1");
+
+if (!isLocal) {
+  if (connectionString.includes('sslmode=require') && !connectionString.includes('uselibpqcompat=true')) {
+    connectionString = connectionString.replace('sslmode=require', 'uselibpqcompat=true&sslmode=require');
+  } else if (!connectionString.includes('sslmode=')) {
+    const separator = connectionString.includes('?') ? '&' : '?';
+    connectionString += separator + 'uselibpqcompat=true&sslmode=require';
+  }
 }
 
 const adapter = new PrismaPg({ connectionString });

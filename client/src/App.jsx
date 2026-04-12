@@ -35,7 +35,7 @@ import Contribute from './pages/Contribute';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
-import Changelog from './pages/Changelog';
+
 // import ProtectedRoute from './components/ProtectedRoute';
 import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
@@ -45,6 +45,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
 import Team from './pages/Team';
 import SendNotification from './pages/SendNotification';
+import Notifications from './pages/Notifications';
 
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
@@ -141,9 +142,10 @@ function App() {
             <Route path="/payments" element={<PaymentTracking />} />
             <Route path="/event-guide" element={<EventGuide />} />
             <Route path="/contribute" element={<Contribute />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/faq" element={<FAQ />} />
-            <Route path="/changelog" element={<Changelog />} />
+          
             <Route path="*" element={<NotFound />} />
             <Route path="/about-features" element={<Aboutfeatures />} />
             <Route path="/team" element={<Team />} />

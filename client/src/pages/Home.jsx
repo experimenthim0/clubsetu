@@ -45,7 +45,16 @@ const clubFeatures = [
   { icon: <i className="ri-award-line" />, title: "Club showcase", desc: "Dedicated profile for your past achievements." },
 ];
 
-
+ let user = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser && storedUser !== "undefined") {
+      user = JSON.parse(storedUser);
+    }
+  } catch (err) {
+    console.error("Error parsing user from local storage", err);
+    localStorage.removeItem("user");
+  }
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
   <div className={`flex items-center gap-2 mb-5 ${light ? 'text-orange-600' : 'text-orange-600'}`}>
@@ -131,13 +140,28 @@ const Home = () => {
                 Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
               </p>
               <div className="flex gap-3 flex-wrap">
-                <button to="/events" className='inline-flex items-center gap-2 px-6 py-1.5 bg-black text-white border-2 border-black text-[13px] font-bold tracking-widest rounded-xl hover:bg-orange-600 hover:border-orange-600 transition-all hover:-translate-y-px'>
-                  <i className="ri-calendar-event-line text-lg" /> Browse Events
-                </button>
+               <Link
+  to="/events"
+  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+>
+  <i className="ri-calendar-event-line text-lg mr-2" /> Browse Events
+</Link>
 
-                <button to="/clubs" className='inline-flex items-center gap-2 px-6 py-1.5 bg-white text-black border-2 border-black text-[13px] font-bold tracking-widest rounded-xl hover:bg-yellow-400 hover:border-yellow-400 transition-all hover:-translate-y-px'>
-                  <i className="ri-group-line text-lg" /> Explore Clubs
-                </button>
+<Link
+  to="/clubs"
+  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+>
+  <i className="ri-group-line text-lg mr-2" /> Explore Clubs
+</Link>
+
+{!user && (
+  <Link
+    to="/login"
+    className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+  >
+    <i className="ri-login-box-line text-lg mr-2" /> Login / Signup
+  </Link>
+)}
               </div>
             </div>
           </ScrollReveal>
@@ -413,7 +437,7 @@ const Home = () => {
 </section>
 
       {/* ── FACULTY & TEAM ────────────────────────────────────────────────── */}
-      <section id="team" className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300 scroll-mt-20">
+      <section id="team" className="py-24 bg-[#fefce8]/30 border-b border-neutral-300 scroll-mt-20">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
           <ScrollReveal direction="up">
   <div className="mb-16">

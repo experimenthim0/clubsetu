@@ -114,6 +114,10 @@ const Profile = () => {
         </div>
       )}
 
+{!user.isTwoFactorAuthEnabled && (
+  <p className='text-black mt-4 text-sm '> <i className="ri-error-warning-line mr-1" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Enable it</Link></p>
+)}
+   
       <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Social Profiles</h3>
@@ -165,7 +169,7 @@ const Profile = () => {
       <div className="mt-8">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-sm  hover:bg-gray-300  transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-3xl  hover:bg-gray-300  transition-colors"
         >
           <i className="ri-calendar-event-line" /> View My Events
         </Link>
@@ -176,30 +180,33 @@ const Profile = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-gray-300  transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-gray-300  transition-colors"
         >
           <i className="ri-calendar-event-line" /> My Events
         </Link>
         <Link 
           to="/payments" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 border-2 border-orange-600 text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-700 hover:border-orange-700 transition-colors"
+          className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-3xl"
         >
-          <i className="ri-money-dollar-circle-line" /> Payment Tracking
+          <i className="ri-money-dollar-circle-line mr-2" /> Payment Tracking
         </Link>
-        <Link 
+        {/* <Link 
           to="/create" 
           className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-black hover:text-white transition-colors"
         >
           <i className="ri-add-line" /> Create Event
-        </Link>
+        </Link> */}
         <Link 
           to={`/club/edit/${user.clubId || user.id}`} 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:translate-y-[-2px] transition-all hover:cursor-pointer"
+          className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-3xl"
         >
-          <i className="ri-community-line" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
+          <i className="ri-community-line mr-2" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
         </Link>
       </div>
+
+
     )}
+
   </div>
   );
 };

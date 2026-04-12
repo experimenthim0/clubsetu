@@ -1,6 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+
+const CAPTCHA_QUESTIONS = [
+  { text: "If pizza has 8 slices and you eat all, how many slices are left?", answer: "0" },
+ 
+  { text: "How many fingers do you have on one hand?", answer: "5" },
+  { text: "If your phone battery is 100% and drops to 90%, how much battery is used?", answer: "10" },
+  { text: "If you eat 2 burgers and order 1 more, how many burgers total?", answer: "3" },
+  { text: "If you have 1 brain and use it, how many brains do you have?", answer: "1" },
+  { text: "If WiFi is off, can you browse internet? (yes/no)", answer: "no" },
+  { text: "If today is Sunday, is tomorrow Monday? (yes/no)", answer: "yes" },
+   { text: "Is BH8 Hostel in NITJ? (yes/no)", answer: "no" },
+  { text: "How many wheels does a normal bike have?", answer: "2" },
+  { text: "If you close your eyes, can you see? (yes/no)", answer: "no" },
+  { text: "If you drink water, are you hydrated? (yes/no)", answer: "yes" },
+  { text: "If 2 + 2 = 4, are you human? (yes/no 😄)", answer: "yes" },
+ 
+  { text: "Is Jaipur in Rajasthan? (yes/no)", answer: "yes" },
+  { text: "Total digits: 148 ", answer: "3" },
+  {text:"Total 4 in 485464",answer:"3"},
+  {text: "Is Yadav Catering in NITJ? (yes/no)",answer:"yes"}
+];
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +34,13 @@ const Login = () => {
   const [showOTP, setShowOTP] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [captcha, setCaptcha] = useState({ text: '', answer: '' });
+  const [captchaInput, setCaptchaInput] = useState('');
+
+  useEffect(() => {
+    const randomQ = CAPTCHA_QUESTIONS[Math.floor(Math.random() * CAPTCHA_QUESTIONS.length)];
+    setCaptcha(randomQ);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,6 +48,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (captchaInput.trim().toLowerCase() !== captcha.answer.toLowerCase()) {
+      setError('Incorrect human verification answer. Please try again.');
+      const randomQ = CAPTCHA_QUESTIONS[Math.floor(Math.random() * CAPTCHA_QUESTIONS.length)];
+      setCaptcha(randomQ);
+      setCaptchaInput('');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
     try {
@@ -92,7 +128,7 @@ const Login = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -104,19 +140,36 @@ const Login = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
               <div className="flex justify-end mt-1">
-                <Link to="/forgot-password" size="sm" className="text-xs text-orange-600 hover:text-orange-700 font-bold uppercase tracking-tight">
+                <Link to="/forgot-password" size="sm" className="text-sm text-orange-600 hover:underline font-medium tracking-tight">
                   Forgot password?
                 </Link>
               </div>
             </div>
 
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Human Verification
+              </label>
+              <p className="text-sm text-gray-600 font-medium italic mb-2">
+                {captcha.text}
+              </p>
+              <input
+                type="text"
+                required
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                placeholder="Your answer"
+                className="w-full px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2 px-4 rounded-lg text-white transition shadow-md ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary'}`}
+              className={`w-full py-2 px-4 rounded-lg text-white transition shadow-md ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary/80 cursor-pointer'}`}
             >
               {isLoading ? 'Signing In...' : 'Sign In'}
             </button>

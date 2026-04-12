@@ -129,7 +129,10 @@ router.post("/register/student", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: { club: { select: { clubName: true } } }
+    });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -169,6 +172,9 @@ router.post("/login", async (req, res) => {
 
     const token = generateToken(user, user.role);
     const userObj = sanitizeUser(user);
+    if (user.club) {
+      userObj.clubName = user.club.clubName;
+    }
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -197,6 +203,7 @@ router.post("/verify-2fa", async (req, res) => {
         otp,
         otpExpire: { gt: new Date() },
       },
+      include: { club: { select: { clubName: true } } }
     });
 
     if (!user) {
@@ -211,6 +218,9 @@ router.post("/verify-2fa", async (req, res) => {
     const clearedUser = { ...user, otp: null, otpExpire: null };
     const token = generateToken(clearedUser, user.role);
     const userObj = sanitizeUser(clearedUser);
+    if (user.club) {
+      userObj.clubName = user.club.clubName;
+    }
 
     res.cookie("token", token, {
       httpOnly: true,

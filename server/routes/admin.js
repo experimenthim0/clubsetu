@@ -50,7 +50,6 @@ router.get(
       const [events, registrations, totalStudents, totalClubs, totalEventsActive, totalEventsAll] =
         await Promise.all([
           prisma.event.findMany({
-            where: { entryFee: { gt: 0 } },
             include: {
               club: { select: { id: true, clubName: true } },
               createdBy: { select: { id: true, name: true, clubId: true } },
@@ -77,6 +76,8 @@ router.get(
           title: event.title,
           clubName: event.club?.clubName || "Unknown",
           creatorId: event.createdBy?.id || null,
+          clubHeadId: event.createdBy?.id || null,
+          registeredCount: event.registeredCount || 0,
           totalCollected: eventRegs.reduce((sum, reg) => sum + (reg.amountPaid || 0), 0),
           regCount: eventRegs.length,
           entryFee: event.entryFee,

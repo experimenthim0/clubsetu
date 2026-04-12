@@ -22,7 +22,7 @@ const HomeFooter = () => {
   return (
     <footer className="bg-[#fefce8]/30 text-black">
       {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x-2 border-gray-300">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x border-gray-300">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
 
           {/* Brand column */}

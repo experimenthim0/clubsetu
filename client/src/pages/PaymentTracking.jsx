@@ -75,8 +75,8 @@ const PaymentTracking = () => {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-2 text-orange-600">
-            <span className="block w-6 h-0.5 bg-orange-600" />
-            <span className="text-[11px] font-bold uppercase tracking-widest">{user.clubName}</span>
+            
+            <span className="text-[14px] font-bold uppercase tracking-widest">{user.name}</span>
           </div>
           <h1 className="text-3xl font-black text-black tracking-tight">
             Payment <span className="text-orange-600">Tracking</span>
@@ -86,22 +86,22 @@ const PaymentTracking = () => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white border-2 border-black rounded-sm p-6 shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Revenue Collected</p>
             <p className="text-4xl font-black text-orange-600">₹{totalRevenue}</p>
           </div>
-          <div className="bg-white border-2 border-black rounded-sm p-6 shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Paid Registrations</p>
             <p className="text-4xl font-black text-black">{totalPaidRegistrations}</p>
           </div>
-          <div className="bg-white border-2 border-black rounded-sm p-6 shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Payouts Received</p>
             <p className="text-4xl font-black text-green-600">{payoutsCompleted} / {events.length}</p>
           </div>
         </div>
 
         {events.length === 0 ? (
-          <div className="bg-white border-2 border-black rounded-sm p-12 text-center shadow-[4px_4px_0px_#000]">
+          <div className="bg-white border-2 border-gray-300 rounded-sm p-12 text-center ">
             <i className="ri-money-dollar-circle-line text-5xl text-neutral-300" />
             <p className="text-lg font-bold text-neutral-400 mt-4">No paid events yet</p>
             <p className="text-sm text-neutral-400 mt-1">Create an event with an entry fee to start tracking payments.</p>
@@ -109,7 +109,7 @@ const PaymentTracking = () => {
         ) : (
           <>
             {/* Events Table */}
-            <div className="bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#000] overflow-hidden mb-10">
+            <div className="bg-white border-2 border-gray-300 rounded-sm  overflow-hidden mb-10">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y-2 divide-black">
                   <thead className="bg-neutral-100">

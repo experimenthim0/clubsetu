@@ -20,14 +20,18 @@ const eventSchema = z.object({
     venue: z.string().optional(),
     startTime: z.coerce.date(),
     endTime: z.coerce.date(),
-    totalSeats: z.number().int().optional(),
-    entryFee: z.number().optional(),
+    totalSeats: z.coerce.number().int().optional(),
+    entryFee: z.coerce.number().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
     requiredFields: z.array(z.string()).optional(),
     customFields: z.array(z.any()).optional(),
     allowedPrograms: z.array(z.string()).optional(),
     allowedYears: z.array(z.string()).optional(),
-    registrationDeadline: z.coerce.date().optional().nullable()
+    registrationDeadline: z.coerce.date().optional().nullable(),
+    winners: z.array(z.any()).optional(),
+    showWinner: z.boolean().optional(),
+    provideCertificate: z.boolean().optional(),
+    certificateTemplate: z.any().optional(),
   }).passthrough(),
   query: z.object({}).passthrough().optional(),
   params: z.object({}).passthrough().optional(),
@@ -502,7 +506,11 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
     if (data.title && data.title !== event.title) data.slug = slugify(data.title);
     if (data.startTime) data.startTime = new Date(data.startTime);
     if (data.endTime) data.endTime = new Date(data.endTime);
-    if (data.registrationDeadline) data.registrationDeadline = new Date(data.registrationDeadline);
+    if (data.registrationDeadline !== undefined) {
+      data.registrationDeadline = data.registrationDeadline ? new Date(data.registrationDeadline) : null;
+    }
+    if (data.entryFee !== undefined) data.entryFee = Number(data.entryFee || 0);
+    if (data.totalSeats !== undefined) data.totalSeats = Number(data.totalSeats || 0);
 
     const updatedEvent = await prisma.event.update({
       where: { id: req.params.id },

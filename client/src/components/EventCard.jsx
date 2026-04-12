@@ -143,7 +143,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         <div className="flex items-center gap-2 text-orange-600">
                            <i className="ri-hourglass-fill text-sm" />
                             <span className="font-bold text-[11px] tracking-wide">
-                                {isEnded ? 'Event Ended' : `Ends: ${new Date(registrationDeadline || startTime).toLocaleString('en-US', {
+                                {isEnded ? 'Event Ended' : `Deadline: ${new Date(registrationDeadline || startTime).toLocaleString('en-US', {
                                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                                 })}`}
                             </span>
@@ -172,15 +172,15 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-2 rounded-sm text-[11px] font-bold uppercase tracking-widest border-2 transition-all ${
-                                isEnded
+                            className={`flex-1 block text-center py-1.5 rounded-sm text-[13px] font-medium tracking-widest border-2 transition-all ${
+                                (isEnded || isLive)
                                     ? 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                                     : isFull
                                         ? 'bg-yellow-400 text-black border-black hover:bg-yellow-300'
                                         : 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                             }`}
                         >
-                            {isEnded ? 'View' : isFull ? 'Waitlist' : 'Register'}
+                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register'}
                         </Link>
                     )}
                 </div>

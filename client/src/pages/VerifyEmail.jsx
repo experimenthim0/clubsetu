@@ -33,7 +33,7 @@ const VerifyEmail = () => {
                 <div className="text-center">
                     {status === 'loading' && (
                         <div className="flex flex-col items-center">
-                            <Loader className="h-16 w-16 text-indigo-600 animate-spin" />
+                            <Loader className="h-16 w-16 text-orange-600 animate-spin" />
                             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Verifying...</h2>
                             <p className="mt-2 text-sm text-gray-600">Please wait while we verify your email.</p>
                         </div>
@@ -44,6 +44,7 @@ const VerifyEmail = () => {
                             <CheckCircle className="h-16 w-16 text-green-500" />
                             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Verified!</h2>
                             <p className="mt-2 text-sm text-gray-600">{message}</p>
+                            <p className="mt-2 text-sm text-gray-600">Ab pta lga ki aap NITJian ho</p>
                             <div className="mt-6">
                                 <Link
                                     to="/login"
