@@ -12,6 +12,31 @@ import { createObjectId } from "../utils/objectId.js";
 const router = express.Router();
 const ALLOWED_PROGRAMS = ["BTECH", "MTECH", "OTHER"];
 
+// ─── Helper: derive student role & clubId from ClubMembership ────────────────
+
+async function getStudentRoleAndClub(studentId) {
+  const membership = await prisma.clubMembership.findFirst({
+    where: { userId: studentId, role: "clubHead" },
+    select: { clubId: true },
+  });
+  return {
+    role: membership ? "club" : "member",
+    clubId: membership?.clubId ?? null,
+  };
+}
+
+// ─── Helper: derive facultyCoordinator clubId ────────────────────────────────
+
+async function getAdminClubId(adminId) {
+  const club = await prisma.club.findFirst({
+    where: { facultyCoordinatorId: adminId },
+    select: { id: true },
+  });
+  return club?.id ?? null;
+}
+
+// ─── STUDENT REGISTRATION ─────────────────────────────────────────────────────
+
 router.post("/register/student", async (req, res) => {
   try {
     const { name, rollNo, branch, year, program, email, password } = req.body;
@@ -24,9 +49,7 @@ router.post("/register/student", async (req, res) => {
     }
 
     if (!name || name.length < 3) {
-      return res.status(400).json({
-        message: "Name must be at least 3 characters long.",
-      });
+      return res.status(400).json({ message: "Name must be at least 3 characters long." });
     }
 
     if (!ALLOWED_PROGRAMS.includes(program)) {
@@ -35,33 +58,28 @@ router.post("/register/student", async (req, res) => {
 
     if (program !== "OTHER" && (!rollNo || !branch || !year)) {
       return res.status(400).json({
-        message:
-          "Roll number, branch, and year are required for BTECH and MTECH registrations.",
+        message: "Roll number, branch, and year are required for BTECH and MTECH registrations.",
       });
     }
 
     const orFilters = [{ email }];
     if (rollNo) orFilters.push({ rollNo });
 
-    const existingUser = await prisma.user.findFirst({
-      where: { OR: orFilters },
-    });
-
+    const existingUser = await prisma.studentUser.findFirst({ where: { OR: orFilters } });
     if (existingUser) {
       return res.status(409).json({
         message: "User already exists with this email or roll number.",
       });
     }
 
-    const isDevMode = process.env.NODE_ENV !== "production" && process.env.SKIP_VERIFICATION === "true";
-    const verificationToken = isDevMode
-      ? null
-      : crypto.randomBytes(20).toString("hex");
+    const isDevMode =
+      process.env.NODE_ENV !== "production" && process.env.SKIP_VERIFICATION === "true";
+    const verificationToken = isDevMode ? null : crypto.randomBytes(20).toString("hex");
     const verificationTokenExpire = isDevMode
       ? null
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.studentUser.create({
       data: {
         id: createObjectId(),
         name: name.toUpperCase(),
@@ -71,7 +89,6 @@ router.post("/register/student", async (req, res) => {
         program,
         email,
         password: await bcrypt.hash(password, 10),
-        role: "member",
         isVerified: isDevMode,
         verificationToken,
         verificationTokenExpire,
@@ -81,68 +98,42 @@ router.post("/register/student", async (req, res) => {
     if (!isDevMode) {
       const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
-       <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
-  
-  <h1 style="color: #FF4400; text-align: center;">
-    Welcome to <span style="color:#000;">Club</span>Setu!
-  </h1>
-
-  <p style="font-size: 16px; text-align: center;">
-    Hi ${name}, <br><br>
-    Thank you for signing up. To complete your registration, please verify your email address.
-  </p>
-
-  <div style="text-align: center; margin: 30px 0;">
-    <a href="${verifyUrl}" 
-       style="background-color: #FF4400; color: white; padding: 12px 24px; 
-              text-decoration: none; border-radius: 5px; font-size: 16px; 
-              display: inline-block;">
-      Verify My Account
-    </a>
-  </div>
-
-  <p style="font-size: 14px; text-align: center; color: #777;">
-    This link will expire in 24 hours for security reasons.
-  </p>
-
-  <p style="font-size: 14px; text-align: center; color: #777;">
-    If the button doesn’t work, copy and paste this link into your browser:<br>
-    <a href="${verifyUrl}" style="color: #FF7518;">${verifyUrl}</a>
-  </p>
-
-  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-  <p style="font-size: 12px; text-align: center; color: #999;">
-    If you didn’t create an account on ClubSetu, you can safely ignore this email.
-  </p>
-
-  <p style="font-size: 12px; text-align: center; color: #999;">
-    This is an automated message, please do not reply.
-  </p>
-
-</div>
-      `;
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
+          <h1 style="color: #FF4400; text-align: center;">Welcome to <span style="color:#000;">Club</span>Setu!</h1>
+          <p style="font-size: 16px; text-align: center;">
+            Hi ${name},<br><br>
+            Thank you for signing up. To complete your registration, please verify your email address.
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verifyUrl}" style="background-color: #FF4400; color: white; padding: 12px 24px;
+               text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
+              Verify My Account
+            </a>
+          </div>
+          <p style="font-size: 14px; text-align: center; color: #777;">This link will expire in 24 hours.</p>
+          <p style="font-size: 14px; text-align: center; color: #777;">
+            If the button doesn't work, copy and paste this link:<br>
+            <a href="${verifyUrl}" style="color: #FF7518;">${verifyUrl}</a>
+          </p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="font-size: 12px; text-align: center; color: #999;">
+            If you didn't create an account on ClubSetu, you can safely ignore this email.
+          </p>
+        </div>`;
 
       try {
-        await sendEmail({
-          email: newUser.email,
-          subject: "Account Verification",
-          message,
-        });
-
+        await sendEmail({ email: newUser.email, subject: "Account Verification", message });
         return res.status(201).json({
-          message:
-            "Registration successful. Please check your email to verify your account.",
+          message: "Registration successful. Please check your email to verify your account.",
         });
       } catch {
-        await prisma.user.delete({ where: { id: newUser.id } });
-        return res.status(500).json({
-          message: "Email could not be sent. Please try again.",
-        });
+        await prisma.studentUser.delete({ where: { id: newUser.id } });
+        return res.status(500).json({ message: "Email could not be sent. Please try again." });
       }
     }
 
-    const token = generateToken(newUser, "member");
+    const { role, clubId } = await getStudentRoleAndClub(newUser.id);
+    const token = generateToken(newUser, role, "student", clubId);
     const userObj = sanitizeUser(newUser);
 
     res.cookie("token", token, {
@@ -152,108 +143,62 @@ router.post("/register/student", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(201).json({
-      message: "Registered successfully",
-      user: userObj,
-      role: "member",
-      token,
-    });
+    res.status(201).json({ message: "Registered successfully", user: userObj, role, token });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-router.post("/login", async (req, res) => {
+// ─── STUDENT LOGIN ─────────────────────────────────────────────────────────────
+// POST /api/auth/login/student
+// Authenticates college students and club heads (StudentUser table)
+
+router.post("/login/student", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ 
-      where: { email },
-      include: { club: { select: { clubName: true } } }
-    });
 
-    if (!user) {
+    const student = await prisma.studentUser.findUnique({ where: { email } });
+
+    if (!student) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!user.isVerified) {
+    if (!student.isVerified) {
       return res.status(401).json({ message: "Please verify your email to login." });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const sensitiveRoles = ["admin", "facultyCoordinator", "club"];
-    if (user.isTwoStepEnabled && sensitiveRoles.includes(user.role)) {
+    const { role, clubId } = await getStudentRoleAndClub(student.id);
+
+    // 2FA for club head accounts
+    if (student.isTwoStepEnabled && role === "club") {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpire = new Date(Date.now() + 5 * 60 * 1000);
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { otp, otpExpire },
-      });
+      await prisma.studentUser.update({ where: { id: student.id }, data: { otp, otpExpire } });
 
       await sendEmail({
-        email: user.email,
+        email: student.email,
         subject: "Login Verification Code",
-        message: `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; text-align: center;">
-
-  <!-- Brand -->
-  <h1 style="color: #FF4400;">
-    <span style="color:#000;">Club</span>Setu
-  </h1>
-
-  <h2>Your Verification Code</h2>
-
-  <p style="font-size: 16px;">
-    Use the following OTP to login to your ClubSetu account:
-  </p>
-
-  <!-- OTP Box -->
-  <div style="margin: 30px 0;">
-    <span style="font-size: 28px; letter-spacing: 6px; font-weight: bold; background: #f4f4f4; padding: 10px 20px; border-radius: 8px; display: inline-block;">
-      ${otp}
-    </span>
-  </div>
-
-  <p style="font-size: 14px; color: #777;">
-    This OTP will expire in <strong>5 minutes</strong>.
-  </p>
-
-  <p style="font-size: 14px; color: #777;">
-    Do not share this code with anyone.
-  </p>
-
-  <p style="font-size: 14px; color: #777;">
-    If you didn’t request this, please ignore this email.
-  </p>
-
-  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-  <p style="font-size: 12px; color: #999;">
-    © 2026 ClubSetu. All rights reserved.
-  </p>
-
-  <p style="font-size: 12px; color: #999;">
-    This is an automated message, please do not reply.
-  </p>
-
-</div>`,
+        message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
+          <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu</h1>
+          <h2>Your Verification Code</h2>
+          <p>Use the following OTP to login:</p>
+          <div style="margin:30px 0">
+            <span style="font-size:28px;letter-spacing:6px;font-weight:bold;background:#f4f4f4;padding:10px 20px;border-radius:8px;display:inline-block">${otp}</span>
+          </div>
+          <p style="color:#777">Expires in <strong>5 minutes</strong>. Do not share this code.</p>
+        </div>`,
       });
 
-      return res.json({
-        needs2FA: true,
-        email: user.email,
-        message: "Verification code sent to your email.",
-      });
+      return res.json({ needs2FA: true, email: student.email, message: "Verification code sent to your email." });
     }
 
-    const token = generateToken(user, user.role);
-    const userObj = sanitizeUser(user);
-    if (user.club) {
-      userObj.clubName = user.club.clubName;
-    }
+    const token = generateToken(student, role, "student", clubId);
+    const userObj = sanitizeUser(student);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -262,66 +207,228 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.json({
-      message: "Login successful",
-      user: userObj,
-      role: user.role,
-      token,
-    });
+    return res.json({ message: "Login successful", user: userObj, role, userType: "student", token });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
+// ─── ADMIN LOGIN ───────────────────────────────────────────────────────────────
+// POST /api/auth/login/admin
+// Authenticates platform admins, faculty coordinators, and payment admins (AdminRole table)
+
+router.post("/login/admin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const admin = await prisma.adminRole.findUnique({ where: { email } });
+
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    // 2FA for admin accounts
+    if (admin.isTwoStepEnabled) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpire = new Date(Date.now() + 5 * 60 * 1000);
+      await prisma.adminRole.update({ where: { id: admin.id }, data: { otp, otpExpire } });
+
+      await sendEmail({
+        email: admin.email,
+        subject: "Admin Login Verification Code",
+        message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
+          <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu — Admin</h1>
+          <h2>Your Verification Code</h2>
+          <p>A login was requested for the <strong>${admin.role}</strong> account.</p>
+          <div style="margin:30px 0">
+            <span style="font-size:28px;letter-spacing:6px;font-weight:bold;background:#f4f4f4;padding:10px 20px;border-radius:8px;display:inline-block">${otp}</span>
+          </div>
+          <p style="color:#777">Expires in <strong>5 minutes</strong>. Do not share this code.</p>
+        </div>`,
+      });
+
+      return res.json({ needs2FA: true, email: admin.email, message: "Verification code sent to your email." });
+    }
+
+    const clubId = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+    const token = generateToken(admin, admin.role, "admin", clubId);
+    const userObj = sanitizeUser(admin);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({ message: "Admin login successful", user: userObj, role: admin.role, userType: "admin", token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── EXTERNAL USER REGISTRATION & LOGIN ───────────────────────────────────────
+// POST /api/auth/register/external  — find-or-create ExternalUser, send OTP
+// POST /api/auth/login/external     — verify OTP, return token
+
+router.post("/register/external", async (req, res) => {
+  try {
+    const { name, email, phone, college_name } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ message: "Name and email are required." });
+    }
+
+    let externalUser = await prisma.externalUser.findUnique({ where: { email } });
+
+    if (!externalUser) {
+      externalUser = await prisma.externalUser.create({
+        data: {
+          id: createObjectId(),
+          name,
+          email,
+          phone: phone || null,
+          collegeName: college_name || null,
+        },
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+    await prisma.externalUser.update({ where: { id: externalUser.id }, data: { otp, otpExpire } });
+
+    await sendEmail({
+      email,
+      subject: "Your ClubSetu Event Access Code",
+      message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
+        <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu</h1>
+        <h2>Event Access Code</h2>
+        <p>Hi ${name}, use this code to confirm your registration:</p>
+        <div style="margin:30px 0">
+          <span style="font-size:28px;letter-spacing:6px;font-weight:bold;background:#f4f4f4;padding:10px 20px;border-radius:8px;display:inline-block">${otp}</span>
+        </div>
+        <p style="color:#777">Valid for <strong>10 minutes</strong>.</p>
+      </div>`,
+    });
+
+    res.json({ message: "Access code sent to your email.", email });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/login/external", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required." });
+    }
+
+    const externalUser = await prisma.externalUser.findFirst({
+      where: { email, otp, otpExpire: { gt: new Date() } },
+    });
+
+    if (!externalUser) {
+      return res.status(401).json({ message: "Invalid or expired access code." });
+    }
+
+    await prisma.externalUser.update({
+      where: { id: externalUser.id },
+      data: { otp: null, otpExpire: null },
+    });
+
+    const token = generateToken(externalUser, "external", "external", null);
+    const userObj = sanitizeUser(externalUser);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({ message: "Login successful", user: userObj, role: "external", userType: "external", token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── 2FA VERIFICATION ─────────────────────────────────────────────────────────
+// Checks StudentUser first, then AdminRole
 
 router.post("/verify-2fa", async (req, res) => {
   try {
     const { email, otp } = req.body;
-    const user = await prisma.user.findFirst({
-      where: {
-        email,
-        otp,
-        otpExpire: { gt: new Date() },
-      },
-      include: { club: { select: { clubName: true } } }
+
+    // Try StudentUser
+    const student = await prisma.studentUser.findFirst({
+      where: { email, otp, otpExpire: { gt: new Date() } },
     });
 
-    if (!user) {
-      return res.status(401).json({ message: "Invalid or expired OTP." });
+    if (student) {
+      await prisma.studentUser.update({
+        where: { id: student.id },
+        data: { otp: null, otpExpire: null },
+      });
+
+      const { role, clubId } = await getStudentRoleAndClub(student.id);
+      const token = generateToken(student, role, "student", clubId);
+      const userObj = sanitizeUser(student);
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.json({ message: "Verification successful", user: userObj, role, token });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { otp: null, otpExpire: null },
+    // Try AdminRole
+    const admin = await prisma.adminRole.findFirst({
+      where: { email, otp, otpExpire: { gt: new Date() } },
     });
 
-    const clearedUser = { ...user, otp: null, otpExpire: null };
-    const token = generateToken(clearedUser, user.role);
-    const userObj = sanitizeUser(clearedUser);
-    if (user.club) {
-      userObj.clubName = user.club.clubName;
+    if (admin) {
+      await prisma.adminRole.update({
+        where: { id: admin.id },
+        data: { otp: null, otpExpire: null },
+      });
+
+      const clubId = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+      const token = generateToken(admin, admin.role, "admin", clubId);
+      const userObj = sanitizeUser(admin);
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.json({ message: "Verification successful", user: userObj, role: admin.role, token });
     }
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.json({
-      message: "Verification successful",
-      user: userObj,
-      role: user.role,
-      token,
-    });
+    return res.status(401).json({ message: "Invalid or expired OTP." });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// ─── EMAIL VERIFICATION ────────────────────────────────────────────────────────
+// Only students verify email; admins are pre-verified, externals use OTP
+
 router.get("/verify-email/:token", async (req, res) => {
   try {
-    const user = await prisma.user.findFirst({
+    const user = await prisma.studentUser.findFirst({
       where: {
         verificationToken: req.params.token,
         verificationTokenExpire: { gt: new Date() },
@@ -332,120 +439,86 @@ router.get("/verify-email/:token", async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
-    await prisma.user.update({
+    await prisma.studentUser.update({
       where: { id: user.id },
-      data: {
-        isVerified: true,
-        verificationToken: null,
-        verificationTokenExpire: null,
-      },
+      data: { isVerified: true, verificationToken: null, verificationTokenExpire: null },
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(200).json({ success: true, message: "Email verified successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
+
+// ─── FORGOT PASSWORD ───────────────────────────────────────────────────────────
+// Checks StudentUser first, then AdminRole
 
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const clientUrl = getClientUrl(req.headers.origin);
+
+    const student = await prisma.studentUser.findUnique({ where: { email } });
+    const admin = !student ? await prisma.adminRole.findUnique({ where: { email } }) : null;
+    const user = student || admin;
 
     if (!user) {
-      return res.json({
-        message: "If an account exists, a reset link has been sent.",
-      });
+      return res.json({ message: "If an account exists, a reset link has been sent." });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000);
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpire: new Date(Date.now() + 30 * 60 * 1000),
-      },
-    });
+    if (student) {
+      await prisma.studentUser.update({
+        where: { id: student.id },
+        data: { resetPasswordToken: hashedToken, resetPasswordExpire },
+      });
+    } else {
+      await prisma.adminRole.update({
+        where: { id: admin.id },
+        data: { resetPasswordToken: hashedToken, resetPasswordExpire },
+      });
+    }
 
-    const resetUrl = `${getClientUrl(req.headers.origin)}/reset-password/${resetToken}`;
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
     const message = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
-
-  <!-- Brand Header -->
-  <h1 style="color: #FF4400; text-align: center;">
-    <span style="color:#000;">Club</span>Setu
-  </h1>
-
-  <h2 style="text-align: center;">Reset Your Password</h2>
-
-  <p style="font-size: 16px; text-align: center;">
-    We received a request to reset your ClubSetu account password.
-  </p>
-
-  <p style="font-size: 16px; text-align: center;">
-    Click the button below to set a new password:
-  </p>
-
-  <!-- Button -->
-  <div style="text-align: center; margin: 30px 0;">
-    <a href="${resetUrl}" 
-       style="background-color: #FF4400; color: white; padding: 12px 24px; 
-              text-decoration: none; border-radius: 5px; font-size: 16px; 
-              display: inline-block;">
-      Reset Password
-    </a>
-  </div>
-
-  <!-- Security Info -->
-  <p style="font-size: 14px; text-align: center; color: #777;">
-    This link will expire in 15 minutes for security reasons.
-  </p>
-
-  <p style="font-size: 14px; text-align: center; color: #777;">
-    If you didn’t request this, please ignore this email or secure your account.
-  </p>
-
-  <!-- Fallback -->
-  <p style="font-size: 14px; text-align: center; color: #777;">
-    If the button doesn’t work, copy and paste this link into your browser:<br>
-    <a href="${resetUrl}" style="color: #FF7518;">${resetUrl}</a>
-  </p>
-
-  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-  <!-- Footer -->
-  <p style="font-size: 12px; text-align: center; color: #999;">
-    © 2026 ClubSetu. All rights reserved.
-  </p>
-
-  <p style="font-size: 12px; text-align: center; color: #999;">
-    This is an automated message, please do not reply.
-  </p>
-
-</div>`;
+      <h1 style="color: #FF4400; text-align: center;"><span style="color:#000;">Club</span>Setu</h1>
+      <h2 style="text-align: center;">Reset Your Password</h2>
+      <p style="font-size: 16px; text-align: center;">
+        We received a request to reset your ClubSetu account password.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="background-color: #FF4400; color: white; padding: 12px 24px;
+           text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
+          Reset Password
+        </a>
+      </div>
+      <p style="font-size: 14px; text-align: center; color: #777;">This link will expire in 30 minutes.</p>
+      <p style="font-size: 14px; text-align: center; color: #777;">
+        If the button doesn't work:<br>
+        <a href="${resetUrl}" style="color: #FF7518;">${resetUrl}</a>
+      </p>
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+      <p style="font-size: 12px; text-align: center; color: #999;">© 2026 ClubSetu. All rights reserved.</p>
+    </div>`;
 
     try {
-      await sendEmail({
-        email: user.email,
-        subject: "Password Reset Request",
-        message,
-      });
+      await sendEmail({ email: user.email, subject: "Password Reset Request", message });
       res.json({ message: "Reset link sent." });
     } catch {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          resetPasswordToken: null,
-          resetPasswordExpire: null,
-        },
-      });
+      if (student) {
+        await prisma.studentUser.update({
+          where: { id: student.id },
+          data: { resetPasswordToken: null, resetPasswordExpire: null },
+        });
+      } else {
+        await prisma.adminRole.update({
+          where: { id: admin.id },
+          data: { resetPasswordToken: null, resetPasswordExpire: null },
+        });
+      }
       return res.status(500).json({ message: "Email could not be sent." });
     }
   } catch (err) {
@@ -453,54 +526,66 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
+// ─── RESET PASSWORD ────────────────────────────────────────────────────────────
+
 router.post("/reset-password/:token", async (req, res) => {
   try {
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
     const { newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpire: { gt: new Date() },
-      },
+    // Try StudentUser
+    const student = await prisma.studentUser.findFirst({
+      where: { resetPasswordToken: hashedToken, resetPasswordExpire: { gt: new Date() } },
     });
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+    if (student) {
+      await prisma.studentUser.update({
+        where: { id: student.id },
+        data: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpire: null },
+      });
+      return res.json({ message: "Password reset successful." });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: await bcrypt.hash(newPassword, 10),
-        resetPasswordToken: null,
-        resetPasswordExpire: null,
-      },
+    // Try AdminRole
+    const admin = await prisma.adminRole.findFirst({
+      where: { resetPasswordToken: hashedToken, resetPasswordExpire: { gt: new Date() } },
     });
 
-    res.json({ message: "Password reset successful." });
+    if (admin) {
+      await prisma.adminRole.update({
+        where: { id: admin.id },
+        data: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpire: null },
+      });
+      return res.json({ message: "Password reset successful." });
+    }
+
+    return res.status(400).json({ message: "Invalid or expired token" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// ─── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+
 router.post("/change-password", verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const { userId } = req.user;
+    const { userId, userType } = req.user;
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    let user;
+    if (userType === "admin") {
+      user = await prisma.adminRole.findUnique({ where: { id: userId } });
+    } else {
+      user = await prisma.studentUser.findUnique({ where: { id: userId } });
+    }
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     if (!checkPasswordRateLimit(user)) {
-      return res.status(429).json({
-        message: "Daily password change limit exceeded. Try again tomorrow.",
-      });
+      return res.status(429).json({ message: "Daily password change limit exceeded. Try again tomorrow." });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -508,16 +593,90 @@ router.post("/change-password", verifyToken, async (req, res) => {
       return res.status(401).json({ message: "Current password is incorrect" });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: await bcrypt.hash(newPassword, 10),
-        passwordChangeCount: user.passwordChangeCount + 1,
-        lastPasswordChangeDate: new Date(),
-      },
-    });
+    const data = {
+      password: await bcrypt.hash(newPassword, 10),
+      passwordChangeCount: user.passwordChangeCount + 1,
+      lastPasswordChangeDate: new Date(),
+    };
+
+    if (userType === "admin") {
+      await prisma.adminRole.update({ where: { id: userId }, data });
+    } else {
+      await prisma.studentUser.update({ where: { id: userId }, data });
+    }
 
     res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── DEPRECATED: backward-compatibility login ─────────────────────────────────
+// Tries StudentUser first, then AdminRole. Remove once frontend uses typed endpoints.
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Try StudentUser
+    const student = await prisma.studentUser.findUnique({ where: { email } });
+    if (student) {
+      if (!student.isVerified) {
+        return res.status(401).json({ message: "Please verify your email to login." });
+      }
+      const isMatch = await bcrypt.compare(password, student.password);
+      if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+      const { role, clubId } = await getStudentRoleAndClub(student.id);
+
+      if (student.isTwoStepEnabled && role === "club") {
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await prisma.studentUser.update({
+          where: { id: student.id },
+          data: { otp, otpExpire: new Date(Date.now() + 5 * 60 * 1000) },
+        });
+        await sendEmail({
+          email: student.email,
+          subject: "Login Verification Code",
+          message: `<p>Your OTP is: <strong>${otp}</strong>. Expires in 5 minutes.</p>`,
+        });
+        return res.json({ needs2FA: true, email: student.email, message: "Verification code sent." });
+      }
+
+      const token = generateToken(student, role, "student", clubId);
+      const userObj = sanitizeUser(student);
+      res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none", maxAge: 7 * 24 * 60 * 60 * 1000 });
+      return res.json({ message: "Login successful", user: userObj, role, token });
+    }
+
+    // Try AdminRole
+    const admin = await prisma.adminRole.findUnique({ where: { email } });
+    if (admin) {
+      const isMatch = await bcrypt.compare(password, admin.password);
+      if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+      if (admin.isTwoStepEnabled) {
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await prisma.adminRole.update({
+          where: { id: admin.id },
+          data: { otp, otpExpire: new Date(Date.now() + 5 * 60 * 1000) },
+        });
+        await sendEmail({
+          email: admin.email,
+          subject: "Login Verification Code",
+          message: `<p>Your OTP is: <strong>${otp}</strong>. Expires in 5 minutes.</p>`,
+        });
+        return res.json({ needs2FA: true, email: admin.email, message: "Verification code sent." });
+      }
+
+      const clubId = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+      const token = generateToken(admin, admin.role, "admin", clubId);
+      const userObj = sanitizeUser(admin);
+      res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none", maxAge: 7 * 24 * 60 * 60 * 1000 });
+      return res.json({ message: "Login successful", user: userObj, role: admin.role, token });
+    }
+
+    return res.status(401).json({ message: "Invalid credentials" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
