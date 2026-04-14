@@ -80,7 +80,7 @@ const NotFound = () => {
         </div>
 
         {/* Funny tagline */}
-        <div className="border-2 border-black rounded-sm p-5 mb-6 bg-neutral-50 shadow-[4px_4px_0px_#0D0D0D]">
+        <div className="border-2 border-black rounded-sm p-5 mb-6 bg-neutral-50">
           <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600 mb-2">
             Page Not Found
           </p>
@@ -102,14 +102,14 @@ const NotFound = () => {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate('/')}
-            className="px-8 py-3.5 bg-black text-white text-[12px] font-bold uppercase tracking-widest border-2 border-black rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all cursor-pointer shadow-[3px_3px_0px_#EA580C] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px]"
+            className="px-8 py-3.5 bg-black text-white text-[12px] font-bold uppercase tracking-widest border-2 border-black rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all cursor-pointer"
           >
             <i className="ri-home-4-line mr-2" />
             Take Me Home
           </button>
           <button
             onClick={() => navigate('/events')}
-            className="px-8 py-3.5 bg-white text-black text-[12px] font-bold uppercase tracking-widest border-2 border-black rounded-sm hover:bg-yellow-400 transition-all cursor-pointer shadow-[3px_3px_0px_#0D0D0D] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px]"
+            className="px-8 py-3.5 bg-white text-black text-[12px] font-bold uppercase tracking-widest border-2 border-black rounded-sm hover:bg-yellow-400 transition-all cursor-pointer"
           >
             <i className="ri-calendar-event-line mr-2" />
             Browse Events

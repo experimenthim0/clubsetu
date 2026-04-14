@@ -80,7 +80,7 @@ const BtnPrimary = ({ to, children }) => (
 const BtnSecondary = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-black border-2 border-black text-[13px] font-bold uppercase tracking-widest rounded-sm hover:bg-yellow-400 hover:border-yellow-400 transition-all hover:-translate-y-px"
+    className="text-black bg-transparent hover:bg-[#0f1419] hover:text-white border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border font-medium leading-5 text-md px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
   >
     {children}
   </Link>
@@ -230,7 +230,7 @@ const Home = () => {
           <ScrollReveal delay={0.3}>
             <div className="flex justify-center mt-12">
               <BtnSecondary to="/events">
-              <ArrowRightIcon >
+              <ArrowRightIcon size={20} >
 
                 View All Events 
               </ArrowRightIcon>
@@ -257,7 +257,7 @@ const Home = () => {
           <ScrollReveal delay={0.3}>
             <div className="flex justify-center mt-12">
               <BtnSecondary to="/clubs">
-              <ArrowRightIcon >
+              <ArrowRightIcon  size={20}>
 
                 View More 
               </ArrowRightIcon>

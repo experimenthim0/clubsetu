@@ -19,16 +19,23 @@ const HomeFooter = () => {
     // { label: 'Login', to: '/login' },
   ];
 
+  const otherLinks = [
+    { label: 'NITJ Website', href: 'https://nitj.ac.in' },
+    { label: 'Contact', href: 'mailto:clubsetu@nikhim.me' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+  ];
+
   return (
     <footer className="bg-[#fefce8]/30 text-black">
       {/* Main footer */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x border-gray-300">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
           {/* Brand column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              
+              <img src="nitjlogo.png" alt="" className="w-11 h-12"/>
               <span className="font-extrabold text-[24px] tracking-wider text-black leading-none select-none logofont">CLUB
              <span className="text-orange-600 font-light tracking-wider">SETU</span>
             </span>
@@ -84,7 +91,23 @@ const HomeFooter = () => {
 
           
           {/* About */}
-        
+        <div>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-neutral-700 mb-5">
+              Other Links
+            </h4>
+            <ul className="space-y-3">
+              {otherLinks.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="text-[14px] text-neutral-800 hover:text-orange-500 transition-colors font-medium cursor-pointer"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
       </div>
       </div>
 
