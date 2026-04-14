@@ -200,10 +200,10 @@ const Navbar = () => {
               Events
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-            <a href="/#team" className={navLinkCls("/team")}>
+            <Link to="/team" className={navLinkCls("/team")}>
               Team
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/team") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </a>
+            </Link>
           </div>
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}

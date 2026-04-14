@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EventFeed from './pages/EventFeed';
 import RegisterStudent from './pages/RegisterStudent';
-
+import Team from './pages/Team';
 import Login from './pages/Login';
 import EventDetails from './pages/EventDetails';
 import CreateEvent from './pages/CreateEvent';
@@ -43,7 +43,7 @@ import CertificateDesigner from './pages/CertificateDesigner';
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
-import Team from './pages/Team';
+
 import SendNotification from './pages/SendNotification';
 import Notifications from './pages/Notifications';
 
@@ -145,7 +145,7 @@ function App() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/faq" element={<FAQ />} />
-          
+          <Route path="/team" element={<Team />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/about-features" element={<Aboutfeatures />} />
             <Route path="/team" element={<Team />} />
