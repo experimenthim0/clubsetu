@@ -15,15 +15,14 @@ const EditProfile = () => {
         linkedinProfile: '',
         xProfile: '',
         portfolioUrl: '',
+        whatsappNumber: '',
+        isTwoStepEnabled: false,
         bankName: '',
         accountHolderName: '',
         accountNumber: '',
         ifscCode: '',
         upiId: '',
-        bankPhone: '',
-        instagramProfile: '',
-        whatsappNumber: '',
-        isTwoStepEnabled: false
+        bankPhone: ''
     });
 
     useEffect(() => {
@@ -38,15 +37,15 @@ const EditProfile = () => {
                 linkedinProfile: storedUser.linkedinProfile || '',
                 xProfile: storedUser.xProfile || '',
                 portfolioUrl: storedUser.portfolioUrl || '',
+                instagramProfile: storedUser.instagramProfile || '',
+                whatsappNumber: storedUser.whatsappNumber || '',
+                isTwoStepEnabled: storedUser.isTwoStepEnabled || false,
                 bankName: storedUser.bankName || '',
                 accountHolderName: storedUser.accountHolderName || '',
                 accountNumber: storedUser.accountNumber || '',
                 ifscCode: storedUser.ifscCode || '',
                 upiId: storedUser.upiId || '',
-                bankPhone: storedUser.bankPhone || '',
-                instagramProfile: storedUser.instagramProfile || '',
-                whatsappNumber: storedUser.whatsappNumber || '',
-                isTwoStepEnabled: storedUser.isTwoStepEnabled || false
+                bankPhone: storedUser.bankPhone || ''
             });
         }
     }, []);
@@ -203,82 +202,68 @@ const EditProfile = () => {
                         />
                     </div>
                 </div>
-
-                {role === 'club' && (
-                    <div className="pt-8 md:pt-10 border-t-2 border-neutral-100 space-y-6">
+                
+                {/* Bank Information section - Restored for Club Account */}
+                {(role === 'club') && (
+                    <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">
                         <div className="flex items-center gap-3">
-                             <i className="ri-bank-card-fill text-orange-600 text-xl" />
-                             <h3 className="font-black text-black  tracking-tight">Financial Information</h3>
+                             <i className="ri-bank-card-line text-orange-600 text-xl" />
+                             <h3 className="font-black text-black tracking-tight">Financial Information</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Bank Name</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Bank Name</label>
                                 <input 
-                                    type="text" 
-                                    name="bankName" 
-                                    value={formData.bankName} 
-                                    onChange={handleChange}
-                                    placeholder="e.g. HDFC Bank"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                                    type="text" name="bankName" value={formData.bankName} onChange={handleChange}
+                                    placeholder="e.g. State Bank of India"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Account Holder</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Account Holder Name</label>
                                 <input 
-                                    type="text" 
-                                    name="accountHolderName" 
-                                    value={formData.accountHolderName} 
-                                    onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                                    type="text" name="accountHolderName" value={formData.accountHolderName} onChange={handleChange}
+                                    placeholder="Account Holder Name"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Account Number</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Account Number</label>
                                 <input 
-                                    type="password" 
-                                    name="accountNumber" 
-                                    value={formData.accountNumber} 
-                                    onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono"
+                                    type="text" name="accountNumber" value={formData.accountNumber} onChange={handleChange}
+                                    placeholder="Account Number"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">IFSC Code</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">IFSC Code</label>
                                 <input 
-                                    type="text" 
-                                    name="ifscCode" 
-                                    value={formData.ifscCode} 
-                                    onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none  font-mono"
+                                    type="text" name="ifscCode" value={formData.ifscCode} onChange={handleChange}
+                                    placeholder="IFSC Code"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">UPI ID</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">UPI ID</label>
                                 <input 
-                                    type="text" 
-                                    name="upiId" 
-                                    value={formData.upiId} 
-                                    onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                                    type="text" name="upiId" value={formData.upiId} onChange={handleChange}
+                                    placeholder="e.g. nikhil@upi"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold text-orange-600"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Linked Phone</label>
+                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Linked Phone Number</label>
                                 <input 
-                                    type="tel" 
-                                    name="bankPhone" 
-                                    value={formData.bankPhone} 
-                                    onChange={handleChange}
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                                    type="tel" name="bankPhone" value={formData.bankPhone} onChange={handleChange}
+                                    placeholder="Linked Phone Number"
+                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
                                 />
                             </div>
                         </div>
-                        <p className="text-[10px] text-neutral-400 italic">
-                            * Private information used only for event settlements.
-                        </p>
                     </div>
                 )}
+
 
                 {/* Change Password Section */}
                 <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate,Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { loadRazorpay } from '../utils/razorpay';
+
 
 const EventDetails = () => {
   const { slug } = useParams();
@@ -17,11 +18,15 @@ const EventDetails = () => {
   const [modalInputs, setModalInputs] = useState({});
   const [customFormModalOpen, setCustomFormModalOpen] = useState(false);
   const [customFormResponses, setCustomFormResponses] = useState({});
+  const [externalEmail, setExternalEmail] = useState('');
+  const [externalName, setExternalName] = useState('');
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [registrationId, setRegistrationId] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${slug}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
         setEvent(res.data);
         if (res.data.entryFee > 0) loadRazorpay();
         setLoading(false);
@@ -61,54 +66,96 @@ const EventDetails = () => {
   const handleRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
-    if (!user || role !== 'member') {
-      showNotification('Please login as a student to register.', 'warning');
-      navigate('/login');
-      return;
-    }
-    if (event.requiredFields && event.requiredFields.length > 0) {
-      const missing = event.requiredFields.filter(field => !user[field]);
-      if (missing.length > 0) {
-        setMissingFields(missing);
-        setMissingFieldsModalOpen(true);
+
+    // Authenticated path
+    if (user && role === 'member') {
+      if (event.requiredFields && event.requiredFields.length > 0) {
+        const missing = event.requiredFields.filter(field => !user[field]);
+        if (missing.length > 0) {
+          setMissingFields(missing);
+          setMissingFieldsModalOpen(true);
+          return;
+        }
+      }
+      if (event.customFields && event.customFields.length > 0) {
+        setCustomFormResponses({});
+        setCustomFormModalOpen(true);
         return;
       }
-    }
-    if (event.customFields && event.customFields.length > 0) {
-      setCustomFormResponses({});
-      setCustomFormModalOpen(true);
-      return;
-    }
-    if (event.entryFee > 0) {
+      if (event.entryFee > 0) {
+        try {
+          await loadRazorpay();
+          const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event.id || event._id, studentId: user.id });
+          const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
+          const options = {
+            key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
+            description: `Registration for ${eventTitle}`, order_id: orderId,
+            handler: async (response) => {
+              try {
+                const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, { orderId, paymentId: response.razorpay_payment_id, signature: response.razorpay_signature, eventId: event.id || event._id, studentId: user.id });
+                if (verifyRes.data.success) { showNotification(`Successfully registered for ${eventTitle}!`, 'success'); setTimeout(() => navigate('/my-events'), 1500); }
+              } catch (err) { showNotification(err.response?.data?.message || 'Payment verification failed', 'error'); }
+            },
+            prefill: { name: user.name, email: user.email, contact: user.phone || '' },
+            theme: { color: '#EA580C' },
+            modal: { ondismiss: () => showNotification('Payment cancelled', 'info') }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } catch (err) { showNotification(err.response?.data?.message || 'Failed to initiate payment', 'error'); }
+        return;
+      }
+      setIsRegistering(true);
       try {
-        await loadRazorpay();
-        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event._id, studentId: user.id });
-        const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
-        const options = {
-          key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
-          description: `Registration for ${eventTitle}`, order_id: orderId,
-          handler: async (response) => {
-            try {
-              const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, { orderId, paymentId: response.razorpay_payment_id, signature: response.razorpay_signature, eventId: event._id, studentId: user.id });
-              if (verifyRes.data.success) { showNotification(`Successfully registered for ${eventTitle}!`, 'success'); setTimeout(() => navigate('/my-events'), 1500); }
-            } catch (err) { showNotification(err.response?.data?.message || 'Payment verification failed', 'error'); }
-          },
-          prefill: { name: user.name, email: user.email, contact: user.phone || '' },
-          theme: { color: '#EA580C' },
-          modal: { ondismiss: () => showNotification('Payment cancelled', 'info') }
-        };
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      } catch (err) { showNotification(err.response?.data?.message || 'Failed to initiate payment', 'error'); }
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: user.id });
+        if (res.data.status === 'WAITLISTED') {
+          showNotification('You have been added to the waitlist.', 'info');
+        } else if (res.data.status === 'REGISTERED') {
+          setRegistrationId(res.data.qrCode);
+          showNotification('Successfully registered!', 'success');
+        } else {
+          showNotification(res.data.message || 'Successfully registered!', 'success');
+        }
+      } catch (err) {
+        if (err.response?.status === 400 && err.response.data.message === 'Already registered for this event.') {
+          setAlreadyRegistered(true);
+        } else {
+          showNotification(err.response?.data?.message || 'Registration failed', 'error');
+        }
+      } finally { setIsRegistering(false); }
       return;
     }
-    setIsRegistering(true);
-    try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, { userId: user.id });
-      showNotification(res.data.message, 'success');
-      setTimeout(() => navigate('/my-events'), 1500);
-    } catch (err) { showNotification(err.response?.data?.message || 'Registration failed', 'error'); }
-    finally { setIsRegistering(false); }
+
+    // Unauthenticated (external) path — form inputs are rendered in the UI
+    if (!user) {
+      if (!externalEmail || !externalName) {
+        showNotification('Please enter your name and email to register.', 'warning');
+        return;
+      }
+      setIsRegistering(true);
+      try {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { externalEmail, externalName });
+        if (res.data.status === 'WAITLISTED') {
+          showNotification('You have been added to the waitlist.', 'info');
+        } else if (res.data.status === 'REGISTERED') {
+          setRegistrationId(res.data.qrCode);
+          showNotification('Successfully registered!', 'success');
+        } else {
+          showNotification(res.data.message || 'Successfully registered!', 'success');
+        }
+      } catch (err) {
+        if (err.response?.status === 400 && err.response.data.message === 'Already registered for this event.') {
+          setAlreadyRegistered(true);
+        } else {
+          showNotification(err.response?.data?.message || 'Registration failed', 'error');
+        }
+      } finally { setIsRegistering(false); }
+      return;
+    }
+
+    // Logged in but not as a student
+    showNotification('Please login as a student to register.', 'warning');
+    navigate('/login');
   };
 
   const handleSaveAndRegister = async () => {
@@ -144,7 +191,7 @@ const EventDetails = () => {
         } catch (err) { showNotification(err.response?.data?.message || 'Failed to initiate payment', 'error'); }
         return;
       }
-      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, { userId: updatedUser.id });
+      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: updatedUser.id });
       showNotification(regRes.data.message, 'success');
       setTimeout(() => navigate('/my-events'), 1500);
     } catch (err) { showNotification(err.response?.data?.message || 'Failed to update profile', 'error'); }
@@ -166,7 +213,7 @@ const EventDetails = () => {
     if (event.entryFee > 0) {
       try {
         await loadRazorpay();
-        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event._id, studentId: user.id });
+        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event.id || event._id, studentId: user.id });
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
         const options = {
           key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
@@ -186,7 +233,7 @@ const EventDetails = () => {
       return;
     }
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${event._id}/register`, { userId: user.id, formResponses: customFormResponses });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: user.id, formResponses: customFormResponses });
       showNotification(res.data.message, 'success');
       setCustomFormModalOpen(false);
       setTimeout(() => navigate('/my-events'), 1500);
@@ -253,11 +300,13 @@ const EventDetails = () => {
     ? { label: 'Event is Live', cls: 'bg-orange-600 text-white border-orange-600 cursor-not-allowed', disabled: true }
     : isDeadlinePassed
     ? { label: 'Deadline Passed', cls: 'bg-neutral-100 text-neutral-500 cursor-not-allowed border-neutral-200', disabled: true }
+    : alreadyRegistered
+    ? { label: 'Already Registered', cls: 'bg-neutral-100 text-neutral-500 cursor-not-allowed border-neutral-200', disabled: true }
     : isFull
     ? { label: 'Join Waitlist', cls: 'bg-yellow-400 text-black border-black hover:bg-yellow-300 cursor-pointer', disabled: false }
     : { label: entryFee > 0 ? `Pay ₹${entryFee} & Register` : 'Register for Event', cls: 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false };
 
-  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop';
+  const user = JSON.parse(localStorage.getItem('user'));
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -271,7 +320,7 @@ const EventDetails = () => {
           >
             <i className="ri-arrow-left-line text-base" /> Back
           </button>
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">Event Details</span>
+          <span className="text-[20px] font-medium text-neutral-800 tracking-wide">Event Details</span>
           <div className="w-16" /> {/* spacer to balance */}
         </div>
       </div>
@@ -385,11 +434,85 @@ const EventDetails = () => {
                 </div>
               )}
 
-              {/* About */}
-              <div className="px-7 py-5 border-b border-neutral-100">
-                <p className="text-[16px] font-bold tracking-widest text-neutral-500 mb-3">About this Event</p>
-                <p className="text-[15px] text-neutral-700 leading-relaxed bg-neutral-100/80 p-3 rounded-lg">{description}</p>
-              </div>
+           {/* About Section */}
+<div className="px-7 py-5 border-b border-neutral-100">
+  <p className="text-[11px] font-medium tracking-[0.18em] text-neutral-400 mb-2.5 uppercase">
+    About this event
+  </p>
+  <div className="text-[14px] text-neutral-700 leading-relaxed bg-neutral-50 p-4 rounded-xl border border-neutral-200 whitespace-pre-wrap">
+    {description}
+  </div>
+</div>
+
+{/* Sponsors Section */}
+{event.sponsors && event.sponsors.length > 0 && (
+  <div className="px-7 py-5 border-b border-neutral-100">
+    <p className="text-[11px] font-medium tracking-[0.18em] text-neutral-400 mb-3.5 uppercase">
+      Sponsors
+    </p>
+    <div className="flex flex-wrap gap-5 items-center">
+      {event.sponsors.map((sponsor, i) => (
+        <a
+          key={i}
+  href={sponsor.websiteUrl || '#'}
+  target={sponsor.websiteUrl ? "_blank" : "_self"}
+  rel="noopener noreferrer"
+  className={`flex flex-col items-start gap-1.5 transition-opacity justify-center ${
+    sponsor.websiteUrl ? 'cursor-pointer hover:opacity-100 opacity-80' : 'cursor-default opacity-80'
+  }`}
+>
+  <img
+    src={sponsor.logoUrl}
+    alt={sponsor.name}
+    className="h-7 w-auto object-contain"
+    onError={(e) => {
+      e.target.src = 'https://via.placeholder.com/28?text=' + sponsor.name[0];
+    }}
+  />
+  <span className="text-[11px] font-medium text-neutral-400 tracking-wide text-center">
+    {sponsor.name}
+  </span>
+</a>
+      ))}
+    </div>
+  </div>
+)}
+
+{/* Gallery Section */}
+{event.media && event.media.filter(m => m.type !== 'SPONSOR_LOGO').length > 0 && (
+  <div className="px-7 py-5 border-b border-neutral-100">
+    <p className="text-[11px] font-medium tracking-[0.18em] text-neutral-400 mb-3.5 uppercase">
+      Gallery
+    </p>
+    <div className="grid grid-cols-3 gap-2">
+      {event.media.filter(m => m.type !== 'SPONSOR_LOGO').map((item, i) => (
+        <div key={i} className="aspect-square rounded-xl overflow-hidden border border-neutral-200 relative group">
+          {item.type === 'IMAGE' ? (
+            <div className="w-full h-full cursor-zoom-in" onClick={() => window.open(item.url, '_blank')}>
+              <img
+                src={item.url}
+                alt={`Gallery ${i}`}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+              />
+            </div>
+          ) : (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-full flex flex-col items-center justify-center bg-black gap-1.5"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white" className="opacity-80">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <span className="text-[9px] text-white font-medium uppercase tracking-widest opacity-50">Watch</span>
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
               {/* Winners */}
               {showWinners && (
@@ -421,27 +544,78 @@ const EventDetails = () => {
               )}
 
               {/* ── CTA Footer: Register + Share ── */}
-              <div className="px-7 py-5 flex flex-col sm:flex-row gap-3 items-stretch">
-                <button
-                  onClick={!btnConfig.disabled && !isRegistering
-                    ? (isEnded
-                      ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' })
-                      : handleRegister)
-                    : undefined}
-                  disabled={btnConfig.disabled || isRegistering}
-                  className={`flex-1 py-3.5 px-6 text-[12px] font-black uppercase tracking-[0.15em] border-2 rounded-lg transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isRegistering ? (
-                    <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
-                  ) : btnConfig.label}
-                </button>
+              <div className="px-7 py-5 flex flex-col gap-4">
 
-                <button
-                  onClick={handleShare}
-                  className="sm:w-auto w-full py-3.5 px-5 text-[12px] font-black uppercase tracking-[0.15em] rounded-lg bg-white text-black hover:text-orange-600 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <i className="ri-share-line text-base" /> Share
-                </button>
+                {/* Already Registered notice banner */}
+                {alreadyRegistered && (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border-2 border-orange-200 rounded-lg">
+                    <i className="ri-checkbox-circle-line text-orange-600 text-lg shrink-0" />
+                    <p className="text-[13px] font-semibold text-orange-700">You are already registered for this event.</p>
+                  </div>
+                )}
+
+                {/* Registration ID display after successful registration */}
+                {registrationId && (
+                  <div className="flex flex-col items-center gap-3 px-4 py-6 bg-green-50 border-2 border-green-200 rounded-lg">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-1">
+                      <i className="ri-checkbox-circle-fill text-2xl" />
+                    </div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-green-700">Registration Successful!</p>
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Your Registration ID</p>
+                      <p className="text-xl font-black text-black tracking-widest font-mono bg-white px-4 py-2 border-2 border-neutral-200 rounded-md">
+                        {registrationId}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-neutral-500 text-center max-w-[240px] mt-2">
+                       You can view your full ticket and QR code in the <Link to="/my-events" className="text-orange-600 font-bold underline">My Events</Link> section.
+                    </p>
+                  </div>
+                )}
+
+                {/* External participant form (shown when not logged in) */}
+                {!user && !isEnded && !isDeadlinePassed && !alreadyRegistered && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Register as External Participant</p>
+                    <input
+                      type="text"
+                      placeholder="Your full name *"
+                      value={externalName}
+                      onChange={(e) => setExternalName(e.target.value)}
+                      className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Your email address *"
+                      value={externalEmail}
+                      onChange={(e) => setExternalEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                  <button
+                    onClick={!btnConfig.disabled && !isRegistering
+                      ? (isEnded
+                        ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' })
+                        : handleRegister)
+                      : undefined}
+                    disabled={btnConfig.disabled || isRegistering}
+                    className={`flex-1 py-3.5 px-6 text-[12px] font-black uppercase tracking-[0.15em] border-2 rounded-lg transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isRegistering ? (
+                      <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
+                    ) : btnConfig.label}
+                  </button>
+
+                  <button
+                    onClick={handleShare}
+                    className="sm:w-auto w-full py-3.5 px-5 text-[12px] font-black uppercase tracking-[0.15em] rounded-lg bg-white text-black hover:text-orange-600 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <i className="ri-share-line text-base" /> Share
+                  </button>
+                </div>
               </div>
 
               {entryFee > 0 && (

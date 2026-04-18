@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { EVENT_VENUES } from '../constants/eventVenues';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
+import { MediaType } from '../types/index';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
 
@@ -27,6 +28,10 @@ const CreateEvent = () => {
         showWinner: false,
         provideCertificate: false,
     });
+    const [sponsors, setSponsors] = useState([]);
+    const [media, setMedia] = useState([]);
+    const [sponsorErrors, setSponsorErrors] = useState([]);
+    const [mediaErrors, setMediaErrors] = useState([]);
     const [isFree, setIsFree] = useState(true);
     const [isUnlimited, setIsUnlimited] = useState(false);
     const [allYears, setAllYears] = useState(true);
@@ -55,6 +60,67 @@ const CreateEvent = () => {
             }
             return { ...prev, allowedYears: [...current, year] };
         });
+    };
+
+    // ── Sponsor Handlers ───────────────────────────────────────────────
+    const addSponsor = () => {
+        setSponsors(prev => [...prev, { name: '', logoUrl: '', websiteUrl: '' }]);
+        setSponsorErrors(prev => [...prev, {}]);
+    };
+
+    const removeSponsor = (index) => {
+        setSponsors(prev => prev.filter((_, i) => i !== index));
+        setSponsorErrors(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateSponsor = (index, field, value) => {
+        setSponsors(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            return updated;
+        });
+    };
+
+    // ── Media Handlers ─────────────────────────────────────────────────
+    const addMedia = () => {
+        setMedia(prev => [...prev, { url: '', type: MediaType.IMAGE }]);
+        setMediaErrors(prev => [...prev, {}]);
+    };
+
+    const removeMedia = (index) => {
+        setMedia(prev => prev.filter((_, i) => i !== index));
+        setMediaErrors(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateMedia = (index, field, value) => {
+        setMedia(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            return updated;
+        });
+    };
+
+    // ── Validation ─────────────────────────────────────────────────────
+    const URL_PATTERN = /^https?:\/\/.+/;
+
+    const validateSponsorsAndMedia = () => {
+        let valid = true;
+        const newSponsorErrors = sponsors.map(s => {
+            const errs = {};
+            if (!s.name.trim()) errs.name = 'Sponsor name is required.';
+            if (!URL_PATTERN.test(s.logoUrl)) errs.logoUrl = 'Logo URL must be a valid URL (https://...).';
+            if (Object.keys(errs).length) valid = false;
+            return errs;
+        });
+        const newMediaErrors = media.map(m => {
+            const errs = {};
+            if (!URL_PATTERN.test(m.url)) errs.url = 'Media URL must be a valid URL (https://...).';
+            if (Object.keys(errs).length) valid = false;
+            return errs;
+        });
+        setSponsorErrors(newSponsorErrors);
+        setMediaErrors(newMediaErrors);
+        return valid;
     };
 
     // ── Custom Fields Handlers ──────────────────────────────────────────
@@ -125,17 +191,24 @@ const CreateEvent = () => {
             return;
         }
 
+        if (!validateSponsorsAndMedia()) {
+            setError('Please fix the sponsor and media errors before submitting.');
+            return;
+        }
+
         const payload = {
             ...formData,
             entryFee: Number(formData.entryFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
             registrationDeadline: formData.registrationDeadline ? formData.registrationDeadline : null,
             allowedYears: allYears ? [] : formData.allowedYears,
+            sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
+            media: media.map(m => ({ url: m.url, type: m.type })),
         };
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events`, payload);
-            navigate('/');
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload);
+            navigate(`/event/${res.data.slug}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');
         }
@@ -497,6 +570,125 @@ const CreateEvent = () => {
                             className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
                         >
                             <i className="ri-add-circle-line text-lg" /> Add Custom Field
+                        </button>
+                    </div>
+
+                    {/* Sponsors */}
+                    <div>
+                        <label className={labelCls}>Sponsors</label>
+                        <p className="text-xs text-neutral-500 mb-4">Add sponsors for this event (optional)</p>
+                        <div className="space-y-4">
+                            {sponsors.map((s, idx) => (
+                                <div key={idx} className="border-2 border-neutral-200 rounded-sm p-4 relative bg-neutral-50">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeSponsor(idx)}
+                                        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors"
+                                        title="Remove sponsor"
+                                    >
+                                        <i className="ri-delete-bin-line text-lg" />
+                                    </button>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-10">
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Sponsor Name <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. Acme Corp"
+                                                value={s.name}
+                                                onChange={(e) => updateSponsor(idx, 'name', e.target.value)}
+                                                className={inputCls}
+                                            />
+                                            {sponsorErrors[idx]?.name && (
+                                                <p className="text-xs text-red-600 mt-1">{sponsorErrors[idx].name}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Logo URL <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/logo.png"
+                                                value={s.logoUrl}
+                                                onChange={(e) => updateSponsor(idx, 'logoUrl', e.target.value)}
+                                                className={inputCls}
+                                            />
+                                            {sponsorErrors[idx]?.logoUrl && (
+                                                <p className="text-xs text-red-600 mt-1">{sponsorErrors[idx].logoUrl}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 pr-10">
+                                        <label className="text-xs font-bold text-neutral-600 mb-1 block">Website URL <span className="text-neutral-400 font-normal">(optional)</span></label>
+                                        <input
+                                            type="url"
+                                            placeholder="https://sponsor-website.com"
+                                            value={s.websiteUrl}
+                                            onChange={(e) => updateSponsor(idx, 'websiteUrl', e.target.value)}
+                                            className={inputCls}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={addSponsor}
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <i className="ri-add-circle-line text-lg" /> Add Sponsor
+                        </button>
+                    </div>
+
+                    {/* Media */}
+                    <div>
+                        <label className={labelCls}>Media</label>
+                        <p className="text-xs text-neutral-500 mb-4">Add images, videos, or sponsor logos for this event (optional)</p>
+                        <div className="space-y-4">
+                            {media.map((m, idx) => (
+                                <div key={idx} className="border-2 border-neutral-200 rounded-sm p-4 relative bg-neutral-50">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeMedia(idx)}
+                                        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-colors"
+                                        title="Remove media"
+                                    >
+                                        <i className="ri-delete-bin-line text-lg" />
+                                    </button>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-10">
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Media URL <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/media.jpg"
+                                                value={m.url}
+                                                onChange={(e) => updateMedia(idx, 'url', e.target.value)}
+                                                className={inputCls}
+                                            />
+                                            {mediaErrors[idx]?.url && (
+                                                <p className="text-xs text-red-600 mt-1">{mediaErrors[idx].url}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-neutral-600 mb-1 block">Type</label>
+                                            <select
+                                                value={m.type}
+                                                onChange={(e) => updateMedia(idx, 'type', e.target.value)}
+                                                className={inputCls}
+                                            >
+                                                <option value={MediaType.IMAGE}>Image</option>
+                                                <option value={MediaType.VIDEO}>Video</option>
+                                                <option value={MediaType.SPONSOR_LOGO}>Sponsor Logo</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={addMedia}
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <i className="ri-add-circle-line text-lg" /> Add Media
                         </button>
                     </div>
 

@@ -24,11 +24,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
         <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
-            <div className="h-64 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-200">
+            <div className="h-84 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-200">
                 <img
   src={displayImage}
   alt={title}
-  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
   onError={(e) => {
     e.target.onerror = null; // prevent infinite loop
     e.target.src = "/CLUBSETU.png"; // fallback image
@@ -59,7 +59,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             {/* Body */}
             <div className="p-3 flex flex-auto flex-col">
                 <h3 className="text-lg font-black text-black leading-tight mb-2 line-clamp-1">{title}</h3>
-                <p className="text-[13px] text-neutral-500 mb-4 line-clamp-3 leading-relaxed">{description}</p>
+                {/* <p className="text-[13px] text-neutral-500 mb-4 line-clamp-2 leading-relaxed">{description}</p> */}
 
                 {/* Info row */}
                 {isEnded && showWinner ? (
@@ -180,7 +180,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                         : 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                             }`}
                         >
-                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register'}
+                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register/Details'}
                         </Link>
                     )}
                 </div>

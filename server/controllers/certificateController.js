@@ -38,28 +38,32 @@ export const downloadCertificate = async (req, res) => {
       });
     }
 
-    const registration = await prisma.registration.findFirst({
+    // Look up the student's participation record
+    const participation = await prisma.participation.findFirst({
       where: {
         eventId,
-        userId: studentId,
+        studentId,
         paymentStatus: "SUCCESS",
       },
       include: {
-        user: { select: { id: true, name: true } },
+        student: { select: { id: true, name: true } },
       },
     });
 
-    if (!registration) {
+    if (!participation) {
       return res.status(403).json({ message: "You are not registered for this event." });
     }
 
-    const userName = registration.user?.name;
+    if (participation.status !== "ATTENDED") {
+      return res.status(403).json({
+        message: "Certificates are only available to participants who attended the event. Please contact the club coordinator if you attended but are not marked.",
+      });
+    }
+
+    const userName = participation.student?.name;
     const safeFileName = userName.replace(/\s+/g, "_");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${safeFileName}_Certificate.pdf"`,
-    );
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}_Certificate.pdf"`);
 
     const n = template;
     const docSize = [n.imageWidth || 841.89, n.imageHeight || 595.28];
@@ -69,7 +73,7 @@ export const downloadCertificate = async (req, res) => {
     try {
       const parsedUrl = new URL(template.imageUrl);
       if (parsedUrl.hostname !== "res.cloudinary.com") {
-         throw new Error("Untrusted image source");
+        throw new Error("Untrusted image source");
       }
       const response = await fetch(template.imageUrl);
       const buffer = Buffer.from(await response.arrayBuffer());
@@ -116,8 +120,7 @@ export const saveTemplate = async (req, res) => {
     const isCreator = event.createdById === req.user.userId;
     const isAdmin = req.user.role === "admin";
     const isAssignedFaculty =
-      req.user.role === "facultyCoordinator" &&
-      event.clubId === req.user.clubId;
+      req.user.role === "facultyCoordinator" && event.clubId === req.user.clubId;
 
     if (!isCreator && !isAdmin && !isAssignedFaculty) {
       return res.status(403).json({

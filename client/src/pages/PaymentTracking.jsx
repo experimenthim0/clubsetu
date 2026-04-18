@@ -15,7 +15,7 @@ const PaymentTracking = () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const storedRole = localStorage.getItem('role');
 
-    if (!storedUser || !(storedRole === 'club-head' || storedRole === 'club' || storedRole === 'clubHead')) {
+    if (!storedUser || !(storedRole === 'club-head' || storedRole === 'club' || storedRole === 'clubHead' || storedRole === 'facultyCoordinator')) {
       navigate('/login');
       return;
     }
@@ -25,18 +25,19 @@ const PaymentTracking = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch club head's events
+        // Fetch club head's events using the associated clubId from the user object
+        const targetClubId = storedUser.clubId || storedUser._id || storedUser.id;
         const eventsRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/club-events/club-head/${storedUser._id}`
+          `${import.meta.env.VITE_API_URL}/api/events/club-manage/${targetClubId}`
         );
         const paidEvents = eventsRes.data.filter(e => e.entryFee > 0);
         setEvents(paidEvents);
 
         // Fetch payment stats for each paid event
         const statsPromises = paidEvents.map(event =>
-          axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${event._id}/stats`)
-            .then(res => ({ eventId: event._id, ...res.data }))
-            .catch(() => ({ eventId: event._id, totalCollected: 0, registrations: [] }))
+          axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${event.id || event._id}/stats`)
+            .then(res => ({ eventId: event.id || event._id, ...res.data }))
+            .catch(() => ({ eventId: event.id || event._id, totalCollected: 0, registrations: [] }))
         );
         const allStats = await Promise.all(statsPromises);
         const statsMap = {};
@@ -61,7 +62,7 @@ const PaymentTracking = () => {
     );
   }
 
-  if (!user || !(role === 'club-head' || role === 'club' || role === 'clubHead')) {
+  if (!user || !(role === 'club-head' || role === 'club' || role === 'clubHead' || role === 'facultyCoordinator')) {
     return <div className="text-center mt-10">Access restricted to club heads.</div>;
   }
 
@@ -124,9 +125,9 @@ const PaymentTracking = () => {
                   </thead>
                   <tbody className="divide-y-2 divide-black">
                     {events.map(event => {
-                      const stats = paymentStats[event._id] || {};
+                      const stats = paymentStats[event.id || event._id] || {};
                       return (
-                        <tr key={event._id} className="hover:bg-neutral-50 transition-colors">
+                        <tr key={event.id || event._id} className="hover:bg-neutral-50 transition-colors">
                           <td className="px-6 py-4 text-sm font-bold border-r-2 border-black">
                             {event.title}
                           </td>
@@ -154,10 +155,10 @@ const PaymentTracking = () => {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
-                              onClick={() => setSelectedEvent(selectedEvent === event._id ? null : event._id)}
+                              onClick={() => setSelectedEvent(selectedEvent === (event.id || event._id) ? null : (event.id || event._id))}
                               className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors border-2 border-black cursor-pointer"
                             >
-                              {selectedEvent === event._id ? 'Hide' : 'View'}
+                              {selectedEvent === (event.id || event._id) ? 'Hide' : 'View'}
                             </button>
                           </td>
                         </tr>
@@ -173,7 +174,7 @@ const PaymentTracking = () => {
               <div className="bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#000] overflow-hidden mb-10">
                 <div className="bg-black text-white p-5">
                   <h3 className="font-black text-lg uppercase tracking-tight">
-                    Payment Details — {events.find(e => e._id === selectedEvent)?.title}
+                  Payment Details — {events.find(e => (e.id || e._id) === selectedEvent)?.title}
                   </h3>
                 </div>
                 <div className="overflow-x-auto">

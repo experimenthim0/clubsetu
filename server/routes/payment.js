@@ -12,6 +12,8 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// ── POST /payment/create-order ────────────────────────────────────────────────
+
 router.post(
   "/create-order",
   verifyToken,
@@ -31,13 +33,13 @@ router.post(
       const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const user = await prisma.user.findUnique({ where: { id: studentId } });
-      if (!user) return res.status(404).json({ message: "User not found." });
+      const student = await prisma.studentUser.findUnique({ where: { id: studentId } });
+      if (!student) return res.status(404).json({ message: "User not found." });
 
       if (
         event.allowedPrograms?.length > 0 &&
-        user.program &&
-        !event.allowedPrograms.includes(user.program)
+        student.program &&
+        !event.allowedPrograms.includes(student.program)
       ) {
         return res.status(403).json({ message: "Ineligible program." });
       }
@@ -46,10 +48,10 @@ router.post(
         return res.status(400).json({ message: "This event is free" });
       }
 
-      const existingRegistration = await prisma.registration.findFirst({
-        where: { eventId, userId: studentId },
+      const existing = await prisma.participation.findFirst({
+        where: { eventId, studentId: studentId },
       });
-      if (existingRegistration) {
+      if (existing) {
         return res.status(400).json({ message: "Already registered" });
       }
 
@@ -74,6 +76,8 @@ router.post(
     }
   },
 );
+
+// ── POST /payment/verify ──────────────────────────────────────────────────────
 
 router.post(
   "/verify",
@@ -108,24 +112,25 @@ router.post(
       const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const existingRegistration = await prisma.registration.findFirst({
-        where: { eventId, userId: studentId },
+      const existing = await prisma.participation.findFirst({
+        where: { eventId, studentId: studentId },
       });
-      if (existingRegistration) {
+      if (existing) {
         return res.status(400).json({ message: "Already registered", success: false });
       }
 
-      const registrationId = createObjectId();
+      const participationId = createObjectId();
 
       await prisma.$transaction(async (tx) => {
-        await tx.registration.create({
+        await tx.participation.create({
           data: {
-            id: registrationId,
+            id: participationId,
             eventId,
-            userId: studentId,
-            status: "CONFIRMED",
+            studentId,
+            status: "REGISTERED",
             paymentId,
             orderId,
+            qrCode: `INT-${createObjectId().toUpperCase()}`,
             paymentStatus: "SUCCESS",
             amountPaid: event.entryFee,
             paymentTimestamp: new Date(),
@@ -143,10 +148,10 @@ router.post(
         success: true,
         message: "Payment verified",
         registration: {
-          id: registrationId,
+          id: participationId,
           eventTitle: event.title,
           amountPaid: event.entryFee,
-          status: "CONFIRMED",
+          status: "REGISTERED",
         },
       });
     } catch (error) {
@@ -159,6 +164,8 @@ router.post(
   },
 );
 
+// ── GET /payment/event/:eventId/stats ─────────────────────────────────────────
+
 router.get(
   "/event/:eventId/stats",
   verifyToken,
@@ -168,38 +175,34 @@ router.get(
       const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      // IDOR check: club users can only view stats for their own club's events
       if (req.user.role === "club" && event.clubId !== req.user.clubId) {
-        return res.status(403).json({ message: "Access denied. You can only view stats for your own club's events." });
+        return res.status(403).json({
+          message: "Access denied. You can only view stats for your own club's events.",
+        });
       }
 
-      const registrations = await prisma.registration.findMany({
-        where: {
-          eventId: req.params.eventId,
-          paymentStatus: "SUCCESS",
-        },
+      const participations = await prisma.participation.findMany({
+        where: { eventId: req.params.eventId, paymentStatus: "SUCCESS" },
         include: {
-          user: {
-            select: { id: true, name: true, email: true, rollNo: true },
-          },
+          student: { select: { id: true, name: true, email: true, rollNo: true } },
         },
       });
 
-      const totalMoneyCollected = registrations.reduce(
-        (sum, reg) => sum + (reg.amountPaid || 0),
+      const totalMoneyCollected = participations.reduce(
+        (sum, p) => sum + (p.amountPaid || 0),
         0,
       );
 
       res.json({
         eventTitle: event.title,
         totalCollected: totalMoneyCollected,
-        registrations: registrations.map((reg) => ({
-          studentName: reg.user?.name || "Unknown",
-          studentEmail: reg.user?.email || "N/A",
-          studentRollNo: reg.user?.rollNo || "N/A",
-          paymentId: reg.paymentId || "N/A",
-          amountPaid: reg.amountPaid || 0,
-          paymentStatus: reg.paymentStatus,
+        registrations: participations.map((p) => ({
+          studentName: p.student?.name || "Unknown",
+          studentEmail: p.student?.email || "N/A",
+          studentRollNo: p.student?.rollNo || "N/A",
+          paymentId: p.paymentId || "N/A",
+          amountPaid: p.amountPaid || 0,
+          paymentStatus: p.paymentStatus,
         })),
       });
     } catch (error) {

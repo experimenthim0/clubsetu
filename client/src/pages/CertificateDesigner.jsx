@@ -70,7 +70,7 @@ const CertificateDesigner = () => {
   const fetchEvent = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/club-events/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/events/${id}`,
       );
       setEvent(res.data);
       if (res.data.certificateTemplate) {

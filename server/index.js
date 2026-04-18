@@ -8,8 +8,10 @@ import userRoutes from "./routes/users.js";
 import paymentRoutes from "./routes/payment.js";
 import adminRoutes from "./routes/admin.js";
 import clubRoutes from "./routes/clubs.js";
+import clubMemberRoutes from "./routes/clubMembers.js";
 import notificationRoutes from "./routes/notifications.js";
 import certificateRoutes from "./routes/certificates.js";
+import participationRoutes from "./routes/participation.js";
 
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -61,14 +63,16 @@ app.get("/", (req, res) => {
   res.send("ClubSetu API Running");
 });
 
-app.use("/api/club-events", eventRoutes);
+app.use("/api/events", eventRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/club-members", clubMemberRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/certificates", certificateRoutes);
+app.use("/api/participation", participationRoutes);
 
 
 // Global Error Handler should be the last middleware

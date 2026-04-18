@@ -1,20 +1,24 @@
 import express from "express";
 import { verifyToken } from "../middleware/auth.js";
 import prisma from "../lib/prisma.js";
+import { getStudentRoleAndClub, getAdminClubId } from "./auth.js";
 
 const router = express.Router();
 
-// PUT /api/users/:role/:id — AUTHENTICATED USERS ONLY
+// PUT /api/users/:role/:id — update profile for the authenticated user
+// The :role segment is kept for URL compatibility; actual table is determined by JWT userType.
+
 router.put("/:role/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+  const { userId, userType, role } = req.user;
 
-  // Verify user is updating their own profile (Unified userId)
-  if (req.user.userId !== id && req.user.role !== "admin") {
+  if (userId !== id && role !== "admin") {
     return res.status(403).json({ message: "Access denied." });
   }
 
-  // Prevent updates to restricted fields
+  const updates = { ...req.body };
+
+  // Prevent updates to restricted fields (some are model-specific but safe to remove regardless)
   delete updates.email;
   delete updates.rollNo;
   delete updates.password;
@@ -22,17 +26,43 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
   delete updates.isApproved;
 
   try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: updates,
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    let user;
+
+    if (userType === "admin") {
+      user = await prisma.adminRole.update({ where: { id }, data: updates });
+    } else if (userType === "external") {
+      // External users no longer have a separate table — treat as studentUser or skip
+      return res.status(400).json({ message: "External user profile updates are not supported." });
+    } else {
+      user = await prisma.studentUser.update({ where: { id }, data: updates });
     }
 
     const safeUser = Object.fromEntries(
-      Object.entries(user).filter(([key]) => key !== "password"),
+      Object.entries(user).filter(([key]) => !["password", "otp", "otpExpire"].includes(key)),
     );
+
+    // Re-attach club associations and memberships
+    if (userType === "admin") {
+        const clubInfo = (user.role === "facultyCoordinator" || user.role === "club") 
+            ? await getAdminClubId(user.id) 
+            : null;
+        safeUser.clubId = clubInfo?.id ?? null;
+        safeUser.memberships = clubInfo ? [{ 
+            clubId: clubInfo.id, 
+            clubName: clubInfo.clubName, 
+            role: "facultyCoordinator",
+            permissions: {
+                canTakeAttendance: true,
+                canViewDashboard: true,
+                canCheckRegistration: true,
+                canEditEvents: true
+            }
+        }] : [];
+    } else {
+        const { clubId, memberships } = await getStudentRoleAndClub(user.id);
+        safeUser.clubId = clubId;
+        safeUser.memberships = memberships;
+    }
 
     res.json({ message: "Profile updated successfully", user: safeUser });
   } catch (err) {

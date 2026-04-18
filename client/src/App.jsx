@@ -14,10 +14,13 @@ import MyEvents from './pages/MyEvents';
 import EditProfile from './pages/EditProfile';
 import EditEvent from './pages/EditEvent';
 import EventRegistrations from './pages/EventRegistrations';
+import CheckIn from './pages/CheckIn';
 import RegisterLanding from './pages/RegisterLanding';
 import ClubsPage from './pages/Clubspage';
 import ClubDetails from './pages/ClubDetails';
 import EditClub from './pages/EditClub';
+import ClubMembers from './pages/ClubMembers';
+import ClubEvents from './pages/ClubEvents';
 import Maintainance from './pages/Maintainance';
 
 
@@ -119,6 +122,7 @@ function App() {
             
             {/* Protected Routes */}
             <Route path="/club/edit/:id" element={<EditClub />} />
+            <Route path="/club/:clubId/team" element={<ClubMembers />} />
 
             <Route path="/events" element={<EventFeed />} />
             <Route path="/event/:slug" element={<EventDetails />} />
@@ -128,10 +132,12 @@ function App() {
             <Route path="/create" element={<CreateEvent />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-events" element={<MyEvents />} />
+            <Route path="/club-events/:clubId" element={<ClubEvents />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/events/edit/:id" element={<EditEvent />} />
             <Route path="/send-notification" element={<SendNotification />} />
             <Route path="/event/:id/registrations" element={<EventRegistrations />} />
+            <Route path="/event/:id/check-in" element={<CheckIn />} />
             <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
             <Route path="/admin-secret-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />

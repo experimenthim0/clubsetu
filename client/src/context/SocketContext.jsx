@@ -44,7 +44,7 @@ export const SocketProvider = ({ children }) => {
         axios.get(`${API_URL}/api/notifications`)
           .then(res => {
             setNotifications(res.data);
-            const unread = res.data.filter(n => !n.readBy.includes(user._id || user.id)).length;
+            const unread = res.data.filter(n => !(n.readBy || []).includes(user._id || user.id)).length;
             setUnreadCount(unread);
           })
           .catch(err => console.error("Could not fetch notifications", err));

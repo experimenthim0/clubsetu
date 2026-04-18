@@ -6,6 +6,8 @@ import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
 import { TwitterIcon } from "@/components/ui/twitter";
 import { GithubIcon } from "@/components/ui/github";
+import { MessageCircleIcon } from "@/components/ui/message-circle";
+import { EarthIcon } from "@/components/ui/earth";
 import ScrollReveal from "../components/ScrollReveal";
 import ClubCardSkeleton from "../components/skeletons/ClubCardSkeleton";
 const ClubsPage = ({ isHome = false }) => {
@@ -161,13 +163,14 @@ const tickerItems = [
                     </div>
 
                     {/* Social Links */}
+                    
                     {club.socialLinks && club.socialLinks.length > 0 && (
                     <div>
                       <span className="text-[10px] font-black tracking-widest text-black/60 block mb-1">
                         Connect
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {club.socialLinks.map((link, i) => {
+                        {club.socialLinks?.map((link, i) => {
                           const platform = link.platform?.toLowerCase() || 'website';
                           const iconProps = { className: "w-5 h-5" };
                           
@@ -176,6 +179,8 @@ const tickerItems = [
                             if (platform.includes('linkedin')) return <LinkedinIcon {...iconProps} />;
                             if (platform.includes('twitter') || platform.includes('x')) return <TwitterIcon {...iconProps} />;
                             if (platform.includes('github')) return <GithubIcon {...iconProps} />;
+                            if (platform.includes('whatsapp')) return <MessageCircleIcon {...iconProps} />;
+                            if (platform.includes('website')) return <EarthIcon {...iconProps} />;
                             return <i className="ri-links-line text-lg" />;
                           };
 

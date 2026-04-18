@@ -18,11 +18,13 @@ const SendNotification = () => {
   const user = userString && userString !== "undefined" ? JSON.parse(userString) : null;
 
   useEffect(() => {
-    if (user && user.id) {
-      // Fetch events for this club head
-      axios
-        .get(`${API_URL}/api/club-events/club-co/${user.id}`)
-        .then((res) => {
+    if (user && (user.id || user.clubId)) {
+      // Use clubId for fetching all events for the managed club
+      const targetClubId = user.clubId;
+      if (targetClubId) {
+        axios
+          .get(`${API_URL}/api/events/club-manage/${targetClubId}`)
+          .then((res) => {
           setEvents(res.data);
         })
         .catch((err) => console.error("Could not fetch events", err));
@@ -32,7 +34,7 @@ const SendNotification = () => {
         .then((res) => setHistory(res.data))
         .catch((err) => console.error("Could not fetch history", err));
     }
-  }, []);
+  }}, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,7 +134,7 @@ const SendNotification = () => {
                   -- Select an event --
                 </option>
                 {events.map((evt) => (
-                  <option key={evt._id} value={evt._id}>
+                  <option key={evt.id || evt._id} value={evt.id || evt._id}>
                     {evt.title}
                   </option>
                 ))}
@@ -203,7 +205,7 @@ const SendNotification = () => {
         ) : (
           <div className="flex flex-col gap-4">
             {history.map((notif) => (
-              <div key={notif._id} className="bg-white border-2 border-gray-300 rounded-sm p-5">
+              <div key={notif.id || notif._id} className="bg-white border-2 border-gray-300 rounded-sm p-5">
                 <div className="flex justify-between items-start mb-2">
                   <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm ${notif.targetType === 'ALL_STUDENTS' ? 'bg-orange-100 text-orange-700 border border-orange-700' : 'bg-blue-100 text-blue-700 border border-blue-700'}`}>
                     {notif.targetType === 'ALL_STUDENTS' ? 'All Students' : `Event: ${notif.eventId?.title || 'Unknown Event'}`}

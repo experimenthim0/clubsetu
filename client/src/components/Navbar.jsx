@@ -10,6 +10,7 @@ import { SettingsIcon } from "./ui/settings";
 import { ConciergeBellIcon } from "./ui/concierge-bell";
 import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
+import { LayoutGridIcon } from "./ui/layout-grid";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -17,12 +18,15 @@ const Navbar = () => {
   let user = null;
   try {
     const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined") {
-      user = JSON.parse(storedUser);
+    const storedAdmin = localStorage.getItem("admin");
+    const raw = storedUser || storedAdmin;
+    if (raw && raw !== "undefined") {
+      user = JSON.parse(raw);
     }
   } catch (err) {
     console.error("Error parsing user from local storage", err);
     localStorage.removeItem("user");
+    localStorage.removeItem("admin");
   }
   const role = localStorage.getItem("role");
 
@@ -299,7 +303,7 @@ const Navbar = () => {
                   {/* ── Dropdown panel ── */}
                   {dropdownOpen && (
                     <div
-                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm  z-50 overflow-hidden mt-2"
+                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm z-50 overflow-hidden mt-2"
                       role="menu"
                     >
                       {/* User header */}
@@ -310,8 +314,8 @@ const Navbar = () => {
                         <p className="text-[14px] font-black text-black truncate">
                           {user.name}
                         </p>
-                        <p className="text-[10px]  tracking-widest text-orange-600 font-medium mt-0.5">
-                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator - ${user.clubName || ""}` : role === "admin" ? "Admin" : "Student"}
+                        <p className="text-[10px] tracking-widest text-orange-600 font-medium mt-0.5">
+                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator` : role === "admin" ? "Admin" : "Student"}
                         </p>
                       </div>
 
@@ -319,70 +323,82 @@ const Navbar = () => {
                       <div className="py-1">
                         <Link
                           to="/profile"
-                          className="flex items-center gap-2.5 px-4 py-2 text-[12px]  text-black hover:bg-neutral-100 transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-black hover:bg-neutral-100 transition-colors"
                           role="menuitem"
                         >
-                          {/* <i className="ri-user-line text-orange-600" /> My */}
-                          <UserIcon size={18} >
-                          Profile
-                          </UserIcon>
+                          <UserIcon size={18} /> Profile
                         </Link>
 
-                        {(role === "member") && (
+                        {role === "member" && (
                           <Link
                             to="/my-events"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
+                            className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-black hover:bg-neutral-100 transition-colors"
                             role="menuitem"
                           >
-                            {/* <i className="ri-calendar-check-line text-orange-600" />{" "} */}
-                            <CalendarDaysIcon size={18} >
-                            My Events
-                            </CalendarDaysIcon>
+                            <CalendarDaysIcon size={18} /> My Events
                           </Link>
                         )}
 
-                        {(role === "club" || role === "facultyCoordinator") && (
-                          <Link
-                            to="/my-events"
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-black hover:bg-neutral-100 transition-colors"
-                            role="menuitem"
-                          >
-                            {/* <i className="ri-calendar-event-line text-orange-600" />{" "} */}
-                            <CalendarCogIcon size={18} >
-                            {role === "facultyCoordinator" ? "Review Events" : "Club Events"}
-                            </CalendarCogIcon>
-                          </Link>
-                        )}
-                        {(role === "club") && (
-                          <>
-                            <Link
-                                to="/payments"
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
-                                role="menuitem"
-                            >
-                                <IndianRupeeIcon size={18} >
-                                Payments
-                                </IndianRupeeIcon>
-                            </Link>
-                            <Link
-                                to="/send-notification"
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
-                                role="menuitem"
-                            >
-                                <ConciergeBellIcon size={18} >
-                                 Send Notification
-                                </ConciergeBellIcon>
-                            </Link>
-                            <Link
-                                to={`/club/edit/${user.clubId}`}
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-[14px]  text-black hover:bg-neutral-100 transition-colors"
-                                role="menuitem"
-                            >
-                                <SettingsIcon size={18} >
-                                Manage Club Profile
-                                </SettingsIcon>
-                            </Link>
-                          </>
+                        {((user.memberships && user.memberships.length > 0) || role === 'facultyCoordinator') && (
+                          <div className="border-t border-neutral-100 mt-1 pt-1 text-black">
+                            <p className="px-4 py-1 text-[9px] font-black uppercase tracking-widest text-neutral-400">Management</p>
+                            
+                            {/* Membership-based links (Clubs) */}
+                            {user.memberships?.map((m) => (
+                              <div key={m.clubId} className="pb-2 last:pb-0 border-b border-neutral-50 last:border-0">
+                                <p className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/40 mb-1">
+                                  {m.clubName}
+                                </p>
+                                
+                                {(m.role === "CLUB_HEAD" || m.role === "COORDINATOR" || m.role === "facultyCoordinator" || m.canEditEvents || m.canCheckRegistration || m.canTakeAttendance || m.permissions?.canEditEvents || m.permissions?.canCheckRegistration || m.permissions?.canTakeAttendance) && (
+                                  <Link to={`/club-events/${m.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                    <CalendarCogIcon size={16} className="text-neutral-500" /> Club Events
+                                  </Link>
+                                )}
+
+                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
+                                  <Link to={`/club/${m.clubId}/team`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                    <UserIcon size={16} className="text-neutral-500" /> Team Management
+                                  </Link>
+                                )}
+
+                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
+                                  <>
+                                    <Link to="/payments" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                      <IndianRupeeIcon size={16} className="text-neutral-500" /> Payments
+                                    </Link>
+                                    <Link to="/send-notification" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                      <ConciergeBellIcon size={16} className="text-neutral-500" /> Notifications
+                                    </Link>
+                                  </>
+                                )}
+
+                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
+                                  <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                    <LayoutGridIcon size={16} className="text-neutral-500" /> Club Page
+                                  </Link>
+                                )}
+                              </div>
+                            ))}
+
+                            {/* Faculty Coordinator specific links (if not in memberships) */}
+                            {role === 'facultyCoordinator' && user.clubId && (!user.memberships || !user.memberships.find(m => m.clubId === user.clubId)) && (
+                              <div className="pb-2">
+                                <p className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/40 mb-1">
+                                  Faculty Review
+                                </p>
+                                <Link to="/my-events" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                  <CalendarCogIcon size={16} className="text-neutral-500" /> Review Events
+                                </Link>
+                                <Link to={`/club/${user.clubId}/team`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                  <UserIcon size={16} className="text-neutral-500" /> Team Management
+                                </Link>
+                                <Link to={`/club/edit/${user.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
+                                  <LayoutGridIcon size={16} className="text-neutral-500" /> Club Page
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
 

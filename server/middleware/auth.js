@@ -5,51 +5,51 @@ if (!JWT_SECRET) {
   throw new Error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
 }
 
-// Generate JWT token
-export const generateToken = (user, role) => {
-  const userId = user?.id;
-  const clubId = user?.clubId ?? null;
-
+/**
+ * Generate JWT token.
+ * @param {object} user - User object (must have .id and .email)
+ * @param {string} role  - Role string: admin | facultyCoordinator | paymentAdmin | club | member | external
+ * @param {string} userType - "student" | "admin" | "external"
+ * @param {string|null} clubId - Club ID if the user is associated with a club
+ */
+export const generateToken = (user, role, userType = "student", clubId = null) => {
   return jwt.sign(
-    { 
-      userId, 
-      role, 
+    {
+      userId: user.id,
+      role,
       email: user.email,
-      clubId // Include clubId for authorization checks
+      clubId,
+      userType,
     },
     JWT_SECRET,
-    { expiresIn: "1d" },
+    { expiresIn: "7d" },
   );
 };
 
-// Verify JWT token middleware (unified 'auth')
+// Verify JWT token middleware
 export const verifyToken = async (req, res, next) => {
-  // Strictly enforce Header-Based Authorization to mitigate CSRF
   let token = null;
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.split(" ")[1];
   } else if (authHeader) {
-     // Simple fallback for non-Bearer auth header
-     token = authHeader;
+    token = authHeader;
   }
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "No token provided." });
+    return res.status(401).json({ message: "No token provided." });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { userId, role, email }
+    req.user = decoded; // { userId, role, email, clubId, userType }
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ message: "Invalid or expired token." });
   }
 };
 
-// Standard 'requireRole'/ 'allowRoles' based on your provided task list
+// Role-based access control — checks req.user.role
 export const allowRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {

@@ -6,17 +6,30 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
+// ── Enums ──────────────────────────────────────────────────────────────────────
+
+enum AdminRoleType {
   admin
   facultyCoordinator
-  club
-  member
   paymentAdmin
 }
 
-enum RegistrationStatus {
-  CONFIRMED
+enum ClubMemberRole {
+  CLUB_HEAD     // Main club account/owner
+  COORDINATOR   // Management & event creation
+  MEMBER        // View only + Attendance permission
+}
+
+enum EventMode {
+  online
+  offline
+}
+
+enum ParticipationStatus {
+  REGISTERED
+  ATTENDED
   WAITLISTED
+  CANCELLED
 }
 
 enum PaymentStatus {
@@ -37,168 +50,235 @@ enum ReviewStatus {
   REJECTED
 }
 
-enum NotificationTargetType {
-  ALL_STUDENTS
-  REGISTERED_STUDENTS
+enum MediaType {
+  IMAGE
+  VIDEO
+  SPONSOR_LOGO
 }
 
-model User {
-  id                      String    @id @db.VarChar(24)
-  name                    String
-  email                   String    @unique
-  password                String
-  role                    UserRole  @default(member)
-  clubId                  String?   @db.VarChar(24)
-  otp                     String?
-  otpExpire               DateTime?
-  isTwoStepEnabled        Boolean   @default(false)
-  rollNo                  String?   @unique
-  branch                  String?
-  year                    String?
-  program                 String?
-  phone                   String?
-  designation             String?
-  isApproved              Boolean   @default(false)
-  githubProfile           String?
-  linkedinProfile         String?
-  xProfile                String?
-  instagramProfile        String?
-  portfolioUrl            String?
-  whatsappNumber          String?
-  bankName                String?
-  accountHolderName       String?
-  accountNumber           String?
-  ifscCode                String?
-  upiId                   String?
-  bankPhone               String?
-  isVerified              Boolean   @default(false)
-  verificationToken       String?
+// ── Users ──────────────────────────────────────────────────────────────────────
+
+model AdminRole {
+  id                     String        @id @db.VarChar(24)
+  name                   String
+  email                  String        @unique
+  password               String
+  role                   AdminRoleType @default(admin)
+  isTwoStepEnabled       Boolean       @default(false)
+  otp                    String?
+  otpExpire              DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  coordinatedClubs       Club[]        @relation("ClubFacultyCoordinator")
+  reviewedEvents         Event[]       @relation("EventReviewedBy")
+  sentNotifications      Notification[] @relation("NotificationSenderAdmin")
+}
+
+model StudentUser {
+  id                     String        @id @db.VarChar(24)
+  rollNo                 String?       @unique
+  name                   String
+  email                  String        @unique
+  password               String
+  branch                 String?
+  year                   String?
+  program                String?
+  
+  
+  // Auth fields
+  isVerified             Boolean       @default(false)
+  isTwoStepEnabled       Boolean       @default(false)
+  otp                    String?
+  otpExpire              DateTime?
+  verificationToken      String?
   verificationTokenExpire DateTime?
-  resetPasswordToken      String?
-  resetPasswordExpire     DateTime?
-  passwordChangeCount     Int       @default(0)
-  lastPasswordChangeDate  DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  resetPasswordToken     String?
+  resetPasswordExpire    DateTime?
+  
+  // Relations
+  memberships            ClubMembership[]
+  participations         Participation[]
+  createdEvents          Event[]       @relation("EventCreatedBy")
+  sentNotifications      Notification[] @relation("NotificationSenderStudent")
 
-  club                Club?    @relation("UserClub", fields: [clubId], references: [id], onDelete: SetNull)
-  createdEvents       Event[]  @relation("EventCreatedBy")
-  reviewedEvents      Event[]  @relation("EventReviewedBy")
-  registrations       Registration[]
-  sentNotifications   Notification[]
-
-  @@index([clubId])
-  @@index([role])
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 }
+
+// ── Clubs & Memberships ────────────────────────────────────────────────────────
 
 model Club {
-  id                  String   @id @db.VarChar(24)
-  clubName            String
-  slug                String   @unique
-  description         String?
-  category            String?
-  uniqueId            String?  @unique
-  clubEmail           String?  @unique
-  facultyEmail        String?
-  facultyName         String?
-  socialLinks         Json?    @db.JsonB
-  clubLogo            String?
-  clubGallery         String[] @default([])
-  clubSponsors        String[] @default([])
-  bankName            String?
-  accountHolderName   String?
-  accountNumber       String?
-  ifscCode            String?
-  upiId               String?
-  bankPhone           String?
-  facultyCoordinatorIds String[] @default([])
-  studentCoordinators String[] @default([])
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   String        @id @db.VarChar(24)
+  clubName             String        @unique
+  slug                 String        @unique
+  description          String?
+  clubLogo             String?
+  category             String?
+  
+  // Contact & Management
+  clubEmail            String?
+  facultyName          String?
+  facultyEmail         String?
+  facultyCoordinatorId String?       @db.VarChar(24)
+  
+  // Payout / Bank Details
+  bankName             String?
+  accountHolderName    String?
+  accountNumber        String?
+  ifscCode             String?
+  upiId                String?
+  bankPhone            String?
+  
+  // Relations
+  facultyCoordinator   AdminRole?    @relation("ClubFacultyCoordinator", fields: [facultyCoordinatorId], references: [id])
+  memberships          ClubMembership[]
+  events               Event[]
+  sponsors             Sponsor[]
+  media                Media[]
+  socialLinks          ClubSocialLink[]
 
-  users  User[]  @relation("UserClub")
-  events Event[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 }
+
+model ClubSocialLink {
+  id          String   @id @db.VarChar(24)
+  clubId      String   @db.VarChar(24)
+  platform    String   // e.g., 'instagram', 'linkedin'
+  url         String
+  
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+}
+
+model ClubMembership {
+  id            String         @id @db.VarChar(24)
+  clubId        String         @db.VarChar(24)
+  studentId     String         @db.VarChar(24)
+  role          ClubMemberRole @default(MEMBER)
+  
+  // Permissions derived from requirements
+  // MEMBER: canViewDashboard = true, canTakeAttendance = true
+  // COORDINATOR: All Member + canEditEvents = true
+  // CLUB_HEAD: Full Access
+  canTakeAttendance Boolean    @default(true) 
+  canEditEvents     Boolean    @default(false)
+
+  club          Club           @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  student       StudentUser    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, studentId])
+}
+
+// ── Events & Participation ─────────────────────────────────────────────────────
 
 model Event {
-  id                   String             @id @db.VarChar(24)
-  title                String
-  slug                 String?            @unique
+  id             String        @id @db.VarChar(24)
+  title          String
+  slug           String?       @unique
+  venue          String
+  startTime      DateTime
+  endTime        DateTime
+  entryFee       Float         @default(0)
+  clubId         String        @db.VarChar(24)
+  createdById    String        @db.VarChar(24)
+  reviewStatus   ReviewStatus  @default(PENDING)
+  reviewedById   String?       @db.VarChar(24)
+
+  // New Fields Restored
   description          String?
-  venue                String
-  startTime            DateTime
-  endTime              DateTime
-  totalSeats           Int                @default(0)
-  entryFee             Float              @default(0)
-  allowedPrograms      String[]           @default(["BTECH", "MTECH", "OTHER"])
-  allowedYears         String[]           @default([])
-  imageUrl             String             @default("")
-  registeredCount      Int                @default(0)
-  waitingListIds       String[]           @default([])
-  requiredFields       String[]           @default([])
-  customFields         Json?             @db.JsonB
-  createdById          String             @db.VarChar(24)
-  clubId               String?            @db.VarChar(24)
-  payoutStatus         PayoutStatus       @default(PENDING)
+  imageUrl             String?
+  totalSeats           Int           @default(0)
+  registeredCount      Int           @default(0)
+  requiredFields       String[]      @default([])
+  customFields         Json?
+  allowedPrograms      String[]      @default(["BTECH", "MTECH", "OTHER"])
+  allowedYears         String[]      @default([])
   registrationDeadline DateTime?
-  reviewStatus         ReviewStatus       @default(PENDING)
+  winners              Json?
+  showWinner           Boolean       @default(false)
+  provideCertificate   Boolean       @default(false)
+  certificateTemplate  Json?
   reviewComment        String?
-  reviewedById         String?            @db.VarChar(24)
-  winners              Json?             @db.JsonB
-  showWinner           Boolean            @default(false)
-  provideCertificate   Boolean            @default(false)
-  certificateTemplate  Json?             @db.JsonB
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  waitingListIds       String[]      @default([])
 
-  createdBy     User           @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  club          Club?          @relation(fields: [clubId], references: [id], onDelete: SetNull)
-  reviewedBy    User?          @relation("EventReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
-  registrations Registration[]
+  // Relations
+  club           Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdBy      StudentUser   @relation("EventCreatedBy", fields: [createdById], references: [id])
+  reviewedBy     AdminRole?    @relation("EventReviewedBy", fields: [reviewedById], references: [id])
+  participations Participation[]
+  sponsors       Sponsor[]
+  media          Media[]
 
-  @@index([clubId])
-  @@index([createdById])
-  @@index([reviewStatus])
-  @@index([startTime])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
 }
 
-model Registration {
-  id               String             @id @db.VarChar(24)
-  eventId          String             @db.VarChar(24)
-  userId           String             @db.VarChar(24)
-  status           RegistrationStatus @default(CONFIRMED)
+model Participation {
+  id               String              @id @db.VarChar(24)
+  eventId          String              @db.VarChar(24)
+  studentId        String?             @db.VarChar(24) // Null if external
+  externalEmail    String?             // For non-college participants
+  externalName     String?
+  status           ParticipationStatus @default(REGISTERED)
+  
+  // Attendance Logic
+  qrCode           String?             @unique
+  attendedAt       DateTime?
+  markedByMemberId String?             @db.VarChar(24) // Track which coordinator/member took attendance
+
+  // Payment
+  paymentStatus    PaymentStatus       @default(SUCCESS)
+  amountPaid       Float               @default(0)
   paymentId        String?
   orderId          String?
-  paymentStatus    PaymentStatus      @default(SUCCESS)
-  amountPaid       Float              @default(0)
   paymentTimestamp DateTime?
-  formResponses    Json?              @db.JsonB
-  timestamp        DateTime           @default(now())
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  formResponses    Json?
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event            Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student          StudentUser?        @relation(fields: [studentId], references: [id])
 
-  @@unique([eventId, userId])
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now()) @updatedAt
+
   @@index([eventId])
-  @@index([userId])
+}
+
+// ── Sponsors & Media ───────────────────────────────────────────────────────────
+
+model Sponsor {
+  id          String   @id @db.VarChar(24)
+  name        String
+  logoUrl     String
+  websiteUrl  String?
+  clubId      String?  @db.VarChar(24)
+  eventId     String?  @db.VarChar(24)
+
+  club        Club?    @relation(fields: [clubId], references: [id])
+  event       Event?   @relation(fields: [eventId], references: [id])
+}
+
+model Media {
+  id          String    @id @db.VarChar(24)
+  url         String
+  type        MediaType @default(IMAGE)
+  clubId      String?   @db.VarChar(24)
+  eventId     String?   @db.VarChar(24)
+
+  club        Club?     @relation(fields: [clubId], references: [id])
+  event       Event?    @relation(fields: [eventId], references: [id])
 }
 
 model Notification {
-  id         String                 @id @db.VarChar(24)
-  senderId   String                 @db.VarChar(24)
-  targetType NotificationTargetType
-  eventId    String?                @db.VarChar(24)
-  recipients String[]               @default([])
-  title      String
-  message    String
-  readBy     String[]               @default([])
-  createdAt  DateTime               @default(now())
-  updatedAt  DateTime               @updatedAt
+  id               String   @id @db.VarChar(24)
+  title            String
+  message          String
+  senderStudentId  String?  @db.VarChar(24)
+  senderAdminId    String?  @db.VarChar(24)
+  
+  senderStudent    StudentUser? @relation("NotificationSenderStudent", fields: [senderStudentId], references: [id])
+  senderAdmin      AdminRole?   @relation("NotificationSenderAdmin", fields: [senderAdminId], references: [id])
+  readBy           String[]     @default([])
 
-  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([eventId])
+  createdAt        DateTime @default(now())
 }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { ParticipationStatus } from '../types/index';
 
 const EventRegistrations = () => {
     const { id } = useParams();
@@ -15,11 +17,12 @@ const EventRegistrations = () => {
         const fetchData = async () => {
             try {
                 const [regRes, statsRes, eventRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${id}/registrations`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`),
                     axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${id}/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/${id}`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`),
                 ]);
-                setRegistrations(regRes.data);
+                const data = regRes.data;
+                setRegistrations(data.participations || (Array.isArray(data) ? data : []));
                 setStats(statsRes.data);
                 setEventData(eventRes.data);
                 setLoading(false);
@@ -40,26 +43,29 @@ const EventRegistrations = () => {
         return responses instanceof Map ? responses.get(label) : responses[label];
     };
 
-    const filteredRegistrations = registrations.filter(reg => {
+    const filteredRegistrations = (Array.isArray(registrations) ? registrations : []).filter(reg => {
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         const name = (reg.student?.name || '').toLowerCase();
         const rollNo = (reg.student?.rollNo || '').toLowerCase();
         const email = (reg.student?.email || '').toLowerCase();
         const branch = (reg.student?.branch || '').toLowerCase();
-        return name.includes(q) || rollNo.includes(q) || email.includes(q) || branch.includes(q);
+        const externalEmail = (reg.externalEmail || '').toLowerCase();
+        const externalName = (reg.externalName || '').toLowerCase();
+        return name.includes(q) || rollNo.includes(q) || email.includes(q) || branch.includes(q) || externalEmail.includes(q) || externalName.includes(q);
     });
 
     // ── Export to Excel (CSV) ─────────────────────────────────────────────
     const handleExportExcel = () => {
         const headers = [
             'S.No', 'Name', 'Roll No', 'Email', 'Branch', 'Year', 'Program',
+            'External Name', 'External Email',
             'Status', 'Registered At', 'Amount Paid',
             'GitHub', 'LinkedIn', 'X (Twitter)', 'Portfolio',
             ...customFields.map(cf => cf.label),
         ];
 
-        const rows = registrations.map((reg, idx) => [
+        const rows = (Array.isArray(registrations) ? registrations : []).map((reg, idx) => [
             idx + 1,
             reg.student?.name || '',
             reg.student?.rollNo || '',
@@ -67,6 +73,8 @@ const EventRegistrations = () => {
             reg.student?.branch || '',
             reg.student?.year || '',
             reg.student?.program || '',
+            reg.externalName || '',
+            reg.externalEmail || '',
             reg.status || '',
             reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
             reg.amountPaid || 0,
@@ -226,6 +234,8 @@ const EventRegistrations = () => {
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socials</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">External Name</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">External Email</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered At</th>
                                 {customFields.map((cf, i) => (
@@ -237,7 +247,7 @@ const EventRegistrations = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredRegistrations.map((reg, idx) => (
-                                <tr key={reg._id} className="hover:bg-orange-50/40 transition-colors">
+                                <tr key={reg.id || reg._id} className="hover:bg-orange-50/40 transition-colors">
                                     <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-neutral-400">{idx + 1}</td>
                                     <td className="px-4 py-4 whitespace-nowrap">
                                         <div className="text-sm font-medium text-gray-900">{reg.student?.name || 'Unknown'}</div>
@@ -285,8 +295,19 @@ const EventRegistrations = () => {
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-500">{reg.externalName || '-'}</div>
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-500">{reg.externalEmail || '-'}</div>
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            reg.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                            {
+                                                [ParticipationStatus.REGISTERED]: 'bg-blue-100 text-blue-800',
+                                                [ParticipationStatus.ATTENDED]:   'bg-green-100 text-green-800',
+                                                [ParticipationStatus.WAITLISTED]: 'bg-yellow-100 text-yellow-800',
+                                                [ParticipationStatus.CANCELLED]:  'bg-red-100 text-red-800',
+                                            }[reg.status] || 'bg-gray-100 text-gray-800'
                                         }`}>
                                             {reg.status}
                                         </span>

@@ -15,6 +15,11 @@ const AdminDashboard = () => {
     const [showYearWise, setShowYearWise] = useState(false);
     const [selectedClub, setSelectedClub] = useState(null);
     const [selectedEventId, setSelectedEventId] = useState(null);
+    const [coordinators, setCoordinators] = useState([]);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingClub, setEditingClub] = useState(null);
+    const [isCoordModalOpen, setIsCoordModalOpen] = useState(false);
+    const [editingCoord, setEditingCoord] = useState(null);
     const navigate = useNavigate();
     const { showNotification } = useNotification();
 
@@ -42,6 +47,9 @@ const AdminDashboard = () => {
 
                 const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
                 setClubHeads(clubsRes.data);
+
+                const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
+                setCoordinators(coordsRes.data);
 
                 fetchFilteredEventData();
                 setLoading(false);
@@ -102,6 +110,8 @@ const AdminDashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('admin');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
         localStorage.removeItem('token');
         navigate('/admin-secret-login');
     };
@@ -142,6 +152,56 @@ const AdminDashboard = () => {
             refreshStats();
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to create club', 'error');
+        }
+    };
+
+    const handleUpdateClub = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/clubs/${editingClub._id}`, data);
+            showNotification('Club updated successfully', 'success');
+            setIsEditModalOpen(false);
+            setEditingClub(null);
+            const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
+            setClubHeads(clubsRes.data);
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to update club', 'error');
+        }
+    };
+
+    const handleCreateCoord = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`, data);
+            showNotification('Coordinator created successfully', 'success');
+            e.target.reset();
+            const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
+            setCoordinators(coordsRes.data);
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to create coordinator', 'error');
+        }
+    };
+
+    const handleUpdateCoord = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/coordinators/${editingCoord._id}`, data);
+            showNotification('Coordinator updated successfully', 'success');
+            setIsCoordModalOpen(false);
+            setEditingCoord(null);
+            const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
+            setCoordinators(coordsRes.data);
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to update coordinator', 'error');
         }
     };
 
@@ -234,6 +294,12 @@ const AdminDashboard = () => {
                                 className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'club-heads' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
                             >
                                 Manage Clubs
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('coordinators')}
+                                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'coordinators' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
+                            >
+                                Faculty Coordinators
                             </button>
                             <button 
                                 onClick={() => setActiveTab('event-data')}
@@ -399,7 +465,7 @@ const AdminDashboard = () => {
                                             <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Name</th>
                                             <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Faculty</th>
                                             <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Email</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black">Unique ID</th>
+                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y-2 divide-black">
@@ -407,18 +473,77 @@ const AdminDashboard = () => {
                                             <tr key={idx} className="hover:bg-neutral-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{club.clubName}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-gray-400 text-orange-600">
-                                                    {club.facultyName}<br/>
-                                                    <span className="text-[10px] text-neutral-400">{club.facultyEmail}</span>
+                                                    {club.facultyName || club.facultyCoordinator?.name || "N/A"}<br/>
+                                                    <span className="text-[10px] text-neutral-400">{club.facultyEmail || club.facultyCoordinator?.email}</span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">{club.clubEmail}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-xs font-mono font-bold">
-                                                    {club.uniqueId}
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">
+                                                    {club.clubEmail || (club.memberships && club.memberships[0]?.student?.email) || "N/A"}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <button 
+                                                        onClick={() => { setEditingClub(club); setIsEditModalOpen(true); }}
+                                                        className="px-3 py-1 bg-white border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-sm"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
                                         {clubHeads.length === 0 && (
                                             <tr>
                                                 <td colSpan="4" className="px-6 py-12 text-center text-neutral-500 text-sm">No clubs registered yet.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── COORDINATORS TAB ── */}
+                {activeTab === 'coordinators' && (
+                    <div className="space-y-8">
+                        {/* Add New Coordinator Form */}
+                        <div className="bg-white border-2 border-gray-300 p-6 rounded-sm">
+                            <h3 className="text-xl font-medium tracking-wide mb-4">Add Faculty Coordinator</h3>
+                            <form onSubmit={handleCreateCoord} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <input name="name" placeholder="Full Name" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                <input name="email" type="email" placeholder="Email Address" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                <input name="password" type="password" placeholder="Password (default: coordinator123)" className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                <button type="submit" className="bg-black text-white py-2 font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Create Coordinator</button>
+                            </form>
+                        </div>
+
+                        {/* Coordinators List Table */}
+                        <div className="bg-white border-2 border-gray-400 rounded-sm overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y-2 divide-black">
+                                    <thead className="bg-neutral-100">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Name</th>
+                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Email</th>
+                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y-2 divide-black">
+                                        {coordinators.map((coord, idx) => (
+                                            <tr key={coord._id || idx} className="hover:bg-neutral-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{coord.name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">{coord.email}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <button 
+                                                        onClick={() => { setEditingCoord(coord); setIsCoordModalOpen(true); }}
+                                                        className="px-3 py-1 bg-white border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-sm"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {coordinators.length === 0 && (
+                                            <tr>
+                                                <td colSpan="3" className="px-6 py-12 text-center text-neutral-500 text-sm">No coordinators found.</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -582,6 +707,76 @@ const AdminDashboard = () => {
                                     Confirm Payout
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+                {/* Edit Club Modal */}
+                {isEditModalOpen && editingClub && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                        <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[12px_12px_0px_#000]">
+                            <div className="bg-black text-white p-6 border-b-2 border-black flex justify-between items-center">
+                                <h3 className="font-black text-xl uppercase tracking-tight">Edit Club</h3>
+                                <button onClick={() => setIsEditModalOpen(false)} className="text-white hover:text-orange-400 text-2xl"><i className="ri-close-line" /></button>
+                            </div>
+                            <form onSubmit={handleUpdateClub} className="p-8 space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Club Name</label>
+                                    <input name="clubName" defaultValue={editingClub.clubName} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Official Club Email</label>
+                                    <input name="clubEmail" type="email" defaultValue={editingClub.clubEmail} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Faculty Name (Legacy Display)</label>
+                                    <input name="facultyName" defaultValue={editingClub.facultyName} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" placeholder="Displayed on public page if no coordinator assigned" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Faculty Email (Legacy Display)</label>
+                                    <input name="facultyEmail" defaultValue={editingClub.facultyEmail} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" placeholder="Legacy faculty email" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Assign Faculty Coordinator</label>
+                                    <select name="facultyCoordinatorId" defaultValue={(editingClub.facultyCoordinators && editingClub.facultyCoordinators[0]?.id) || editingClub.facultyCoordinatorId} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none">
+                                        <option value="">None</option>
+                                        {coordinators.map(c => <option key={c._id} value={c._id}>{c.name} ({c.email})</option>)}
+                                    </select>
+                                </div>
+                                <div className="pt-4 flex gap-4">
+                                    <button onClick={() => setIsEditModalOpen(false)} type="button" className="flex-1 py-3 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition-colors">Cancel</button>
+                                    <button type="submit" className="flex-1 py-3 bg-black text-white font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Coordinator Modal */}
+                {isCoordModalOpen && editingCoord && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                        <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[12px_12px_0px_#000]">
+                            <div className="bg-black text-white p-6 border-b-2 border-black flex justify-between items-center">
+                                <h3 className="font-black text-xl uppercase tracking-tight">Edit Coordinator</h3>
+                                <button onClick={() => setIsCoordModalOpen(false)} className="text-white hover:text-orange-400 text-2xl"><i className="ri-close-line" /></button>
+                            </div>
+                            <form onSubmit={handleUpdateCoord} className="p-8 space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Full Name</label>
+                                    <input name="name" defaultValue={editingCoord.name} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Email Address</label>
+                                    <input name="email" type="email" defaultValue={editingCoord.email} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">New Password (leave blank to keep current)</label>
+                                    <input name="password" type="password" className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
+                                </div>
+                                <div className="pt-4 flex gap-4">
+                                    <button onClick={() => setIsCoordModalOpen(false)} type="button" className="flex-1 py-3 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition-colors">Cancel</button>
+                                    <button type="submit" className="flex-1 py-3 bg-black text-white font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Save Changes</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

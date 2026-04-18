@@ -5,6 +5,10 @@ import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
 import { TwitterIcon } from "@/components/ui/twitter";
 import { GithubIcon } from "@/components/ui/github";
+import { MessageCircleIcon } from "@/components/ui/message-circle";
+import { EarthIcon } from "@/components/ui/earth";
+
+import { ClubMemberRole } from "../types/index.js";
 
 const ClubDetails = () => {
   const { slug } = useParams();
@@ -12,6 +16,8 @@ const ClubDetails = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [canEdit, setCanEdit] = useState(false);
+  const [isHead, setIsHead] = useState(false);
 
   useEffect(() => {
     const fetchClubDetails = async () => {
@@ -21,7 +27,26 @@ const ClubDetails = () => {
         );
         setClub(res.data.club);
         setEvents(res.data.events);
-        setUser(JSON.parse(localStorage.getItem("user")));
+
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        setUser(storedUser);
+
+        // Fetch membership to derive RBAC flags
+        if (storedUser && res.data.club) {
+          const clubId = res.data.club._id || res.data.club.id;
+          try {
+            const membersRes = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/club-members/${clubId}/members`
+            );
+            const membership = membersRes.data.find(
+              (m) => m.studentId === storedUser.id || m.student?.id === storedUser.id
+            );
+            setCanEdit(membership?.canEditEvents ?? false);
+            setIsHead(membership?.role === ClubMemberRole.CLUB_HEAD);
+          } catch {
+            // Not a member or fetch failed — no admin controls shown
+          }
+        }
       } catch (err) {
         console.error("Error fetching club details:", err);
       } finally {
@@ -56,6 +81,17 @@ const ClubDetails = () => {
   );
   const upcomingEvents = events.filter((e) => new Date(e.startTime) > now);
   const pastEvents = events.filter((e) => new Date(e.endTime) < now);
+
+  const handleDeleteClub = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${club.clubName}"? This action cannot be undone.`)) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/clubs/${club._id || club.id}`);
+      window.location.href = '/clubs';
+    } catch (err) {
+      console.error("Failed to delete club:", err);
+      alert(err.response?.data?.message || "Failed to delete club.");
+    }
+  };
 
   const getBadgeClass = (type) => {
     if (type === "live")
@@ -162,6 +198,41 @@ const ClubDetails = () => {
               {club.description ||
                 "The official student group dedicated to community, innovation, and campus spirit."}
             </p>
+            {/* Admin action buttons — shown only to members with appropriate permissions */}
+            {(canEdit || isHead) && (
+              <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
+                {canEdit && (
+                  <Link
+                    to="/create"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white border-2 border-black rounded-sm hover:bg-black transition font-bold text-xs uppercase tracking-widest"
+                  >
+                    <i className="ri-add-line" /> Create Event
+                  </Link>
+                )}
+                {isHead && (
+                  <>
+                    <Link
+                      to={`/club/edit/${club._id || club.id}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-xs uppercase tracking-widest"
+                    >
+                      <i className="ri-settings-3-line" /> Club Settings
+                    </Link>
+                    <Link
+                      to={`/club/${club._id || club.id}/team`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-xs uppercase tracking-widest"
+                    >
+                      <i className="ri-team-line" /> Manage Members
+                    </Link>
+                    <button
+                      onClick={handleDeleteClub}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white border-2 border-red-800 rounded-sm hover:bg-red-800 transition font-bold text-xs uppercase tracking-widest"
+                    >
+                      <i className="ri-delete-bin-line" /> Delete Club
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -181,7 +252,7 @@ const ClubDetails = () => {
               Faculty Coord.
             </p>
             <p className="font-medium text-sm sm:text-base text-black break-words leading-snug">
-              {club.facultyName || "Not Assigned"}
+              {club.facultyName || club.facultyCoordinator?.name || "Not Assigned"}
             </p>
           </div>
 
@@ -198,6 +269,7 @@ const ClubDetails = () => {
           </div>
 
           {/* Socials — spans 2 cols on mobile, 1 col on sm+ */}
+          
           <div className="col-span-2 sm:col-span-1 bg-white border-2 border-gray-200 p-2 sm:p-4 rounded-xl">
             <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1 uppercase">
               Connect with us
@@ -216,6 +288,10 @@ const ClubDetails = () => {
                     return <InstagramIcon {...iconProps} />;
                   if (platform.includes("linkedin"))
                     return <LinkedinIcon {...iconProps} />;
+                  if (platform.includes("website"))
+                    return <EarthIcon {...iconProps} />;
+                  if (platform.includes("whatsapp"))
+                    return <MessageCircleIcon {...iconProps} />;
                   if (
                     platform.includes("twitter") ||
                     platform.includes("x")

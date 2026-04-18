@@ -2,6 +2,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "@prisma/config": "^7.7.0",
     "@sendgrid/mail": "^8.1.6",
     "async": "^3.2.6",
     "bcryptjs": "^3.0.3",
@@ -23,14 +24,16 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "fast-check": "^4.6.0",
+    "nodemon": "^3.1.11",
+    "vitest": "^4.1.4"
   },
   "name": "clubsetu-server",
   "version": "2.0.0",
   "description": "Backend for ClubSetu",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "start": "node index.js",
     "dev": "nodemon index.js",
     "prisma:generate": "prisma generate",

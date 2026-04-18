@@ -72,47 +72,6 @@ const Profile = () => {
         )} */}
       </div>
 
-      {/* Bank Information — Club Head Only */}
-      {(role === 'club') && (
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <i className="ri-bank-line text-orange-600" />
-            Bank / Payment Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-500">Account Holder Name</p>
-              <p className="font-medium">{user.accountHolderName || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Bank Name</p>
-              <p className="font-medium">{user.bankName || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Account Number</p>
-              <p className="font-medium font-mono">{user.accountNumber || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">IFSC Code</p>
-              <p className="font-medium font-mono uppercase">{user.ifscCode || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">UPI ID</p>
-              <p className="font-medium text-orange-600">{user.upiId || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Bank Phone</p>
-              <p className="font-medium">{user.bankPhone || <span className="text-gray-400 italic">Not added</span>}</p>
-            </div>
-          </div>
-          {(!user.accountNumber && !user.upiId) && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-              <i className="ri-error-warning-line mr-1" />
-              Please add your bank details via <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Edit Profile</Link> to receive event payouts.
-            </div>
-          )}
-        </div>
-      )}
 
 {(!['member', 'student'].includes(role)) && !user.isTwoStepEnabled && (
   <p className='text-black mt-4 text-sm '> <i className="ri-error-warning-line mr-1" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Enable it</Link></p>
@@ -190,12 +149,6 @@ const Profile = () => {
         >
           <i className="ri-money-dollar-circle-line mr-2" /> Payment Tracking
         </Link>
-        {/* <Link 
-          to="/create" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-black hover:text-white transition-colors"
-        >
-          <i className="ri-add-line" /> Create Event
-        </Link> */}
         <Link 
           to={`/club/edit/${user.clubId || user.id}`} 
           className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-3xl"
@@ -203,8 +156,42 @@ const Profile = () => {
           <i className="ri-community-line mr-2" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
         </Link>
       </div>
+    )}
 
-
+    {/* Bank Information section - Restored for Club Account */}
+    {(role === 'club') && (
+      <div className="mt-12 pt-8 border-t border-gray-100">
+        <h2 className="text-xl font-bold text-black uppercase tracking-tighter mb-6 flex items-center gap-2">
+          <i className="ri-bank-card-line text-orange-600" /> Bank / Payment Information
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700 bg-neutral-50 p-6 rounded-xl border border-neutral-100">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Bank Name</p>
+            <p className="font-bold text-neutral-800">{user.bankName || 'Not Set'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Account Holder</p>
+            <p className="font-bold text-neutral-800">{user.accountHolderName || 'Not Set'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Account Number</p>
+            <p className="font-mono font-bold text-neutral-800">{user.accountNumber || 'Not Set'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">IFSC Code</p>
+            <p className="font-mono font-bold text-neutral-800">{user.ifscCode || 'Not Set'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">UPI ID</p>
+            <p className="font-bold text-orange-600 underline">{user.upiId || 'Not Set'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Linked Phone</p>
+            <p className="font-bold text-neutral-800">{user.bankPhone || 'Not Set'}</p>
+          </div>
+        </div>
+      </div>
     )}
 
   </div>

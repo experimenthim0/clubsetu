@@ -22,12 +22,12 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
       setEvents(Array.isArray(res.data) ? res.data : []);
       const role = localStorage.getItem('role');
       if (user && role === 'member') {
-          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/club-events/user/${user._id}`);
-          setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId._id));
+          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user.id || user._id}`);
+          setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId.id || r.eventId._id));
       }
       setLoading(false);
     } catch (err) {
@@ -98,8 +98,8 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
     }
 
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/club-events/${eventId}/register`, {
-            userId: user._id
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/register`, {
+            userId: user.id || user._id
         });
         showNotification(res.data.message, 'success');
         fetchEvents();
@@ -369,10 +369,10 @@ return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {liveEvents.map(event => (
             <EventCard
-              key={event._id || event.id}
+              key={event.id || event._id}
               event={event}
               onRegister={handleRegister}
-              isRegistered={registeredEvents.includes(event._id || event.id)}
+              isRegistered={registeredEvents.includes(event.id || event._id)}
             />
           ))}
         </div>
@@ -391,10 +391,10 @@ return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {upcomingEvents.map(event => (
             <EventCard
-              key={event._id}
+              key={event.id || event._id}
               event={event}
               onRegister={handleRegister}
-              isRegistered={registeredEvents.includes(event._id)}
+              isRegistered={registeredEvents.includes(event.id || event._id)}
             />
           ))}
         </div>
@@ -419,10 +419,10 @@ return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {endedEvents.map(event => (
             <EventCard
-              key={event._id}
+              key={event.id || event._id}
               event={event}
               onRegister={handleRegister}
-              isRegistered={registeredEvents.includes(event._id)}
+              isRegistered={registeredEvents.includes(event.id || event._id)}
             />
           ))}
         </div>

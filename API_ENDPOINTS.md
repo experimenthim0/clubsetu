@@ -20,7 +20,7 @@ This document lists all the available API endpoints in the ClubSetu backend for 
 
 ---
 
-## Events (`/api/club-events`)
+## Events (`/api/events`)
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
@@ -107,7 +107,7 @@ This document lists all the available API endpoints in the ClubSetu backend for 
 
 ## Common Request Bodies
 
-### Event Registration (`POST /api/club-events/:id/register`)
+### Event Registration (`POST /api/events/:id/register`)
 ```json
 {
   "formResponses": {
@@ -117,7 +117,7 @@ This document lists all the available API endpoints in the ClubSetu backend for 
 }
 ```
 
-### Event Review (`PUT /api/club-events/:id/review`)
+### Event Review (`PUT /api/events/:id/review`)
 ```json
 {
   "status": "PUBLISHED" | "REJECTED",
