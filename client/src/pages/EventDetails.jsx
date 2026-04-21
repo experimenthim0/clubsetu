@@ -50,7 +50,7 @@ const EventDetails = () => {
         }
         element.setAttribute('content', content);
       };
-      const defaultImg = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
+      const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
       setMetaTag("meta[property='og:title']", 'property', 'og:title', `${event.title} | ClubSetu`);
       setMetaTag("meta[property='og:description']", 'property', 'og:description', event.description || "Join this amazing event on ClubSetu!");
       setMetaTag("meta[property='og:image']", 'property', 'og:image', event.imageUrl || defaultImg);
