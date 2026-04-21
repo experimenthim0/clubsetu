@@ -46,7 +46,8 @@ router.get("/:id", async (req, res) => {
       include: {
         facultyCoordinator: { select: { id: true, name: true, email: true } },
         socialLinks: true,
-        media: true,
+        media: { where: { eventId: null } },
+        sponsors: { where: { eventId: null } },
       },
     });
 
@@ -65,7 +66,12 @@ router.get("/:id", async (req, res) => {
     });
 
     res.json({
-      club: { ...club, _id: club.id },
+       club: { 
+        ...club, 
+        _id: club.id,
+        clubGallery: club.media?.map(m => m.url) || [],
+        clubSponsors: club.sponsors?.map(s => s.logoUrl) || []
+      },
       events: events.map(serializeEvent),
     });
   } catch (err) {
@@ -99,7 +105,9 @@ router.put("/:id", verifyToken, allowRoles("admin", "club", "facultyCoordinator"
       "accountNumber",
       "ifscCode",
       "upiId",
-      "bankPhone"
+      "bankPhone",
+      "studentCoordinators"
+
     ];
 
     const updates = {};
@@ -134,14 +142,55 @@ router.put("/:id", verifyToken, allowRoles("admin", "club", "facultyCoordinator"
       }
     }
 
+    if (req.body.clubGallery && Array.isArray(req.body.clubGallery)) {
+      await prisma.media.deleteMany({
+        where: { clubId: targetClubId, eventId: null }
+      });
+      if (req.body.clubGallery.length > 0) {
+        await prisma.media.createMany({
+          data: req.body.clubGallery.map(url => ({
+            id: crypto.randomBytes(12).toString("hex"),
+            clubId: targetClubId,
+            url: url,
+            type: "IMAGE"
+          }))
+        });
+      }
+    }
+    if (req.body.clubSponsors && Array.isArray(req.body.clubSponsors)) {
+      await prisma.sponsor.deleteMany({
+        where: { clubId: targetClubId, eventId: null }
+      });
+      if (req.body.clubSponsors.length > 0) {
+        await prisma.sponsor.createMany({
+          data: req.body.clubSponsors.map(url => ({
+            id: crypto.randomBytes(12).toString("hex"),
+            clubId: targetClubId,
+            name: "Sponsor",
+            logoUrl: url
+          }))
+        });
+      }
+    }
+
+
     const updatedClub = await prisma.club.findUnique({
       where: { id: targetClubId },
-      include: { socialLinks: true }
+       include: { 
+        socialLinks: true,
+        media: { where: { eventId: null } },
+        sponsors: { where: { eventId: null } }
+      }
     });
 
     res.json({
       message: "Club updated successfully",
-      club: { ...updatedClub, _id: updatedClub.id },
+      club: { 
+        ...updatedClub, 
+        _id: updatedClub.id,
+        clubGallery: updatedClub.media?.map(m => m.url) || [],
+        clubSponsors: updatedClub.sponsors?.map(s => s.logoUrl) || []
+      },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

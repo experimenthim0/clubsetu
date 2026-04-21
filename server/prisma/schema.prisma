@@ -121,6 +121,7 @@ model Club {
   facultyName          String?
   facultyEmail         String?
   facultyCoordinatorId String?       @db.VarChar(24)
+  studentCoordinators  String[]      @default([])
   
   // Payout / Bank Details
   bankName             String?
