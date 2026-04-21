@@ -14,3 +14,11 @@ README_MONETIZATION.md
 UI_DESIGN_GUIDE.txt
 new.md
 FEATURES.md
+
+server/node_modules/
+.env
+dist/
+*.log
+_tests_/
+
+POSTGRESQL_MIGRATION_PLAN.md
