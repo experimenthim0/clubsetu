@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { loadRazorpay } from '../utils/razorpay';
 
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
+
 
 const EventDetails = () => {
   const { slug } = useParams();
@@ -50,16 +52,15 @@ const EventDetails = () => {
         }
         element.setAttribute('content', content);
       };
-      const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
       setMetaTag("meta[property='og:title']", 'property', 'og:title', `${event.title} | ClubSetu`);
       setMetaTag("meta[property='og:description']", 'property', 'og:description', event.description || "Join this amazing event on ClubSetu!");
-      setMetaTag("meta[property='og:image']", 'property', 'og:image', event.imageUrl || defaultImg);
+      setMetaTag("meta[property='og:image']", 'property', 'og:image', event.imageUrl || DEFAULT_IMAGE);
       setMetaTag("meta[property='og:url']", 'property', 'og:url', window.location.href);
       setMetaTag("meta[property='og:type']", 'property', 'og:type', "website");
       setMetaTag("meta[name='twitter:card']", 'name', 'twitter:card', "summary_large_image");
       setMetaTag("meta[name='twitter:title']", 'name', 'twitter:title', `${event.title} | ClubSetu`);
       setMetaTag("meta[name='twitter:description']", 'name', 'twitter:description', event.description || "Join this amazing event on ClubSetu!");
-      setMetaTag("meta[name='twitter:image']", 'name', 'twitter:image', event.imageUrl || defaultImg);
+      setMetaTag("meta[name='twitter:image']", 'name', 'twitter:image', event.imageUrl || DEFAULT_IMAGE);
     }
   }, [event]);
 
