@@ -1,0 +1,95 @@
+# ClubSetu Full-Stack Docker Compose
+# Runs: PostgreSQL + Redis + Go Check-in Service + Node.js API
+#
+# Usage:
+#   docker compose up --build
+#   docker compose down -v  (removes volumes too)
+#
+# Required env vars (create a .env file or export):
+#   JWT_SECRET=your_jwt_secret_here
+
+services:
+  # ─── Database ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: clubsetu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clubsetu
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: himanshu
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Cache & Pub/Sub ───────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: clubsetu-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Go Check-in Microservice ──────────────────────────────
+  checkin-go:
+    build:
+      context: ./services/checkin-go
+      dockerfile: Dockerfile
+    container_name: clubsetu-checkin-go
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:himanshu@postgres:5432/clubsetu?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/checkin/health"]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+  # ─── Node.js API Server ────────────────────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: clubsetu-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgres://postgres:himanshu@postgres:5432/clubsetu?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      CHECKIN_SERVICE_URL: http://checkin-go:8080
+      PORT: 5000
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      checkin-go:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
