@@ -1,34 +1,35 @@
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 
 // Load environment variables BEFORE importing modules that use them
 dotenv.config();
-const sendEmail = async (options) => {
-  // Set SendGrid API Key dynamically to ensure process.env is loaded
-  if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  } else {
-    console.warn("SENDGRID_API_KEY is not set in environment variables.");
-  }
 
-  const msg = {
-    to: options.email,
-    from: `${process.env.EMAIL_FROM_NAME || "ClubSetu Support"} <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`, // Use a verified sender email
-    subject: options.subject,
-    html: options.message,
-  };
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendEmail = async (options) => {
+  const fromName = process.env.EMAIL_FROM_NAME || "ClubSetu Support";
+  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
   try {
-    await sgMail.send(msg);
-    console.log(`Email sent to ${options.email}`);
-  } catch (error) {
-    console.error("Error sending email via SendGrid:", error);
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.message,
+    });
 
-    if (error.response) {
-      console.error(error.response.body);
+    if (error) {
+      console.error("Error sending email via Resend:", error);
+      throw error;
     }
+
+    console.log(`Email sent successfully: ${data.id}`);
+    return data;
+  } catch (error) {
+    console.error("Error sending email via Resend:", error);
     throw error;
   }
 };
 
 export default sendEmail;
+

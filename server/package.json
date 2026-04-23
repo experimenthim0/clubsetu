@@ -3,7 +3,6 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@prisma/config": "^7.7.0",
-    "@sendgrid/mail": "^8.1.6",
     "async": "^3.2.6",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
@@ -20,6 +19,7 @@
     "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "razorpay": "^2.9.6",
+    "resend": "^6.12.2",
     "socket.io": "^4.8.3",
     "zod": "^4.3.6"
   },

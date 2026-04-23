@@ -11,19 +11,19 @@ const testEmail = async () => {
 
   console.log(`Attempting to send test email to ${recipientEmail}...`);
   console.log(
-    `Using API Key: ${process.env.SENDGRID_API_KEY ? "Loaded" : "MISSING"}`,
+    `Using API Key: ${process.env.RESEND_API_KEY ? "Loaded" : "MISSING"}`,
   );
   console.log(
-    `From Email: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`,
+    `From Email: ${process.env.EMAIL_FROM || "onboarding@resend.dev"}`,
   );
 
   try {
     await sendEmail({
       email: recipientEmail,
-      subject: "Test Email from ClubSetu (SendGrid)",
+      subject: "Test Email from ClubSetu (Resend)",
       message: `
         <h1>It Works!</h1>
-        <p>This is a test email sent using SendGrid integration.</p>
+        <p>This is a test email sent using Resend integration.</p>
         <p>Time: ${new Date().toLocaleString()}</p>
       `,
     });
@@ -35,3 +35,4 @@ const testEmail = async () => {
 };
 
 testEmail();
+
