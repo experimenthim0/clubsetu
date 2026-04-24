@@ -22,3 +22,4 @@ dist/
 _tests_/
 
 POSTGRESQL_MIGRATION_PLAN.md
+docs
