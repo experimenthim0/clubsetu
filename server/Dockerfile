@@ -1,31 +1,25 @@
-FROM node:18-alpine AS builder
-
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# Copy package files
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
-
-# Install all dependencies
 RUN npm ci
-
-# Generate Prisma Client
 RUN npx prisma generate
 
-# Final production stage
-FROM node:18-alpine
-
+FROM node:22-alpine
 WORKDIR /app
-
-# Copy built assets and modules
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY . .
 
-# Set environment
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+USER nodejs
+
 ENV NODE_ENV=production
 ENV PORT=5000
-
 EXPOSE 5000
+
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+#   CMD node -e "require('http').get('http://localhost:5000/', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 CMD ["node", "index.js"]
