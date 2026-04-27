@@ -80,18 +80,21 @@ axios.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // Clear all auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('admin');
+      localStorage.removeItem('role');
+      // Clear cookie client-side
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
       // Handle Admin routes
       if (path.includes('/admin')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('admin');
         window.location.href = '/admin-secret-login';
         return Promise.reject(error);
       }
 
       // Handle regular User routes
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('role');
       window.location.href = '/login';
     }
     return Promise.reject(error);

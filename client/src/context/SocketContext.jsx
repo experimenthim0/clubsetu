@@ -40,7 +40,7 @@ export const SocketProvider = ({ children }) => {
         setUnreadCount((prev) => prev + 1);
       });
 
-      if (["member", "club", "facultyCoordinator"].includes(userRole)) {
+      if (["member", "club", "facultyCoordinator", "admin", "student"].includes(userRole)) {
         axios.get(`${API_URL}/api/notifications`)
           .then(res => {
             setNotifications(res.data);

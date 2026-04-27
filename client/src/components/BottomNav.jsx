@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Users, Calendar, User, ShieldCheck, X } from "lucide-react";
+import axios from "axios";
 import { CalendarDaysIcon } from "./ui/calendar-days";
 import { IndianRupeeIcon } from "./ui/indian-rupee";
 import { ConciergeBellIcon } from "./ui/concierge-bell";
@@ -57,11 +58,17 @@ const BottomNav = () => {
     };
   }, [drawerOpen]);
 
+  const API_URL = import.meta.env.VITE_API_URL;
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("admin");
     localStorage.removeItem("role");
     localStorage.removeItem("token");
-    window.location.reload();
+    // Clear the server-set httpOnly cookie by calling logout endpoint
+    axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
+    // Also clear cookie client-side as fallback
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/";
   };
 
   const isActive = (path) => {

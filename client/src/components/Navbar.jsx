@@ -105,9 +105,14 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("admin");
     localStorage.removeItem("role");
     localStorage.removeItem("token");
-    window.location.reload();
+    // Clear the server-set httpOnly cookie by calling logout endpoint
+    axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
+    // Also clear cookie client-side as fallback
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/";
   };
 
   const isActive = (path) =>
@@ -227,8 +232,8 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* ── Notification Bell (Members, Faculty, Clubs) ── */}
-                {(role === "member" || role === "facultyCoordinator" || role === "club") && (
+                {/* ── Notification Bell (Members, Faculty, Clubs, Admins) ── */}
+                {(role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
@@ -442,7 +447,7 @@ const Navbar = () => {
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <div className="md:hidden flex items-center gap-3">
-            {user && (role === "member" || role === "facultyCoordinator" || role === "club") && (
+            {user && (role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
               <div className="relative" ref={notifMobileDropdownRef}>
                 <button
                   onClick={handleNotificationClick}

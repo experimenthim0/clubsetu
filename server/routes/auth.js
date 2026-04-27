@@ -602,6 +602,18 @@ router.post("/change-password", verifyToken, async (req, res) => {
   }
 });
 
+// ─── LOGOUT ────────────────────────────────────────────────────────────────────
+// Clears the httpOnly token cookie
+router.post("/logout", (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    expires: new Date(0),
+  });
+  res.json({ success: true, message: "Logged out successfully" });
+});
+
 // ─── DEPRECATED: backward-compatibility login ─────────────────────────────────
 // Tries StudentUser first, then AdminRole. Remove once frontend uses typed endpoints.
 
