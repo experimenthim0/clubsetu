@@ -1,5 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import prismaPkg from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+const { PrismaClient } = prismaPkg;
 
 const globalForPrisma = globalThis;
 let connectionString = process.env.DATABASE_URL;
