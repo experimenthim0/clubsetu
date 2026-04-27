@@ -47,7 +47,8 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
     const names = new Set();
     if (Array.isArray(events)) {
       events.forEach(e => {
-        if (e.createdBy?.clubName) names.add(e.createdBy.clubName);
+        const cName = e.club?.clubName || e.createdBy?.clubName;
+        if (cName) names.add(cName);
       });
     }
     return Array.from(names).sort();
@@ -127,7 +128,10 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   let filtered = [...events];
 
   if (filterClub !== 'ALL') {
-    filtered = filtered.filter(e => e.createdBy?.clubName === filterClub);
+    filtered = filtered.filter(e => {
+      const cName = e.club?.clubName || e.createdBy?.clubName;
+      return cName === filterClub;
+    });
   }
 
   if (filterStatus !== 'ALL') {

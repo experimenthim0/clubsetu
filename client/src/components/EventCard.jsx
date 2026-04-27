@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { loadRazorpay } from '../utils/razorpay';
+import CalendarDropdown from './CalendarDropdown';
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
     const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline, slug, showWinner } = event;
@@ -11,6 +12,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 
     const isLive = status === 'LIVE';
     const isEnded = status === 'ENDED';
+    const isUpcoming = !isLive && status === 'UPCOMING';
     const isUnlimited = !totalSeats || totalSeats === 0;
     const isFull = !isUnlimited && registeredCount >= totalSeats;
     const seatsText = isUnlimited
@@ -24,11 +26,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
         <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 flex flex-col h-full group">
 
             {/* Image */}
-            <div className="h-84 overflow-hidden bg-neutral-100 relative border-b-2 border-gray-200">
+            <div className="relative w-full aspect-[4/5] overflow-hidden bg-slate-200 border-b-2 border-gray-200">
                 <img
   src={displayImage}
   alt={title}
-  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
   onError={(e) => {
     e.target.onerror = null; // prevent infinite loop
     e.target.src = "/CLUBSETU.png"; // fallback image
@@ -183,6 +185,9 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register/Details'}
                         </Link>
                     )}
+                    
+                    {/* Add to Calendar button for upcoming events */}
+                    {isUpcoming && <CalendarDropdown event={event} />}
                 </div>
             </div>
         </div>

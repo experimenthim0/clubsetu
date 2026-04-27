@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import EventFeed from './pages/EventFeed';
 import RegisterStudent from './pages/RegisterStudent';
@@ -110,7 +111,7 @@ function App() {
     <NotificationProvider>
       <SocketProvider>
         <Router>
-        <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="min-h-screen flex flex-col bg-gray-50 pb-20 md:pb-0">
           <Navbar />
           <div className="flex-1">
           <Routes>
@@ -158,6 +159,7 @@ function App() {
           </Routes>
           </div>
           <Footer />
+          <BottomNav />
         </div>
       </Router>
       </SocketProvider>

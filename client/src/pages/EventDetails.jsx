@@ -3,6 +3,7 @@ import { useParams, useNavigate,Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { loadRazorpay } from '../utils/razorpay';
+import CalendarDropdown from '../components/CalendarDropdown';
 
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
 
@@ -595,7 +596,7 @@ const EventDetails = () => {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={!btnConfig.disabled && !isRegistering
                       ? (isEnded
@@ -603,7 +604,7 @@ const EventDetails = () => {
                         : handleRegister)
                       : undefined}
                     disabled={btnConfig.disabled || isRegistering}
-                    className={`flex-1 py-3.5 px-6 text-[12px] font-black uppercase tracking-[0.15em] border-2 rounded-lg transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 py-2 px-6 text-[12px] font-black uppercase tracking-[0.15em] border-2 rounded-lg transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isRegistering ? (
                       <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
@@ -612,10 +613,16 @@ const EventDetails = () => {
 
                   <button
                     onClick={handleShare}
-                    className="sm:w-auto w-full py-3.5 px-5 text-[12px] font-black uppercase tracking-[0.15em] rounded-lg bg-white text-black hover:text-orange-600 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="sm:w-auto w-full py-2 px-5 text-[12px] font-black uppercase tracking-[0.15em] rounded-lg bg-white text-black border-2 border-neutral-200 hover:text-orange-600 hover:border-orange-600 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <i className="ri-share-line text-base" /> Share
                   </button>
+
+                  {status === 'UPCOMING' && (
+                    <div className="flex items-stretch">
+                      <CalendarDropdown event={event} />
+                    </div>
+                  )}
                 </div>
               </div>
 
