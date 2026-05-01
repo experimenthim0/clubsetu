@@ -8,6 +8,7 @@ import { ConciergeBellIcon } from "./ui/concierge-bell";
 import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
+import LogInIcon from "./ui/login";
 
 const BottomNav = () => {
   const location = useLocation();
@@ -82,7 +83,7 @@ const BottomNav = () => {
     { label: "Events", icon: Calendar, path: "/events" },
     user
       ? { label: "Profile", icon: User, action: () => setDrawerOpen(true), isActiveCheck: drawerOpen }
-      : { label: "Team", icon: ShieldCheck, path: "/team" },
+      : { label: "Login", icon: LogInIcon, path: "/login" },
   ];
 
   return (

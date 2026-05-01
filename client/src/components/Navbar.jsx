@@ -11,6 +11,7 @@ import { ConciergeBellIcon } from "./ui/concierge-bell";
 import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
+import LogInIcon from "./ui/login";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -163,7 +164,7 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white transition-shadow duration-200 myfont ${
+        className={`sticky top-0 z-50 bg-white/70 backdrop-blur-md transition-shadow duration-200 myfont ${
           scrolled ? "shadow-sm" : ""
         }`}
       >
@@ -180,7 +181,7 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont hidden sm:block " 
           >
-            <span className="font-extrabold text-[24px] tracking-wider text-black leading-none select-none">
+            <span className="font-light text-[28px] tracking-wider text-black leading-none select-none">
               Club<span className="text-orange-600">Setu</span>
             </span>
           </Link>
@@ -190,7 +191,7 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont sm:hidden block" 
           >
-            <span className="font-extrabold text-[24px] tracking-wider text-black leading-none select-none">
+            <span className="font-light text-[28px] tracking-wider text-black leading-none select-none">
               Club<span className="text-orange-600">Setu</span>
             </span>
           </Link>
@@ -447,56 +448,65 @@ const Navbar = () => {
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
           <div className="md:hidden flex items-center gap-3">
-            {user && (role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
-              <div className="relative" ref={notifMobileDropdownRef}>
-                <button
-                  onClick={handleNotificationClick}
-                  className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
-                >
-                  <BellIcon size={22} className="text-black" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
-                  )}
-                </button>
+            {user ? (
+              (role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
+                <div className="relative" ref={notifMobileDropdownRef}>
+                  <button
+                    onClick={handleNotificationClick}
+                    className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                  >
+                    <BellIcon size={22} className="text-black" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+                    )}
+                  </button>
 
-                {/* Mobile Notification Dropdown */}
-                {notifDropdownOpen && (
-                  <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50">
-                    <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
-                      <h3 className="text-[14px] font-black  tracking-widest text-black">Notifications</h3>
-                    </div>
-                    <div className="divide-y divide-neutral-100">
-                      {notifications?.length > 0 ? (
-                        notifications.slice(0, 4).map((notif, idx) => (
-                          <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
-                            <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
-                              <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
+                  {/* Mobile Notification Dropdown */}
+                  {notifDropdownOpen && (
+                    <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50">
+                      <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
+                        <h3 className="text-[14px] font-black  tracking-widest text-black">Notifications</h3>
+                      </div>
+                      <div className="divide-y divide-neutral-100">
+                        {notifications?.length > 0 ? (
+                          notifications.slice(0, 4).map((notif, idx) => (
+                            <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                                <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
+                              </div>
+                              <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
+                              <p className="text-[12px] text-neutral-600">{notif.message}</p>
                             </div>
-                            <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
-                            <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-neutral-500 text-[12px] font-bold  tracking-widest">
+                            No notifications yet
                           </div>
-                        ))
-                      ) : (
-                        <div className="p-6 text-center text-neutral-500 text-[12px] font-bold  tracking-widest">
-                          No notifications yet
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      <Link
+                        to="/notifications"
+                        onClick={() => {
+                          setNotifDropdownOpen(false);
+                          setMobileOpen(false);
+                        }}
+                        className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium  tracking-widest text-orange-600 border-t-2 border-gray-200 bg-neutral-100 hover:bg-orange-50 transition-colors"
+                      >
+                        See all notifications
+                        <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
+                      </Link>
                     </div>
-                    <Link
-                      to="/notifications"
-                      onClick={() => {
-                        setNotifDropdownOpen(false);
-                        setMobileOpen(false);
-                      }}
-                      className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium  tracking-widest text-orange-600 border-t-2 border-gray-200 bg-neutral-100 hover:bg-orange-50 transition-colors"
-                    >
-                      See all notifications
-                      <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
-                    </Link>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-1.5 text-black"
+              >
+                <LogInIcon/>
+              </Link>
             )}
 
             {/* Hamburger (Removed for BottomNav PWA style) */}
