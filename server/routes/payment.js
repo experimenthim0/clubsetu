@@ -130,7 +130,7 @@ router.post(
             status: "REGISTERED",
             paymentId,
             orderId,
-            qrCode: `INT-${createObjectId().toUpperCase()}`,
+            qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
             paymentStatus: "SUCCESS",
             amountPaid: event.entryFee,
             paymentTimestamp: new Date(),

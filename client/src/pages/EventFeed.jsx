@@ -339,13 +339,50 @@ return (
 
     {/* If No Events At All */}
     {totalFiltered === 0 && (
-      <div className="text-center py-20 border border-gray-200 rounded-xl bg-white">
-        <p className="text-lg font-medium text-gray-600">
-          {events.length === 0 ? 'No events found' : 'No events match your filters'}
+      <div className="text-center py-10 px-4 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-5 ">
+           {/* <i className="ri-calendar-event-line text-2xl text-neutral-400" />
+            */}
+            <img className='w-full h-full object-cover rounded-full' src="cat.png" alt="" />
+        </div>
+        <h3 className="text-xl font-black text-neutral-800 mb-2">
+          {onlyActive ? 'No Live or Upcoming Events' : (events.length === 0 ? 'No Events Found' : 'No Matching Events')}
+        </h3>
+        <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
+          {onlyActive 
+            ? "There aren't any active events happening right now. Don't worry! You can still browse our past events to see what's been happening on campus." 
+            : (events.length === 0 ? 'Please check back later for new events.' : 'Try adjusting your filters or search query to find what you\'re looking for.')}
         </p>
-        <p className="text-sm text-gray-400 mt-2">
-          {events.length === 0 ? 'Please check back later for new events.' : 'Try adjusting your filters above.'}
+        <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
+          {onlyActive 
+            ? "Go to our events page to see all the events that have happened in the past!" 
+            : (events.length === 0 ? '' : '')}
         </p>
+        
+        {/* {onlyActive && (
+          <Link
+            to="/events"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-black/5"
+          >
+            Explore Past Events
+            <i className="ri-arrow-right-up-line text-sm" />
+          </Link>
+        )} */}
+
+        {!onlyActive && (events.length > 0) && (
+           <button
+           onClick={() => {
+             setFilterStatus('ALL');
+             setFilterClub('ALL');
+             setFilterMonth('ALL');
+             setFilterYear('ALL');
+             setSearchQuery('');
+           }}
+           className="text-orange-600 font-bold uppercase tracking-widest text-[10px] hover:underline"
+         >
+           Clear all filters
+         </button>
+        )}
       </div>
     )}
 
@@ -392,6 +429,7 @@ return (
              Upcoming
              </h2>
         )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {upcomingEvents.map(event => (
             <EventCard

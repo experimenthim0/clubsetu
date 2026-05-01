@@ -18,10 +18,10 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Only connect if user is logged in
     const userRole = localStorage.getItem("role");
-    const userString = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("user");
+    const storedAdmin = localStorage.getItem("admin");
+    const userString = storedUser || storedAdmin;
     
-    // We strictly want this for students to receive notifications in real-time
-    // But club heads can also connect if we want them to receive things later.
     if (userString && userString !== "undefined") {
       const user = JSON.parse(userString);
       

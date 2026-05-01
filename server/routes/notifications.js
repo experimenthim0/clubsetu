@@ -124,6 +124,7 @@ router.get(
 
       const notifications = await prisma.notification.findMany({
         where: {
+          createdAt: { gte: userCreatedAt },
           OR: [
             { senderStudentId: { not: null } },
             { senderAdminId: { not: null } },

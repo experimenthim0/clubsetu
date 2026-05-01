@@ -21,6 +21,135 @@ const MyEvents = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
+ const handleDownloadTicket = async () => {
+  if (!selectedTicket || !qrDataUrl) return;
+
+  try {
+    await document.fonts.ready;
+  } catch (e) {
+    console.warn("Fonts not loaded yet", e);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1000;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+
+  // --- 1. BACKGROUND WITH SECURITY PATTERN ---
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Subtle Diagonal Stripe Pattern
+  ctx.strokeStyle = 'rgba(0,0,0,0.02)';
+  ctx.lineWidth = 1;
+  for (let i = -400; i < 1000; i += 15) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 400, 400);
+    ctx.stroke();
+  }
+
+  // Ghost Watermark (Refined transparency)
+  ctx.save();
+  ctx.font = 'bold 160px "logofont"';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.025)'; 
+  ctx.textAlign = 'center';
+  ctx.translate(350, 240);
+  ctx.rotate(-Math.PI / 12);
+  ctx.fillText('CLUBSETU', 0, 0);
+  ctx.restore();
+
+  // --- 2. BLACK STUB & ACCENTS ---
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(700, 0, 300, canvas.height);
+
+  // Orange Accent with Gradient
+  const accentGrad = ctx.createLinearGradient(0, 0, 15, 400);
+  accentGrad.addColorStop(0, '#ea580c');
+  accentGrad.addColorStop(1, '#9a3412');
+  ctx.fillStyle = accentGrad;
+  ctx.fillRect(0, 0, 15, canvas.height);
+
+  // --- 3. PERFORATION & NOTCHES ---
+  ctx.fillStyle = '#f3f4f6'; // Match your site background
+  ctx.beginPath(); ctx.arc(700, 0, 25, 0, Math.PI, false); ctx.fill();
+  ctx.beginPath(); ctx.arc(700, 400, 25, Math.PI, 0, false); ctx.fill();
+
+  // Perforation Dots
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  for (let i = 40; i < 370; i += 25) {
+    ctx.beginPath(); ctx.arc(700, i, 3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // --- 4. BRANDING & TEXT ---
+  const brandX = 60;
+  const brandY = 65;
+  ctx.letterSpacing = "4px"; 
+  ctx.font = 'bold 30px "logofont"'; 
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillText('Club', brandX, brandY);
+  const clubWidth = ctx.measureText('Club').width;
+  ctx.fillStyle = '#ea580c';
+  ctx.fillText('Setu', brandX + clubWidth, brandY);
+  ctx.letterSpacing = "0px";
+
+  // Event Name
+  ctx.font = 'bold 44px "myfont"';
+  ctx.fillStyle = '#171717';
+  const eventName = (selectedTicket.eventId?.title || 'EVENT TICKET')
+  ctx.fillText(eventName.length > 20 ? eventName.substring(0, 20) + '...' : eventName, 60, 145);
+
+  const drawData = (label, value, x, y) => {
+    ctx.font = 'bold 12px "myfont"';
+    ctx.fillStyle = '#a3a3a3';
+    ctx.fillText(label.toUpperCase(), x, y);
+    ctx.font = 'bold 22px "myfont"';
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillText(value, x, y + 28);
+  };
+
+  const eventDate = new Date(selectedTicket.eventId?.startTime);
+  drawData('Attendee', user?.name || 'Guest User', 60, 215);
+  drawData('Date', eventDate.toLocaleDateString(undefined, { dateStyle: 'medium' }), 60, 305);
+  drawData('Time', eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }), 280, 305);
+  drawData('Venue', selectedTicket.eventId?.venue || 'TBA', 460, 305);
+
+  // --- 5. STUB CONTENT ---
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 20px "myfont"';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('Event Pass', 850, 55);
+
+  const qrImage = new Image();
+  qrImage.crossOrigin = "anonymous";
+  qrImage.onload = () => {
+    // QR Box with a very subtle Orange "Frame"
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(748, 93, 204, 204); // The "border"
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(750, 95, 200, 200);
+    ctx.drawImage(qrImage, 750, 95, 200, 200);
+
+    ctx.font = '12px "myfont"';
+    ctx.fillStyle = '#737373';
+    ctx.fillText('SERIAL NUMBER', 850, 325);
+    
+    ctx.font = 'bold 15px monospace';
+    ctx.fillStyle = '#ea580c';
+    ctx.fillText(selectedTicket.qrCode, 850, 350);
+
+    // DOWNLOAD
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `ClubSetu-Ticket-${selectedTicket.qrCode}.png`;
+    link.click();
+  };
+  qrImage.src = qrDataUrl;
+};
+
+
+
   useEffect(() => {
     const storedUserData = localStorage.getItem('user');
     const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
@@ -753,18 +882,17 @@ const MyEvents = () => {
                   <div className="text-center">
                     
                     <p className="text-[10px] font-bold text-neutral-400 italic mb-1">Valid for one-time entry only</p>
-                    <p className="text-[9px] font-bold text-neutral-400 italic mb-2">Show this QR code at the entrance</p>
-                    <p className="text-[9px] font-bold text-neutral-400 italic">Powered by Club<span className="text-orange-600">Setu</span></p>
+                    {/* <p className="text-[9px] font-bold text-neutral-400 italic mb-2">Show this QR code at the entrance</p> */}
+                    <p className="text-[9px] font-bold text-neutral-400 italic">Powered by <span className='text-black'>Club</span><span className="text-orange-600">Setu</span></p>
                   </div>
                   
                   {qrDataUrl && (
-                    <a
-                      href={qrDataUrl}
-                      download={`ticket-qr-${selectedTicket.qrCode}.png`}
-                      className="mt-2 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-black transition-colors flex items-center gap-1"
+                    <button
+                      onClick={handleDownloadTicket}
+                      className="mt-2 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-black transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      <i className="ri-download-line" /> Download QR
-                    </a>
+                      <i className="ri-download-line" /> Download Ticket
+                    </button>
                   )}
                 </div>
               </div>

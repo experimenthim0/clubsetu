@@ -293,6 +293,7 @@ const BottomNav = () => {
                 <LogoutIcon size={18} />
                 Logout
               </button>
+              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2">Club<span className='text-orange-600 font-bold'>Setu</span> | Developed By Team Xplore </p>
             </div>
           </div>
         </>

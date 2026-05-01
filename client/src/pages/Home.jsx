@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
+import ClubLeaderboard from '../components/ClubLeaderboard';
 import HomeFooter from '../components/HomeFooter';
 import Maintainance from './Maintainance';
 import ScrollReveal from '../components/ScrollReveal';
@@ -102,6 +103,15 @@ const Home = () => {
   if (isMaintenance) {
     return <Maintainance />;
   }
+  const bgImages = ["csh.jpeg", "mainbuilding.jpeg"];
+  const [bgIndex, setBgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % bgImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="myfont text-black bg-white">
@@ -110,14 +120,16 @@ const Home = () => {
       <section className="relative flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
         {/* Background Image & Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <img 
-            // src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
-            src="csh.jpeg" 
-            alt="University Campus" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[3px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-transparent"></div>
+          {bgImages.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt="University Campus" 
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${bgIndex === idx ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/90 to-transparent"></div>
         </div>
 
@@ -138,10 +150,8 @@ const Home = () => {
           {/* Sub + CTAs */}
           <ScrollReveal delay={0.3}>
             <div className="mt-12 flex flex-wrap items-end gap-10 justify-between">
-              <p className="text-[17px] font-light text-neutral-600 max-w-sm leading-relaxed">
-                ClubSetu connects NIT Jalandhar students with campus clubs and events in one place. 
-                Discover clubs, explore upcoming events, and stay updated with everything happening on campus.
-              </p>
+              <p className="text-[17px] font-light text-neutral-700 max-w-sm leading-relaxed">
+               Stop hunting through a dozen WhatsApp groups just to find out what's happening. From late-night hackathons to cultural fests, ClubSetu brings the best of NITJ campus life right to your screen. Find your tribe, join the clubs you love, and never miss a beat again.</p>
               <div className="flex gap-3 flex-wrap">
                <Link
   to="/events"
@@ -240,6 +250,8 @@ const Home = () => {
         </div>
       </section>
 
+      
+
       {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
@@ -264,6 +276,32 @@ const Home = () => {
               </BtnSecondary>
             </div>
           </ScrollReveal>
+        </div>
+      </section>
+
+
+      {/* ── LEADERBOARD ──────────────────────────────────────────────────── */}
+      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+            <div className="lg:col-span-4">
+              <ScrollReveal direction="left">
+                <SectionLabel>Campus Rankings</SectionLabel>
+                <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide mb-6">
+                  Club<br /><span className="text-orange-600 text-6xl">Hall of Fame</span>
+                </h2>
+                <p className="text-neutral-500 leading-relaxed mb-8">
+                  Recognition for the most active student organizations at NITJ. Activity is measured by the total number of events successfully hosted and registered through ClubSetu.
+                </p>
+              
+              </ScrollReveal>
+            </div>
+            <div className="lg:col-span-8">
+              <ScrollReveal delay={0.2} direction="right">
+                <ClubLeaderboard />
+              </ScrollReveal>
+            </div>
+          </div>
         </div>
       </section>
 
