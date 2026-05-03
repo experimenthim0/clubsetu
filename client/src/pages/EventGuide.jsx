@@ -250,12 +250,12 @@ const EventGuide = () => {
         </section>
 
         {/* Tips */}
-        <section className="bg-black text-white border-2 border-black rounded-sm p-8 mb-8">
+        <section className="bg-[#000000] text-[#ffffff] border-2 border-[#000000] rounded-sm p-8 mb-8">
           <h2 className="text-xl font-black mb-5 flex items-center gap-2">
             <i className="ri-lightbulb-flash-line text-yellow-400" />
             Pro Tips
           </h2>
-          <ul className="space-y-3 text-sm text-neutral-300">
+          <ul className="space-y-3 text-sm text-[#d4d4d4]">
             {[
               'Set a registration deadline 1-2 hours before the event to avoid last-minute chaos.',
               'Use custom fields to collect team info for hackathons — like Team Name, GitHub Repo URL, and Tech Stack.',

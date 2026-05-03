@@ -46,7 +46,7 @@ const tickerItems = [
 
   if (loading) {
     return (
-      <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-6`}>
+      <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-3`}>
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[...Array(isHome ? 6 : 9)].map((_, i) => (
             <ClubCardSkeleton key={i} />
@@ -59,7 +59,7 @@ const tickerItems = [
   return (
 
     
-    <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-6`}>
+    <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-3`}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');`}</style>
 
       {/* Page Header - Hide if on Home */}

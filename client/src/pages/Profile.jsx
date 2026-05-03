@@ -117,7 +117,7 @@ const Profile = () => {
                 </div>
             </div>
             <div className="flex items-end justify-end">
-                <a href="/profile/edit" className="inline-flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition font-medium">
+                <a href="/profile/edit" className="inline-flex items-center gap-2 px-6 py-2 bg-[#f3f4f6] text-[#1f2937] rounded-lg hover:bg-[#e5e7eb] dark:bg-[#262626] dark:text-[#e5e5e5] dark:hover:bg-[#333333] transition font-medium">
                     <i className="ri-edit-line" /> Edit Profile
                 </a>
             </div>
@@ -128,7 +128,7 @@ const Profile = () => {
       <div className="mt-8">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-3xl  hover:bg-gray-300  transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffffff] border-2 border-[#d1d5db] text-[#0a0a0a]/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-[#d1d5db] dark:bg-[#1f1f1f] dark:border-[#404040] dark:text-[#f5f5f5]/70 dark:hover:bg-[#333333] transition-colors"
         >
           <i className="ri-calendar-event-line" /> View My Events
         </Link>
@@ -139,19 +139,19 @@ const Profile = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-black/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-gray-300  transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffffff] border-2 border-[#d1d5db] text-[#0a0a0a]/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-[#d1d5db] dark:bg-[#1f1f1f] dark:border-[#404040] dark:text-[#f5f5f5]/70 dark:hover:bg-[#333333] transition-colors"
         >
           <i className="ri-calendar-event-line" /> My Events
         </Link>
         <Link 
           to="/payments" 
-          className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-3xl"
+          className="text-[#ffffff] bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-[#e5e5e5] dark:focus:ring-[#24292F]/55 rounded-3xl"
         >
           <i className="ri-money-dollar-circle-line mr-2" /> Payment Tracking
         </Link>
         <Link 
           to={`/club/edit/${user.clubId || user.id}`} 
-          className="text-white bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:hover:bg-[#24292F] dark:focus:ring-[#24292F]/55 rounded-3xl"
+          className="text-[#ffffff] bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-[#e5e5e5] dark:focus:ring-[#24292F]/55 rounded-3xl"
         >
           <i className="ri-community-line mr-2" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
         </Link>

@@ -102,6 +102,7 @@
   src: url('/fonts/organix.regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+  font-display: block;
 }
 
 body {
@@ -275,3 +276,230 @@ body {
 .social-icon-btn.website:hover .social-icon-inner { color: #ea580c; }
 .social-icon-btn.github:hover .social-icon-inner { color: #333; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE — Global Overrides
+   Remaps hardcoded Tailwind utility classes when .dark is on <html>.
+   This avoids editing 45+ page files; the CSS layer handles inversions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dark {
+  --bg-color: #0a0a0a;
+  --text-color: #f5f5f5;
+}
+
+/* ── Background inversions ─────────────────────────────────────────────── */
+.dark .bg-white          { background-color: #0f0f0f !important; }
+.dark .bg-gray-50        { background-color: #111111 !important; }
+.dark .bg-gray-100       { background-color: #171717 !important; }
+.dark .bg-gray-200       { background-color: #1f1f1f !important; }
+.dark .bg-gray-300       { background-color: #262626 !important; }
+.dark .bg-neutral-50     { background-color: #141414 !important; }
+.dark .bg-neutral-100    { background-color: #1a1a1a !important; }
+.dark .bg-neutral-200    { background-color: #262626 !important; }
+.dark .bg-slate-200      { background-color: #1a1a1a !important; }
+
+/* Alpha / translucent backgrounds */
+.dark .bg-white\/70      { background-color: rgba(15,15,15,0.70) !important; }
+.dark .bg-white\/80      { background-color: rgba(15,15,15,0.80) !important; }
+.dark .bg-white\/90      { background-color: rgba(15,15,15,0.90) !important; }
+.dark .bg-black\/40      { background-color: rgba(0,0,0,0.55) !important; }
+.dark .bg-black\/10      { background-color: rgba(255,255,255,0.06) !important; }
+.dark .bg-white\/20      { background-color: rgba(255,255,255,0.06) !important; }
+.dark .bg-neutral-50\/50 { background-color: rgba(20,20,20,0.50) !important; }
+.dark .bg-neutral-50\/30 { background-color: rgba(20,20,20,0.30) !important; }
+
+/* Tinted backgrounds (keep hue, darken base) */
+.dark .bg-orange-50      { background-color: rgba(234,88,12,0.08) !important; }
+.dark .bg-orange-100     { background-color: rgba(234,88,12,0.12) !important; }
+.dark .bg-red-50         { background-color: rgba(239,68,68,0.08) !important; }
+.dark .bg-red-100        { background-color: rgba(239,68,68,0.12) !important; }
+.dark .bg-blue-50        { background-color: rgba(59,130,246,0.08) !important; }
+.dark .bg-blue-100       { background-color: rgba(59,130,246,0.12) !important; }
+.dark .bg-green-50       { background-color: rgba(34,197,94,0.08) !important; }
+.dark .bg-green-100      { background-color: rgba(34,197,94,0.12) !important; }
+.dark .bg-purple-50      { background-color: rgba(168,85,247,0.08) !important; }
+.dark .bg-indigo-50      { background-color: rgba(99,102,241,0.08) !important; }
+.dark .bg-yellow-50      { background-color: rgba(234,179,8,0.08) !important; }
+.dark .bg-yellow-100     { background-color: rgba(234,179,8,0.12) !important; }
+
+/* Specific hex backgrounds used in Profile pages */
+.dark .bg-\[\#fefce8\]\/30 { background-color: rgba(15,15,15,0.3) !important; }
+.dark .bg-orange-50\/40  { background-color: rgba(234,88,12,0.06) !important; }
+.dark .bg-orange-50\/50  { background-color: rgba(234,88,12,0.07) !important; }
+.dark .bg-\[\#0f1419\]   { background-color: #e5e5e5 !important; }
+
+/* ── Text inversions ───────────────────────────────────────────────────── */
+.dark .text-black        { color: #f5f5f5 !important; }
+.dark .text-black\/70    { color: rgba(245,245,245,0.70) !important; }
+.dark .text-black\/80    { color: rgba(245,245,245,0.80) !important; }
+.dark .text-black\/90    { color: rgba(245,245,245,0.90) !important; }
+.dark .text-black\/60    { color: rgba(245,245,245,0.60) !important; }
+.dark .text-black\/50    { color: rgba(245,245,245,0.50) !important; }
+.dark .text-gray-300     { color: #525252 !important; }
+.dark .text-gray-400     { color: #737373 !important; }
+.dark .text-gray-500     { color: #a3a3a3 !important; }
+.dark .text-gray-600     { color: #b3b3b3 !important; }
+.dark .text-gray-700     { color: #d4d4d4 !important; }
+.dark .text-gray-800     { color: #e5e5e5 !important; }
+.dark .text-gray-900     { color: #f0f0f0 !important; }
+.dark .text-neutral-400  { color: #737373 !important; }
+.dark .text-neutral-500  { color: #a3a3a3 !important; }
+.dark .text-neutral-600  { color: #b3b3b3 !important; }
+.dark .text-neutral-700  { color: #d4d4d4 !important; }
+.dark .text-neutral-800  { color: #e5e5e5 !important; }
+.dark .text-neutral-900  { color: #f0f0f0 !important; }
+
+/* ── Border inversions ─────────────────────────────────────────────────── */
+.dark .border-gray-100   { border-color: #1f1f1f !important; }
+.dark .border-gray-200   { border-color: #262626 !important; }
+.dark .border-gray-300   { border-color: #333333 !important; }
+.dark .border-gray-400   { border-color: #404040 !important; }
+.dark .border-gray-500   { border-color: #525252 !important; }
+.dark .border-gray-600   { border-color: #5a5a5a !important; }
+.dark .border-neutral-50 { border-color: #1a1a1a !important; }
+.dark .border-neutral-100{ border-color: #262626 !important; }
+.dark .border-neutral-200{ border-color: #333333 !important; }
+.dark .border-neutral-300{ border-color: #404040 !important; }
+.dark .border-white      { border-color: #262626 !important; }
+.dark .border-black      { border-color: #d4d4d4 !important; }
+.dark .border-black\/10  { border-color: rgba(255,255,255,0.10) !important; }
+.dark .border-black\/40  { border-color: rgba(255,255,255,0.25) !important; }
+.dark .border-t.border-gray-200 { border-color: #262626 !important; }
+.dark .border-t.border-gray-300 { border-color: #333333 !important; }
+
+/* ── Divide color ──────────────────────────────────────────────────────── */
+.dark .divide-neutral-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #262626 !important;
+}
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #262626 !important;
+}
+
+/* ── Hover state overrides ─────────────────────────────────────────────── */
+/* Background hover: these MUST use !important to beat base class !important */
+.dark .hover\:bg-neutral-100:hover  { background-color: #1f1f1f !important; }
+.dark .hover\:bg-neutral-200:hover  { background-color: #2a2a2a !important; }
+.dark .hover\:bg-neutral-50:hover   { background-color: #171717 !important; }
+.dark .hover\:bg-gray-100:hover     { background-color: #1a1a1a !important; }
+.dark .hover\:bg-gray-200:hover     { background-color: #262626 !important; }
+.dark .hover\:bg-gray-300:hover     { background-color: #333333 !important; }
+.dark .hover\:bg-gray-400:hover     { background-color: #404040 !important; }
+.dark .hover\:bg-orange-50:hover    { background-color: rgba(234,88,12,0.1) !important; }
+.dark .hover\:bg-red-50:hover       { background-color: rgba(239,68,68,0.1) !important; }
+.dark .hover\:bg-red-100:hover      { background-color: rgba(239,68,68,0.15) !important; }
+.dark .hover\:bg-black\/10:hover    { background-color: rgba(255,255,255,0.06) !important; }
+.dark .hover\:bg-\[\#0f1419\]\/90:hover { background-color: #d4d4d4 !important; }
+
+/* Critical: hover bg colors that override base !important bg-black / bg-white */
+.dark .hover\:bg-orange-600:hover   { background-color: #ea580c !important; }
+.dark .hover\:bg-orange-700:hover   { background-color: #c2410c !important; }
+.dark .hover\:bg-red-600:hover      { background-color: #dc2626 !important; }
+.dark .hover\:bg-red-700:hover      { background-color: #b91c1c !important; }
+.dark .hover\:bg-green-700:hover    { background-color: #15803d !important; }
+.dark .hover\:bg-blue-700:hover     { background-color: #1d4ed8 !important; }
+.dark .hover\:bg-yellow-300:hover   { background-color: #fde047 !important; }
+.dark .hover\:bg-transparent:hover  { background-color: transparent !important; }
+.dark .hover\:bg-black:hover        { background-color: #e5e5e5 !important; }
+.dark .hover\:bg-white:hover        { background-color: #171717 !important; }
+
+/* Text hover */
+.dark .hover\:text-black:hover      { color: #f5f5f5 !important; }
+.dark .hover\:text-white:hover      { color: #0a0a0a !important; }
+.dark .hover\:text-orange-600:hover { color: #ea580c !important; }
+.dark .hover\:text-orange-700:hover { color: #c2410c !important; }
+
+/* Border hover */
+.dark .hover\:border-orange-600:hover { border-color: #ea580c !important; }
+.dark .hover\:border-black:hover      { border-color: #d4d4d4 !important; }
+.dark .hover\:border-white:hover      { border-color: #404040 !important; }
+
+/* ── Focus state overrides ──────────────────────────────────────────────── */
+.dark .focus\:border-black:focus   { border-color: #e5e5e5 !important; }
+.dark .focus\:bg-white:focus       { background-color: #171717 !important; }
+.dark .focus\:border-orange-600:focus { border-color: #ea580c !important; }
+
+/* ── Shadow adjustments ────────────────────────────────────────────────── */
+.dark .shadow-sm  { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.4) !important; }
+.dark .shadow-md  { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3) !important; }
+.dark .shadow-lg  { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3) !important; }
+.dark .shadow-xl  { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.4) !important; }
+.dark .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6) !important; }
+.dark .shadow-\[8px_8px_0px_\#0D0D0D\] { box-shadow: 8px 8px 0px #f5f5f5 !important; }
+
+/* ── Social icon buttons ───────────────────────────────────────────────── */
+.dark .social-icon-btn {
+  background: linear-gradient(0deg, #262626, #1f1f1f) !important;
+  box-shadow: 0 8px 12px rgba(0,0,0,0.4) !important;
+}
+.dark .social-icon-inner {
+  background: linear-gradient(0deg, #1f1f1f, #262626) !important;
+  color: #e5e5e5 !important;
+}
+
+/* ── Ring / outline ────────────────────────────────────────────────────── */
+.dark .ring-white { --tw-ring-color: #262626 !important; }
+
+/* ── Placeholder text ──────────────────────────────────────────────────── */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #737373 !important;
+}
+
+/* ── Form inputs ───────────────────────────────────────────────────────── */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #171717 !important;
+  color: #f5f5f5 !important;
+  border-color: #333333 !important;
+}
+.dark select option {
+  background-color: #171717 !important;
+  color: #f5f5f5 !important;
+}
+
+/* Keep buttons with explicit bg colors as they are */
+.dark .bg-orange-600  { background-color: #ea580c !important; }
+.dark .bg-red-600     { background-color: #dc2626 !important; }
+.dark .bg-green-600   { background-color: #16a34a !important; }
+.dark .bg-blue-600    { background-color: #2563eb !important; }
+.dark .bg-neutral-800 { background-color: #e5e5e5 !important; }
+.dark .bg-neutral-800 .text-white,
+.dark .bg-neutral-800.text-white { color: #0a0a0a !important; }
+.dark .bg-neutral-800 .text-neutral-200 { color: #404040 !important; }
+.dark .bg-black       { background-color: #f5f5f5 !important; }
+/* Same-element: <button class="bg-black text-white"> */
+.dark .bg-black.text-white { color: #0a0a0a !important; }
+/* Child-element: <div class="bg-black"><span class="text-white"> */
+.dark .bg-black .text-white { color: #0a0a0a !important; }
+
+/* Hover inversions for black/neutral-800 buttons */
+.dark .hover\:bg-black:hover { background-color: #e5e5e5 !important; }
+.dark .hover\:bg-black:hover.text-white { color: #0a0a0a !important; }
+.dark .hover\:bg-black:hover .text-white { color: #0a0a0a !important; }
+
+/* ── Dashed/dotted border elements (no-events states) ─────────────────── */
+.dark .border-dashed { border-color: #333333 !important; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* ── Smooth transition on theme change ─────────────────────────────────── */
+html.dark-transition,
+html.dark-transition *,
+html.dark-transition *::before,
+html.dark-transition *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}

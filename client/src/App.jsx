@@ -4,6 +4,7 @@ import axios from 'axios';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
+import RouteLoader from './components/RouteLoader';
 import EventFeed from './pages/EventFeed';
 import RegisterStudent from './pages/RegisterStudent';
 import Team from './pages/Team';
@@ -114,7 +115,8 @@ function App() {
     <NotificationProvider>
       <SocketProvider>
         <Router>
-        <div className="min-h-screen flex flex-col bg-gray-50 pb-20 md:pb-0">
+        <RouteLoader>
+        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a] pb-20 md:pb-0">
           <Navbar />
           <div className="flex-1">
           <Routes>
@@ -164,6 +166,7 @@ function App() {
           <Footer />
           <BottomNav />
         </div>
+        </RouteLoader>
       </Router>
       </SocketProvider>
     </NotificationProvider>

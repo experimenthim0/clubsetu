@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTheme } from "../context/ThemeContext";
 import { Link, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
@@ -16,6 +17,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 const Navbar = () => {
+  const { isDark, toggleTheme } = useTheme();
   let user = null;
   try {
     const storedUser = localStorage.getItem("user");
@@ -220,13 +222,31 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             <div className="w-px h-6 bg-neutral-200" />
 
+            {/* Theme toggle */}
+            <button
+              onClick={() => {
+                document.documentElement.classList.add('dark-transition');
+                toggleTheme();
+                setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
+              }}
+              className="p-2 rounded-sm hover:bg-neutral-200 transition-colors duration-150 cursor-pointer"
+              aria-label="Toggle dark mode"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              )}
+            </button>
+
             {user ? (
               <>
                 {/* Create Event — club only */}
                 {(role === "club") && (
                   <Link
                     to="/create"
-                    className="flex items-center gap-1.5 px-4 py-2  border-2 border-gray-400 text-black text-[11px] font-bold tracking-widest rounded-sm hover:bg-gray-400 hover:text-white hover:border-gray-400 transition-all duration-150 hover:-translate-y-px"
+                    className="flex items-center gap-1.5 px-4 py-2 border-2 border-[#9ca3af] text-[#000000] dark:text-[#f5f5f5] text-[11px] font-bold tracking-widest rounded-sm hover:bg-[#9ca3af] hover:text-[#ffffff] dark:hover:bg-[#f5f5f5] dark:hover:text-[#000000] dark:hover:border-[#f5f5f5] transition-all duration-150 hover:-translate-y-px"
                   >
                     <i className="ri-add-line text-sm" />
                     Create Event

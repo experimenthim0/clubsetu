@@ -46,7 +46,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </span>
                     )}
                     {!isLive && status === 'UPCOMING' && (
-                        <span className="inline-flex items-center bg-yellow-400 text-black text-[10px] font-bold  tracking-widest px-3 py-1 rounded-sm border border-gray-300">
+                        <span className="inline-flex items-center bg-yellow-400 text-[#000000] text-[10px] font-bold  tracking-widest px-3 py-1 rounded-sm border border-gray-300">
                             Upcoming
                         </span>
                     )}
@@ -83,7 +83,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                     <div key={index} className="flex justify-between items-center bg-neutral-50 p-2 rounded border border-neutral-200 shadow-sm">
                                         <div className="flex items-center gap-2">
                                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                                                winner.rank === 1 ? 'bg-yellow-400 text-black' :
+                                                winner.rank === 1 ? 'bg-yellow-400 text-[#000000]' :
                                                 winner.rank === 2 ? 'bg-neutral-300 text-neutral-700' :
                                                 'bg-orange-200 text-orange-800'
                                             }`}>
@@ -174,7 +174,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-1.5 rounded-sm text-[13px] font-medium tracking-widest border-2 transition-all ${
+                            className={`flex-1 block text-center py-1.5 rounded-sm text-[13px] font-medium tracking-widest border-2 transition-all dark:text-black ${
                                 (isEnded || isLive)
                                     ? 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                                     : isFull

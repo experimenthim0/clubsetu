@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // FOUC prevention — apply dark class before React mounts
+      (function(){
+        try {
+          if(localStorage.getItem('theme')==='dark'){
+            document.documentElement.classList.add('dark');
+          }
+        } catch(e){}
+      })();
+    </script>
+    <link rel="preload" href="/fonts/organix.regular.otf" as="font" type="font/otf" crossorigin />
+    <style>
+      @font-face {
+        font-family: 'logofont';
+        src: url('/fonts/organix.regular.otf') format('opentype');
+        font-display: block;
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/clubsetu-favicon.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ClubSetu - Event Management</title>
@@ -11,7 +29,44 @@
  />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-React Lissajous loader — replaced when React mounts -->
+      <div id="pre-loader" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background 0.3s ease;">
+        <script>document.getElementById('pre-loader').style.background=document.documentElement.classList.contains('dark')?'#0a0a0a':'#ffffff';</script>
+        <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,0.12) 0%,transparent 70%);filter:blur(40px);pointer-events:none;"></div>
+        <div style="width:min(56vmin,320px);aspect-ratio:1;">
+          <svg id="pre-svg" viewBox="0 0 100 100" fill="none" style="width:100%;height:100%;overflow:visible;">
+            <g id="pre-group">
+              <path id="pre-path" stroke="#ea580c" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.7" opacity="0.12"></path>
+            </g>
+          </svg>
+        </div>
+        <div style="margin-top:28px;text-align:center;">
+          <div id="pre-brand" style="font-family:'logofont',serif;font-size:28px;font-weight:700;letter-spacing:0.04em;">Club<span style="color:#ea580c;font-weight:300;">Setu</span></div>
+          <div id="pre-loading" style="margin-top:8px;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;font-family:Inter,system-ui,sans-serif;">Loading…</div>
+          <script>
+            (function(){
+              var dk=document.documentElement.classList.contains('dark');
+              document.getElementById('pre-brand').style.color=dk?'#ffffff':'#0a0a0a';
+              document.getElementById('pre-loading').style.color=dk?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.35)';
+            })();
+          </script>
+        </div>
+      </div>
+      <script>
+        (function(){
+          var c={particleCount:68,trailSpan:0.34,durationMs:6000,pulseDurationMs:5400,strokeWidth:4.7,amp:24,boost:6,ax:3,by:4,phase:1.57,ys:0.92};
+          var g=document.getElementById('pre-group'),p=document.getElementById('pre-path');
+          var dots=[];for(var i=0;i<c.particleCount;i++){var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.setAttribute('fill','#ea580c');g.appendChild(ci);dots.push(ci);}
+          function pt(pr,ds){var t=pr*Math.PI*2,a=c.amp+ds*c.boost;return{x:50+Math.sin(c.ax*t+c.phase)*a,y:50+Math.sin(c.by*t)*(a*c.ys)};}
+          var s=performance.now();
+          function r(n){if(!document.getElementById('pre-loader'))return;var t=n-s,pr=(t%c.durationMs)/c.durationMs;var pp=(t%c.pulseDurationMs)/c.pulseDurationMs;var ds=0.52+((Math.sin(pp*Math.PI*2+0.55)+1)/2)*0.48;
+          var d='';for(var i=0;i<=480;i++){var pt2=pt(i/480,ds);d+=(i===0?'M':'L')+' '+pt2.x.toFixed(2)+' '+pt2.y.toFixed(2)+' ';}p.setAttribute('d',d);
+          dots.forEach(function(nd,idx){var to=idx/(c.particleCount-1);var pp2=((pr-to*c.trailSpan)%1+1)%1;var pt3=pt(pp2,ds);var f=Math.pow(1-to,0.56);nd.setAttribute('cx',pt3.x.toFixed(2));nd.setAttribute('cy',pt3.y.toFixed(2));nd.setAttribute('r',(0.9+f*2.7).toFixed(2));nd.setAttribute('opacity',(0.04+f*0.96).toFixed(3));});
+          requestAnimationFrame(r);}requestAnimationFrame(r);
+        })();
+      </script>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

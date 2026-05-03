@@ -205,7 +205,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   ];
 
 return (
-  <div className={`max-w-7xl mx-auto px-3 ${hideHeader ? '' : 'py-12'}`}>
+  <div className={`max-w-7xl mx-auto px-1 ${hideHeader ? '' : 'py-12'}`}>
 
     {!hideHeader && (
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">

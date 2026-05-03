@@ -379,7 +379,7 @@ const EventDetails = () => {
                     </span>
                   )}
                   {!isLive && !isEnded && (
-                    <span className="inline-flex items-center gap-1.5 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-black/10 shadow">
+                    <span className="inline-flex items-center gap-1.5 bg-yellow-400 text-[#000000] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-black/10 shadow">
                       <i className="ri-time-line" /> Upcoming
                     </span>
                   )}
@@ -576,7 +576,7 @@ const EventDetails = () => {
                 )}
 
                 {/* External participant form (shown when not logged in) */}
-                {!user && !isEnded && !isDeadlinePassed && !alreadyRegistered && (
+                {/* {!user && !isEnded && !isDeadlinePassed && !alreadyRegistered && (
                   <div className="flex flex-col gap-3">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">Register as External Participant</p>
                     <input
@@ -594,7 +594,7 @@ const EventDetails = () => {
                       className="w-full px-4 py-2.5 border-2 border-neutral-200 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors"
                     />
                   </div>
-                )}
+                )} */}
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button

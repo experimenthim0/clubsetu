@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, User, ShieldCheck, X } from "lucide-react";
+import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import { CalendarDaysIcon } from "./ui/calendar-days";
 import { IndianRupeeIcon } from "./ui/indian-rupee";
@@ -14,6 +15,7 @@ const BottomNav = () => {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef(null);
+  const { isDark, toggleTheme } = useTheme();
 
   // Parse user from local storage
   let user = null;
@@ -287,6 +289,23 @@ const BottomNav = () => {
             </div>
 
             <div className="px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
+              {/* Dark mode toggle */}
+              <button
+                onClick={() => {
+                  document.documentElement.classList.add('dark-transition');
+                  toggleTheme();
+                  setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
+                }}
+                className="w-full flex items-center justify-between py-3 px-4 mb-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 transition-colors"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-black">
+                  {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                  {isDark ? 'Light Mode' : 'Dark Mode'}
+                </span>
+                <div className={`w-10 h-6 rounded-full relative transition-colors duration-200 ${isDark ? 'bg-orange-600' : 'bg-neutral-300'}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isDark ? 'translate-x-5' : 'translate-x-1'}`} />
+                </div>
+              </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors"

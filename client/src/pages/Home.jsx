@@ -81,7 +81,7 @@ const BtnPrimary = ({ to, children }) => (
 const BtnSecondary = ({ to, children }) => (
   <Link
     to={to}
-    className="text-black bg-transparent hover:bg-[#0f1419] hover:text-white border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border font-medium leading-5 text-md px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+    className="text-[#0a0a0a] bg-transparent hover:bg-[#0f1419] hover:text-[#ffffff] border-[#0a0a0a] dark:hover:bg-[#f5f5f5] dark:text-white dark:border-[#f5f5f5] dark:bg-transparent dark:hover:text-black dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border font-medium leading-5 text-md px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
   >
     {children}
   </Link>
@@ -128,9 +128,9 @@ const Home = () => {
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${bgIndex === idx ? 'opacity-100' : 'opacity-0'}`}
             />
           ))}
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/90 to-transparent"></div>
+          <div className="absolute inset-0 bg-white/20 dark:bg-black/60 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/60 dark:to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/90 to-transparent dark:from-[#0a0a0a]/90 dark:to-transparent"></div>
         </div>
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
@@ -155,14 +155,14 @@ const Home = () => {
               <div className="flex gap-3 flex-wrap">
                <Link
   to="/events"
-  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
 >
   <i className="ri-calendar-event-line text-lg mr-2" /> Browse Events
 </Link>
 
 <Link
   to="/clubs"
-  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
 >
   <i className="ri-group-line text-lg mr-2" /> Explore Clubs
 </Link>
@@ -170,7 +170,7 @@ const Home = () => {
 {!user && (
   <Link
     to="/login"
-    className="text-white bg-[#0f1419] hover:bg-transparent hover:text-black hover:border-black transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+    className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
   >
     <i className="ri-login-box-line text-lg mr-2" /> Login / Signup
   </Link>
@@ -183,7 +183,7 @@ const Home = () => {
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
       <div
-        className="overflow-hidden bg-orange-600  py-3 mt-10"
+        className="overflow-hidden bg-orange-600 py-2"
         style={{ whiteSpace: 'nowrap' }}
       >
         <div

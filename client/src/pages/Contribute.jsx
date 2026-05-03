@@ -44,7 +44,7 @@ const SocialLink = ({ icon, label, username, href, color }) => (
     </div>
     <div className="min-w-0">
       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-500">{label}</p>
-      <p className="text-[13px] font-bold text-white/80 group-hover:text-orange-400 truncate transition-colors">{username}</p>
+      <p className="text-[13px] font-bold text-[#f5f5f5]/80 group-hover:text-orange-400 truncate transition-colors">{username}</p>
     </div>
     <i className="ri-arrow-right-up-line ml-auto text-neutral-600 group-hover:text-orange-500 transition-colors" />
   </a>
@@ -62,26 +62,27 @@ const SectionLabel = ({ children }) => (
 /* ══════════════════════════════════════════════════════════════ */
 const Contribute = () => {
   return (
-    <div className="min-h-screen bg-[#F8F7F4]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#0a0a0a]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* ── Google font import ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
         .mono { font-family: 'DM Mono', monospace; }
-        .step-bg { -webkit-text-stroke: 1px #e5e5e5; color: transparent; font-size: clamp(80px, 15vw, 140px); }
+        .step-bg { -webkit-text-stroke: 1px #d1d5db; color: transparent; font-size: clamp(80px, 15vw, 140px); }
+        .dark .step-bg { -webkit-text-stroke: 1px #404040; }
       `}</style>
 
       {/* ── Hero ── */}
-      <div className="border-b-2 border-black bg-black text-white overflow-hidden relative">
+      <div className="border-b-2 border-[#000000] bg-[#000000] text-[#ffffff] overflow-hidden relative">
         {/* decorative grid */}
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
         {/* big decorative word */}
-        <p className="absolute right-0 top-1/2 -translate-y-1/2 mono font-black text-white opacity-[0.04] text-[200px] leading-none select-none pointer-events-none pr-8 hidden lg:block">BUILD</p>
+        <p className="absolute right-0 top-1/2 -translate-y-1/2 mono font-black text-[#ffffff] opacity-[0.04] text-[200px] leading-none select-none pointer-events-none pr-8 hidden lg:block">BUILD</p>
 
         <div className="max-w-4xl mx-auto px-6 lg:px-10 pt-16 pb-14 relative">
           <div className="inline-flex items-center gap-2 mb-5">
             <span className="w-5 h-5 rounded-sm bg-orange-600 flex items-center justify-center">
-              <i className="ri-open-source-line text-white text-xs" />
+              <i className="ri-open-source-line text-[#ffffff] text-xs" />
             </span>
             <span className="mono text-[10px] tracking-[0.2em] text-orange-400 uppercase">Open Source · NIT Jalandhar</span>
           </div>
@@ -138,13 +139,13 @@ const Contribute = () => {
               <Reveal key={item.step} delay={i * 80}>
                 <div className="relative flex gap-6 pl-8 pb-10 group">
                   {/* dot on timeline */}
-                  <div className="absolute -left-[13px] top-1 w-6 h-6 bg-black rounded-full border-4 border-[#F8F7F4] group-hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                  <div className="absolute -left-[13px] top-1 w-6 h-6 bg-[#000000] dark:bg-[#f5f5f5] rounded-full border-4 border-[#F8F7F4] dark:border-[#0a0a0a] group-hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-[#ffffff] dark:bg-[#000000] rounded-full" />
                   </div>
 
                   {/* big step number behind */}
                   <div className="relative flex-1">
-                    <div className="step-bg mono font-black leading-none absolute -top-4 -left-1 select-none pointer-events-none" style={{ WebkitTextStroke: '1.5px #e5e5e5', color: 'transparent' }}>
+                    <div className="step-bg mono font-black leading-none absolute -top-4 -left-1 select-none pointer-events-none">
                       {item.step}
                     </div>
                     <div className="relative pt-1">
@@ -193,18 +194,18 @@ const Contribute = () => {
         {/* ── Contact ── */}
         <Reveal>
           <SectionLabel>Maintainer</SectionLabel>
-          <div className="bg-black rounded-2xl overflow-hidden border-2 border-black">
+          <div className="bg-[#000000] rounded-2xl overflow-hidden border-2 border-[#000000]">
             {/* orange top stripe */}
             <div className="h-1.5 bg-orange-600 w-full" />
 
             <div className="p-8">
               <div className="flex items-start gap-4 mb-8">
-                <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 text-2xl text-white">
+                <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 text-2xl text-[#ffffff]">
                   <i className="ri-user-3-line" />
                 </div>
                 <div>
                   <p className="text-[9px] mono uppercase tracking-[0.2em] text-neutral-500 mb-1">Project Maintainer</p>
-                  <h3 className="text-xl font-black text-white">Nikhil Yadav</h3>
+                  <h3 className="text-xl font-black text-[#ffffff]">Nikhil Yadav</h3>
                   <p className="text-[13px] text-neutral-400 mt-1">Student · NIT Jalandhar</p>
                 </div>
               </div>
@@ -223,7 +224,7 @@ const Contribute = () => {
                 </div>
                 <div>
                   <p className="text-[9px] mono uppercase tracking-[0.2em] text-neutral-500">Email</p>
-                  <p className="text-[13px] font-bold text-white group-hover:text-orange-400 transition-colors">contact.nikhim@gmail.com</p>
+                  <p className="text-[13px] font-bold text-[#ffffff] group-hover:text-orange-400 transition-colors">contact.nikhim@gmail.com</p>
                 </div>
                 <i className="ri-arrow-right-up-line ml-auto text-neutral-600 group-hover:text-orange-500 transition-colors" />
               </a>
