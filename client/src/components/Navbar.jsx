@@ -13,6 +13,7 @@ import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
+import SearchBar from "./SearchBar";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -36,6 +37,9 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const searchWrapperRef = useRef(null);
 
   const { notifications, unreadCount, setUnreadCount, setNotifications } = useSocket() || {};
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
@@ -56,6 +60,8 @@ const Navbar = () => {
   useEffect(() => {
     setMobileOpen(false);
     setDropdownOpen(false);
+    setSearchOpen(false);
+    setMobileSearchOpen(false);
   }, [location.pathname]);
 
   // ── Click-outside → close dropdown ───────────────────────────────────────
@@ -70,6 +76,12 @@ const Navbar = () => {
         (!notifMobileDropdownRef.current || !notifMobileDropdownRef.current.contains(e.target))
       ) {
         setNotifDropdownOpen(false);
+      }
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target)
+      ) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -92,7 +104,23 @@ const Navbar = () => {
   // ── Escape key → close dropdown ──────────────────────────────────────────
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "Escape") setDropdownOpen(false);
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setSearchOpen(false);
+        setMobileSearchOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
+
+  // ── Global keyboard shortcut: Ctrl/Cmd+K to open search ──────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
@@ -221,6 +249,23 @@ const Navbar = () => {
           {/* ── Desktop right actions ─────────────────────────────────────── */}
           <div className="hidden md:flex items-center gap-2">
             <div className="w-px h-6 bg-neutral-200" />
+
+            {/* Search */}
+            <div className="flex items-center" ref={searchWrapperRef}>
+              <button
+                onClick={() => setSearchOpen((prev) => !prev)}
+                className="search-trigger-btn"
+                aria-label="Search"
+                title="Search (Ctrl+K)"
+              >
+                <i className={searchOpen ? "ri-close-line" : "ri-search-line"} />
+              </button>
+              <SearchBar
+                isOpen={searchOpen}
+                onClose={() => setSearchOpen(false)}
+                isMobile={false}
+              />
+            </div>
 
             {/* Theme toggle */}
             <button
@@ -467,12 +512,27 @@ const Navbar = () => {
           </div>
 
           {/* ── Hamburger ────────────────────────────────────────────────── */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-1">
+            {/* Mobile Search Icon */}
+            <button
+              onClick={() => {
+                setMobileSearchOpen((prev) => !prev);
+                setNotifDropdownOpen(false);
+              }}
+              className="relative  rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+              aria-label="Search"
+            >
+              <i className={`${mobileSearchOpen ? 'ri-close-line' : 'ri-search-line'} text-[20px] text-black`} />
+            </button>
+
             {user ? (
               (role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
                 <div className="relative" ref={notifMobileDropdownRef}>
                   <button
-                    onClick={handleNotificationClick}
+                    onClick={() => {
+                      handleNotificationClick();
+                      setMobileSearchOpen(false);
+                    }}
                     className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
                   >
                     <BellIcon size={22} className="text-black" />
@@ -523,9 +583,9 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-1.5 text-black"
+                className="px-2 py-1.5 text-black"
               >
-                <LogInIcon/>
+                <LogInIcon size={22}/>
               </Link>
             )}
 
@@ -535,6 +595,19 @@ const Navbar = () => {
         </div>
 
       </nav>
+
+      {/* ── Mobile Search Bar (below navbar with dropdown animation) ──── */}
+      <SearchBar
+        isOpen={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+        isMobile={true}
+      />
+
+      {/* ── Mobile Search Overlay ──────────────────────────────────────── */}
+      <div
+        className={`search-overlay ${mobileSearchOpen ? 'search-overlay-visible' : ''} md:hidden`}
+        onClick={() => setMobileSearchOpen(false)}
+      />
     </>
   );
 };
