@@ -168,13 +168,16 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 
                     {/* Action button */}
                     {isRegistered ? (
-                        <div className="flex-1 text-center py-2 bg-green-50 text-green-700 border-2 border-green-300 rounded-sm text-[11px] font-bold uppercase tracking-widest">
+                        <Link
+                            to={`/event/${slug || _id}`}>
+                        <div className="flex-1 text-center py-2 bg-green-50 text-green-700 border-2 border-green-300 rounded-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer">
                             ✓ Registered
                         </div>
+                        </Link>
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-1.5 rounded-sm text-[13px] font-medium tracking-widest border-2 transition-all dark:text-black ${
+                            className={`flex-1 block text-center py-1.5 rounded-sm text-[13px] font-medium tracking-widest border-2 transition-all dark:text-black cursor-pointer ${
                                 (isEnded || isLive)
                                     ? 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                                     : isFull

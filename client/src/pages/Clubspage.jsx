@@ -59,7 +59,7 @@ const tickerItems = [
   return (
 
     
-    <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-3`}>
+    <div className={`${isHome ? "" : "min-h-screen bg-gray-50 py-12"} px-4`}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');`}</style>
 
       {/* Page Header - Hide if on Home */}
@@ -108,9 +108,14 @@ const tickerItems = [
                           className="w-full h-full object-contain filter brightness-110 rounded-full "
                         />
                       ) : (
-                        <span className="font-black text-2xl italic text-black/90">
-                          {club.clubName.charAt(0)}
-                        </span>
+                        // <span className="font-black text-2xl italic text-black/90">
+                        //   {club.clubName.charAt(0)}
+                        // </span>
+                         <img
+                          src="CLUBSETU.png"
+                          alt={club.clubName}
+                          className="w-full h-full object-cover rounded-full "
+                        />
                       )}
                     </div>
                     {/* Title & Category */}

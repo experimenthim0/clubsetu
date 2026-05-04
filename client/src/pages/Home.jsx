@@ -321,7 +321,7 @@ const Home = () => {
                   : "border-transparent text-neutral-400 hover:text-neutral-600"
                 }`}
             >
-              {t === "students" ? "For Students" : "For Club Coordinators"}
+              {t === "students" ? "For Students" : "For Clubs & Societies"}
             </button>
           ))}
         </div>
@@ -370,7 +370,7 @@ const Home = () => {
               />
               <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-200 rounded-lg px-4 py-3">
                 <p className="text-lg font-black leading-none">1-Click</p>
-                <p className="text-[11px] text-neutral-700 mt-0.5">Event Registration</p>
+                <p className="text-[11px] text-[#0d1422] mt-0.5">Event Registration</p>
               </div>
             </div>
           </div>
@@ -381,7 +381,7 @@ const Home = () => {
           <div>
             <div className="mb-10">
               <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
-                Club Coordinators
+                Clubs & Societies
               </p>
               <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
                 Less logistics,{" "}

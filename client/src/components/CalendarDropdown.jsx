@@ -74,7 +74,7 @@ const CalendarDropdown = ({ event }) => {
                 {isSynced ? (
                     <CalendarCheck2 className="w-[18px] h-[18px] " />
                 ) : (
-                    <CalendarDays className="w-[18px] h-[18px]" />
+                    <CalendarDays className="w-[18px] h-[18px] cursor-pointer" />
                 )}
             </button>
 
