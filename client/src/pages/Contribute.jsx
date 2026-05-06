@@ -88,7 +88,7 @@ const Contribute = () => {
           </div>
           <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-5">
             Contribute to<br />
-            Club<span className="text-orange-500">Setu</span>
+            Campus<span className="text-orange-500">Node</span>
           </h1>
           <p className="text-neutral-400 text-[15px] max-w-lg leading-relaxed">
             Built for and by NIT Jalandhar students. We welcome developers, designers, and anyone passionate about improving campus life.
@@ -121,7 +121,7 @@ const Contribute = () => {
             ))}
           </div>
           <p className="text-[13px] text-neutral-600 mt-5 leading-relaxed">
-            ClubSetu is a full-stack event management platform. Club heads create and manage events, handle registrations with custom forms, process payments through Razorpay, and track payouts — all in one place.
+            CampusNode is a full-stack event management platform. Club heads create and manage events, handle registrations with custom forms, process payments through Razorpay, and track payouts — all in one place.
           </p>
         </Reveal>
 
@@ -130,7 +130,7 @@ const Contribute = () => {
           <SectionLabel>How to Contribute</SectionLabel>
           <div className="space-y-0 border-l-2 border-black ml-6">
             {[
-              { step: '01', title: 'Fork the Repository', desc: 'Fork the ClubSetu repo on GitHub and clone it to your local machine.', icon: 'ri-git-branch-line' },
+              { step: '01', title: 'Fork the Repository', desc: 'Fork the CampusNode repo on GitHub and clone it to your local machine.', icon: 'ri-git-branch-line' },
               { step: '02', title: 'Set Up Locally', desc: 'Install dependencies for both client and server. Set up your .env file with database URL and other keys.', icon: 'ri-terminal-box-line' },
               { step: '03', title: 'Pick an Issue', desc: 'Check the GitHub Issues tab for open bugs and feature requests, or propose your own improvement.', icon: 'ri-bug-line' },
               { step: '04', title: 'Create a Branch & Code', desc: 'Create a feature branch, make your changes, and test thoroughly before committing.', icon: 'ri-code-line' },
@@ -211,7 +211,7 @@ const Contribute = () => {
               </div>
 
               <p className="text-neutral-400 text-[13px] leading-relaxed mb-7">
-                Feel free to reach out for questions, suggestions, or collaboration on ClubSetu.
+                Feel free to reach out for questions, suggestions, or collaboration on CampusNode.
               </p>
 
               {/* Email */}
@@ -268,7 +268,7 @@ const Contribute = () => {
           <Link to="/" className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-black hover:text-orange-600 transition-colors">
             <i className="ri-arrow-left-line" /> Back to Home
           </Link>
-          <span className="mono text-[10px] text-neutral-400">ClubSetu · Open Source</span>
+          <span className="mono text-[10px] text-neutral-400">CampusNode · Open Source</span>
         </div>
 
       </div>

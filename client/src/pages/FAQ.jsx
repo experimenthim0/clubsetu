@@ -15,7 +15,7 @@ const FAQ = () => {
               I didn't receive the verification email.
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              First, please check your <strong>Spam</strong> or <strong>Junk</strong> folder. Emails from ClubSetu sometimes land there. 
+              First, please check your <strong>Spam</strong> or <strong>Junk</strong> folder. Emails from CampusNode sometimes land there. 
               If you still can't find it, ensure you entered your email correctly during registration. 
               Note that students must use their <strong>NITJ college email</strong> (ending in <code>@nitj.ac.in</code>).
             </p>

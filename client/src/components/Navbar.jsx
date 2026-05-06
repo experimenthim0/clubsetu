@@ -211,8 +211,8 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont hidden sm:block " 
           >
-            <span className="font-light text-[28px] tracking-wider text-black leading-none select-none">
-              Club<span className="text-orange-600">Setu</span>
+            <span className="font-light text-[24px] tracking-wider text-black leading-none select-none">
+              Campus<span className="text-orange-600">Node</span>
             </span>
           </Link>
           </div>
@@ -221,8 +221,8 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont sm:hidden block" 
           >
-            <span className="font-light text-[28px] tracking-wider text-black leading-none select-none">
-              Club<span className="text-orange-600">Setu</span>
+            <span className="font-light text-[24px] tracking-wider text-black leading-none select-none">
+              Campus<span className="text-orange-600">Node</span>
             </span>
           </Link>
 
@@ -240,6 +240,10 @@ const Navbar = () => {
               Events
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
+{/* <Link to="/lost-found" className={navLinkCls("/lost-found")}>
+              Lost & Found
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/lost-found") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+            </Link> */}
             <Link to="/team" className={navLinkCls("/team")}>
               Team
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/team") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
@@ -323,7 +327,7 @@ const Navbar = () => {
                             notifications.slice(0, 4).map((notif, idx) => (
                               <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                                 <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[10px] font-medium text-orange-600  tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                                  <span className="text-[10px] font-medium text-orange-600  tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
                                   <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt)}</span>
                                 </div>
                                 <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
@@ -386,7 +390,7 @@ const Navbar = () => {
                           {user.name}
                         </p>
                         <p className="text-[10px] tracking-widest text-orange-600 font-medium mt-0.5">
-                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator` : role === "admin" ? "Admin" : "Student"}
+                          {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator` : role === "admin" ? "Admin" : role === "lostFoundAdmin" ? "L&F Admin" : "Student"}
                         </p>
                       </div>
 
@@ -471,6 +475,17 @@ const Navbar = () => {
                             )}
                           </div>
                         )}
+                        {(role === 'admin' || role === 'paymentAdmin') && (
+                          <div className="border-t border-neutral-100 mt-1 pt-1 text-black">
+                            <p className="px-4 py-1 text-[9px] font-black uppercase tracking-widest text-neutral-400">Administration</p>
+                            <Link 
+                              to="/admin-dashboard" 
+                              className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors"
+                            >
+                              <LayoutGridIcon size={16} className="text-neutral-500" /> Admin Panel
+                            </Link>
+                          </div>
+                        )}
                       </div>
 
                       {/* Divider + logout */}
@@ -552,7 +567,7 @@ const Navbar = () => {
                           notifications.slice(0, 4).map((notif, idx) => (
                             <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
                               <div className="flex justify-between items-start mb-1">
-                                <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "ClubSetu"}</span>
+                                <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
                                 <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
                               </div>
                               <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>

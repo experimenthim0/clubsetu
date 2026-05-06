@@ -127,7 +127,7 @@ const Notifications = () => {
                     <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-medium  tracking-widest text-orange-600  py-0.5 rounded-sm">
-                          {notif.sender?.clubName || "ClubSetu"}
+                          {notif.sender?.clubName || "CampusNode"}
                         </span>
                         {!isRead && (
                           <span className="flex h-2 w-2">

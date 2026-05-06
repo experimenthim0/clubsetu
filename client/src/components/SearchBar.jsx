@@ -138,7 +138,7 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
     if (q.includes("nikhil") || q.includes("Nikhil") || q.includes("nik") || q.includes("Nik") || q.includes("yadav") || q.includes("Yadav") || q.includes("n")) {
       matched.push({
         title: "Nikhil Yadav",
-        subtitle: "Lead Developer of ClubSetu",
+        subtitle: "Lead Developer of CampusNode",
         path: "/team",
         type: "developer",
         icon: "ri-code-s-slash-line",

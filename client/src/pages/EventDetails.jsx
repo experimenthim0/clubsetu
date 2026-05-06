@@ -43,7 +43,7 @@ const EventDetails = () => {
 
   useEffect(() => {
     if (event) {
-      document.title = `${event.title} - ClubSetu`;
+      document.title = `${event.title} - CampusNode`;
       const setMetaTag = (selector, propertyAttr, propertyVal, content) => {
         let element = document.querySelector(selector);
         if (!element) {
@@ -53,14 +53,14 @@ const EventDetails = () => {
         }
         element.setAttribute('content', content);
       };
-      setMetaTag("meta[property='og:title']", 'property', 'og:title', `${event.title} | ClubSetu`);
-      setMetaTag("meta[property='og:description']", 'property', 'og:description', event.description || "Join this amazing event on ClubSetu!");
+      setMetaTag("meta[property='og:title']", 'property', 'og:title', `${event.title} | CampusNode`);
+      setMetaTag("meta[property='og:description']", 'property', 'og:description', event.description || "Join this amazing event on CampusNode!");
       setMetaTag("meta[property='og:image']", 'property', 'og:image', event.imageUrl || DEFAULT_IMAGE);
       setMetaTag("meta[property='og:url']", 'property', 'og:url', window.location.href);
       setMetaTag("meta[property='og:type']", 'property', 'og:type', "website");
       setMetaTag("meta[name='twitter:card']", 'name', 'twitter:card', "summary_large_image");
-      setMetaTag("meta[name='twitter:title']", 'name', 'twitter:title', `${event.title} | ClubSetu`);
-      setMetaTag("meta[name='twitter:description']", 'name', 'twitter:description', event.description || "Join this amazing event on ClubSetu!");
+      setMetaTag("meta[name='twitter:title']", 'name', 'twitter:title', `${event.title} | CampusNode`);
+      setMetaTag("meta[name='twitter:description']", 'name', 'twitter:description', event.description || "Join this amazing event on CampusNode!");
       setMetaTag("meta[name='twitter:image']", 'name', 'twitter:image', event.imageUrl || DEFAULT_IMAGE);
     }
   }, [event]);
@@ -90,7 +90,7 @@ const EventDetails = () => {
           const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event.id || event._id, studentId: user.id });
           const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
           const options = {
-            key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
+            key: keyId, amount: amount * 100, currency, name: 'CampusNode',
             description: `Registration for ${eventTitle}`, order_id: orderId,
             handler: async (response) => {
               try {
@@ -177,7 +177,7 @@ const EventDetails = () => {
           const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event._id, studentId: updatedUser.id });
           const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
           const options = {
-            key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
+            key: keyId, amount: amount * 100, currency, name: 'CampusNode',
             description: `Registration for ${eventTitle}`, order_id: orderId,
             handler: async (response) => {
               try {
@@ -218,7 +218,7 @@ const EventDetails = () => {
         const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, { eventId: event.id || event._id, studentId: user.id });
         const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
         const options = {
-          key: keyId, amount: amount * 100, currency, name: 'ClubSetu',
+          key: keyId, amount: amount * 100, currency, name: 'CampusNode',
           description: `Registration for ${eventTitle}`, order_id: orderId,
           handler: async (response) => {
             try {
@@ -244,9 +244,9 @@ const EventDetails = () => {
   };
 
   const handleShare = () => {
-    const message = `*_Event Alert 🚨_*\n\n*${event.title}*\n*Venue*: ${event.venue}\n*Date*: ${new Date(event.startTime).toLocaleDateString('en-IN')}\n*Time*: ${new Date(event.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}\n*Entry Fee*: ${event.entryFee ? `₹${event.entryFee}` : 'Free'}\n*Event By*: ${event.club?.clubName || event.createdBy?.clubName}\n*Hosted On*: *_ClubSetu_*\n\n*More Info*: `;
+    const message = `*_Event Alert 🚨_*\n\n*${event.title}*\n*Venue*: ${event.venue}\n*Date*: ${new Date(event.startTime).toLocaleDateString('en-IN')}\n*Time*: ${new Date(event.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}\n*Entry Fee*: ${event.entryFee ? `₹${event.entryFee}` : 'Free'}\n*Event By*: ${event.club?.clubName || event.createdBy?.clubName}\n*Hosted On*: *_CampusNode_*\n\n*More Info*: `;
     if (navigator.share) {
-      navigator.share({ title: `${event.title} - ClubSetu`, text: message, url: window.location.href }).catch((error) => console.error('Error sharing:', error));
+      navigator.share({ title: `${event.title} - CampusNode`, text: message, url: window.location.href }).catch((error) => console.error('Error sharing:', error));
     } else {
       navigator.clipboard.writeText(message + window.location.href).then(() => showNotification('Event details copied to clipboard', 'success')).catch((error) => console.error('Clipboard error:', error));
     }

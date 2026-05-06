@@ -56,7 +56,7 @@ const MyEvents = () => {
   ctx.textAlign = 'center';
   ctx.translate(350, 240);
   ctx.rotate(-Math.PI / 12);
-  ctx.fillText('CLUBSETU', 0, 0);
+  ctx.fillText('CAMPUSNODE', 0, 0);
   ctx.restore();
 
   // --- 2. BLACK STUB & ACCENTS ---
@@ -142,7 +142,7 @@ const MyEvents = () => {
     const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `ClubSetu-Ticket-${selectedTicket.qrCode}.png`;
+    link.download = `CampusNode-Ticket-${selectedTicket.qrCode}.png`;
     link.click();
   };
   qrImage.src = qrDataUrl;

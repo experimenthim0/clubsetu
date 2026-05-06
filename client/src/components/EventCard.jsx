@@ -170,8 +170,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     {isRegistered ? (
                         <Link
                             to={`/event/${slug || _id}`}>
-                        <div className="flex-1 text-center py-2 bg-green-50 text-green-700 border-2 border-green-300 rounded-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer">
-                            ✓ Registered
+                        <div className="flex-1 block text-center py-2 bg-green-50 text-green-700 border-2 border-green-300 rounded-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer">
+                            ✓ Registered/View
                         </div>
                         </Link>
                     ) : (
@@ -185,7 +185,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                         : 'bg-black text-white border-black hover:bg-orange-600 hover:border-orange-600'
                             }`}
                         >
-                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register/Details'}
+                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register/View'}
                         </Link>
                     )}
                     

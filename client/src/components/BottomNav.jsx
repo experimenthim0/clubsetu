@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon } from "lucide-react";
+import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import { CalendarDaysIcon } from "./ui/calendar-days";
@@ -83,6 +83,7 @@ const BottomNav = () => {
     { label: "Home", icon: Home, path: "/" },
     { label: "Clubs", icon: Users, path: "/clubs" },
     { label: "Events", icon: Calendar, path: "/events" },
+    // { label: "L&F", icon: Package, path: "/lost-found" },
     user
       ? { label: "Profile", icon: User, action: () => setDrawerOpen(true), isActiveCheck: drawerOpen }
       : { label: "Login", icon: LogInIcon, path: "/login" },
@@ -202,6 +203,14 @@ const BottomNav = () => {
                    My Events
                 </Link>
               )}
+{/* {role === "lostFoundAdmin" && (
+                <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                   <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                     <LayoutGridIcon size={18} />
+                   </div>
+                   Moderation Panel
+                </Link>
+              )} */}
 
               {((user.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (
                 <div className="mt-2 pt-2 border-t border-neutral-100">
@@ -313,7 +322,7 @@ const BottomNav = () => {
                 <LogoutIcon size={18} />
                 Logout
               </button>
-              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2">Club<span className='text-orange-600 font-bold'>Setu</span> | Developed By Team Xplore </p>
+              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2">Campus<span className='text-orange-600 font-bold'>Node</span> | Developed By Team Xplore </p>
             </div>
           </div>
         </>

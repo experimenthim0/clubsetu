@@ -118,7 +118,7 @@ const NotFound = () => {
 
         {/* Fun footer */}
         <p className="mt-10 text-[11px] text-neutral-300 uppercase tracking-widest font-bold">
-          Error 404 • ClubSetu • You're off the map 🗺️
+          Error 404 • CampusNode • You're off the map 🗺️
         </p>
       </div>
     </div>

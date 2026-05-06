@@ -195,7 +195,7 @@ export default function PageLoader({ visible }) {
             letterSpacing: '0.04em',
           }}
         >
-          Club<span style={{ color: '#ea580c' }} className='font-light'>Setu</span>
+          Campus<span style={{ color: '#ea580c' }} className='font-light'>Node</span>
         </div>
         <div
           style={{

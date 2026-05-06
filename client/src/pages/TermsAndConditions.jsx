@@ -20,7 +20,7 @@ const TermsAndConditions = () => {
                 <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">1. Acceptance of Terms</h2>
-                        <p>By accessing and using ClubSetu, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the platform.</p>
+                        <p>By accessing and using CampusNode, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the platform.</p>
                     </section>
 
                     <section>
@@ -29,7 +29,7 @@ const TermsAndConditions = () => {
                             <li>You must provide accurate and complete information during registration.</li>
                             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
                             <li>You must not share your account with others or create multiple accounts.</li>
-                            <li>ClubSetu reserves the right to suspend or terminate accounts that violate these terms.</li>
+                            <li>CampusNode reserves the right to suspend or terminate accounts that violate these terms.</li>
                         </ul>
                     </section>
 
@@ -49,7 +49,7 @@ const TermsAndConditions = () => {
                             <li>Club heads are responsible for the accuracy of event information they publish.</li>
                             <li>Club heads must not misuse participant data collected during registration.</li>
                             <li>Events must comply with institutional guidelines and policies.</li>
-                            <li>ClubSetu reserves the right to remove events that violate community guidelines.</li>
+                            <li>CampusNode reserves the right to remove events that violate community guidelines.</li>
                         </ul>
                     </section>
 

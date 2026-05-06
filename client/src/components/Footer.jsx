@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex  sm:flex-row items-center justify-between gap-4">
           <p className="text-[12px] text-neutral-500 tracking-wide">
-            © {new Date().getFullYear()} <span className="font-bold text-black">Club<span className="text-orange-600">Setu</span></span>
+            © {new Date().getFullYear()} <span className="font-bold text-black">Campus<span className="text-orange-600">Node</span></span>
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">

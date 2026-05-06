@@ -77,7 +77,7 @@ const RegisterStudent = () => {
           {/* <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-center">New Account</span> */}
         </div>
         <h1 className="font-black text-[clamp(28px,5vw,40px)] leading-[1.1] tracking-tight text-black">
-          ClubSetu User<br />
+          CampusNode User<br />
           <span className="text-orange-600">Registration</span>
         </h1>
         <p className="text-[14px] text-neutral-500 mt-2">Sign up to discover and register for campus events.</p>

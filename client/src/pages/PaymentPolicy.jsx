@@ -20,13 +20,13 @@ const PaymentPolicy = () => {
                 <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">1. Payment Processing</h2>
-                        <p>All payments on ClubSetu are processed securely through <strong>Razorpay</strong>, a PCI-DSS compliant payment gateway. ClubSetu does not store your card details or sensitive financial information directly.</p>
+                        <p>All payments on CampusNode are processed securely through <strong>Razorpay</strong>, a PCI-DSS compliant payment gateway. CampusNode does not store your card details or sensitive financial information directly.</p>
                     </section>
 
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">2. Entry Fee & Pricing</h2>
                         <ul className="list-disc pl-6 space-y-1.5">
-                            <li>Event organizers set the entry fee for their events. ClubSetu displays the fee transparently before registration.</li>
+                            <li>Event organizers set the entry fee for their events. CampusNode displays the fee transparently before registration.</li>
                             <li>All prices are displayed in Indian Rupees (INR).</li>
                             <li>The fee displayed at the time of registration is the final amount charged.</li>
                             <li>Free events do not require any payment.</li>

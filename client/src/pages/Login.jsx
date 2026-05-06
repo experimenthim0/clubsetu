@@ -72,7 +72,11 @@ const Login = () => {
       localStorage.setItem('role', res.data.role);
       localStorage.setItem('token', res.data.token);
       
-      navigate('/');
+      if (res.data.role === 'lostFoundAdmin') {
+        navigate('/admin/lost-found');
+      } else {
+        navigate('/');
+      }
       window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
@@ -95,7 +99,11 @@ const Login = () => {
       localStorage.setItem('role', res.data.role);
       localStorage.setItem('token', res.data.token);
       
-      navigate('/');
+      if (res.data.role === 'lostFoundAdmin') {
+        navigate('/admin/lost-found');
+      } else {
+        navigate('/');
+      }
       window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || 'OTP verification failed');
@@ -109,7 +117,7 @@ const Login = () => {
     
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <h2 className="text-center text-3xl font-bold text-gray-800">
-        Sign in to Club<span className="text-orange-600">Setu</span>
+        Sign in to Campus<span className="text-orange-600">Node</span>
       </h2>
     </div>
 

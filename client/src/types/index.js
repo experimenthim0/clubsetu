@@ -1,5 +1,5 @@
 /**
- * Shared constants and type definitions for the ClubSetu frontend.
+ * Shared constants and type definitions for the CampusNode frontend.
  * These mirror the backend Prisma enums exactly.
  */
 

@@ -45,6 +45,8 @@ import VerifyEmail from './pages/VerifyEmail';
 import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
 import CertificateDesigner from './pages/CertificateDesigner';
+// import LostAndFound from './pages/LostAndFound';
+// import LostFoundAdminDashboard from './pages/LostFoundAdminDashboard';
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
@@ -161,6 +163,8 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/about-features" element={<Aboutfeatures />} />
             <Route path="/team" element={<Team />} />
+            {/* <Route path="/lost-found" element={<LostAndFound />} />
+            <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} /> */}
           </Routes>
           </div>
           <Footer />

@@ -16,7 +16,7 @@ const EventGuide = () => {
             Event <span className="text-orange-600">Creation</span> Guide
           </h1>
           <p className="text-neutral-600 mt-2 max-w-xl">
-            Everything you need to know about creating and managing events on Club<span className='text-orange-600'>Setu</span>. This guide covers all available options, field types, and best practices.
+            Everything you need to know about creating and managing events on Campus<span className='text-orange-600'>Node</span>. This guide covers all available options, field types, and best practices.
           </p>
         </div>
 
@@ -27,7 +27,7 @@ const EventGuide = () => {
             Who Can Create Events?
           </h2>
           <p className="text-neutral-700 leading-relaxed mb-4">
-            Only registered <strong>Club Heads</strong> can create events on Club<span className='text-orange-600'>Setu</span>. Each club head represents an official NITJ club and is responsible for managing their events, registrations, and payments.
+            Only registered <strong>Club Heads</strong> can create events on Campus<span className='text-orange-600'>Node</span>. Each club head represents an official NITJ club and is responsible for managing their events, registrations, and payments.
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-sm p-4 text-sm text-orange-800">
             <i className="ri-information-line mr-1" />

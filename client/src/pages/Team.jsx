@@ -29,7 +29,7 @@ const Team = () => {
           <ScrollReveal direction="up">
   <div className="mb-16">
     <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black mb-4">
-      The Minds Behind <span className="border-b-4 border-orange-600">ClubSetu</span>
+      The Minds Behind <span className="border-b-4 border-orange-600">CampusNode</span>
     </h2>
     <p className="text-neutral-600 max-w-2xl mx-auto text-[18px] leading-relaxed">
       We are a team of passionate student developers and campus leaders dedicated to 

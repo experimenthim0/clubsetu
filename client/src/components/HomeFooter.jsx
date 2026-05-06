@@ -36,12 +36,12 @@ const HomeFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <img src="nitjlogo.png" alt="" className="w-11 h-12"/>
-              <span className="font-extrabold text-[24px] tracking-wider text-black leading-none select-none logofont">CLUB
-             <span className="text-orange-600 font-light tracking-wider">SETU</span>
+              <span className="font-light text-[24px] tracking-wider text-black leading-none select-none logofont">Campus
+             <span className="text-orange-600 font-light tracking-wider">Node</span>
             </span>
             </div>
             {/* <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
-             ClubSetu is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}
+             CampusNode is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}
             <div className=''>
          <div className="flex items-center gap-3">
                 {[

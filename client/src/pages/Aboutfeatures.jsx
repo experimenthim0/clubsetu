@@ -103,7 +103,7 @@ const Aboutfeatures = () => {
           <div className="flex items-center gap-2.5 mb-8 relative z-10">
             <span className="w-2 h-2 rounded-full bg-orange-500" />
             <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-neutral-700">
-              ClubSetu — Campus Events Platform
+              CampusNode — Campus Events Platform
             </span>
           </div>
 
@@ -181,7 +181,7 @@ const Aboutfeatures = () => {
                 Ready to dive in?
               </h3>
               <p className="text-[13px] text-orange-100 font-light">
-                Join 500+ NITJ students already on ClubSetu.
+                Join 500+ NITJ students already on CampusNode.
               </p>
             </div>
             <Link
@@ -304,7 +304,7 @@ const Aboutfeatures = () => {
             <span className="text-orange-500">Connect?</span>
           </h2>
           <p className="text-[15px] font-light text-neutral-500 max-w-md mx-auto mb-10 leading-relaxed">
-            Whether you're hunting your next hackathon or running the grandest fest, ClubSetu has you covered.
+            Whether you're hunting your next hackathon or running the grandest fest, CampusNode has you covered.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link

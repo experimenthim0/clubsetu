@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
                 <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">1. Introduction</h2>
-                        <p>Welcome to ClubSetu. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.</p>
+                        <p>Welcome to CampusNode. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.</p>
                     </section>
 
                     <section>
