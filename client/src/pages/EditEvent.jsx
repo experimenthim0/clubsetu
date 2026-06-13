@@ -40,6 +40,7 @@ const EditEvent = () => {
     const [allYears, setAllYears] = useState(true);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -91,6 +92,29 @@ const EditEvent = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('File size exceeds 5MB limit.', 'error');
+            return;
+        }
+        setUploading(true);
+        try {
+            const formDataUpload = new FormData();
+            formDataUpload.append('image', file);
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
+            showNotification('Image uploaded successfully!', 'success');
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Upload failed', 'error');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleRequiredFieldsChange = (e) => {
@@ -360,12 +384,49 @@ const EditEvent = () => {
                         </select>
                     </div>
 
+                    {/* Event Poster Upload */}
+                    <div>
+                        <label className={labelCls}>Event Poster <span className="text-neutral-400 font-normal">(max 5 MB)</span></label>
+                        <input 
+                            type="file" 
+                            id="poster-upload" 
+                            accept="image/*" 
+                            onChange={handleFileChange} 
+                            className="hidden" 
+                        />
+                        <label
+                            htmlFor="poster-upload"
+                            className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed border-neutral-300 rounded-sm p-6 text-sm font-semibold text-neutral-500 cursor-pointer hover:border-orange-600 hover:text-orange-600 hover:bg-neutral-50 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                            {uploading ? (
+                                <div className="flex flex-col items-center gap-2">
+                                    <i className="ri-loader-4-line text-2xl animate-spin text-orange-600" />
+                                    <span>Uploading poster...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <i className="ri-image-add-line text-3xl" />
+                                    <div className="text-center">
+                                        <span className="text-orange-600 underline">Click to upload</span> or drag and drop
+                                        <p className="text-xs text-neutral-400 mt-1">Supports PNG, JPG, JPEG, WEBP, GIF</p>
+                                    </div>
+                                </>
+                            )}
+                        </label>
 
-
-                     <div className="space-y-2">
-                        <label className={labelCls}>Event Banner URL <span className="text-orange-600">*</span></label>
-                        <input type="url" name="imageUrl" placeholder="https://example.com/banner.jpg"
-                            className={inputCls + " font-mono text-sm"} value={formData.imageUrl} onChange={handleChange} />
+                        {formData.imageUrl && (
+                            <div className="relative mt-4 border-2 border-neutral-200 rounded-sm p-2 bg-neutral-50 flex flex-col items-center">
+                                <img src={formData.imageUrl} alt="Poster Preview" className="max-h-64 object-contain rounded-sm" />
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                                    className="absolute top-4 right-4 bg-black hover:bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+                                    title="Remove Image"
+                                >
+                                    <i className="ri-close-line text-lg" />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Date & Time */}

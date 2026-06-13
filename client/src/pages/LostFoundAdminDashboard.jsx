@@ -76,17 +76,56 @@ const LostFoundAdminDashboard = () => {
     );
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
-            <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0a0a0a] animate-pulse">
+            {/* Header Skeleton */}
+            <div className="bg-white text-black py-12 px-6 border-b border-neutral-200 dark:border-zinc-800">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="space-y-2">
+                        <div className="h-8 w-64 bg-neutral-100 dark:bg-zinc-800 rounded-lg" />
+                        <div className="h-4 w-48 bg-neutral-50 dark:bg-zinc-900 rounded-lg" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 -mt-8">
+                {/* Stats Grid Skeleton */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-neutral-200 dark:border-zinc-800 space-y-3">
+                            <div className="w-10 h-10 bg-neutral-100 dark:bg-zinc-800 rounded-xl" />
+                            <div className="h-3 w-16 bg-neutral-200 dark:bg-zinc-800 rounded" />
+                            <div className="h-7 w-20 bg-neutral-200 dark:bg-zinc-800 rounded-lg" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Content Table Skeleton */}
+                <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-neutral-200 dark:border-zinc-800 overflow-hidden p-6 space-y-6">
+                    <div className="h-6 w-32 bg-neutral-200 dark:bg-zinc-800 rounded-lg" />
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex gap-4 items-center border-b border-neutral-100 dark:border-zinc-800/30 pb-4 last:border-0 last:pb-0">
+                                <div className="w-10 h-10 bg-neutral-100 dark:bg-zinc-800 rounded-lg animate-pulse" />
+                                <div className="space-y-2 flex-1">
+                                    <div className="h-4 w-48 bg-neutral-100 dark:bg-zinc-800 rounded animate-pulse" />
+                                    <div className="h-3 w-72 bg-neutral-100 dark:bg-zinc-800 rounded animate-pulse" />
+                                </div>
+                                <div className="h-4 w-16 bg-neutral-100 dark:bg-zinc-800 rounded-full animate-pulse" />
+                                <div className="h-4 w-24 bg-neutral-100 dark:bg-zinc-800 rounded animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#FDFCFB] pb-20">
+        <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0a0a0a] pb-20">
             <Toaster position="top-right" />
             
             {/* Header */}
-            <div className="bg-black text-white py-12 px-6">
+            <div className="bg-white text-black py-12 px-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
                         <h1 className="text-3xl font-black tracking-tight">L&F Moderation Portal</h1>
@@ -94,11 +133,11 @@ const LostFoundAdminDashboard = () => {
                     </div>
                     <div className="flex gap-3">
                         {(role === 'admin' || role === 'superAdmin') && (
-                            <button onClick={() => navigate('/admin-dashboard')} className="px-5 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-semibold transition-colors">
+                            <button onClick={() => navigate('/admin-dashboard')} className="px-5 py-2 bg-white/10  rounded-lg text-sm font-semibold transition-colors border border-gray-300  hover:bg-gray-300 cursor-pointer">
                                 Main Dashboard
                             </button>
                         )}
-                        <button onClick={() => navigate('/lost-found')} className="px-5 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-semibold transition-colors">
+                        <button onClick={() => navigate('/lost-found')} className="px-5 py-2 bg-white/10  rounded-lg text-sm font-semibold transition-colors border border-gray-300  hover:bg-gray-300 cursor-pointer">
                             View Public Feed
                         </button>
                     </div>
@@ -115,58 +154,62 @@ const LostFoundAdminDashboard = () => {
                 </div>
 
                 {/* Content */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <h2 className="text-xl font-bold text-gray-900">All Items</h2>
+                <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-sm border border-neutral-200 dark:border-zinc-800 overflow-hidden">
+                    <div className="p-6 border-b border-neutral-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">All Items</h2>
                         <div className="relative w-full md:w-80">
-                            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"></i>
                             <input 
                                 type="text" 
                                 placeholder="Search title, user, or email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300 focus:scale-[1.01] focus:-translate-y-0.5 focus:shadow-[0_4px_20px_rgba(234,88,12,0.08)]"
                             />
                         </div>
                     </div>
-
+ 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-100">
+                            <thead className="bg-gray-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-zinc-800">
                                 <tr>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Item</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Reporter</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Actions</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500">Item</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500">Reporter</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {filteredItems.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                            <tbody key={searchTerm} className="divide-y divide-neutral-100 dark:divide-zinc-800/50">
+                                {filteredItems.map((item, idx) => (
+                                    <tr 
+                                        key={item.id} 
+                                        className="hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors table-row-animate"
+                                        style={{ animationDelay: `${idx * 0.03}s` }}
+                                    >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 {item.imageUrl ? (
-                                                    <img src={item.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-100" />
+                                                    <img src={item.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover border border-neutral-200 dark:border-zinc-800" />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-gray-400 dark:text-neutral-600">
                                                         <i className="ri-image-line"></i>
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <p className="text-sm font-bold text-gray-900">{item.title}</p>
-                                                    <p className="text-[11px] text-gray-500 line-clamp-1">{item.description}</p>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{item.title}</p>
+                                                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 line-clamp-1">{item.description}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-                                                    item.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                                    item.status === 'ACTIVE' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                                                 }`}>
                                                     {item.status}
                                                 </span>
                                                 {item.isFraud && (
-                                                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600 w-fit">
+                                                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-fit">
                                                         FRAUD FLAG
                                                     </span>
                                                 )}
@@ -174,8 +217,8 @@ const LostFoundAdminDashboard = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col">
-                                                <p className="text-sm font-semibold text-gray-800">{item.user?.name}</p>
-                                                <p className="text-[11px] text-gray-500">{item.user?.email}</p>
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.user?.name}</p>
+                                                <p className="text-[11px] text-gray-500 dark:text-neutral-400">{item.user?.email}</p>
                                                 {item.user?.isBlocked && (
                                                     <span className="text-[10px] text-red-500 font-bold mt-0.5">Blocked User</span>
                                                 )}
@@ -185,21 +228,21 @@ const LostFoundAdminDashboard = () => {
                                             <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={() => handleToggleFraud(item.id)}
-                                                    className={`p-2 rounded-lg transition-colors ${item.isFraud ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400 hover:text-orange-500'}`}
+                                                    className={`p-2 rounded-lg transition-colors ${item.isFraud ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 hover:text-orange-500'}`}
                                                     title={item.isFraud ? "Unmark Fraud" : "Mark as Fraud"}
                                                 >
                                                     <i className="ri-error-warning-line"></i>
                                                 </button>
                                                 <button 
                                                     onClick={() => handleToggleBlock(item.userId)}
-                                                    className={`p-2 rounded-lg transition-colors ${item.user?.isBlocked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-400 hover:text-red-500'}`}
+                                                    className={`p-2 rounded-lg transition-colors ${item.user?.isBlocked ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 hover:text-red-500'}`}
                                                     title={item.user?.isBlocked ? "Unblock User" : "Block User"}
                                                 >
                                                     <i className="ri-user-forbid-line"></i>
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(item.id)}
-                                                    className="p-2 bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                                                    className="p-2 bg-gray-100 dark:bg-neutral-800 text-gray-400 dark:text-neutral-500 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
                                                     title="Delete Permanently"
                                                 >
                                                     <i className="ri-delete-bin-line"></i>
@@ -227,18 +270,18 @@ const LostFoundAdminDashboard = () => {
 
 const StatCard = ({ label, value, icon, color }) => {
     const colors = {
-        blue: 'bg-blue-50 text-blue-600',
-        green: 'bg-green-50 text-green-600',
-        orange: 'bg-orange-50 text-orange-600',
-        red: 'bg-red-50 text-red-600'
+        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+        green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
+        orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
+        red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
     };
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl shadow-sm border border-neutral-200 dark:border-zinc-800">
             <div className={`w-10 h-10 ${colors[color]} rounded-xl flex items-center justify-center mb-4`}>
                 <i className={`${icon} text-xl`}></i>
             </div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
-            <p className="text-2xl font-black text-gray-900">{value}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500 mb-1">{label}</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white">{value}</p>
         </div>
     );
 };

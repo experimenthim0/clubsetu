@@ -6,7 +6,7 @@ services:
     container_name: clubsetu-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: clubsetu
+      POSTGRES_DB: campusnode
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: himanshu
     ports:
@@ -19,13 +19,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - clubsetu-network
+      - campusnode-network
 
   app:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: clubsetu-api
+    container_name: campusnode-api
     restart: unless-stopped
     depends_on:
       db:
@@ -33,18 +33,18 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
-      DATABASE_URL: postgresql://postgres:himanshu@db:5432/clubsetu
+      DATABASE_URL: postgresql://postgres:himanshu@db:5432/campusnode
     env_file:
       - ./server/.env
     command: sh -c "npx prisma migrate deploy && node index.js"
     ports:
       - "5000:5000"
     networks:
-      - clubsetu-network
+      - campusnode-network
 
 volumes:
   postgres_data:
 
 networks:
-  clubsetu-network:
+  campusnode-network:
     driver: bridge

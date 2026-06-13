@@ -4,7 +4,7 @@ services:
     container_name: clubsetu-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: clubsetu
+      POSTGRES_DB: campusnode
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: himanshu
     ports:

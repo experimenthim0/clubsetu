@@ -1,5 +1,5 @@
 /**
- * Safe schema migration script for ClubSetu
+ * Safe schema migration script for CampusNode
  * 
  * What this does (in order, all in a transaction):
  * 1. Rename ClubMembership.userId → studentId

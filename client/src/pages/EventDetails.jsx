@@ -350,13 +350,41 @@ const EventDetails = () => {
 
               {/* Club info below poster */}
               <div className="px-4 py-3 border-t border-neutral-100 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <i className="ri-team-line text-orange-600 text-sm" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Organized by</p>
-                  <p className="text-[13px] font-bold text-black truncate">{event.club?.clubName || event.createdBy?.clubName || '—'}</p>
-                </div>
+                {(() => {
+                  const clubSlugOrId = event.club?.slug || event.club?._id || event.club?.id || event.createdBy?.slug || event.createdBy?._id || event.createdBy?.id;
+                  const displayName = event.club?.clubName || event.createdBy?.clubName || '—';
+                  
+                  return (
+                    <>
+                      {clubSlugOrId ? (
+                        <Link
+                          to={`/club/${clubSlugOrId}`}
+                          className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0 hover:bg-orange-200 transition-colors"
+                        >
+                          <i className="ri-team-line text-orange-600 text-sm" />
+                        </Link>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                          <i className="ri-team-line text-orange-600 text-sm" />
+                        </div>
+                      )}
+                      
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Organized by</p>
+                        {clubSlugOrId ? (
+                          <Link 
+                            to={`/club/${clubSlugOrId}`}
+                            className="text-[13px] font-bold text-black hover:text-orange-600 transition-colors duration-200 truncate block hover:underline"
+                          >
+                            {displayName}
+                          </Link>
+                        ) : (
+                          <p className="text-[13px] font-bold text-black truncate">{displayName}</p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -369,17 +397,17 @@ const EventDetails = () => {
               <div className="px-5 pt-3 pb-5 border-b border-neutral-100">
                 <div className="mb-3">
                   {isLive && (
-                    <span className="inline-flex items-center gap-1.5 bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full animate-pulse shadow">
-                      <span className="w-1.5 h-1.5 bg-white rounded-full" /> Live Now
+                    <span className="inline-flex items-center gap-1.5 bg-orange-600 dark:bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full animate-pulse shadow">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" /> Live Now
                     </span>
                   )}
                   {isEnded && (
-                    <span className="inline-flex items-center gap-1.5 bg-neutral-800 text-neutral-200 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow">
+                    <span className="inline-flex items-center gap-1.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 shadow-sm">
                       <i className="ri-check-line" /> Ended
                     </span>
                   )}
                   {!isLive && !isEnded && (
-                    <span className="inline-flex items-center gap-1.5 bg-yellow-400 text-[#000000] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-black/10 shadow">
+                    <span className="inline-flex items-center gap-1.5 bg-yellow-400 dark:bg-yellow-500/20 text-black dark:text-yellow-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-black/10 dark:border-yellow-500/30 shadow-sm">
                       <i className="ri-time-line" /> Upcoming
                     </span>
                   )}

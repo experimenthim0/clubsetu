@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma.js"; // trigger restart
+import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
 
 const VALID_ROLES = ["CLUB_HEAD", "COORDINATOR", "MEMBER"];
@@ -14,6 +14,19 @@ export function derivePermissions(role) {
   }
   // MEMBER
   return { canTakeAttendance: true, canEditEvents: false };
+}
+
+async function canManageClubMembers(req, clubId) {
+  if (req.user.role === "admin") return true;
+  if (req.user.role === "facultyCoordinator") {
+    return String(req.user.clubId) === String(clubId);
+  }
+  if (req.user.userType !== "student") return false;
+
+  const membership = await prisma.clubMembership.findUnique({
+    where: { clubId_studentId: { clubId, studentId: req.user.userId } },
+  });
+  return membership?.role === "CLUB_HEAD";
 }
 
 /**
@@ -41,19 +54,7 @@ export const addClubMember = async (req, res) => {
     const club = await prisma.club.findUnique({ where: { id: clubId } });
     if (!club) return res.status(404).json({ message: "Club not found." });
 
-    // Verify requesting user is authorized (ClubHead or Admin)
-    let isClubHead = false;
-    if (req.user.userType === "student") {
-        const membership = await prisma.clubMembership.findUnique({
-            where: { clubId_studentId: { clubId, studentId: req.user.userId } }
-        });
-        isClubHead = membership?.role === "CLUB_HEAD";
-    }
-
-    const isAdmin = req.user.role === "admin";
-    const isFaculty = req.user.role === "facultyCoordinator" && req.user.clubId === clubId;
-
-    if (!isClubHead && !isAdmin && !isFaculty) {
+    if (!(await canManageClubMembers(req, clubId))) {
       return res.status(403).json({ message: "Unauthorized to add members to this club." });
     }
 
@@ -156,6 +157,9 @@ export const updateMemberPermissions = async (req, res) => {
     // Check if membership exists first to avoid Prisma error P2025
     const existing = await prisma.clubMembership.findUnique({ where: { id: membershipId } });
     if (!existing) return res.status(404).json({ message: "Membership record not found. Try refreshing the member list." });
+    if (!(await canManageClubMembers(req, existing.clubId))) {
+      return res.status(403).json({ message: "Unauthorized to update members in this club." });
+    }
 
     const membership = await prisma.clubMembership.update({
       where: { id: membershipId },
@@ -182,6 +186,9 @@ export const removeClubMember = async (req, res) => {
     // Check if membership exists
     const membership = await prisma.clubMembership.findUnique({ where: { id: membershipId } });
     if (!membership) return res.status(404).json({ message: "Membership not found." });
+    if (!(await canManageClubMembers(req, membership.clubId))) {
+      return res.status(403).json({ message: "Unauthorized to remove members from this club." });
+    }
 
     // Protect clubHead role? Usually handled by deletion logic
     if (membership.role === "CLUB_HEAD") {

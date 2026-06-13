@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isClubAdded, setIsClubAdded] = useState(false);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -12,6 +14,19 @@ const Profile = () => {
     if (storedUser) {
       setUser(storedUser);
       setRole(storedRole);
+
+      if (storedRole === 'club' && storedUser.clubId) {
+        axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${storedUser.clubId}`)
+          .then(res => {
+            const club = res.data.club;
+            if (club && (club.description || club.clubLogo || club.category)) {
+              setIsClubAdded(true);
+            }
+          })
+          .catch(err => {
+            console.error("Error fetching club details in Profile.jsx:", err);
+          });
+      }
     }
     setLoading(false);
   }, []);
@@ -23,20 +38,20 @@ const Profile = () => {
   <div className="max-w-5xl mx-auto px-6 py-12">
 
     {/* Profile Card */}
-    <div className="bg-white border border-gray-200 rounded-xl p-8 mb-12">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-8">
+    <div className="bg-white border border-neutral-200 rounded-xl p-6 md:p-8 mb-12 shadow-sm">
+      <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 mb-8">
         Profile
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-neutral-700">
         <div>
-          <p className="text-sm text-gray-500">Name</p>
-          <p className="font-medium text-lg">{user.name}</p>
+          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Name</p>
+          <p className="font-semibold text-lg text-neutral-800">{user.name}</p>
         </div>
 
         <div>
-          <p className="text-sm text-gray-500">Email</p>
-          <p className="font-medium text-lg">
+          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Email</p>
+          <p className="font-semibold text-lg text-neutral-800 break-all">
             {user.email}
           </p>
         </div>
@@ -44,81 +59,66 @@ const Profile = () => {
         {(role === 'member' || role === 'student') && (
           <>
             <div>
-              <p className="text-sm text-gray-500">Roll No</p>
-              <p className="font-medium">{user.rollNo}</p>
+              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</p>
+              <p className="font-semibold text-neutral-800">{user.rollNo}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Branch / Year</p>
-              <p className="font-medium">
+              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Branch / Year</p>
+              <p className="font-semibold text-neutral-800">
                 {user.branch} - {user.year}
               </p>
             </div>
           </>
         )}
-
-        {/* {(role === 'clubHead' || role === 'club-head' || role === 'club') && (
-          <>
-            <div>
-              <p className="text-sm text-gray-500">Club Name</p>
-              <p className="font-medium">{user.name}</p>
-            </div>
-           
-          
-            <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium">{user.phone}</p>
-            </div>
-          </>
-        )} */}
       </div>
 
 
 {(!['member', 'student'].includes(role)) && !user.isTwoStepEnabled && (
-  <p className='text-black mt-4 text-sm '> <i className="ri-error-warning-line mr-1" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-bold text-orange-600 hover:underline">Enable it</Link></p>
+  <p className='text-neutral-600 mt-6 text-sm font-medium'> <i className="ri-error-warning-line mr-1 text-orange-500" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-semibold text-orange-655 text-orange-600 hover:underline">Enable it</Link></p>
 )}
    
-      <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-8 pt-6 border-t border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Social Profiles</h3>
-                <div className="flex flex-wrap gap-4">
+                <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Social Profiles</h3>
+                <div className="flex flex-wrap gap-2.5">
                     {user.githubProfile && (
-                        <a href={user.githubProfile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-700 hover:text-black">
-                            <i className="ri-github-fill text-xl" /> GitHub
+                        <a href={user.githubProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-sm">
+                            <i className="ri-github-fill text-lg text-neutral-800" /> GitHub
                         </a>
                     )}
                     {user.linkedinProfile && (
-                        <a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-700 hover:text-blue-900">
-                            <i className="ri-linkedin-box-fill text-xl" /> LinkedIn
+                        <a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-blue-700 hover:bg-neutral-50 hover:border-blue-500/50 transition-colors shadow-sm">
+                            <i className="ri-linkedin-box-fill text-lg" /> LinkedIn
                         </a>
                     )}
                     {user.xProfile && (
-                        <a href={user.xProfile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:opacity-70">
-                            <i className="ri-twitter-x-fill text-xl" /> X
+                        <a href={user.xProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-900 hover:bg-neutral-50 hover:border-neutral-800/50 transition-colors shadow-sm">
+                            <i className="ri-twitter-x-fill text-lg" /> X
                         </a>
                     )}
                     {user.instagramProfile && (
-                        <a href={user.instagramProfile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-pink-600 hover:text-pink-800">
-                            <i className="ri-instagram-line text-xl" /> Instagram
+                        <a href={user.instagramProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-pink-600 hover:bg-neutral-50 hover:border-pink-500/50 transition-colors shadow-sm">
+                            <i className="ri-instagram-line text-lg" /> Instagram
                         </a>
                     )}
                     {user.whatsappNumber && (
-                        <a href={`https://wa.me/${user.whatsappNumber.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-600 hover:text-green-800">
-                            <i className="ri-whatsapp-line text-xl" /> WhatsApp
+                        <a href={`https://wa.me/${user.whatsappNumber.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-green-600 hover:bg-neutral-50 hover:border-green-500/50 transition-colors shadow-sm">
+                            <i className="ri-whatsapp-line text-lg" /> WhatsApp
                         </a>
                     )}
                     {user.portfolioUrl && (
-                        <a href={user.portfolioUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-orange-600 hover:text-orange-700">
-                            <i className="ri-global-line text-xl" /> Portfolio
+                        <a href={user.portfolioUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-orange-600 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-sm">
+                            <i className="ri-global-line text-lg" /> Portfolio
                         </a>
                     )}
                     {!user.githubProfile && !user.linkedinProfile && !user.xProfile && !user.instagramProfile && !user.whatsappNumber && !user.portfolioUrl && (
-                        <p className="text-sm text-gray-400 italic">No social profiles added.</p>
+                        <p className="text-xs text-neutral-400 italic font-medium">No social profiles added.</p>
                     )}
                 </div>
             </div>
-            <div className="flex items-end justify-end">
-                <a href="/profile/edit" className="inline-flex items-center gap-2 px-6 py-2 bg-[#f3f4f6] text-[#1f2937] rounded-lg hover:bg-[#e5e7eb] dark:bg-[#262626] dark:text-[#e5e5e5] dark:hover:bg-[#333333] transition font-medium">
-                    <i className="ri-edit-line" /> Edit Profile
+            <div className="flex md:justify-end">
+                <a href="/profile/edit" className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold text-xs shadow-sm cursor-pointer">
+                    <i className="ri-edit-line text-sm" /> Edit Profile
                 </a>
             </div>
       </div>
@@ -128,9 +128,9 @@ const Profile = () => {
       <div className="mt-8">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffffff] border-2 border-[#d1d5db] text-[#0a0a0a]/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-[#d1d5db] dark:bg-[#1f1f1f] dark:border-[#404040] dark:text-[#f5f5f5]/70 dark:hover:bg-[#333333] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-50 hover:border-orange-500/50 hover:text-orange-600 transition-colors shadow-sm cursor-pointer"
         >
-          <i className="ri-calendar-event-line" /> View My Events
+          <i className="ri-calendar-event-line text-sm" /> View My Events
         </Link>
       </div>
     )}
@@ -139,56 +139,56 @@ const Profile = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#ffffff] border-2 border-[#d1d5db] text-[#0a0a0a]/70 font-bold text-sm uppercase tracking-widest rounded-3xl hover:bg-[#d1d5db] dark:bg-[#1f1f1f] dark:border-[#404040] dark:text-[#f5f5f5]/70 dark:hover:bg-[#333333] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-50 hover:border-orange-500/50 hover:text-orange-600 transition-colors shadow-sm cursor-pointer"
         >
-          <i className="ri-calendar-event-line" /> My Events
+          <i className="ri-calendar-event-line text-sm" /> My Events
         </Link>
         <Link 
           to="/payments" 
-          className="text-[#ffffff] bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-[#e5e5e5] dark:focus:ring-[#24292F]/55 rounded-3xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
         >
-          <i className="ri-money-dollar-circle-line mr-2" /> Payment Tracking
+          <i className="ri-money-dollar-circle-line text-sm" /> Payment Tracking
         </Link>
         <Link 
           to={`/club/edit/${user.clubId || user.id}`} 
-          className="text-[#ffffff] bg-[#0f1419] hover:bg-[#0f1419]/90 focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 rounded-base text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-[#e5e5e5] dark:focus:ring-[#24292F]/55 rounded-3xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
         >
-          <i className="ri-community-line mr-2" /> {!user.isClubAdded ? "Add Club on Website" : "Edit Club Details"}
+          <i className="ri-community-line text-sm" /> {!isClubAdded ? "Add Club on Website" : "Edit Club Details"}
         </Link>
       </div>
     )}
 
     {/* Bank Information section - Restored for Club Account */}
     {(role === 'club') && (
-      <div className="mt-12 pt-8 border-t border-gray-100">
-        <h2 className="text-xl font-bold text-black uppercase tracking-tighter mb-6 flex items-center gap-2">
+      <div className="mt-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900 uppercase tracking-wider mb-6 flex items-center gap-2">
           <i className="ri-bank-card-line text-orange-600" /> Bank / Payment Information
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-700 bg-neutral-50 p-6 rounded-xl border border-neutral-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-neutral-600 bg-neutral-50/50 p-6 rounded-xl border border-neutral-200">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Bank Name</p>
-            <p className="font-bold text-neutral-800">{user.bankName || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">Bank Name</p>
+            <p className="font-semibold text-neutral-800">{user.bankName || 'Not Set'}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Account Holder</p>
-            <p className="font-bold text-neutral-800">{user.accountHolderName || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">Account Holder</p>
+            <p className="font-semibold text-neutral-800">{user.accountHolderName || 'Not Set'}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Account Number</p>
-            <p className="font-mono font-bold text-neutral-800">{user.accountNumber || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">Account Number</p>
+            <p className="font-mono font-semibold text-neutral-800">{user.accountNumber || 'Not Set'}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">IFSC Code</p>
-            <p className="font-mono font-bold text-neutral-800">{user.ifscCode || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">IFSC Code</p>
+            <p className="font-mono font-semibold text-neutral-800">{user.ifscCode || 'Not Set'}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">UPI ID</p>
-            <p className="font-bold text-orange-600 underline">{user.upiId || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">UPI ID</p>
+            <p className="font-semibold text-orange-600">{user.upiId || 'Not Set'}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Linked Phone</p>
-            <p className="font-bold text-neutral-800">{user.bankPhone || 'Not Set'}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">Linked Phone</p>
+            <p className="font-semibold text-neutral-800">{user.bankPhone || 'Not Set'}</p>
           </div>
         </div>
       </div>

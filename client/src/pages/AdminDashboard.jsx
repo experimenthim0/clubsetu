@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
 const AdminDashboard = () => {
@@ -22,6 +22,21 @@ const AdminDashboard = () => {
     const [editingCoord, setEditingCoord] = useState(null);
     const navigate = useNavigate();
     const { showNotification } = useNotification();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab');
+
+    // Sync tab param with activeTab state
+    useEffect(() => {
+        if (tabParam) {
+            setActiveTab(tabParam);
+        } else if (role) {
+            if (role === 'paymentAdmin') {
+                setActiveTab('payouts');
+            } else {
+                setActiveTab('overview');
+            }
+        }
+    }, [tabParam, role]);
 
     useEffect(() => {
         const adminDataString = localStorage.getItem('admin');
@@ -33,12 +48,6 @@ const AdminDashboard = () => {
         
         const adminData = JSON.parse(adminDataString);
         setRole(adminData.role);
-        
-        if (adminData.role === 'paymentAdmin') {
-            setActiveTab('payouts');
-        } else {
-            setActiveTab('overview');
-        }
 
         const fetchData = async () => {
             try {
@@ -101,7 +110,7 @@ const AdminDashboard = () => {
             if (res.data.success) {
                 showNotification('Payout marked as complete!', 'success');
                 setModalOpen(false);
-                refreshStats(); // Refresh table state
+                refreshStats();
             }
         } catch (err) {
             showNotification('Failed to update payout status', 'error');
@@ -146,7 +155,6 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/clubs`, data);
             showNotification('Club and users created successfully', 'success');
             e.target.reset();
-            // Refresh list
             const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
             setClubHeads(clubsRes.data);
             refreshStats();
@@ -205,584 +213,591 @@ const AdminDashboard = () => {
         }
     };
 
+    /* ─── Tab Titles ───────────────────────────────────────────────────── */
+    const tabTitles = {
+        overview: { title: 'Overview', subtitle: 'All events at a glance' },
+        payouts: { title: 'Payouts', subtitle: 'Manage settlement & revenue' },
+        'club-heads': { title: 'Manage Clubs', subtitle: 'Create and edit registered clubs' },
+        coordinators: { title: 'Coordinators', subtitle: 'Faculty coordinator accounts' },
+        'event-data': { title: 'Event Data', subtitle: 'Filter, analyze & export' },
+    };
+
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-white">
-            <div className="w-12 h-12 border-4 border-black border-t-orange-600 rounded-full animate-spin" />
+        <div className="min-h-full bg-white dark:bg-[#0a0a0a] myfont animate-pulse">
+            <div className="max-w-7xl mx-auto px-5 lg:px-8 py-8">
+                {/* Page Header Skeleton */}
+                <div className="mb-8 space-y-2">
+                    <div className="h-7 w-48 bg-neutral-100 dark:bg-zinc-900 rounded-lg" />
+                    <div className="h-4 w-72 bg-neutral-50 dark:bg-zinc-900/50 rounded-lg" />
+                </div>
+
+                {/* Stats Cards Skeleton */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="p-5 rounded-2xl border border-neutral-200 dark:border-zinc-800 bg-neutral-50/50 dark:bg-[#0c0c0c] space-y-3">
+                            <div className="h-3 w-16 bg-neutral-200 dark:bg-zinc-800 rounded" />
+                            <div className="h-8 w-24 bg-neutral-200 dark:bg-zinc-800 rounded-lg" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Table Box Skeleton */}
+                <div className="border border-neutral-200 dark:border-zinc-800 rounded-2xl p-6 bg-white dark:bg-[#0a0a0a] space-y-4">
+                    <div className="h-4 w-32 bg-neutral-200 dark:bg-zinc-800 rounded" />
+                    <div className="space-y-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="flex gap-4 items-center border-b border-neutral-100 dark:border-zinc-900 pb-4 last:border-0 last:pb-0">
+                                <div className="h-4 w-6 bg-neutral-100 dark:bg-zinc-800 rounded" />
+                                <div className="h-4 flex-1 bg-neutral-100 dark:bg-zinc-800 rounded" />
+                                <div className="h-4 w-28 bg-neutral-100 dark:bg-zinc-800 rounded" />
+                                <div className="h-4 w-20 bg-neutral-100 dark:bg-zinc-800 rounded" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 
+    const currentTabInfo = tabTitles[activeTab] || tabTitles.overview;
+
     return (
-        <div className="min-h-screen bg-neutral-50 p-6 lg:p-12">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-4xl font-black text-black tracking-tight ">Admin Panel</h1>
-                        <p className="text-neutral-500 text-sm mt-1  tracking-widest font-medium">Manage Platform Payouts & Revenue</p>
-                    </div>
-                    <button 
-                        onClick={handleLogout}
-                        className="px-6 py-2 border-2 border-black text-white font-medium text-xs  tracking-widest rounded-sm bg-red-500 hover:bg-red-300 hover:text-black transition-colors"
-                    >
-                        Secure Logout
-                    </button>
+        <div className="min-h-full bg-white dark:bg-[#0a0a0a] myfont">
+            <div className="max-w-7xl mx-auto px-5 lg:px-8 py-8">
+
+                {/* ── Page Header ───────────────────────────────────────── */}
+                <div className="mb-8">
+                    <h1 className="text-2xl font-black text-black dark:text-white tracking-wide">
+                        {currentTabInfo.title}
+                    </h1>
+                    <p className="text-neutral-400 dark:text-neutral-500 text-[12px] mt-0.5 tracking-wide font-medium">
+                        {currentTabInfo.subtitle}
+                    </p>
                 </div>
 
-                {/* Stats Cards */}
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
-                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Total Students</p>
-                          <p className="text-2xl font-black text-black">{stats?.totalStudents || 0}</p>
-                      </div>
-                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
-                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Active Events</p>
-                          <p className="text-2xl font-black text-black">{stats?.totalEvents || 0}</p>
-                      </div>
-                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
-                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Total Clubs</p>
-                          <p className="text-2xl font-black text-black">{stats?.totalClubs || 0}</p>
-                      </div>
-                      <div className="bg-white border-2 border-gray-300 p-4 rounded-sm ">
-                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Events (Till Today)</p>
-                          <p className="text-2xl font-black text-black">{stats?.totalEventsTillNow || 0}</p>
-                      </div>
-                 </div>
-
-                 {role === 'admin' && (
-                     <div className="flex justify-end mb-6">
-                        <button 
-                            onClick={() => setShowYearWise(!showYearWise)}
-                            className="text-[10px] font-black uppercase tracking-widest px-4 py-2 border-2 border-black rounded-sm hover:bg-neutral-100 transition-colors cursor-pointer"
-                        >
-                            {showYearWise ? 'Hide Yearly Stats' : 'Show Year-wise Total Events'}
-                        </button>
-                     </div>
-                 )}
-
-                 {showYearWise && stats?.yearWiseEvents && (
-                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-                         {stats.yearWiseEvents.map(y => (
-                             <div key={y._id} className="bg-neutral-100 border-2 border-black p-3 rounded-sm text-center">
-                                 <p className="text-[10px] font-bold text-neutral-500 uppercase">{y._id}</p>
-                                 <p className="text-lg font-black">{y.count} Events</p>
-                             </div>
-                         ))}
-                     </div>
-                 )}
-
-                {/* Navigation Tabs */}
-                <div className="flex gap-4 border-b-2 border-neutral-200 mb-8 overflow-x-auto no-scrollbar">
-                    {role === 'admin' && (
-                        <button 
-                            onClick={() => setActiveTab('overview')}
-                            className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'overview' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
-                        >
-                            Overview
-                        </button>
-                    )}
-                    {(role === 'admin' || role === 'paymentAdmin') && (
-                        <button 
-                            onClick={() => setActiveTab('payouts')}
-                            className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'payouts' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
-                        >
-                            Payouts
-                        </button>
-                    )}
-                    {role === 'admin' && (
-                        <>
-                            <button 
-                                onClick={() => setActiveTab('club-heads')}
-                                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'club-heads' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
-                            >
-                                Manage Clubs
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('coordinators')}
-                                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'coordinators' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
-                            >
-                                Faculty Coordinators
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('event-data')}
-                                className={`pb-2 px-1 text-sm font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${activeTab === 'event-data' ? 'border-b-4 border-orange-600 text-orange-600' : 'text-neutral-400 hover:text-black'}`}
-                            >
-                                Event Data
-                            </button>
-                        </>
-                    )}
-                </div>
-
-                {/* ── OVERVIEW TAB ── All events general info */}
+                {/* ── Stats Cards (overview only) ──────────────────────── */}
                 {activeTab === 'overview' && (
-                    <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-neutral-100">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">#</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Title</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Club</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Registrations</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Date</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Type</th>
-                                        <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Revenue</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {stats?.eventStats?.slice().sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400 font-bold border-r border-gray-200">{idx + 1}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.title}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r border-gray-200">{item.clubName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.registeredCount || item.regCount} students</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-200 uppercase tracking-wide">
-                                                {new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap border-r border-gray-200">
-                                                <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm border ${
-                                                    item.entryFee > 0
-                                                        ? 'bg-orange-50 text-orange-700 border-orange-300'
-                                                        : 'bg-green-50 text-green-700 border-green-300'
-                                                }`}>
-                                                    {item.entryFee > 0 ? `Paid (₹${item.entryFee})` : 'Free'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-black font-mono">
-                                                {item.totalCollected > 0 
-                                                    ? <span className="text-orange-600">₹{item.totalCollected}</span>
-                                                    : <span className="text-neutral-300">—</span>
-                                                }
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {(!stats?.eventStats || stats.eventStats.length === 0) && (
-                                        <tr>
-                                            <td colSpan="7" className="px-6 py-12 text-center text-neutral-500 text-sm">No events found.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                    <>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <StatCard label="Total Students" value={stats?.totalStudents || 0} />
+                            <StatCard label="Active Events" value={stats?.totalEvents || 0} />
+                            <StatCard label="Total Clubs" value={stats?.totalClubs || 0} />
+                            <StatCard label="Events (Till Today)" value={stats?.totalEventsTillNow || 0} accent />
                         </div>
-                    </div>
+
+                        {role === 'admin' && (
+                            <div className="flex justify-end mb-6">
+                                <button 
+                                    onClick={() => setShowYearWise(!showYearWise)}
+                                    className="text-[10px] font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-lg border border-neutral-200 dark:border-zinc-800 text-neutral-500 dark:text-neutral-400 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-all cursor-pointer"
+                                >
+                                    {showYearWise ? 'Hide Yearly Stats' : 'Show Year-wise Total Events'}
+                                </button>
+                            </div>
+                        )}
+
+                        {showYearWise && stats?.yearWiseEvents && (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+                                {stats.yearWiseEvents.map(y => (
+                                    <div key={y._id} className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 p-3 rounded-xl text-center">
+                                        <p className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">{y._id}</p>
+                                        <p className="text-lg font-black text-black dark:text-white">{y.count}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
                 )}
 
-                {/* ── PAYOUTS TAB ── Only paid events with payout actions */}
+                {/* ── OVERVIEW TAB — All events table ──────────────────── */}
+                {activeTab === 'overview' && (
+                    <DataTable>
+                        <thead>
+                            <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                <Th>#</Th>
+                                <Th>Event Title</Th>
+                                <Th>Club</Th>
+                                <Th>Registrations</Th>
+                                <Th>Event Date</Th>
+                                <Th>Type</Th>
+                                <Th align="right">Revenue</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {stats?.eventStats?.slice().sort((a, b) => new Date(b.startTime) - new Date(a.startTime)).map((item, idx) => (
+                                <tr key={idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                    <Td className="text-neutral-300 dark:text-neutral-600">{idx + 1}</Td>
+                                    <Td className="font-semibold text-black dark:text-white">{item.title}</Td>
+                                    <Td className="text-orange-600 dark:text-orange-400 font-semibold">{item.clubName}</Td>
+                                    <Td>{item.registeredCount || item.regCount} students</Td>
+                                    <Td className="text-[11px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+                                        {new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                    </Td>
+                                    <Td>
+                                        <TypeBadge isPaid={item.entryFee > 0} fee={item.entryFee} />
+                                    </Td>
+                                    <Td align="right" className="font-mono font-black text-base">
+                                        {item.totalCollected > 0 
+                                            ? <span className="text-orange-600 dark:text-orange-400">₹{item.totalCollected}</span>
+                                            : <span className="text-neutral-200 dark:text-neutral-700">—</span>
+                                        }
+                                    </Td>
+                                </tr>
+                            ))}
+                            {(!stats?.eventStats || stats.eventStats.length === 0) && (
+                                <tr><td colSpan="7" className="px-5 py-16 text-center text-neutral-400 text-sm">No events found.</td></tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                )}
+
+                {/* ── PAYOUTS TAB ──────────────────────────────────────── */}
                 {activeTab === 'payouts' && (
-                    <div className="bg-white border-2 border-gray-300 rounded-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-neutral-100">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Club Name</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Event Title</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Amount</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Registrations</th>
-                                        <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-200">Deadline</th>
-                                        <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {stats?.eventStats?.filter(item => item.entryFee > 0).map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.clubName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r border-gray-200">{item.title}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-black text-orange-600 border-r border-gray-200">₹{item.totalCollected}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-200">{item.regCount} students</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-200 uppercase tracking-tighter">
-                                                {item.registrationDeadline 
-                                                    ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                                                    : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-                                                }
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                {(() => {
-                                                    const deadline = item.registrationDeadline || item.startTime;
-                                                    const isLocked = new Date() < new Date(deadline);
+                    <DataTable>
+                        <thead>
+                            <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                <Th>Club Name</Th>
+                                <Th>Event Title</Th>
+                                <Th>Amount</Th>
+                                <Th>Registrations</Th>
+                                <Th>Deadline</Th>
+                                <Th align="right">Action</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {stats?.eventStats?.filter(item => item.entryFee > 0).map((item, idx) => (
+                                <tr key={idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                    <Td className="font-semibold text-black dark:text-white">{item.clubName}</Td>
+                                    <Td>{item.title}</Td>
+                                    <Td className="font-mono font-black text-orange-600 dark:text-orange-400 text-base">₹{item.totalCollected}</Td>
+                                    <Td>{item.regCount} students</Td>
+                                    <Td className="text-[11px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+                                        {item.registrationDeadline 
+                                            ? new Date(item.registrationDeadline).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                            : new Date(item.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+                                        }
+                                    </Td>
+                                    <Td align="right">
+                                        {(() => {
+                                            const deadline = item.registrationDeadline || item.startTime;
+                                            const isLocked = new Date() < new Date(deadline);
 
-                                                    if (item.payoutStatus === 'COMPLETED') {
-                                                        return (
-                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-green-600">
-                                                                <i className="ri-checkbox-circle-fill text-sm" />
-                                                                Completed
-                                                            </span>
-                                                        );
-                                                    }
+                                            if (item.payoutStatus === 'COMPLETED') {
+                                                return (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-green-200 dark:border-green-500/20">
+                                                        <i className="ri-checkbox-circle-fill text-sm" />
+                                                        Completed
+                                                    </span>
+                                                );
+                                            }
 
-                                                    if (isLocked) {
-                                                        return (
-                                                            <div className="flex flex-col items-end">
-                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-400 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-neutral-200 cursor-not-allowed">
-                                                                    <i className="ri-lock-2-line text-sm" />
-                                                                    Locked
-                                                                </span>
-                                                                <span className="text-[9px] font-bold text-neutral-400 mt-1 uppercase">Available after deadline</span>
-                                                            </div>
-                                                        );
-                                                    }
+                                            if (isLocked) {
+                                                return (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 dark:bg-neutral-800 text-neutral-400 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-neutral-200 dark:border-neutral-700 cursor-not-allowed">
+                                                            <i className="ri-lock-2-line text-sm" />
+                                                            Locked
+                                                        </span>
+                                                        <span className="text-[9px] font-medium text-neutral-300 dark:text-neutral-600 mt-1">After deadline</span>
+                                                    </div>
+                                                );
+                                            }
 
-                                                    return (
-                                                        <button 
-                                                            onClick={() => handleFetchPayoutInfo(item.clubHeadId, item.eventId)}
-                                                            className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors border-2 border-black active:translate-y-1"
-                                                        >
-                                                            Make Payout
-                                                        </button>
-                                                    );
-                                                })()}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {(!stats?.eventStats || stats.eventStats.filter(item => item.entryFee > 0).length === 0) && (
-                                        <tr>
-                                            <td colSpan="6" className="px-6 py-12 text-center text-neutral-500 text-sm">No paid events found for payout.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                            return (
+                                                <button 
+                                                    onClick={() => handleFetchPayoutInfo(item.clubHeadId, item.eventId)}
+                                                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer"
+                                                >
+                                                    Make Payout
+                                                </button>
+                                            );
+                                        })()}
+                                    </Td>
+                                </tr>
+                            ))}
+                            {(!stats?.eventStats || stats.eventStats.filter(item => item.entryFee > 0).length === 0) && (
+                                <tr><td colSpan="6" className="px-5 py-16 text-center text-neutral-400 text-sm">No paid events found for payout.</td></tr>
+                            )}
+                        </tbody>
+                    </DataTable>
                 )}
 
+                {/* ── MANAGE CLUBS TAB ─────────────────────────────────── */}
                 {activeTab === 'club-heads' && (
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {/* Add New Club Form */}
-                        <div className="bg-white border-2 border-gray-300 p-6 rounded-sm ">
-                            <h3 className="text-xl font-medium  tracking-wide mb-4">Add New Club</h3>
-                            <form onSubmit={handleCreateClub} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <input name="clubName" placeholder="Club Name" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <input name="facultyName" placeholder="Faculty Coordinator" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <input name="facultyEmail" type="email" placeholder="Faculty Email" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <input name="clubEmail" type="email" placeholder="Official Club Email" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <button type="submit" className="lg:col-span-4 bg-black text-white py-3 font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Create Club & Seeding Users</button>
+                        <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-zinc-800 p-6 rounded-2xl">
+                            <h3 className="text-sm font-bold text-black dark:text-white mb-4">Add New Club</h3>
+                            <form onSubmit={handleCreateClub} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <FormInput name="clubName" placeholder="Club Name" required />
+                                <FormInput name="facultyName" placeholder="Faculty Coordinator" required />
+                                <FormInput name="facultyEmail" type="email" placeholder="Faculty Email" required />
+                                <FormInput name="clubEmail" type="email" placeholder="Official Club Email" required />
+                                <div className="lg:col-span-4 flex justify-end mt-1">
+                                    <button type="submit" className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 text-[11px] font-bold uppercase tracking-[0.15em] rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer">
+                                        Create Club & Seed Users
+                                    </button>
+                                </div>
                             </form>
                         </div>
 
-                        {/* Clubs List Table */}
-                        <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y-2 divide-black">
-                                    <thead className="bg-neutral-100">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Name</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Faculty</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Club Email</th>
-                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y-2 divide-black">
-                                        {clubHeads.map((club, idx) => (
-                                            <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{club.clubName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold border-r-2 border-gray-400 text-orange-600">
-                                                    {club.facultyName || club.facultyCoordinator?.name || "N/A"}<br/>
-                                                    <span className="text-[10px] text-neutral-400">{club.facultyEmail || club.facultyCoordinator?.email}</span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">
-                                                    {club.clubEmail || (club.memberships && club.memberships[0]?.student?.email) || "N/A"}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <button 
-                                                        onClick={() => { setEditingClub(club); setIsEditModalOpen(true); }}
-                                                        className="px-3 py-1 bg-white border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-sm"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {clubHeads.length === 0 && (
-                                            <tr>
-                                                <td colSpan="4" className="px-6 py-12 text-center text-neutral-500 text-sm">No clubs registered yet.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        {/* Clubs List */}
+                        <DataTable>
+                            <thead>
+                                <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                    <Th>Club Name</Th>
+                                    <Th>Faculty</Th>
+                                    <Th>Club Email</Th>
+                                    <Th align="right">Action</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {clubHeads.map((club, idx) => (
+                                    <tr key={idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                        <Td className="font-semibold text-black dark:text-white">{club.clubName}</Td>
+                                        <Td>
+                                            <span className="text-orange-600 dark:text-orange-400 font-semibold">{club.facultyName || club.facultyCoordinator?.name || "N/A"}</span>
+                                            <br/>
+                                            <span className="text-[10px] text-neutral-400">{club.facultyEmail || club.facultyCoordinator?.email}</span>
+                                        </Td>
+                                        <Td>{club.clubEmail || (club.memberships && club.memberships[0]?.student?.email) || "N/A"}</Td>
+                                        <Td align="right">
+                                            <button 
+                                                onClick={() => { setEditingClub(club); setIsEditModalOpen(true); }}
+                                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-neutral-500 transition-all cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                        </Td>
+                                    </tr>
+                                ))}
+                                {clubHeads.length === 0 && (
+                                    <tr><td colSpan="4" className="px-5 py-16 text-center text-neutral-400 text-sm">No clubs registered yet.</td></tr>
+                                )}
+                            </tbody>
+                        </DataTable>
                     </div>
                 )}
 
-                {/* ── COORDINATORS TAB ── */}
+                {/* ── COORDINATORS TAB ─────────────────────────────────── */}
                 {activeTab === 'coordinators' && (
-                    <div className="space-y-8">
-                        {/* Add New Coordinator Form */}
-                        <div className="bg-white border-2 border-gray-300 p-6 rounded-sm">
-                            <h3 className="text-xl font-medium tracking-wide mb-4">Add Faculty Coordinator</h3>
-                            <form onSubmit={handleCreateCoord} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <input name="name" placeholder="Full Name" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <input name="email" type="email" placeholder="Email Address" required className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <input name="password" type="password" placeholder="Password (default: coordinator123)" className="p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                <button type="submit" className="bg-black text-white py-2 font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Create Coordinator</button>
+                    <div className="space-y-6">
+                        {/* Add Coordinator Form */}
+                        <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-zinc-800 p-6 rounded-2xl">
+                            <h3 className="text-sm font-bold text-black dark:text-white mb-4">Add Faculty Coordinator</h3>
+                            <form onSubmit={handleCreateCoord} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <FormInput name="name" placeholder="Full Name" required />
+                                <FormInput name="email" type="email" placeholder="Email Address" required />
+                                <FormInput name="password" type="password" placeholder="Password (default: coordinator123)" />
+                                <button type="submit" className="bg-black dark:bg-white text-white dark:text-black py-3 text-[11px] font-bold uppercase tracking-[0.15em] rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer">
+                                    Create Coordinator
+                                </button>
                             </form>
                         </div>
 
-                        {/* Coordinators List Table */}
-                        <div className="bg-white border-2 border-gray-400 rounded-sm overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y-2 divide-black">
-                                    <thead className="bg-neutral-100">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Name</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-gray-400">Email</th>
-                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y-2 divide-black">
-                                        {coordinators.map((coord, idx) => (
-                                            <tr key={coord._id || idx} className="hover:bg-neutral-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r-2 border-gray-400">{coord.name}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-r-2 border-gray-400">{coord.email}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <button 
-                                                        onClick={() => { setEditingCoord(coord); setIsCoordModalOpen(true); }}
-                                                        className="px-3 py-1 bg-white border-2 border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-sm"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {coordinators.length === 0 && (
-                                            <tr>
-                                                <td colSpan="3" className="px-6 py-12 text-center text-neutral-500 text-sm">No coordinators found.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        {/* Coordinators List */}
+                        <DataTable>
+                            <thead>
+                                <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                    <Th>Name</Th>
+                                    <Th>Email</Th>
+                                    <Th align="right">Action</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {coordinators.map((coord, idx) => (
+                                    <tr key={coord._id || idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                        <Td className="font-semibold text-black dark:text-white">{coord.name}</Td>
+                                        <Td>{coord.email}</Td>
+                                        <Td align="right">
+                                            <button 
+                                                onClick={() => { setEditingCoord(coord); setIsCoordModalOpen(true); }}
+                                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-neutral-500 transition-all cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                        </Td>
+                                    </tr>
+                                ))}
+                                {coordinators.length === 0 && (
+                                    <tr><td colSpan="3" className="px-5 py-16 text-center text-neutral-400 text-sm">No coordinators found.</td></tr>
+                                )}
+                            </tbody>
+                        </DataTable>
                     </div>
                 )}
 
+                {/* ── EVENT DATA TAB ───────────────────────────────────── */}
                 {activeTab === 'event-data' && (
                     <div>
-                        {/* Filter UI */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <select 
-                                value={filters.clubId}
-                                onChange={(e) => setFilters({ ...filters, clubId: e.target.value })}
-                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
-                            >
+                        {/* Filters */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                            <FilterSelect value={filters.clubId} onChange={(v) => setFilters({ ...filters, clubId: v })}>
                                 <option value="all">All Clubs</option>
                                 {clubHeads.map(c => <option key={c._id} value={c._id}>{c.clubName}</option>)}
-                            </select>
-                            <select 
-                                value={filters.month}
-                                onChange={(e) => setFilters({ ...filters, month: e.target.value })}
-                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
-                            >
+                            </FilterSelect>
+                            <FilterSelect value={filters.month} onChange={(v) => setFilters({ ...filters, month: v })}>
                                 <option value="all">All Months</option>
                                 {[...Array(12)].map((_, i) => (
                                     <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('en', { month: 'long' })}</option>
                                 ))}
-                            </select>
-                            <select 
-                                value={filters.year}
-                                onChange={(e) => setFilters({ ...filters, year: e.target.value })}
-                                className="p-2 border-2 border-gray-300 rounded-sm text-xs font-bold uppercase"
-                            >
+                            </FilterSelect>
+                            <FilterSelect value={filters.year} onChange={(v) => setFilters({ ...filters, year: v })}>
                                 <option value="all">All Years</option>
                                 {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
+                            </FilterSelect>
                         </div>
 
                         <div className="flex justify-between items-center mb-4">
-                            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                            <p className="text-[11px] font-bold text-neutral-400 dark:text-neutral-500 tracking-wide">
                                 {eventData.length} event{eventData.length !== 1 ? 's' : ''} found
                             </p>
                             <button
                                 onClick={handleDownloadCSV}
                                 disabled={!eventData.length}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-gray-400 active:translate-x-1 active:translate-y-1 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 hover:cursor-pointer"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-orange-500 cursor-pointer"
                             >
                                 <i className="ri-download-2-line text-sm" />
                                 Download CSV
                             </button>
                         </div>
-                        <div className="bg-white border-2 border-gray-400 rounded-sm  overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y-2 divide-gray-300">
-                                    <thead className="bg-neutral-100">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-400">Event Name</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Organising Club</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Registrations</th>
-                                            <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Event Date</th>
-                                            {role === 'admin' && <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r border-gray-300">Type</th>}
-                                            <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Amount Received</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y-2 divide-gray-300">
-                                        {eventData.map((item, idx) => (
-                                            <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-300">{item.eventName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-orange-600 border-r border-gray-300">{item.clubName}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold border-r border-gray-300">{item.totalRegistrations}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-neutral-500 border-r border-gray-300 uppercase tracking-wide">
-                                                    {new Date(item.eventDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                                                </td>
-                                                {role === 'admin' && (
-                                                    <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                                                        <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 ${
-                                                            item.eventType === 'Paid'
-                                                                ? 'bg-orange-50 text-orange-700 border-orange-300'
-                                                                : 'bg-green-50 text-green-700 border-green-300'
-                                                        }`}>
-                                                            {item.eventType}
-                                                        </span>
-                                                    </td>
-                                                )}
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-black font-mono">
-                                                    {item.totalAmountReceived > 0 
-                                                        ? <span className="text-orange-600">₹{item.totalAmountReceived}</span> 
-                                                        : <span className="text-neutral-300">—</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {eventData.length === 0 && (
-                                            <tr>
-                                                <td colSpan="6" className="px-6 py-12 text-center text-neutral-500 text-sm">No events found.</td>
-                                            </tr>
+
+                        <DataTable>
+                            <thead>
+                                <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                    <Th>Event Name</Th>
+                                    <Th>Organising Club</Th>
+                                    <Th>Registrations</Th>
+                                    <Th>Event Date</Th>
+                                    {role === 'admin' && <Th>Type</Th>}
+                                    <Th align="right">Amount Received</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {eventData.map((item, idx) => (
+                                    <tr key={idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                        <Td className="font-semibold text-black dark:text-white">{item.eventName}</Td>
+                                        <Td className="text-orange-600 dark:text-orange-400 font-semibold">{item.clubName}</Td>
+                                        <Td>{item.totalRegistrations}</Td>
+                                        <Td className="text-[11px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+                                            {new Date(item.eventDate).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                        </Td>
+                                        {role === 'admin' && (
+                                            <Td>
+                                                <TypeBadge isPaid={item.eventType === 'Paid'} />
+                                            </Td>
                                         )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                                        <Td align="right" className="font-mono font-black text-base">
+                                            {item.totalAmountReceived > 0 
+                                                ? <span className="text-orange-600 dark:text-orange-400">₹{item.totalAmountReceived}</span> 
+                                                : <span className="text-neutral-200 dark:text-neutral-700">—</span>
+                                            }
+                                        </Td>
+                                    </tr>
+                                ))}
+                                {eventData.length === 0 && (
+                                    <tr><td colSpan="6" className="px-5 py-16 text-center text-neutral-400 text-sm">No events found.</td></tr>
+                                )}
+                            </tbody>
+                        </DataTable>
                     </div>
                 )}
+
+                {/* ═══════════════════════════════════════════════════════════
+                   MODALS
+                   ═══════════════════════════════════════════════════════════ */}
 
                 {/* Payout Modal */}
                 {modalOpen && selectedClub && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-                        <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[12px_12px_0px_#000]">
-                            <div className="bg-black text-white p-6 border-b-2 border-black flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-black text-xl uppercase tracking-tight">Settlement Info</h3>
-                                    <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest mt-1">{selectedClub.clubName}</p>
-                                </div>
-                                <button onClick={() => setModalOpen(false)} className="text-white hover:text-orange-400 text-2xl"><i className="ri-close-line" /></button>
-                            </div>
-                            
-                            <div className="p-8 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Account Holder</label>
-                                        <p className="font-bold text-black border-b border-neutral-100 pb-1">{selectedClub.bankInfo.accountHolderName || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Bank Name</label>
-                                        <p className="font-bold text-black border-b border-neutral-100 pb-1">{selectedClub.bankInfo.bankName || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">A/C Number</label>
-                                        <p className="font-bold text-black border-b border-neutral-100 pb-1 font-mono">{selectedClub.bankInfo.accountNumber || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">IFSC Code</label>
-                                        <p className="font-bold text-black border-b border-neutral-100 pb-1 font-mono uppercase">{selectedClub.bankInfo.ifscCode || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">UPI ID</label>
-                                        <p className="font-bold text-orange-600 border-b border-neutral-100 pb-1">{selectedClub.bankInfo.upiId || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Phone</label>
-                                        <p className="font-bold text-black border-b border-neutral-100 pb-1">{selectedClub.bankInfo.bankPhone || 'N/A'}</p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-neutral-100 p-4 border border-neutral-200 rounded-sm">
-                                    <p className="text-[11px] text-neutral-600 leading-relaxed font-semibold">
-                                        <i className="ri-hand-coin-line mr-2 text-black" />
-                                        Please execute the transaction manually via your business banking portal and mark as complete.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="p-6 pt-0 flex gap-4">
-                                <button 
-                                    className="flex-1 py-4 bg-orange-600 text-white font-black uppercase tracking-widest border-2 border-black rounded-sm hover:shadow-[4px_4px_0px_#000] active:translate-x-1 active:translate-y-1 transition-all"
-                                    onClick={handleConfirmPayout}
-                                >
-                                    Confirm Payout
-                                </button>
-                            </div>
+                    <Modal onClose={() => setModalOpen(false)} title="Settlement Info" subtitle={selectedClub.clubName}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <ModalField label="Account Holder" value={selectedClub.bankInfo.accountHolderName} />
+                            <ModalField label="Bank Name" value={selectedClub.bankInfo.bankName} />
+                            <ModalField label="A/C Number" value={selectedClub.bankInfo.accountNumber} mono />
+                            <ModalField label="IFSC Code" value={selectedClub.bankInfo.ifscCode} mono />
+                            <ModalField label="UPI ID" value={selectedClub.bankInfo.upiId} accent />
+                            <ModalField label="Phone" value={selectedClub.bankInfo.bankPhone} />
                         </div>
-                    </div>
+
+                        <div className="bg-neutral-50 dark:bg-neutral-900 p-4 border border-neutral-200 dark:border-zinc-800 rounded-xl mt-6">
+                            <p className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                                <i className="ri-hand-coin-line mr-2 text-black dark:text-white" />
+                                Execute the transaction manually via your business banking portal, then mark as complete.
+                            </p>
+                        </div>
+
+                        <button 
+                            className="w-full mt-6 py-3.5 bg-orange-600 text-white font-bold text-[11px] uppercase tracking-[0.15em] rounded-xl hover:bg-orange-500 transition-colors cursor-pointer"
+                            onClick={handleConfirmPayout}
+                        >
+                            Confirm Payout
+                        </button>
+                    </Modal>
                 )}
+
                 {/* Edit Club Modal */}
                 {isEditModalOpen && editingClub && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-                        <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[12px_12px_0px_#000]">
-                            <div className="bg-black text-white p-6 border-b-2 border-black flex justify-between items-center">
-                                <h3 className="font-black text-xl uppercase tracking-tight">Edit Club</h3>
-                                <button onClick={() => setIsEditModalOpen(false)} className="text-white hover:text-orange-400 text-2xl"><i className="ri-close-line" /></button>
+                    <Modal onClose={() => setIsEditModalOpen(false)} title="Edit Club">
+                        <form onSubmit={handleUpdateClub} className="space-y-4">
+                            <ModalFormField label="Club Name" name="clubName" defaultValue={editingClub.clubName} required />
+                            <ModalFormField label="Official Club Email" name="clubEmail" type="email" defaultValue={editingClub.clubEmail} required />
+                            <ModalFormField label="Faculty Name" name="facultyName" defaultValue={editingClub.facultyName} placeholder="Display name if no coordinator" />
+                            <ModalFormField label="Faculty Email" name="facultyEmail" defaultValue={editingClub.facultyEmail} placeholder="Legacy faculty email" />
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">Assign Faculty Coordinator</label>
+                                <select name="facultyCoordinatorId" defaultValue={(editingClub.facultyCoordinators && editingClub.facultyCoordinators[0]?.id) || editingClub.facultyCoordinatorId} className="w-full px-3 py-2.5 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-[13px] focus:border-orange-600 dark:focus:border-orange-500 outline-none transition-colors">
+                                    <option value="">None</option>
+                                    {coordinators.map(c => <option key={c._id} value={c._id}>{c.name} ({c.email})</option>)}
+                                </select>
                             </div>
-                            <form onSubmit={handleUpdateClub} className="p-8 space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Club Name</label>
-                                    <input name="clubName" defaultValue={editingClub.clubName} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Official Club Email</label>
-                                    <input name="clubEmail" type="email" defaultValue={editingClub.clubEmail} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Faculty Name (Legacy Display)</label>
-                                    <input name="facultyName" defaultValue={editingClub.facultyName} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" placeholder="Displayed on public page if no coordinator assigned" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Faculty Email (Legacy Display)</label>
-                                    <input name="facultyEmail" defaultValue={editingClub.facultyEmail} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" placeholder="Legacy faculty email" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Assign Faculty Coordinator</label>
-                                    <select name="facultyCoordinatorId" defaultValue={(editingClub.facultyCoordinators && editingClub.facultyCoordinators[0]?.id) || editingClub.facultyCoordinatorId} className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none">
-                                        <option value="">None</option>
-                                        {coordinators.map(c => <option key={c._id} value={c._id}>{c.name} ({c.email})</option>)}
-                                    </select>
-                                </div>
-                                <div className="pt-4 flex gap-4">
-                                    <button onClick={() => setIsEditModalOpen(false)} type="button" className="flex-1 py-3 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition-colors">Cancel</button>
-                                    <button type="submit" className="flex-1 py-3 bg-black text-white font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                            <div className="pt-2 flex gap-3">
+                                <button onClick={() => setIsEditModalOpen(false)} type="button" className="flex-1 py-3 border border-neutral-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer">Cancel</button>
+                                <button type="submit" className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer">Save Changes</button>
+                            </div>
+                        </form>
+                    </Modal>
                 )}
 
                 {/* Edit Coordinator Modal */}
                 {isCoordModalOpen && editingCoord && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-                        <div className="bg-white border-2 border-black rounded-sm max-w-lg w-full shadow-[12px_12px_0px_#000]">
-                            <div className="bg-black text-white p-6 border-b-2 border-black flex justify-between items-center">
-                                <h3 className="font-black text-xl uppercase tracking-tight">Edit Coordinator</h3>
-                                <button onClick={() => setIsCoordModalOpen(false)} className="text-white hover:text-orange-400 text-2xl"><i className="ri-close-line" /></button>
+                    <Modal onClose={() => setIsCoordModalOpen(false)} title="Edit Coordinator">
+                        <form onSubmit={handleUpdateCoord} className="space-y-4">
+                            <ModalFormField label="Full Name" name="name" defaultValue={editingCoord.name} required />
+                            <ModalFormField label="Email Address" name="email" type="email" defaultValue={editingCoord.email} required />
+                            <ModalFormField label="New Password" name="password" type="password" placeholder="Leave blank to keep current" />
+                            <div className="pt-2 flex gap-3">
+                                <button onClick={() => setIsCoordModalOpen(false)} type="button" className="flex-1 py-3 border border-neutral-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer">Cancel</button>
+                                <button type="submit" className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer">Save Changes</button>
                             </div>
-                            <form onSubmit={handleUpdateCoord} className="p-8 space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Full Name</label>
-                                    <input name="name" defaultValue={editingCoord.name} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Email Address</label>
-                                    <input name="email" type="email" defaultValue={editingCoord.email} required className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">New Password (leave blank to keep current)</label>
-                                    <input name="password" type="password" className="w-full p-2 border-2 border-gray-300 rounded-sm focus:border-black outline-none" />
-                                </div>
-                                <div className="pt-4 flex gap-4">
-                                    <button onClick={() => setIsCoordModalOpen(false)} type="button" className="flex-1 py-3 border-2 border-black font-black uppercase tracking-widest hover:bg-neutral-100 transition-colors">Cancel</button>
-                                    <button type="submit" className="flex-1 py-3 bg-black text-white font-black uppercase tracking-widest hover:bg-orange-600 transition-colors">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                        </form>
+                    </Modal>
                 )}
             </div>
         </div>
     );
 };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sub-components — Minimal Design System
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Stat card */
+const StatCard = ({ label, value, accent }) => (
+    <div className={`p-5 rounded-2xl border transition-colors ${
+        accent 
+            ? "bg-black dark:bg-white border-black dark:border-white" 
+            : "bg-white dark:bg-[#0a0a0a] border-neutral-200 dark:border-zinc-800"
+    }`}>
+        <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${
+            accent ? "text-neutral-400 dark:text-neutral-500" : "text-neutral-400 dark:text-neutral-500"
+        }`}>{label}</p>
+        <p className={`text-2xl font-black mt-1 ${
+            accent ? "text-orange-500 dark:text-orange-600" : "text-black dark:text-white"
+        }`}>{value}</p>
+    </div>
+);
+
+/** DataTable wrapper */
+const DataTable = ({ children }) => (
+    <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+            <table className="min-w-full">{children}</table>
+        </div>
+    </div>
+);
+
+/** Table header cell */
+const Th = ({ children, align = "left" }) => (
+    <th className={`px-5 py-4 text-${align} text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500`}>
+        {children}
+    </th>
+);
+
+/** Table body cell */
+const Td = ({ children, align = "left", className = "" }) => (
+    <td className={`px-5 py-4 whitespace-nowrap text-sm text-neutral-600 dark:text-neutral-300 text-${align} ${className}`}>
+        {children}
+    </td>
+);
+
+/** Event type badge */
+const TypeBadge = ({ isPaid, fee }) => (
+    <span className={`inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-lg border ${
+        isPaid
+            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20'
+            : 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20'
+    }`}>
+        {isPaid ? (fee ? `Paid (₹${fee})` : 'Paid') : 'Free'}
+    </span>
+);
+
+/** Form input */
+const FormInput = ({ name, type = "text", placeholder, required }) => (
+    <input 
+        name={name} 
+        type={type} 
+        placeholder={placeholder} 
+        required={required} 
+        className="px-3 py-2.5 bg-neutral-50 dark:bg-neutral-900 border border-neutral-400 dark:border-zinc-800 rounded-xl text-[13px] focus:border-orange-600 dark:focus:border-orange-500 outline-none transition-colors placeholder:text-neutral-500 dark:placeholder:text-neutral-600" 
+    />
+);
+
+/** Filter select */
+const FilterSelect = ({ children, value, onChange }) => (
+    <select 
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="px-3 py-2.5 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-[12px] font-bold text-neutral-600 dark:text-neutral-300 focus:border-orange-600 dark:focus:border-orange-500 outline-none transition-colors cursor-pointer"
+    >
+        {children}
+    </select>
+);
+
+/** Modal wrapper */
+const Modal = ({ onClose, title, subtitle, children }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm px-4" onClick={onClose}>
+        <div className="bg-white dark:bg-[#0f0f0f] border border-neutral-200 dark:border-zinc-800 rounded-2xl max-w-lg w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 flex justify-between items-start">
+                <div>
+                    <h3 className="text-lg font-black text-black dark:text-white tracking-tight">{title}</h3>
+                    {subtitle && <p className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold mt-0.5 tracking-wide">{subtitle}</p>}
+                </div>
+                <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
+                    <i className="ri-close-line text-lg" />
+                </button>
+            </div>
+            {/* Body */}
+            <div className="px-6 pb-6">{children}</div>
+        </div>
+    </div>
+);
+
+/** Modal field (read-only) */
+const ModalField = ({ label, value, mono, accent }) => (
+    <div>
+        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">{label}</label>
+        <p className={`font-semibold text-sm border-b border-neutral-200 dark:border-zinc-800 pb-1.5 ${
+            mono ? "font-mono" : ""
+        } ${accent ? "text-orange-600 dark:text-orange-400" : "text-black dark:text-white"}`}>
+            {value || 'N/A'}
+        </p>
+    </div>
+);
+
+/** Modal form field */
+const ModalFormField = ({ label, name, type = "text", defaultValue, placeholder, required }) => (
+    <div>
+        <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">{label}</label>
+        <input 
+            name={name} 
+            type={type} 
+            defaultValue={defaultValue} 
+            placeholder={placeholder} 
+            required={required} 
+            className="w-full px-3 py-2.5 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-[13px] focus:border-orange-600 dark:focus:border-orange-500 outline-none transition-colors" 
+        />
+    </div>
+);
 
 export default AdminDashboard;

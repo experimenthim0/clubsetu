@@ -11,6 +11,26 @@ import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
 
+const LostFoundIcon = ({ size = 24, ...props }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 14 14" 
+    height={size} 
+    width={size} 
+    {...props}
+  >
+    <g id="lost-and-found">
+      <path 
+        fill="currentColor" 
+        fillRule="evenodd" 
+        d="M5.763 2.263A1.75 1.75 0 0 1 8.75 3.5h-3.5c0 -0.464 0.184 -0.91 0.513 -1.237ZM3.75 3.5a3.25 3.25 0 0 1 6.5 0h1.25A2.5 2.5 0 0 1 14 6v5.5a2.5 2.5 0 0 1 -2.5 2.5h-9A2.5 2.5 0 0 1 0 11.5V6a2.5 2.5 0 0 1 2.5 -2.5h1.25Zm2.915 3.067A0.875 0.875 0 1 1 7 8.25a0.625 0.625 0 0 0 -0.625 0.625v1a0.625 0.625 0 1 0 1.25 0v-0.469a2.125 2.125 0 1 0 -2.75 -2.031 0.625 0.625 0 1 0 1.25 0 0.875 0.875 0 0 1 0.54 -0.808Zm0.337 6.308a0.75 0.75 0 1 1 0 -1.5 0.75 0.75 0 0 1 0 1.5Z" 
+        clipRule="evenodd" 
+      />
+    </g>
+  </svg>
+);
+
 const BottomNav = () => {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -81,13 +101,31 @@ const BottomNav = () => {
 
   const navItems = [
     { label: "Home", icon: Home, path: "/" },
-    { label: "Clubs", icon: Users, path: "/clubs" },
+    // { label: "Clubs", icon: Users, path: "/clubs" },
     { label: "Events", icon: Calendar, path: "/events" },
-    // { label: "L&F", icon: Package, path: "/lost-found" },
+    { label: "L&F", icon: LostFoundIcon, path: "/lost-found" },
+  ];
+
+  if (user && (role === "admin" || role === "paymentAdmin")) {
+    navItems.push({
+      label: "Admin",
+      icon: ShieldCheck,
+      action: () => window.open("/admin-dashboard", "_blank"),
+      isActiveCheck: isActive("/admin-dashboard"),
+    });
+  } else if (user && role === "lostFoundAdmin") {
+    navItems.push({
+      label: "Admin",
+      icon: ShieldCheck,
+      path: "/admin/lost-found",
+    });
+  }
+
+  navItems.push(
     user
       ? { label: "Profile", icon: User, action: () => setDrawerOpen(true), isActiveCheck: drawerOpen }
-      : { label: "Login", icon: LogInIcon, path: "/login" },
-  ];
+      : { label: "Login", icon: LogInIcon, path: "/login" }
+  );
 
   return (
     <>
@@ -203,14 +241,34 @@ const BottomNav = () => {
                    My Events
                 </Link>
               )}
-{/* {role === "lostFoundAdmin" && (
+              {role === "lostFoundAdmin" && (
                 <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                     <LayoutGridIcon size={18} />
+                     <LostFoundIcon size={18} />
                    </div>
                    Moderation Panel
                 </Link>
-              )} */}
+              )}
+
+              {(role === "admin" || role === "paymentAdmin") && (
+                <button
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    window.open("/admin-dashboard", "_blank");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                    <ShieldCheck size={18} />
+                  </div>
+                  Admin Dashboard
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto text-neutral-400">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </button>
+              )}
 
               {((user.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (
                 <div className="mt-2 pt-2 border-t border-neutral-100">
@@ -322,7 +380,7 @@ const BottomNav = () => {
                 <LogoutIcon size={18} />
                 Logout
               </button>
-              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2">Campus<span className='text-orange-600 font-bold'>Node</span> | Developed By Team Xplore </p>
+              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2"><h3 className="logofont uppercase tracking-wider">Campus<span className='text-orange-600 font-bold'>Node</span></h3> Developed By Team Xplore </p>
             </div>
           </div>
         </>

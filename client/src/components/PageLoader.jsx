@@ -59,7 +59,7 @@ function getParticle(index, progress, detailScale) {
  * Props:
  *  - visible (boolean): controls whether the loader is shown
  */
-export default function PageLoader({ visible }) {
+export default function PageLoader({ visible, absolute = false }) {
   const groupRef = useRef(null);
   const pathRef = useRef(null);
   const particleRefs = useRef([]);
@@ -133,9 +133,9 @@ export default function PageLoader({ visible }) {
     <div
       id="page-loader-overlay"
       style={{
-        position: 'fixed',
+        position: absolute ? 'absolute' : 'fixed',
         inset: 0,
-        zIndex: 99999,
+        zIndex: absolute ? 40 : 99999,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -150,8 +150,8 @@ export default function PageLoader({ visible }) {
       <div
         style={{
           position: 'absolute',
-          width: '300px',
-          height: '300px',
+          width: '150px',
+          height: '150px',
           borderRadius: '50%',
           background: isDark
             ? 'radial-gradient(circle, rgba(234,88,12,0.12) 0%, transparent 70%)'
@@ -162,7 +162,7 @@ export default function PageLoader({ visible }) {
       />
 
       {/* SVG Lissajous Animation */}
-      <div style={{ width: 'min(56vmin, 320px)', aspectRatio: '1', position: 'relative' }}>
+      <div style={{ width: 'min(56vmin, 150px)', aspectRatio: '1', position: 'relative' }}>
         <svg viewBox="0 0 100 100" fill="none" aria-hidden="true" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
           <g ref={groupRef}>
             <path

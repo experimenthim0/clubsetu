@@ -258,7 +258,7 @@ return (
                 : 'bg-white text-neutral-500 border-neutral-100 hover:border-orange-600 hover:text-orange-600'
             }`}
           >
-            <i className={`${btn.icon} text-xs`} />
+            <i className={`${btn.icon} text-xs font-light`} />
             {btn.label}
           </button>
         ))}
@@ -425,7 +425,7 @@ return (
       <div className={endedEvents.length > 0 ? 'mb-14' : ''}>
         {!hideHeader && (
              <h2 className="text-lg font-semibold text-gray-700 mb-6 flex items-center gap-2">
-             <i className="ri-calendar-event-line text-orange-600"></i>
+             <i className="ri-calendar-event-line text-orange-600 font-light"></i>
              Upcoming
              </h2>
         )}

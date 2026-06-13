@@ -690,6 +690,17 @@ html.dark-transition *::after {
   }
 }
 
+@keyframes searchItemSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .search-results-header {
   padding: 8px 14px;
   font-size: 10px;
@@ -698,6 +709,7 @@ html.dark-transition *::after {
   text-transform: uppercase;
   color: #a3a3a3;
   border-bottom: 1px solid #f5f5f5;
+  animation: searchItemSlideUp 0.2s ease both;
 }
 
 .search-result-item {
@@ -706,10 +718,21 @@ html.dark-transition *::after {
   gap: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.2s ease;
   text-decoration: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  animation: searchItemSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* Staggered Delay for Search Result Items */
+.search-result-item:nth-child(1) { animation-delay: 0.02s; }
+.search-result-item:nth-child(2) { animation-delay: 0.04s; }
+.search-result-item:nth-child(3) { animation-delay: 0.06s; }
+.search-result-item:nth-child(4) { animation-delay: 0.08s; }
+.search-result-item:nth-child(5) { animation-delay: 0.10s; }
+.search-result-item:nth-child(6) { animation-delay: 0.12s; }
+.search-result-item:nth-child(7) { animation-delay: 0.14s; }
+.search-result-item:nth-child(8) { animation-delay: 0.16s; }
 
 .search-result-item:last-child {
   border-bottom: none;
@@ -717,6 +740,7 @@ html.dark-transition *::after {
 
 .search-result-item:hover {
   background-color: #fafafa;
+  transform: translateX(2px);
 }
 
 .search-result-icon-wrapper {
@@ -1034,4 +1058,216 @@ html.dark-transition *::after {
   background: rgba(168, 85, 247, 0.12) !important;
   color: #c084fc !important;
   border-color: rgba(168, 85, 247, 0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN SIDEBAR — Collapse / Expand Transitions
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Smooth width transition */
+.admin-sidebar-transition {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+.admin-sidebar-expanded {
+  width: 256px;
+}
+
+.admin-sidebar-collapsed {
+  width: 64px;
+}
+
+/* Sidebar Link Base styles */
+.admin-sidebar-link {
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.2s ease,
+              color 0.2s ease;
+  height: 42px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.admin-sidebar-expanded .admin-sidebar-link {
+  padding: 0.625rem 0.875rem; /* px-3.5 py-2.5 equivalent */
+  width: 100%;
+}
+
+.admin-sidebar-collapsed .admin-sidebar-link {
+  padding: 0 !important;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Icon scaling in collapsed mode */
+.admin-sidebar-link .sidebar-link-icon {
+  transition: transform 0.2s ease;
+}
+
+.admin-sidebar-collapsed .admin-sidebar-link:hover .sidebar-link-icon {
+  transform: scale(1.1);
+}
+
+/* Sidebar link text fade and height transition */
+.admin-sidebar-link .sidebar-link-text {
+  opacity: 1;
+  max-width: 160px;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
+}
+
+.admin-sidebar-collapsed .admin-sidebar-link .sidebar-link-text {
+  display: none !important;
+}
+
+/* Chevron fade */
+.admin-sidebar-link .sidebar-link-chevron {
+  opacity: 0.6;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-collapsed .admin-sidebar-link .sidebar-link-chevron {
+  display: none !important;
+}
+
+/* Brand container fade */
+.sidebar-brand-container {
+  opacity: 1;
+  max-width: 200px;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-collapsed .sidebar-brand-container {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Section divider transition */
+.sidebar-divider {
+  margin-left: 0.75rem; /* mx-3 */
+  margin-right: 0.75rem;
+  transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-collapsed .sidebar-divider {
+  margin-left: 0.5rem; /* mx-2 */
+  margin-right: 0.5rem;
+}
+
+/* Bottom dot */
+.sidebar-bottom-dot {
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-collapsed .sidebar-bottom-dot {
+  opacity: 1;
+}
+
+/* Toggle button position when collapsed vs expanded */
+.admin-sidebar-toggle-btn {
+  transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s ease;
+}
+
+.admin-sidebar-collapsed .admin-sidebar-toggle-btn {
+  margin: 0 auto;
+}
+
+.admin-sidebar-toggle-btn svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-sidebar-toggle-btn:hover svg {
+  transform: scale(1.15);
+}
+
+.admin-sidebar-toggle-btn:active svg {
+  transform: scale(0.9);
+}
+
+/* Tooltip styles */
+.admin-sidebar-tooltip {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode tooltip adjustments */
+.dark .admin-sidebar-tooltip {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Responsive: hide sidebar on mobile for admin layout ── */
+@media (max-width: 767px) {
+  .admin-sidebar-expanded,
+  .admin-sidebar-collapsed {
+    display: none;
+  }
+}
+
+/* ── Table Row Entry Animations for Search Results ── */
+@keyframes rowAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row-animate {
+  animation: rowAppear 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Modern Custom Scrollbars ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e5e5e5;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3f3f3f;
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e5e5 transparent;
+}
+
+.dark * {
+  scrollbar-color: #2d2d2d transparent;
 }

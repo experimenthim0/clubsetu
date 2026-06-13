@@ -1,9 +1,16 @@
 import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
 }
+
+const normalizeClubId = (clubId) => {
+  if (!clubId) return null;
+  if (typeof clubId === "object") return clubId.id ?? null;
+  return clubId;
+};
 
 /**
  * Generate JWT token.
@@ -18,7 +25,7 @@ export const generateToken = (user, role, userType = "student", clubId = null) =
       userId: user.id,
       role,
       email: user.email,
-      clubId,
+      clubId: normalizeClubId(clubId),
       userType,
     },
     JWT_SECRET,
@@ -26,23 +33,96 @@ export const generateToken = (user, role, userType = "student", clubId = null) =
   );
 };
 
+const getTokensFromRequest = (req) => {
+  const tokens = [];
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) tokens.push(authHeader.slice(7));
+  else if (authHeader) tokens.push(authHeader);
+  if (req.cookies?.token && !tokens.includes(req.cookies.token)) tokens.push(req.cookies.token);
+  return tokens;
+};
+
+const getPrimaryStudentMembership = async (studentId) => {
+  const memberships = await prisma.clubMembership.findMany({ where: { studentId } });
+  const managementMembership = memberships.find((m) =>
+    ["CLUB_HEAD", "COORDINATOR"].includes(m.role),
+  );
+  return managementMembership ?? memberships[0] ?? null;
+};
+
+const getFacultyClub = async (adminId) => {
+  return prisma.club.findFirst({
+    where: { facultyCoordinatorId: adminId },
+    select: { id: true },
+  });
+};
+
 // Verify JWT token middleware
 export const verifyToken = async (req, res, next) => {
-  let token = null;
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.split(" ")[1];
-  } else if (authHeader) {
-    token = authHeader;
-  }
+  const tokens = getTokensFromRequest(req);
 
-  if (!token) {
+  if (tokens.length === 0) {
     return res.status(401).json({ message: "No token provided." });
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { userId, role, email, clubId, userType }
+    let decoded = null;
+    for (const token of tokens) {
+      try {
+        decoded = jwt.verify(token, JWT_SECRET);
+        break;
+      } catch {
+        // Try the next token transport for compatibility during cookie migration.
+      }
+    }
+    if (!decoded) return res.status(401).json({ message: "Invalid or expired token." });
+    const userType = decoded.userType === "admin" ? "admin" : decoded.userType === "external" ? "external" : "student";
+
+    if (userType === "admin") {
+      const admin = await prisma.adminRole.findUnique({
+        where: { id: decoded.userId },
+        select: { id: true, email: true, role: true },
+      });
+      if (!admin) return res.status(401).json({ message: "Invalid or expired token." });
+
+      const facultyClub = admin.role === "facultyCoordinator" ? await getFacultyClub(admin.id) : null;
+      req.user = {
+        userId: admin.id,
+        email: admin.email,
+        role: admin.role,
+        userType: "admin",
+        clubId: facultyClub?.id ?? null,
+      };
+      return next();
+    }
+
+    const student = await prisma.studentUser.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, isBlocked: true },
+    });
+    if (!student || student.isBlocked) {
+      return res.status(401).json({ message: "Invalid or expired token." });
+    }
+
+    if (userType === "external") {
+      req.user = {
+        userId: student.id,
+        email: student.email,
+        role: "external",
+        userType: "external",
+        clubId: null,
+      };
+      return next();
+    }
+
+    const membership = await getPrimaryStudentMembership(student.id);
+    req.user = {
+      userId: student.id,
+      email: student.email,
+      role: membership && ["CLUB_HEAD", "COORDINATOR"].includes(membership.role) ? "club" : "member",
+      userType: "student",
+      clubId: membership?.clubId ?? null,
+    };
     next();
   } catch {
     return res.status(401).json({ message: "Invalid or expired token." });

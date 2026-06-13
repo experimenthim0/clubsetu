@@ -72,7 +72,7 @@ const SendNotification = () => {
         </p>
       </div>
 
-      <div className="bg-white border-2 border-gray-400 rounded-sm  p-6 pr-8">
+      <div className="bg-white border-2 border-gray-300 rounded-sm  p-6 pr-8">
         {successMsg && (
           <div className="mb-6 p-4 bg-green-50 border-2 border-green-600 font-bold text-green-700 text-[13px] rounded-sm flex items-center gap-2">
             <i className="ri-checkbox-circle-fill text-lg"></i>
@@ -89,7 +89,7 @@ const SendNotification = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Target Audience */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-black uppercase tracking-widest text-black">
+            <label className="text-[12px] font-bold uppercase tracking-widest text-black">
               Target Audience
             </label>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -102,7 +102,7 @@ const SendNotification = () => {
                   onChange={() => setTargetType("ALL_STUDENTS")}
                   className="accent-orange-600 scale-125"
                 />
-                <span className="text-sm font-bold text-neutral-800">All Students</span>
+                <span className="text-sm font-medium text-neutral-800">All Students</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -113,7 +113,7 @@ const SendNotification = () => {
                   onChange={() => setTargetType("REGISTERED_STUDENTS")}
                   className="accent-orange-600 scale-125"
                 />
-                <span className="text-sm font-bold text-neutral-800">Registered Students</span>
+                <span className="text-sm font-medium text-neutral-800">Registered Students</span>
               </label>
             </div>
           </div>
@@ -124,6 +124,7 @@ const SendNotification = () => {
               <label className="text-[12px] font-black uppercase tracking-widest text-black">
                 Select Event
               </label>
+              
               <select
                 value={selectedEventId}
                 onChange={(e) => setSelectedEventId(e.target.value)}

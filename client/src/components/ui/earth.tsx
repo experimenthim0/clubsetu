@@ -34,7 +34,7 @@ const CIRCLE_VARIANTS: Variants = {
 };
 
 const EarthIcon = forwardRef<EarthIconHandle, EarthIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
+  ({ onMouseEnter, onMouseLeave, className, size = 20, ...props }, ref) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
 

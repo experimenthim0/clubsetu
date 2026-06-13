@@ -1,9 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
-import Navbar from './components/Navbar';
-import BottomNav from './components/BottomNav';
-import Footer from './components/Footer';
+import AppLayout from './components/AppLayout';
+import AdminLayout from './components/AdminLayout';
 import RouteLoader from './components/RouteLoader';
 import EventFeed from './pages/EventFeed';
 import RegisterStudent from './pages/RegisterStudent';
@@ -45,8 +44,10 @@ import VerifyEmail from './pages/VerifyEmail';
 import FAQ from './pages/FAQ';
 import Aboutfeatures from './pages/Aboutfeatures';
 import CertificateDesigner from './pages/CertificateDesigner';
-// import LostAndFound from './pages/LostAndFound';
-// import LostFoundAdminDashboard from './pages/LostFoundAdminDashboard';
+import LostAndFound from './pages/LostAndFound';
+import LostFoundAdminDashboard from './pages/LostFoundAdminDashboard';
+import LostFoundGuide from './pages/LostFoundGuide';
+import ColorExtractorDemo from './pages/ColorExtractorDemo';
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
@@ -118,58 +119,60 @@ function App() {
       <SocketProvider>
         <Router>
         <RouteLoader>
-        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a] pb-20 md:pb-0">
-          <Navbar />
-          <div className="flex-1">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/clubs" element={<ClubsPage />} />
-            <Route path="/club/:slug" element={<ClubDetails />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            
-            {/* Protected Routes */}
-            <Route path="/club/edit/:id" element={<EditClub />} />
-            <Route path="/club/:clubId/team" element={<ClubMembers />} />
+            {/* ── Admin Layout — separate window, custom navbar/sidebar ── */}
+            <Route element={<AdminLayout />}>
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} />
+            </Route>
 
-            <Route path="/events" element={<EventFeed />} />
-            <Route path="/event/:slug" element={<EventDetails />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<RegisterLanding />} />
-            <Route path="/register/student" element={<RegisterStudent />} />
-            <Route path="/create" element={<CreateEvent />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-events" element={<MyEvents />} />
-            <Route path="/club-events/:clubId" element={<ClubEvents />} />
-            <Route path="/profile/edit" element={<EditProfile />} />
-            <Route path="/events/edit/:id" element={<EditEvent />} />
-            <Route path="/send-notification" element={<SendNotification />} />
-            <Route path="/event/:id/registrations" element={<EventRegistrations />} />
-            <Route path="/event/:id/check-in" element={<CheckIn />} />
-            <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
-            <Route path="/admin-secret-login" element={<AdminLogin />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsAndConditions />} />
-            <Route path="/payment-policy" element={<PaymentPolicy />} />
-            <Route path="/data-privacy" element={<DataPrivacy />} />
-            <Route path="/payments" element={<PaymentTracking />} />
-            <Route path="/event-guide" element={<EventGuide />} />
-            <Route path="/contribute" element={<Contribute />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/verify-email/:token" element={<VerifyEmail />} />
-            <Route path="/faq" element={<FAQ />} />
-          <Route path="/team" element={<Team />} />
-            <Route path="*" element={<NotFound />} />
-            <Route path="/about-features" element={<Aboutfeatures />} />
-            <Route path="/team" element={<Team />} />
-            {/* <Route path="/lost-found" element={<LostAndFound />} />
-            <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} /> */}
+            {/* ── Public Layout — standard navbar/footer ── */}
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/clubs" element={<ClubsPage />} />
+              <Route path="/club/:slug" element={<ClubDetails />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+            
+              {/* Protected Routes */}
+              <Route path="/club/edit/:id" element={<EditClub />} />
+              <Route path="/club/:clubId/team" element={<ClubMembers />} />
+
+              <Route path="/events" element={<EventFeed />} />
+              <Route path="/event/:slug" element={<EventDetails />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<RegisterLanding />} />
+              <Route path="/register/student" element={<RegisterStudent />} />
+              <Route path="/create" element={<CreateEvent />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-events" element={<MyEvents />} />
+              <Route path="/club-events/:clubId" element={<ClubEvents />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
+              <Route path="/events/edit/:id" element={<EditEvent />} />
+              <Route path="/send-notification" element={<SendNotification />} />
+              <Route path="/event/:id/registrations" element={<EventRegistrations />} />
+              <Route path="/event/:id/check-in" element={<CheckIn />} />
+              <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
+              <Route path="/admin-secret-login" element={<AdminLogin />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/payment-policy" element={<PaymentPolicy />} />
+              <Route path="/data-privacy" element={<DataPrivacy />} />
+              <Route path="/payments" element={<PaymentTracking />} />
+              <Route path="/event-guide" element={<EventGuide />} />
+              <Route path="/contribute" element={<Contribute />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/verify-email/:token" element={<VerifyEmail />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/about-features" element={<Aboutfeatures />} />
+              <Route path="/lost-found" element={<LostAndFound />} />
+              <Route path="/lost-found/guide" element={<LostFoundGuide />} />
+              <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
-          </div>
-          <Footer />
-          <BottomNav />
-        </div>
         </RouteLoader>
       </Router>
       </SocketProvider>
@@ -178,3 +181,4 @@ function App() {
 }
 
 export default App;
+

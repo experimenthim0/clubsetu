@@ -69,7 +69,7 @@ const Notifications = () => {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <BellIcon size={22} className="text-orange-600 flex-shrink-0" />
-                <h1 className="text-3xl font-black tracking-tight text-black leading-none">
+                <h1 className="text-3xl font-medium tracking-tight text-black leading-none">
                   Notifications
                 </h1>
                 {unreadCount > 0 && (

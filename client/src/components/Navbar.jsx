@@ -13,9 +13,30 @@ import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
+import { LayoutDashboard } from "lucide-react";
 import SearchBar from "./SearchBar";
 const API_URL = import.meta.env.VITE_API_URL;
 
+
+const LostFoundIcon = ({ size = 24, ...props }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 14 14" 
+    height={size} 
+    width={size} 
+    {...props}
+  >
+    <g id="lost-and-found">
+      <path 
+        fill="currentColor" 
+        fillRule="evenodd" 
+        d="M5.763 2.263A1.75 1.75 0 0 1 8.75 3.5h-3.5c0 -0.464 0.184 -0.91 0.513 -1.237ZM3.75 3.5a3.25 3.25 0 0 1 6.5 0h1.25A2.5 2.5 0 0 1 14 6v5.5a2.5 2.5 0 0 1 -2.5 2.5h-9A2.5 2.5 0 0 1 0 11.5V6a2.5 2.5 0 0 1 2.5 -2.5h1.25Zm2.915 3.067A0.875 0.875 0 1 1 7 8.25a0.625 0.625 0 0 0 -0.625 0.625v1a0.625 0.625 0 1 0 1.25 0v-0.469a2.125 2.125 0 1 0 -2.75 -2.031 0.625 0.625 0 1 0 1.25 0 0.875 0.875 0 0 1 0.54 -0.808Zm0.337 6.308a0.75 0.75 0 1 1 0 -1.5 0.75 0.75 0 0 1 0 1.5Z" 
+        clipRule="evenodd" 
+      />
+    </g>
+  </svg>
+);
 
 const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -162,7 +183,9 @@ const Navbar = () => {
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
     `relative py-1 text-[14px] font-medium tracking-widest transition-all duration-300 group ${
-      isActive(path) ? "text-orange-600" : "text-black hover:text-orange-600"
+      isActive(path)
+        ? "text-orange-600 dark:text-orange-500"
+        : "text-neutral-850 dark:text-neutral-200 hover:text-orange-600 dark:hover:text-orange-500"
     }`;
 
 
@@ -194,8 +217,8 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white/70 backdrop-blur-md transition-shadow duration-200 myfont ${
-          scrolled ? "shadow-sm" : ""
+        className={`sticky top-0 z-50 bg-white/30 dark:bg-[#0a0a0a]/75 border-b border-transparent backdrop-blur-md transition-all duration-200 myfont ${
+          scrolled ? "shadow-sm border-neutral-100/80 dark:border-white/10" : ""
         }`}
       >
         {/* Orange top accent on scroll */}
@@ -203,7 +226,7 @@ const Navbar = () => {
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-orange-600 z-10 pointer-events-none" />
         )} */}
 
-        <div className="max-w-[1200px] mx-auto px-5 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* ── Logo ─────────────────────────────────────────────────────── */}
           <div className="flex items-center sm:gap-5 gap-auto">
           <img src="nitjlogo.png" alt="" className="w-11 h-12"/>
@@ -211,8 +234,8 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont hidden sm:block " 
           >
-            <span className="font-light text-[24px] tracking-wider text-black leading-none select-none">
-              Campus<span className="text-orange-600">Node</span>
+            <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none">
+              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
             </span>
           </Link>
           </div>
@@ -221,8 +244,8 @@ const Navbar = () => {
             to="/"
             className="flex items-center gap-2.5 shrink-0 group logofont sm:hidden block" 
           >
-            <span className="font-light text-[24px] tracking-wider text-black leading-none select-none">
-              Campus<span className="text-orange-600">Node</span>
+            <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none">
+              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
             </span>
           </Link>
 
@@ -230,20 +253,20 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6 ">
             <Link to="/" className={navLinkCls("/")}>
               Home
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/clubs" className={navLinkCls("/clubs")}>
               Clubs
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/clubs") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/clubs") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/events" className={navLinkCls("/events")}>
               Events
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-{/* <Link to="/lost-found" className={navLinkCls("/lost-found")}>
+            <Link to="/lost-found" className={navLinkCls("/lost-found")}>
               Lost & Found
-              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/lost-found") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </Link> */}
+              <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/lost-found") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+            </Link>
             <Link to="/team" className={navLinkCls("/team")}>
               Team
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/team") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
@@ -252,13 +275,13 @@ const Navbar = () => {
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}
           <div className="hidden md:flex items-center gap-2">
-            <div className="w-px h-6 bg-neutral-200" />
+            <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-800" />
 
             {/* Search */}
             <div className="flex items-center" ref={searchWrapperRef}>
               <button
                 onClick={() => setSearchOpen((prev) => !prev)}
-                className="search-trigger-btn"
+                className="search-trigger-btn text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
                 aria-label="Search"
                 title="Search (Ctrl+K)"
               >
@@ -278,7 +301,7 @@ const Navbar = () => {
                 toggleTheme();
                 setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
               }}
-              className="p-2 rounded-sm hover:bg-neutral-200 transition-colors duration-150 cursor-pointer"
+              className="p-2 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
               aria-label="Toggle dark mode"
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -302,40 +325,41 @@ const Navbar = () => {
                   </Link>
                 )}
 
+
                 {/* ── Notification Bell (Members, Faculty, Clubs, Admins) ── */}
                 {(role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
-                      className="relative p-2 rounded-sm  border-transparent  hover:bg-neutral-200 transition-colors duration-150 cursor-pointer"
+                      className="relative p-2 rounded-sm text-neutral-700 dark:text-neutral-300 border-transparent hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
                     >
                      {/* <i className="ri-notification-3-line text-lg" /> */}
                      <BellIcon />
                       {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white dark:border-[#0a0a0a]"></span>
                       )}
                     </button>
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50 mt-1">
-                        <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
-                          <h3 className="text-[14px] font-black  tracking-widest">Notifications</h3>
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800 rounded-sm z-50 mt-1 shadow-lg">
+                        <div className="px-4 py-3 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
+                          <h3 className="text-[14px] font-black tracking-widest text-neutral-800 dark:text-neutral-200">Notifications</h3>
                         </div>
-                        <div className="divide-y divide-neutral-100">
+                        <div className="divide-y divide-neutral-100 dark:divide-neutral-850">
                           {notifications?.length > 0 ? (
                             notifications.slice(0, 4).map((notif, idx) => (
-                              <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
+                              <div key={idx} className={`p-4 transition-colors ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50 dark:bg-orange-500/10' : 'bg-transparent'}`}>
                                 <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[10px] font-medium text-orange-600  tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
-                                  <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt)}</span>
+                                  <span className="text-[10px] font-medium text-orange-600 dark:text-orange-500 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
+                                  <span className="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(notif.createdAt)}</span>
                                 </div>
-                                <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
-                                <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                                <h4 className="text-[13px] font-bold text-black dark:text-neutral-100 mb-1">{notif.title}</h4>
+                                <p className="text-[12px] text-neutral-600 dark:text-neutral-400">{notif.message}</p>
                               </div>
                             ))
                           ) : (
-                            <div className="p-6 text-center text-neutral-500 text-[12px] font-bold uppercase tracking-widest">
+                            <div className="p-6 text-center text-neutral-500 dark:text-neutral-450 text-[12px] font-bold uppercase tracking-widest">
                               No notifications yet
                             </div>
                           )}
@@ -343,10 +367,10 @@ const Navbar = () => {
                         <Link
                           to="/notifications"
                           onClick={() => setNotifDropdownOpen(false)}
-                          className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 border-t-2 border-gray-300 hover:bg-orange-50 transition-colors"
+                          className="block w-full py-2 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 dark:text-orange-500 border-t-2 border-gray-300 dark:border-neutral-800 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
                         >
                           See all notifications
-                          <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
+                          <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
                         </Link>
                       </div>
                     )}
@@ -357,19 +381,15 @@ const Navbar = () => {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((o) => !o)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm border-2 border-transparent hover:bg-gray-200 transition-colors duration-150 cursor-pointer"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-sm border-2 border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
                     aria-haspopup="true"
                     aria-expanded={dropdownOpen}
                   >
-                    {/* Avatar square */}
-                    {/* <div className="w-8 h-8 border-2 border-black rounded-sm flex items-center justify-center text-black text-[11px] font-black shrink-0">
-                      {initials}
-                    </div> */}
-                    <span className="text-[12px] font-bold text-black max-w-[80px] truncate hidden lg:block">
+                    <span className="text-[12px] font-bold text-black dark:text-neutral-200 max-w-[80px] truncate hidden lg:block">
                       {user.name?.split(" ")[0]}
                     </span>
                     <i
-                      className={`ri-arrow-down-s-line text-base text-neutral-500 transition-transform duration-200 ${
+                      className={`ri-arrow-down-s-line text-base text-neutral-500 dark:text-neutral-400 transition-transform duration-200 ${
                         dropdownOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -378,121 +398,63 @@ const Navbar = () => {
                   {/* ── Dropdown panel ── */}
                   {dropdownOpen && (
                     <div
-                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white border-2 border-gray-400 rounded-sm z-50 overflow-hidden mt-2"
+                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white dark:bg-neutral-900 border-2 border-gray-400 dark:border-neutral-800 rounded-sm z-50 overflow-hidden mt-2 shadow-lg"
                       role="menu"
                     >
                       {/* User header */}
-                      <div className="px-4 pt-3 pb-2 border-b border-neutral-100">
-                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 mb-0.5">
+                      <div className="px-4 pt-3 pb-2 border-b border-neutral-100 dark:border-neutral-800">
+                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 dark:text-neutral-500 mb-0.5">
                           Logged in as
                         </p>
-                        <p className="text-[14px] font-black text-black truncate">
+                        <p className="text-[14px] font-black text-black dark:text-neutral-100 truncate">
                           {user.name}
                         </p>
-                        <p className="text-[10px] tracking-widest text-orange-600 font-medium mt-0.5">
+                        <p className="text-[10px] tracking-widest text-orange-600 dark:text-orange-500 font-medium mt-0.5">
                           {role === "club" ? "Club Account" : role === "facultyCoordinator" ? `Faculty Coordinator` : role === "admin" ? "Admin" : role === "lostFoundAdmin" ? "L&F Admin" : "Student"}
                         </p>
                       </div>
 
                       {/* Menu items */}
                       <div className="py-1">
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-black hover:bg-neutral-100 transition-colors"
-                          role="menuitem"
-                        >
-                          <UserIcon size={18} /> Profile
-                        </Link>
-
-                        {role === "member" && (
-                          <Link
-                            to="/my-events"
-                            className="flex items-center gap-2.5 px-4 py-2 text-[12px] text-black hover:bg-neutral-100 transition-colors"
+                        {(role === "admin" || role === "paymentAdmin") ? (
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              window.open("/admin-dashboard", "_blank");
+                            }}
+                            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                             role="menuitem"
                           >
-                            <CalendarDaysIcon size={18} /> My Events
+                            <LayoutDashboard size={18} className="text-neutral-500 dark:text-neutral-400" />
+                            Dashboard
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto text-neutral-400">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                              <polyline points="15 3 21 3 21 9"/>
+                              <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                          </button>
+                        ) : (
+                          <Link
+                            to={
+                              role === "lostFoundAdmin"
+                                ? "/admin/lost-found"
+                                : "/profile"
+                            }
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                            role="menuitem"
+                          >
+                            <LayoutDashboard size={18} className="text-neutral-500 dark:text-neutral-400" />
+                            Dashboard
                           </Link>
-                        )}
-
-                        {((user.memberships && user.memberships.length > 0) || role === 'facultyCoordinator') && (
-                          <div className="border-t border-neutral-100 mt-1 pt-1 text-black">
-                            <p className="px-4 py-1 text-[9px] font-black uppercase tracking-widest text-neutral-400">Management</p>
-                            
-                            {/* Membership-based links (Clubs) */}
-                            {user.memberships?.map((m) => (
-                              <div key={m.clubId} className="pb-2 last:pb-0 border-b border-neutral-50 last:border-0">
-                                <p className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/40 mb-1">
-                                  {m.clubName}
-                                </p>
-                                
-                                {(m.role === "CLUB_HEAD" || m.role === "COORDINATOR" || m.role === "facultyCoordinator" || m.canEditEvents || m.canCheckRegistration || m.canTakeAttendance || m.permissions?.canEditEvents || m.permissions?.canCheckRegistration || m.permissions?.canTakeAttendance) && (
-                                  <Link to={`/club-events/${m.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                    <CalendarCogIcon size={16} className="text-neutral-500" /> Club Events
-                                  </Link>
-                                )}
-
-                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
-                                  <Link to={`/club/${m.clubId}/team`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                    <UserIcon size={16} className="text-neutral-500" /> Team Management
-                                  </Link>
-                                )}
-
-                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
-                                  <>
-                                    <Link to="/payments" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                      <IndianRupeeIcon size={16} className="text-neutral-500" /> Payments
-                                    </Link>
-                                    <Link to="/send-notification" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                      <ConciergeBellIcon size={16} className="text-neutral-500" /> Notifications
-                                    </Link>
-                                  </>
-                                )}
-
-                                {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
-                                  <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                    <LayoutGridIcon size={16} className="text-neutral-500" /> Club Page
-                                  </Link>
-                                )}
-                              </div>
-                            ))}
-
-                            {/* Faculty Coordinator specific links (if not in memberships) */}
-                            {role === 'facultyCoordinator' && user.clubId && (!user.memberships || !user.memberships.find(m => m.clubId === user.clubId)) && (
-                              <div className="pb-2">
-                                <p className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/40 mb-1">
-                                  Faculty Review
-                                </p>
-                                <Link to="/my-events" className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                  <CalendarCogIcon size={16} className="text-neutral-500" /> Review Events
-                                </Link>
-                                <Link to={`/club/${user.clubId}/team`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                  <UserIcon size={16} className="text-neutral-500" /> Team Management
-                                </Link>
-                                <Link to={`/club/edit/${user.clubId}`} className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors">
-                                  <LayoutGridIcon size={16} className="text-neutral-500" /> Club Page
-                                </Link>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {(role === 'admin' || role === 'paymentAdmin') && (
-                          <div className="border-t border-neutral-100 mt-1 pt-1 text-black">
-                            <p className="px-4 py-1 text-[9px] font-black uppercase tracking-widest text-neutral-400">Administration</p>
-                            <Link 
-                              to="/admin-dashboard" 
-                              className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-black hover:bg-neutral-100 transition-colors"
-                            >
-                              <LayoutGridIcon size={16} className="text-neutral-500" /> Admin Panel
-                            </Link>
-                          </div>
                         )}
                       </div>
 
                       {/* Divider + logout */}
-                      <div className="border-t border-neutral-100">
+                      <div className="border-t border-neutral-100 dark:border-neutral-800">
                         <button
                           onClick={handleLogout}
-                          className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[12px] font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
                           role="menuitem"
                         >
                           {/* <i className="ri-logout-box-r-line" /> */}
@@ -510,14 +472,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="relative py-1 text-[11px] font-bold  tracking-widest text-black group transition-colors hover:text-orange-600"
+                  className="relative py-1 text-[11px] font-bold tracking-widest text-black dark:text-neutral-200 group transition-colors hover:text-orange-600 dark:hover:text-orange-500"
                 >
                   Login
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </Link>
                 <Link
                   to="/register/student"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-black text-white border-2 border-black text-[11px] font-bold  tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all duration-150 hover:-translate-y-px"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-black dark:border-neutral-100 text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
                 >
                   <i className="ri-user-add-line text-sm" />
                   Register
@@ -534,10 +496,10 @@ const Navbar = () => {
                 setMobileSearchOpen((prev) => !prev);
                 setNotifDropdownOpen(false);
               }}
-              className="relative  rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+              className="relative p-1.5 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
               aria-label="Search"
             >
-              <i className={`${mobileSearchOpen ? 'ri-close-line' : 'ri-search-line'} text-[20px] text-black`} />
+              <i className={`${mobileSearchOpen ? 'ri-close-line' : 'ri-search-line'} text-[20px]`} />
             </button>
 
             {user ? (
@@ -548,34 +510,34 @@ const Navbar = () => {
                       handleNotificationClick();
                       setMobileSearchOpen(false);
                     }}
-                    className="relative p-1.5 rounded-sm border-2 border-transparent hover:bg-neutral-100 transition-colors duration-150 cursor-pointer"
+                    className="relative p-1.5 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
                   >
-                    <BellIcon size={22} className="text-black" />
+                    <BellIcon size={22} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white"></span>
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white dark:border-[#0a0a0a]"></span>
                     )}
                   </button>
 
                   {/* Mobile Notification Dropdown */}
                   {notifDropdownOpen && (
-                    <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white border-2 border-gray-200 rounded-sm z-50">
-                      <div className="px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center bg-neutral-100 sticky top-0 z-10">
-                        <h3 className="text-[14px] font-black  tracking-widest text-black">Notifications</h3>
+                    <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800 rounded-sm z-50 shadow-lg">
+                      <div className="px-4 py-3 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
+                        <h3 className="text-[14px] font-black tracking-widest text-black dark:text-neutral-200">Notifications</h3>
                       </div>
-                      <div className="divide-y divide-neutral-100">
+                      <div className="divide-y divide-neutral-100 dark:divide-neutral-850">
                         {notifications?.length > 0 ? (
                           notifications.slice(0, 4).map((notif, idx) => (
-                            <div key={idx} className={`p-4 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50' : ''}`}>
+                            <div key={idx} className={`p-4 transition-colors ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50 dark:bg-orange-500/10' : 'bg-transparent'}`}>
                               <div className="flex justify-between items-start mb-1">
-                                <span className="text-[10px] font-medium text-orange-600 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
-                                <span className="text-[10px] text-neutral-500 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
+                                <span className="text-[10px] font-medium text-orange-600 dark:text-orange-500 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
+                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
                               </div>
-                              <h4 className="text-[13px] font-bold text-black mb-1">{notif.title}</h4>
-                              <p className="text-[12px] text-neutral-600">{notif.message}</p>
+                              <h4 className="text-[13px] font-bold text-black dark:text-neutral-100 mb-1">{notif.title}</h4>
+                              <p className="text-[12px] text-neutral-600 dark:text-neutral-400">{notif.message}</p>
                             </div>
                           ))
                         ) : (
-                          <div className="p-6 text-center text-neutral-500 text-[12px] font-bold  tracking-widest">
+                          <div className="p-6 text-center text-neutral-500 dark:text-neutral-450 text-[12px] font-bold tracking-widest">
                             No notifications yet
                           </div>
                         )}
@@ -586,22 +548,32 @@ const Navbar = () => {
                           setNotifDropdownOpen(false);
                           setMobileOpen(false);
                         }}
-                        className="block w-full py-1 text-center flex items-center justify-center gap-1 text-[13px] font-medium  tracking-widest text-orange-600 border-t-2 border-gray-200 bg-neutral-100 hover:bg-orange-50 transition-colors"
+                        className="block w-full py-2 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 dark:text-orange-500 border-t-2 border-gray-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-950 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
                       >
                         See all notifications
-                        <i className="ri-arrow-right-line text-base text-orange-600 transition-transform duration-200" />
+                        <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
                       </Link>
                     </div>
                   )}
                 </div>
               )
             ) : (
-              <Link
-                to="/login"
-                className="px-2 py-1.5 text-black"
-              >
-                <LogInIcon size={22}/>
-              </Link>
+              <button
+              onClick={() => {
+                document.documentElement.classList.add('dark-transition');
+                toggleTheme();
+                setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
+              }}
+              className="p-2 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
+              aria-label="Toggle dark mode"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+              )}
+            </button>
             )}
 
             {/* Hamburger (Removed for BottomNav PWA style) */}

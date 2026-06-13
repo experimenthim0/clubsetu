@@ -12,6 +12,9 @@ import clubMemberRoutes from "./routes/clubMembers.js";
 import notificationRoutes from "./routes/notifications.js";
 import certificateRoutes from "./routes/certificates.js";
 import participationRoutes from "./routes/participation.js";
+import lostFoundRoutes from "./routes/lostFound.js";
+import lostFoundAdminRoutes from "./routes/lostFoundAdmin.js";
+import prisma from "./lib/prisma.js";
 
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -60,7 +63,7 @@ app.use(cookieParser());
 
 console.log("Using PostgreSQL via Prisma");
 app.get("/", (req, res) => {
-  res.send("ClubSetu API Running");
+  res.send("CampusNode API Running");
 });
 
 app.use("/api/events", eventRoutes);
@@ -73,7 +76,33 @@ app.use("/api/clubs", clubRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/participation", participationRoutes);
+app.use("/api/lost-found", lostFoundRoutes);
+app.use("/api/admin/lost-found", lostFoundAdminRoutes);
 
+// Auto-cleanup for reunited items (runs every 6 hours)
+const cleanupReunitedItems = async () => {
+  try {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const deleted = await prisma.lostFoundItem.deleteMany({
+      where: {
+        status: "REUNITED",
+        reunitedAt: {
+          lt: threeDaysAgo
+        }
+      }
+    });
+    if (deleted.count > 0) {
+      console.log(`Auto-cleaned ${deleted.count} reunited items older than 3 days.`);
+    }
+  } catch (error) {
+    console.error("Error running auto-cleanup:", error);
+  }
+};
+
+// Run on startup
+cleanupReunitedItems();
+// Then run every 6 hours
+setInterval(cleanupReunitedItems, 6 * 60 * 60 * 1000);
 
 // Global Error Handler should be the last middleware
 app.use(errorHandler);
@@ -81,3 +110,4 @@ app.use(errorHandler);
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+

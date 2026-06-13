@@ -42,7 +42,7 @@ function formatSender(notification) {
 
 // ── POST /notifications — create & broadcast ──────────────────────────────────
 
-router.post("/", verifyToken, allowRoles("club", "facultyCoordinator"), async (req, res) => {
+router.post("/", verifyToken, allowRoles("club", "facultyCoordinator", "admin"), async (req, res) => {
   try {
     const { targetType, eventId, title, message } = req.body;
     const { userId: sender, userType } = req.user;
@@ -58,11 +58,33 @@ router.post("/", verifyToken, allowRoles("club", "facultyCoordinator"), async (r
         return res.status(400).json({ message: "Event ID is required." });
       }
 
+      const event = await prisma.event.findUnique({ where: { id: eventId } });
+      if (!event) return res.status(404).json({ message: "Event not found." });
+      if (req.user.role === "facultyCoordinator" && event.clubId !== req.user.clubId) {
+        return res.status(403).json({ message: "Access denied for this event." });
+      }
+      if (req.user.role === "club") {
+        const membership = await prisma.clubMembership.findFirst({
+          where: {
+            clubId: event.clubId,
+            studentId: req.user.userId,
+            OR: [{ role: "CLUB_HEAD" }, { canEditEvents: true }],
+          },
+        });
+        if (!membership) return res.status(403).json({ message: "Access denied for this event." });
+      }
+
       const participations = await prisma.participation.findMany({
         where: { eventId },
         select: { studentId: true },
       });
       recipients = participations.map((p) => p.studentId).filter(Boolean);
+    } else if (targetType === "ALL_STUDENTS") {
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Only admins can broadcast to all students." });
+      }
+    } else {
+      return res.status(400).json({ message: "Invalid notification target." });
     }
 
     const notification = await prisma.notification.create({

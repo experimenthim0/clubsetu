@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const LostAndFound = () => {
   const [items, setItems] = useState([]);
@@ -125,16 +126,16 @@ const LostAndFound = () => {
   // Login Gate
   if (!user) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-[#FDFCFB]">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-[#FDFCFB] dark:bg-[#0a0a0a]">
+        <div className="bg-white dark:bg-[#1a1a1a] p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-800 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500 dark:text-orange-400">
             <i className="ri-lock-2-line text-2xl"></i>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
-          <p className="text-gray-500 mb-6 text-sm">You must be logged in to access the CampusNode Lost & Found community.</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">You must be logged in to access the CampusNode Lost & Found community.</p>
           <button 
             onClick={() => navigate('/login')}
-            className="w-full py-3 bg-black text-white rounded-xl text-sm font-semibold hover:bg-orange-500 transition-colors"
+            className="w-full py-3 bg-black dark:bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-500 dark:hover:bg-orange-700 transition-colors"
           >
             Go to Login
           </button>
@@ -144,11 +145,11 @@ const LostAndFound = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] myfont pb-20">
+    <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0a0a0a] myfont pb-20">
       <Toaster position="top-right" />
 
       {/* Hero Section */}
-      <div className="bg-black text-white py-16 px-6 relative overflow-hidden">
+      <div className="bg-white text-black py-16 px-6 relative overflow-hidden">
         <div className="max-w-[1200px] mx-auto relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4">
             Lost <span className="text-orange-500">&</span> Found
@@ -163,32 +164,41 @@ const LostAndFound = () => {
       <div className="max-w-[1200px] mx-auto px-6 mt-10">
 
         {/* Actions Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 gap-4">
-          <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-500 dark:border-neutral-800 pb-6 gap-4">
+          <div className="flex bg-gray-100 dark:bg-neutral-900 p-1 rounded-lg gap-1">
             <button
               onClick={() => setActiveTab('browse')}
-              className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all ${activeTab === 'browse' ? 'bg-black text-white' : 'text-gray-500 hover:text-gray-800'}`}
+              className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all  ${activeTab === 'browse' ? 'bg-black dark:bg-orange-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'} `}
             >
               Browse All
             </button>
             {user && (
               <button
                 onClick={() => setActiveTab('my-items')}
-                className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all ${activeTab === 'my-items' ? 'bg-black text-white' : 'text-gray-500 hover:text-gray-800'}`}
+                className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all ${activeTab === 'my-items' ? 'bg-black dark:bg-orange-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
               >
                 My Posts
               </button>
             )}
           </div>
 
-          {user && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-6 py-2.5 bg-orange-500 text-white rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors"
+          <div className="flex items-center gap-3">
+            <Link 
+              to="/lost-found/guide"
+              className="p-2.5  text-gray-500 dark:text-neutral-400 rounded-full  hover:text-orange-500 transition-all group"
+              title="View Community Guidelines"
             >
-              + Post an Item
-            </button>
-          )}
+              <i className="ri-information-line text-lg" />
+            </Link>
+            {user && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-6 py-2.5 bg-orange-500 text-white rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors shadow-sm cursor-pointer"
+              >
+                + Post an Item
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Cards Grid */}
@@ -196,7 +206,7 @@ const LostAndFound = () => {
           {(activeTab === 'browse' ? items : myItems).map((item) => (
             <div
               key={item.id}
-              className="bg-white border-2 border-gray-300 rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-transform duration-200 group flex flex-col"
+              className="bg-white dark:bg-[#1a1a1a] border-2 border-gray-300 dark:border-neutral-800 rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-transform duration-200 group flex flex-col"
             >
               {/* Image */}
               <div className="aspect-video bg-gray-50 relative overflow-hidden">
@@ -209,24 +219,24 @@ const LostAndFound = () => {
                 )}
 
                 {/* Type badge */}
-                <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${item.type === 'LOST' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${item.type === 'LOST' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
                   {item.type}
                 </span>
 
                 {/* Resolved overlay */}
                 {item.status === 'REUNITED' && (
-                  <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center z-10">
-                    <span className="px-5 py-1.5 bg-black text-white rounded-full text-xs font-semibold -rotate-6">Reunited ✓</span>
+                  <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-[2px] flex items-center justify-center z-10">
+                    <span className="px-5 py-1.5 bg-black dark:bg-orange-600 text-white rounded-full text-xs font-semibold -rotate-6">Reunited ✓</span>
                   </div>
                 )}
               </div>
 
               {/* Body */}
               <div className="p-5 flex flex-col flex-1">
-                <h3 className="text-base font-bold text-gray-900 leading-snug line-clamp-1 mb-1">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-4 flex-1">{item.description}</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white leading-snug line-clamp-1 mb-1">{item.title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed line-clamp-2 mb-4 flex-1">{item.description}</p>
 
-                <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-4">
+                <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-4">
                   <i className="ri-calendar-line" />
                   <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                   <span className="mx-1">·</span>
@@ -238,7 +248,7 @@ const LostAndFound = () => {
                   {activeTab === 'my-items' && item.status === 'ACTIVE' && (
                     <button
                       onClick={() => handleResolve(item.id)}
-                      className="flex-1 py-2 bg-black text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+                      className="flex-1 py-2 bg-black dark:bg-orange-600 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 dark:hover:bg-orange-700 transition-colors"
                     >
                       Mark as Reunited
                     </button>
@@ -246,7 +256,7 @@ const LostAndFound = () => {
                   {activeTab === 'browse' && user && item.userId !== user.id && item.status === 'ACTIVE' && (
                     <button
                       onClick={() => handleClaim(item)}
-                      className="flex-1 py-2 bg-orange-50 text-orange-600 border border-orange-200 rounded-lg text-xs font-semibold hover:bg-orange-100 transition-colors"
+                      className="flex-1 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 rounded-lg text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                     >
                       {item.type === 'LOST' ? "I found this" : "It's Mine"}
                     </button>
@@ -259,8 +269,8 @@ const LostAndFound = () => {
 
         {(activeTab === 'browse' ? items : myItems).length === 0 && (
           <div className="py-24 text-center">
-            <i className="ri-search-line text-5xl text-gray-200 mb-4 block" />
-            <h3 className="text-xl font-semibold text-gray-300">No items found</h3>
+            <i className="ri-search-line text-5xl text-gray-200 dark:text-neutral-800 mb-4 block" />
+            <h3 className="text-xl font-semibold text-gray-300 dark:text-neutral-700">No items found</h3>
           </div>
         )}
       </div>
@@ -268,32 +278,32 @@ const LostAndFound = () => {
       {/* Post Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-lg p-8 relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-lg p-8 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
             >
               <i className="ri-close-line" />
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Post an Item</h2>
-            <p className="text-sm text-gray-400 mb-6">Help the community find what's been lost or claimed.</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Post an Item</h2>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Help the community find what's been lost or claimed.</p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Item Title</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Item Title</label>
                 <input
                   type="text" name="title" value={formData.title} onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-800 placeholder-gray-300 focus:border-orange-400 focus:outline-none transition-colors"
+                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors"
                   placeholder="e.g. Blue water bottle at Library" required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Type</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Type</label>
                 <select
                   name="type" value={formData.type} onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-800 focus:border-orange-400 focus:outline-none transition-colors"
+                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 focus:border-orange-400 focus:outline-none transition-colors"
                 >
                   <option value="Lost">Lost</option>
                   <option value="Found">Found</option>
@@ -301,36 +311,36 @@ const LostAndFound = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Description</label>
                 <textarea
                   name="description" value={formData.description} onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-800 placeholder-gray-300 focus:border-orange-400 focus:outline-none transition-colors h-24 resize-none"
+                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors h-24 resize-none"
                   placeholder="Where, when, and any unique marks…" required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">WhatsApp Number <span className="font-normal text-gray-300">(optional)</span></label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">WhatsApp Number <span className="font-normal text-gray-300 dark:text-neutral-700">(optional)</span></label>
                 <input
                   type="text" name="whatsapp" value={formData.whatsapp} onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-800 placeholder-gray-300 focus:border-orange-400 focus:outline-none transition-colors"
+                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors"
                   placeholder="e.g. 9876543210"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Item Image <span className="font-normal text-gray-300">(max 5 MB)</span></label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Item Image <span className="font-normal text-gray-300 dark:text-neutral-700">(max 5 MB)</span></label>
                 <input type="file" id="file-input" accept="image/*" onChange={handleFileChange} className="hidden" />
                 <label
                   htmlFor="file-input"
-                  className={`flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-lg p-4 text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                  className={`flex items-center justify-center gap-2 border border-dashed border-gray-300 dark:border-neutral-800 rounded-lg p-4 text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
                 >
                   <i className={uploading ? 'ri-loader-4-line animate-spin' : 'ri-upload-2-line'} />
                   {uploading ? 'Uploading…' : formData.image_url ? 'Change image' : 'Select image'}
                 </label>
 
                 {formData.image_url && (
-                  <div className="relative mt-3 rounded-lg overflow-hidden border border-gray-200 h-36">
+                  <div className="relative mt-3 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-800 h-36">
                     <img src={formData.image_url} alt="Preview" className="w-full h-full object-contain" />
                     <button
                       type="button"
@@ -345,7 +355,7 @@ const LostAndFound = () => {
 
               <button
                 type="submit" disabled={loading || uploading}
-                className="w-full py-3 bg-black text-white rounded-xl text-sm font-semibold hover:bg-orange-500 transition-colors disabled:opacity-50"
+                className="w-full py-3 bg-black dark:bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-500 dark:hover:bg-orange-700 transition-colors disabled:opacity-50"
               >
                 {loading ? 'Publishing…' : 'Publish Post'}
               </button>
@@ -357,25 +367,25 @@ const LostAndFound = () => {
       {/* Contact Modal */}
       {selectedContact && selectedContact.contact_info && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-sm p-7 relative">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-sm p-7 relative">
             <button
               onClick={() => setSelectedContact(null)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
             >
               <i className="ri-close-line" />
             </button>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-5">Contact Details</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Contact Details</h2>
 
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400 font-medium mb-0.5">Posted by</p>
-                <p className="text-base font-bold text-gray-800">{selectedContact.contact_info.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Posted by</p>
+                <p className="text-base font-bold text-gray-800 dark:text-gray-200">{selectedContact.contact_info.name}</p>
               </div>
 
               <div>
-                <p className="text-xs text-gray-400 font-medium mb-0.5">Email</p>
-                <p className="text-sm text-gray-600 break-all">{selectedContact.contact_info.email}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Email</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 break-all">{selectedContact.contact_info.email}</p>
               </div>
 
               {selectedContact.contact_info.whatsapp ? (
@@ -395,15 +405,15 @@ const LostAndFound = () => {
                       <i className="ri-phone-line" /> Call
                     </a>
                   </div>
-                  <p className="text-center text-xs text-gray-400">+91 {selectedContact.contact_info.whatsapp}</p>
+                  <p className="text-center text-xs text-gray-400 dark:text-gray-500">+91 {selectedContact.contact_info.whatsapp}</p>
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 italic pt-2 border-t border-gray-100">No phone number provided — reach out via email.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 italic pt-2 border-t border-gray-100 dark:border-neutral-800">No phone number provided — reach out via email.</p>
               )}
 
               <button
                 onClick={() => setSelectedContact(null)}
-                className="w-full mt-2 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors"
+                className="w-full mt-2 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Close
               </button>

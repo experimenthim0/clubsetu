@@ -7,7 +7,7 @@ dotenv.config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (options) => {
-  const fromName = process.env.EMAIL_FROM_NAME || "ClubSetu Support";
+  const fromName = process.env.EMAIL_FROM_NAME || "CampusNode Support";
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
   try {

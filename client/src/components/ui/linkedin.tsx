@@ -83,7 +83,7 @@ const CIRCLE_VARIANTS: Variants = {
 };
 
 const LinkedinIcon = forwardRef<LinkedinIconHandle, LinkedinIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
+  ({ onMouseEnter, onMouseLeave, className, size = 20, ...props }, ref) => {
     const pathControls = useAnimation();
     const rectControls = useAnimation();
     const circleControls = useAnimation();

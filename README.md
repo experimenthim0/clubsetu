@@ -1,6 +1,6 @@
-# ClubSetu — Campus Event Management System 🎓🚀
+# CampusNode — Campus Event Management System 🎓🚀
 
-Hi! I'm **Nikhil Yadav**, a student at NIT Jalandhar. Welcome to **ClubSetu**, a full-stack web application designed to simplify how we manage and participate in campus events.
+Hi! I'm **Nikhil Yadav**, a student at NIT Jalandhar. Welcome to **CampusNode**, a full-stack web application designed to simplify how we manage and participate in campus events.
 
 ---
 
@@ -15,7 +15,7 @@ As a student, I noticed that managing club events on campus was always chaotic:
 
 ## 💡 The Solution
 
-**ClubSetu** solves these problems by providing a centralized platform for everyone on campus:
+**CampusNode** solves these problems by providing a centralized platform for everyone on campus:
 
 - **For Students**: A single dashboard to browse all events, register with one click, pay securely, and track their participation.
 - **For Club Heads**: A powerful dashboard to create events, manage registrations (with custom forms!), track payments in real-time, and download attendee lists.

@@ -94,170 +94,170 @@ const EditProfile = () => {
     return (
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
             <div className="flex justify-between items-center mb-6 md:mb-8">
-                <h1 className="text-2xl md:text-3xl font-black text-black">Edit Profile</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 tracking-tight">Edit Profile</h1>
                 <button 
                     onClick={() => navigate('/profile')}
-                    className="text-[14px] font-bold  tracking-widest text-neutral-400 hover:text-black transition-colors"
+                    className="text-sm font-semibold tracking-wide text-neutral-400 hover:text-orange-600 transition-colors cursor-pointer"
                 >
                    Go Back
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border-2 border-gray-300 rounded-sm space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border border-neutral-200 rounded-xl space-y-6 shadow-sm">
                 
                 {/* Read Only Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50 p-4 border border-neutral-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50/50 p-4 border border-neutral-200 rounded-lg">
                     <div>
-                        <label className="block text-[10px] font-black text-neutral-400  tracking-widest">Roll No</label>
-                        <p className="font-mono text-neutral-800 text-sm">{user.rollNo}</p>
+                        <label className="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</label>
+                        <p className="font-mono text-neutral-600 text-sm">{user.rollNo}</p>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-neutral-400  tracking-widest">Email</label>
-                        <p className="font-mono text-neutral-800 text-sm break-all">{user.email}</p>
+                        <label className="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Email</label>
+                        <p className="font-mono text-neutral-600 text-sm break-all">{user.email}</p>
                     </div>
                 </div>
 
                 {/* Editable Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Full Name</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Full Name</label>
                         <input 
                             type="text" 
                             name="name" 
                             value={formData.name} 
                             onChange={handleChange}
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">GitHub URL</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">GitHub URL</label>
                         <input 
                             type="url" 
                             name="githubProfile" 
                             value={formData.githubProfile} 
                             onChange={handleChange}
                             placeholder="https://github.com/experimenthim0"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">LinkedIn URL</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">LinkedIn URL</label>
                         <input 
                             type="url" 
                             name="linkedinProfile" 
                             value={formData.linkedinProfile} 
                             onChange={handleChange}
                             placeholder="https://linkedin.com/in/nikhilydv0148"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">X (Twitter) URL</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">X (Twitter) URL</label>
                         <input 
                             type="url" 
                             name="xProfile" 
                             value={formData.xProfile} 
                             onChange={handleChange}
                             placeholder="https://x.com/nikhil0148"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Portfolio Website</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Portfolio Website</label>
                         <input 
                             type="url" 
                             name="portfolioUrl" 
                             value={formData.portfolioUrl} 
                             onChange={handleChange}
                             placeholder="https://nikhim.me"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">Instagram URL</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Instagram URL</label>
                         <input 
                             type="url" 
                             name="instagramProfile" 
                             value={formData.instagramProfile} 
                             onChange={handleChange}
                             placeholder="https://instagram.com/jankaritag.in"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-neutral-700  tracking-widest mb-2">WhatsApp Number</label>
+                        <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">WhatsApp Number</label>
                         <input 
                             type="tel" 
                             name="whatsappNumber" 
                             value={formData.whatsappNumber} 
                             onChange={handleChange}
                             placeholder="+91 98765 43210"
-                            className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors"
+                            className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
                 </div>
                 
                 {/* Bank Information section - Restored for Club Account */}
                 {(role === 'club') && (
-                    <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">
+                    <div className="pt-8 md:pt-10 border-t border-neutral-200 space-y-6">
                         <div className="flex items-center gap-3">
                              <i className="ri-bank-card-line text-orange-600 text-xl" />
-                             <h3 className="font-black text-black tracking-tight">Financial Information</h3>
+                             <h3 className="font-bold text-neutral-900 tracking-tight">Financial Information</h3>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Bank Name</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Bank Name</label>
                                 <input 
                                     type="text" name="bankName" value={formData.bankName} onChange={handleChange}
                                     placeholder="e.g. State Bank of India"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Account Holder Name</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Account Holder Name</label>
                                 <input 
                                     type="text" name="accountHolderName" value={formData.accountHolderName} onChange={handleChange}
                                     placeholder="Account Holder Name"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Account Number</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Account Number</label>
                                 <input 
                                     type="text" name="accountNumber" value={formData.accountNumber} onChange={handleChange}
                                     placeholder="Account Number"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono font-bold"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 font-mono font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">IFSC Code</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">IFSC Code</label>
                                 <input 
                                     type="text" name="ifscCode" value={formData.ifscCode} onChange={handleChange}
                                     placeholder="IFSC Code"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-mono font-bold"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 font-mono font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">UPI ID</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">UPI ID</label>
                                 <input 
                                     type="text" name="upiId" value={formData.upiId} onChange={handleChange}
                                     placeholder="e.g. nikhil@upi"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold text-orange-600"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-orange-655 text-orange-600 font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 tracking-widest mb-2">Linked Phone Number</label>
+                                <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Linked Phone Number</label>
                                 <input 
                                     type="tel" name="bankPhone" value={formData.bankPhone} onChange={handleChange}
                                     placeholder="Linked Phone Number"
-                                    className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none transition-colors font-bold"
+                                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 font-bold"
                                 />
                             </div>
                         </div>
@@ -266,30 +266,30 @@ const EditProfile = () => {
 
 
                 {/* Change Password Section */}
-                <div className="pt-8 md:pt-10 border-t-2 border-black space-y-6">
+                <div className="pt-8 md:pt-10 border-t border-neutral-200 space-y-6">
                     <div className="flex items-center gap-3">
-                         <i className="ri-lock-2-fill text-orange-600 text-xl" />
-                         <h3 className="font-black text-black  tracking-tight">Security & Auth</h3>
+                          <i className="ri-lock-2-fill text-orange-600 text-xl" />
+                          <h3 className="font-bold text-neutral-900 tracking-tight">Security & Auth</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         <div>
-                            <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">Current Password</label>
+                            <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Current Password</label>
                             <input 
                                 type="password" 
                                 name="currentPassword" 
                                 value={formData.currentPassword || ''} 
                                 onChange={handleChange}
-                                className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none"
+                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-neutral-500  tracking-widest mb-2">New Password (Optional)</label>
+                            <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">New Password (Optional)</label>
                             <input 
                                 type="password" 
                                 name="newPassword" 
                                 value={formData.newPassword || ''} 
                                 onChange={handleChange}
-                                className="w-full p-3 border-2 border-neutral-200 rounded-sm focus:border-black outline-none"
+                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                             />
                         </div>
                     </div>
@@ -299,13 +299,13 @@ const EditProfile = () => {
 
                     {/* 2FA Toggle */}
                     {(!['member', 'student'].includes(role)) && (
-                    <div className="pt-6 border-t border-neutral-100">
-                        <label className="flex items-center justify-between p-4 bg-orange-50 border-2 border-orange-200 rounded-sm cursor-pointer group hover:border-orange-600 transition-colors">
+                    <div className="pt-6 border-t border-neutral-200">
+                        <label className="flex items-center justify-between p-4 bg-orange-50/40 border border-orange-200 rounded-xl cursor-pointer group hover:border-orange-500 transition-colors">
                             <div className="flex items-center gap-3">
                                 <i className="ri-shield-check-line text-2xl text-orange-600" />
                                 <div>
-                                    <p className="text-sm font-black text-black  tracking-tight">2-Step Verification</p>
-                                    <p className="text-[10px] text-neutral-600">Requires an email OTP code every time you login.</p>
+                                    <p className="text-sm font-semibold text-neutral-900 tracking-tight">2-Step Verification</p>
+                                    <p className="text-[10px] text-neutral-500">Requires an email OTP code every time you login.</p>
                                 </div>
                             </div>
                             <div className="relative inline-flex items-center cursor-pointer">
@@ -314,6 +314,7 @@ const EditProfile = () => {
                                     checked={formData.isTwoStepEnabled}
                                     onChange={(e) => setFormData({ ...formData, isTwoStepEnabled: e.target.checked })}
                                     className="sr-only peer" 
+                                    id="isTwoStepEnabledToggle"
                                 />
                                 <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                             </div>
@@ -326,14 +327,14 @@ const EditProfile = () => {
                     <button 
                         type="button" 
                         onClick={() => navigate('/profile')}
-                        className="flex-1 py-4 border-2 border-black text-black font-black  tracking-widest rounded-sm transition-colors hover:bg-gray-300/40 cursor-pointer"
+                        className="flex-1 py-2.5 border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors hover:bg-neutral-50 cursor-pointer shadow-sm"
                     >
                         Discard
                     </button>
                     <button 
                         type="submit" 
                         disabled={isSaving}
-                        className={`flex-1 py-4 text-white font-black cursor-pointer tracking-widest rounded-sm transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}
+                        className={`flex-1 py-2.5 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer ${isSaving ? 'bg-neutral-300 cursor-not-allowed shadow-none' : 'bg-orange-600 hover:bg-orange-700'}`}
                     >
                         {isSaving ? 'Saving…' : 'Update Profile'}
                     </button>

@@ -1,6 +1,6 @@
-# ClubSetu — Backend Database Schema 🗄️
+# CampusNode — Backend Database Schema 🗄️
 
-This document outlines the database architecture for ClubSetu, detailng the Mongoose models and their relationships.
+This document outlines the database architecture for CampusNode, detailng the Mongoose models and their relationships.
 
 ---
 

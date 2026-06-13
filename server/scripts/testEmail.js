@@ -20,7 +20,7 @@ const testEmail = async () => {
   try {
     await sendEmail({
       email: recipientEmail,
-      subject: "Test Email from ClubSetu (Resend)",
+      subject: "Test Email from CampusNode (Resend)",
       message: `
         <h1>It Works!</h1>
         <p>This is a test email sent using Resend integration.</p>

@@ -1,6 +1,6 @@
-# ClubSetu API Endpoints Documentation
+# CampusNode API Endpoints Documentation
 
-This document lists all the available API endpoints in the ClubSetu backend for the frontend designer.
+This document lists all the available API endpoints in the CampusNode backend for the frontend designer.
 
 **Base URL:** `http://localhost:5000/api` (Development)
 

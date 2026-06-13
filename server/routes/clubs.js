@@ -1,6 +1,5 @@
 import express from "express";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
-import { slugify } from "../utils/slugify.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import prisma from "../lib/prisma.js";
 import { serializeEvent } from "../utils/postgresEventSerializer.js";
@@ -121,66 +120,62 @@ router.put("/:id", verifyToken, allowRoles("admin", "club", "facultyCoordinator"
       updates.slug = await slugifyUnique(updates.clubName, 'club', 'slug', targetClubId);
     }
 
-    const club = await prisma.club.update({
-      where: { id: targetClubId },
-      data: updates,
-    });
-
-    if (req.body.socialLinks && Array.isArray(req.body.socialLinks)) {
-      await prisma.clubSocialLink.deleteMany({
-        where: { clubId: targetClubId },
+    const updatedClub = await prisma.$transaction(async (tx) => {
+      await tx.club.update({
+        where: { id: targetClubId },
+        data: updates,
       });
-      if (req.body.socialLinks.length > 0) {
-        await prisma.clubSocialLink.createMany({
-          data: req.body.socialLinks.map(link => ({
-            id: crypto.randomBytes(12).toString("hex"),
-            clubId: targetClubId,
-            platform: link.platform,
-            url: link.url
-          }))
-        });
-      }
-    }
 
-    if (req.body.clubGallery && Array.isArray(req.body.clubGallery)) {
-      await prisma.media.deleteMany({
-        where: { clubId: targetClubId, eventId: null }
+      if (req.body.socialLinks && Array.isArray(req.body.socialLinks)) {
+        await tx.clubSocialLink.deleteMany({ where: { clubId: targetClubId } });
+        if (req.body.socialLinks.length > 0) {
+          await tx.clubSocialLink.createMany({
+            data: req.body.socialLinks.map(link => ({
+              id: crypto.randomBytes(12).toString("hex"),
+              clubId: targetClubId,
+              platform: link.platform,
+              url: link.url
+            }))
+          });
+        }
+      }
+
+      if (req.body.clubGallery && Array.isArray(req.body.clubGallery)) {
+        await tx.media.deleteMany({ where: { clubId: targetClubId, eventId: null } });
+        if (req.body.clubGallery.length > 0) {
+          await tx.media.createMany({
+            data: req.body.clubGallery.map(url => ({
+              id: crypto.randomBytes(12).toString("hex"),
+              clubId: targetClubId,
+              url,
+              type: "IMAGE"
+            }))
+          });
+        }
+      }
+
+      if (req.body.clubSponsors && Array.isArray(req.body.clubSponsors)) {
+        await tx.sponsor.deleteMany({ where: { clubId: targetClubId, eventId: null } });
+        if (req.body.clubSponsors.length > 0) {
+          await tx.sponsor.createMany({
+            data: req.body.clubSponsors.map(url => ({
+              id: crypto.randomBytes(12).toString("hex"),
+              clubId: targetClubId,
+              name: "Sponsor",
+              logoUrl: url
+            }))
+          });
+        }
+      }
+
+      return tx.club.findUnique({
+        where: { id: targetClubId },
+        include: {
+          socialLinks: true,
+          media: { where: { eventId: null } },
+          sponsors: { where: { eventId: null } }
+        }
       });
-      if (req.body.clubGallery.length > 0) {
-        await prisma.media.createMany({
-          data: req.body.clubGallery.map(url => ({
-            id: crypto.randomBytes(12).toString("hex"),
-            clubId: targetClubId,
-            url: url,
-            type: "IMAGE"
-          }))
-        });
-      }
-    }
-    if (req.body.clubSponsors && Array.isArray(req.body.clubSponsors)) {
-      await prisma.sponsor.deleteMany({
-        where: { clubId: targetClubId, eventId: null }
-      });
-      if (req.body.clubSponsors.length > 0) {
-        await prisma.sponsor.createMany({
-          data: req.body.clubSponsors.map(url => ({
-            id: crypto.randomBytes(12).toString("hex"),
-            clubId: targetClubId,
-            name: "Sponsor",
-            logoUrl: url
-          }))
-        });
-      }
-    }
-
-
-    const updatedClub = await prisma.club.findUnique({
-      where: { id: targetClubId },
-       include: { 
-        socialLinks: true,
-        media: { where: { eventId: null } },
-        sponsors: { where: { eventId: null } }
-      }
     });
 
     res.json({

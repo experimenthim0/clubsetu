@@ -62,7 +62,7 @@ const TAIL_VARIANTS: Variants = {
 };
 
 const GithubIcon = forwardRef<GithubIconHandle, GithubIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
+  ({ onMouseEnter, onMouseLeave, className, size = 20, ...props }, ref) => {
     const bodyControls = useAnimation();
     const tailControls = useAnimation();
     const isControlledRef = useRef(false);

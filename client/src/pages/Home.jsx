@@ -225,7 +225,7 @@ const Home = () => {
 
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+        <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
           <ScrollReveal direction="up">
             <div className="mb-12">
               <SectionLabel>Latest Happenings</SectionLabel>
@@ -368,8 +368,8 @@ const Home = () => {
                 className="w-full h-[400px] object-cover rounded-xl border border-neutral-200"
                 style={{ filter: "saturate(0.9)" }}
               />
-              <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-200 rounded-lg px-4 py-3">
-                <p className="text-lg font-black leading-none">1-Click</p>
+              <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-500 dark:border-gray-200 rounded-lg px-4 py-3">
+                <p className="text-lg font-black text-[#0d1422] leading-none">1-Click</p>
                 <p className="text-[11px] text-[#0d1422] mt-0.5">Event Registration</p>
               </div>
             </div>

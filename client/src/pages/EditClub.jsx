@@ -207,6 +207,7 @@ const EditClub = () => {
           clubId: res.data.club._id,
           clubSlug: res.data.club.slug || "",
           clubName: res.data.club.clubName || storedUser.clubName,
+          isClubAdded: true,
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
       }

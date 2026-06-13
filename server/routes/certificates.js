@@ -8,7 +8,15 @@ import {
 } from "../controllers/certificateController.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    return cb(new Error("Only jpeg, png, and webp images are allowed."), false);
+  },
+});
 
 // All certificate routes require authentication
 router.use(verifyToken);

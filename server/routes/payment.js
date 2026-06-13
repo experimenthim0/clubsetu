@@ -112,36 +112,61 @@ router.post(
       const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
 
-      const existing = await prisma.participation.findFirst({
-        where: { eventId, studentId: studentId },
-      });
-      if (existing) {
-        return res.status(400).json({ message: "Already registered", success: false });
-      }
-
       const participationId = createObjectId();
+      let registrationStatus = "REGISTERED";
 
       await prisma.$transaction(async (tx) => {
+        const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
+        if (!latestEvent) throw new Error("Event not found");
+
+        const student = await tx.studentUser.findUnique({ where: { id: studentId } });
+        if (!student) throw new Error("User not found");
+
+        if (
+          latestEvent.allowedPrograms?.length > 0 &&
+          student.program &&
+          !latestEvent.allowedPrograms.includes(student.program)
+        ) {
+          throw new Error("Ineligible program.");
+        }
+
+        const existing = await tx.participation.findFirst({
+          where: { eventId, studentId },
+        });
+        if (existing) throw new Error("Already registered");
+
+        registrationStatus =
+          latestEvent.totalSeats > 0 && latestEvent.registeredCount >= latestEvent.totalSeats
+            ? "WAITLISTED"
+            : "REGISTERED";
+
         await tx.participation.create({
           data: {
             id: participationId,
             eventId,
             studentId,
-            status: "REGISTERED",
+            status: registrationStatus,
             paymentId,
             orderId,
             qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
             paymentStatus: "SUCCESS",
-            amountPaid: event.entryFee,
+            amountPaid: latestEvent.entryFee,
             paymentTimestamp: new Date(),
             formResponses: formResponses || {},
           },
         });
 
-        await tx.event.update({
-          where: { id: eventId },
-          data: { registeredCount: { increment: 1 } },
-        });
+        if (registrationStatus === "REGISTERED") {
+          await tx.event.update({
+            where: { id: eventId },
+            data: { registeredCount: { increment: 1 } },
+          });
+        } else {
+          await tx.event.update({
+            where: { id: eventId },
+            data: { waitingListIds: { push: participationId } },
+          });
+        }
       });
 
       res.json({
@@ -151,11 +176,14 @@ router.post(
           id: participationId,
           eventTitle: event.title,
           amountPaid: event.entryFee,
-          status: "REGISTERED",
+          status: registrationStatus,
         },
       });
     } catch (error) {
-      res.status(500).json({
+      const statusCode = ["Already registered", "Ineligible program.", "Event not found", "User not found"].includes(error.message)
+        ? 400
+        : 500;
+      res.status(statusCode).json({
         message: "Verification failed",
         error: error.message,
         success: false,

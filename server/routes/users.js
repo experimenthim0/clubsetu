@@ -60,14 +60,16 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied." });
   }
 
-  const updates = { ...req.body };
+  const studentAllowedFields = ["name", "branch", "year", "program"];
+  const adminAllowedFields = ["name"];
+  const allowedFields = userType === "admin" ? adminAllowedFields : studentAllowedFields;
+  const updates = Object.fromEntries(
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
+  );
 
-  // Prevent updates to restricted fields (some are model-specific but safe to remove regardless)
-  delete updates.email;
-  delete updates.rollNo;
-  delete updates.password;
-  delete updates.role;
-  delete updates.isApproved;
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: "No allowed profile fields provided." });
+  }
 
   try {
     let user;

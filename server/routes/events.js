@@ -1,30 +1,62 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
-import { slugify } from "../utils/slugify.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import prisma from "../lib/prisma.js";
 import { serializeEvent, serializeParticipation } from "../utils/postgresEventSerializer.js";
 import { createObjectId } from "../utils/objectId.js";
 import { z } from "zod";
 import { validate, objectIdSchema } from "../middleware/validate.js";
+import multer from "multer";
+import { uploadImage } from "../utils/cloudinary.js";
 
 const router = express.Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files (jpeg, png, webp, gif) are allowed."), false);
+    }
+  },
+});
+
+// POST /api/events/upload - Handle image upload for event poster
+router.post("/upload", verifyToken, allowRoles("club", "admin"), upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+
+    const result = await uploadImage(req.file.buffer, "event-posters");
+    res.json({ 
+      secure_url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (error) {
+    console.error("Upload Route Error:", error);
+    res.status(500).json({ message: "Upload failed.", error: error.message });
+  }
+});
 
 // Helper function to check if a user has access to a club's events
 async function checkEventAccess(req, eventClubId, requiredPermission = null) {
   if (req.user.role === 'admin') return true;
   if (req.user.role === 'facultyCoordinator') return String(req.user.clubId) === String(eventClubId);
-  
+
   if (['club', 'member', 'student'].includes(req.user.role)) {
-      const membership = await prisma.clubMembership.findFirst({
-          where: { studentId: req.user.userId, clubId: eventClubId }
-      });
-      if (!membership && String(req.user.clubId) === String(eventClubId)) return true;
-      if (!membership) return false;
-      if (membership.role === 'CLUB_HEAD') return true;
-      if (requiredPermission && !membership[requiredPermission]) return false;
-      return true;
+    const membership = await prisma.clubMembership.findFirst({
+      where: { studentId: req.user.userId, clubId: eventClubId }
+    });
+    if (!membership && String(req.user.clubId) === String(eventClubId)) return true;
+    if (!membership) return false;
+    if (membership.role === 'CLUB_HEAD') return true;
+    if (requiredPermission && !membership[requiredPermission]) return false;
+    return true;
   }
   return false;
 }
@@ -156,7 +188,7 @@ router.get(
     try {
       const targetClubId = req.params.clubId;
       if (!(await checkEventAccess(req, targetClubId))) {
-         return res.status(403).json({ message: "Access denied. You don't have permission to view this club's events." });
+        return res.status(403).json({ message: "Access denied. You don't have permission to view this club's events." });
       }
 
       const events = await prisma.event.findMany({
@@ -353,6 +385,15 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
       });
     }
 
+    const targetClubId = req.user.role === "admin" ? req.body.clubId : req.user.clubId;
+    if (!targetClubId) {
+      return res.status(400).json({ message: "Club ID is required." });
+    }
+    const targetClub = await prisma.club.findUnique({ where: { id: targetClubId } });
+    if (!targetClub) {
+      return res.status(404).json({ message: "Club not found." });
+    }
+
     const start = new Date(startTime);
     const end = new Date(endTime);
 
@@ -383,14 +424,14 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
         requiredFields: requiredFields || [],
         customFields: customFields || [],
         createdById: req.user.userId,
-        clubId: req.user.clubId || req.body.clubId,
+        clubId: targetClubId,
         allowedPrograms: allowedPrograms || ["BTECH", "MTECH", "OTHER"],
         allowedYears: allowedYears || [],
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
         slug: await slugifyUnique(title, 'event', 'slug'),
         reviewStatus: "PENDING",
         sponsors: { createMany: { data: (sponsors || []).map(s => ({ id: createObjectId(), ...s })) } },
-        media:    { createMany: { data: (media    || []).map(m => ({ id: createObjectId(), ...m })) } },
+        media: { createMany: { data: (media || []).map(m => ({ id: createObjectId(), ...m })) } },
       },
       include: eventInclude,
     });
@@ -494,6 +535,12 @@ router.post(
       const eventId = req.params.id;
       const { externalEmail, externalName } = req.body;
       const isExternal = !!externalEmail;
+      if (req.user.role === "external" && externalEmail !== req.user.email) {
+        return res.status(403).json({ message: "External users can only register with their own email." });
+      }
+      if (req.user.role !== "external" && isExternal) {
+        return res.status(403).json({ message: "Only external users can submit external registration details." });
+      }
 
       const event = await prisma.event.findUnique({ where: { id: eventId } });
       if (!event) return res.status(404).json({ message: "Event not found" });
@@ -521,34 +568,53 @@ router.post(
 
       const participationData = isExternal
         ? {
-            id: createObjectId(),
-            eventId,
-            studentId: null,
-            externalEmail,
-            externalName: externalName || null,
-            qrCode,
-            status,
-          }
+          id: createObjectId(),
+          eventId,
+          studentId: null,
+          externalEmail,
+          externalName: externalName || null,
+          qrCode,
+          status,
+        }
         : {
-            id: createObjectId(),
-            eventId,
-            studentId: req.user.userId,
-            externalEmail: null,
-            externalName: null,
-            qrCode,
-            status,
-          };
+          id: createObjectId(),
+          eventId,
+          studentId: req.user.userId,
+          externalEmail: null,
+          externalName: null,
+          qrCode,
+          status,
+        };
 
-      const participation = await prisma.participation.create({ data: participationData });
+      const participation = await prisma.$transaction(async (tx) => {
+        const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
+        if (!latestEvent) throw new Error("Event not found");
 
-      if (status === "REGISTERED") {
-        await prisma.event.update({
-          where: { id: eventId },
-          data: { registeredCount: { increment: 1 } },
+        const latestStatus =
+          latestEvent.totalSeats > 0 && latestEvent.registeredCount >= latestEvent.totalSeats
+            ? "WAITLISTED"
+            : "REGISTERED";
+
+        const created = await tx.participation.create({
+          data: { ...participationData, status: latestStatus },
         });
-      }
 
-      res.status(201).json({ message: "Registration successful", status, qrCode: participation.qrCode });
+        if (latestStatus === "REGISTERED") {
+          await tx.event.update({
+            where: { id: eventId },
+            data: { registeredCount: { increment: 1 } },
+          });
+        } else {
+          await tx.event.update({
+            where: { id: eventId },
+            data: { waitingListIds: { push: created.id } },
+          });
+        }
+
+        return created;
+      });
+
+      res.status(201).json({ message: "Registration successful", status: participation.status, qrCode: participation.qrCode });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -575,6 +641,9 @@ router.get(
       // Permission check: admin or facultyCoordinator always allowed;
       // otherwise require ClubMembership with canTakeAttendance OR canEditEvents
       const { role, userId } = req.user;
+      if (role === "facultyCoordinator" && event.clubId !== req.user.clubId) {
+        return res.status(403).json({ message: "Access denied. You can only view registrations for your assigned club." });
+      }
       if (role !== "admin" && role !== "facultyCoordinator") {
         const membership = await prisma.clubMembership.findFirst({
           where: {
@@ -873,7 +942,13 @@ router.post(
 
       const data = { status: "ATTENDED", attendedAt: new Date(), markedByMemberId: scannerId };
 
-      await prisma.participation.update({ where: { id: participationId }, data });
+      const updated = await prisma.participation.updateMany({
+        where: { id: participationId, eventId },
+        data,
+      });
+      if (updated.count === 0) {
+        return res.status(404).json({ message: "Participation not found for this event." });
+      }
 
       res.json({ message: "Participant marked as attended successfully." });
     } catch (err) {

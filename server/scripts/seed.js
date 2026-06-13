@@ -36,6 +36,20 @@ async function seed() {
       },
     });
 
+    console.log("Seeding Lost & Found Admin...");
+    await prisma.adminRole.upsert({
+      where: { email: "lostfoundadmin@nitj.ac.in" },
+      update: { password: adminPasswordHash },
+      create: {
+        id: createObjectId(),
+        name: "L&F Admin",
+        email: "lostfoundadmin@nitj.ac.in",
+        password: adminPasswordHash,
+        role: "lostFoundAdmin",
+        isTwoStepEnabled: false,
+      },
+    });
+
     console.log("Seeding Clubs...");
     for (const [clubName, facultyName, facultyEmail, clubEmail] of clubsData) {
       const slug = slugify(clubName);

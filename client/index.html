@@ -6,8 +6,14 @@
       // FOUC prevention — apply dark class before React mounts
       (function(){
         try {
-          if(localStorage.getItem('theme')==='dark'){
-            document.documentElement.classList.add('dark');
+          const theme = localStorage.getItem('theme');
+          const isDark = theme === 'dark';
+          if(isDark) document.documentElement.classList.add('dark');
+          
+          // Set initial favicon
+          const favicon = document.getElementById('dynamic-favicon');
+          if(favicon) {
+            favicon.href = isDark ? '/darkthemelogo.png' : '/lightthemelogo2.png';
           }
         } catch(e){}
       })();
@@ -20,7 +26,8 @@
         font-display: block;
       }
     </style>
-    <link rel="icon" type="image/svg+xml" href="/clubsetu-favicon.jpg" />
+    <link rel="icon" id="dynamic-favicon" type="image/png" href="/lightthemelogo2.png" />
+    <link rel="apple-touch-icon" href="/lightthemelogo2.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CampusNode - Event Management</title>
     <link

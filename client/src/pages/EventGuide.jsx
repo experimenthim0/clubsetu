@@ -3,42 +3,42 @@ import { Link } from 'react-router-dom';
 
 const EventGuide = () => {
   return (
-    <div className="min-h-screen bg-neutral-50 py-12 px-4">
+    <div className="min-h-screen bg-neutral-50/50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-3 text-orange-600">
-            <span className="block w-6 h-0.5 bg-orange-600" />
-            <span className="text-[11px] font-bold uppercase tracking-widest">Documentation</span>
+            <span className="block w-6 h-[1px] bg-orange-600" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Documentation</span>
           </div>
-          <h1 className="text-4xl font-black text-black tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 tracking-tight">
             Event <span className="text-orange-600">Creation</span> Guide
           </h1>
-          <p className="text-neutral-600 mt-2 max-w-xl">
-            Everything you need to know about creating and managing events on Campus<span className='text-orange-600'>Node</span>. This guide covers all available options, field types, and best practices.
+          <p className="text-neutral-600 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
+            Everything you need to know about creating and managing events on Campus<span className='text-orange-600 font-semibold'>Node</span>. This guide covers all available options, field types, and best practices.
           </p>
         </div>
 
         {/* Who can create */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
-          <h2 className="text-xl font-black text-black mb-4 flex items-center gap-2">
-            <i className="ri-user-star-line text-orange-600" />
+        <section className="bg-white border border-neutral-200 rounded-xl p-8 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2.5">
+            <i className="ri-user-star-line text-orange-600 text-xl" />
             Who Can Create Events?
           </h2>
-          <p className="text-neutral-700 leading-relaxed mb-4">
-            Only registered <strong>Club Heads</strong> can create events on Campus<span className='text-orange-600'>Node</span>. Each club head represents an official NITJ club and is responsible for managing their events, registrations, and payments.
+          <p className="text-neutral-600 leading-relaxed mb-4 text-sm">
+            Only registered <strong className="text-neutral-800">Club Heads</strong> can create events on Campus<span className='text-orange-600 font-semibold'>Node</span>. Each club head represents an official NITJ club and is responsible for managing their events, registrations, and payments.
           </p>
-          <div className="bg-orange-50 border border-orange-200 rounded-sm p-4 text-sm text-orange-800">
-            <i className="ri-information-line mr-1" />
-            If you're a student who wants to create events, register as a Club Head with your club's credentials.
+          <div className="bg-orange-50/60 border border-orange-100 rounded-lg p-4 text-xs md:text-sm text-orange-800 flex items-center gap-2">
+            <i className="ri-information-line text-orange-600 text-base shrink-0" />
+            <span>If you're a student who wants to create events, register as a Club Head with your club's credentials.</span>
           </div>
         </section>
 
         {/* Types of Events */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
-          <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
-            <i className="ri-calendar-event-line text-orange-600" />
+        <section className="bg-white border border-neutral-200 rounded-xl p-8 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-900 mb-6 flex items-center gap-2.5">
+            <i className="ri-calendar-event-line text-orange-600 text-xl" />
             Types of Events You Can Create
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -74,13 +74,13 @@ const EventGuide = () => {
                 desc: 'Talks by industry professionals, limited seats with first-come-first-served registration.',
               },
             ].map((item) => (
-              <div key={item.title} className="flex gap-4 p-4 bg-neutral-50 rounded-sm border border-neutral-200">
-                <div className="w-10 h-10 bg-orange-100 rounded-sm flex items-center justify-center text-orange-600 flex-shrink-0">
-                  <i className={`${item.icon} text-xl`} />
+              <div key={item.title} className="flex gap-4 p-4 bg-neutral-50/50 rounded-xl border border-neutral-200/60 hover:border-orange-500/25 hover:bg-white hover:shadow-sm transition-all duration-300">
+                <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i className={`${item.icon} text-lg`} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-black text-sm">{item.title}</h3>
-                  <p className="text-xs text-neutral-600 mt-1 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-semibold text-neutral-800 text-sm">{item.title}</h3>
+                  <p className="text-xs text-neutral-500 mt-1 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -88,17 +88,17 @@ const EventGuide = () => {
         </section>
 
         {/* All Fields Explained */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
-          <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
-            <i className="ri-file-list-3-line text-orange-600" />
+        <section className="bg-white border border-neutral-200 rounded-xl p-8 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-900 mb-6 flex items-center gap-2.5">
+            <i className="ri-file-list-3-line text-orange-600 text-xl" />
             Event Fields — Complete Reference
           </h2>
 
           <div className="space-y-6">
             {/* Basic Info */}
             <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-4">Basic Information</h3>
-              <div className="space-y-4">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-4 block">Basic Information</span>
+              <div className="space-y-1">
                 <FieldRow
                   name="Event Title"
                   required
@@ -128,9 +128,9 @@ const EventGuide = () => {
             </div>
 
             {/* Scheduling */}
-            <div className="pt-4 border-t border-neutral-100">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-4">Scheduling</h3>
-              <div className="space-y-4">
+            <div className="pt-5 border-t border-neutral-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-4 block">Scheduling</span>
+              <div className="space-y-1">
                 <FieldRow
                   name="Start Time"
                   required
@@ -152,9 +152,9 @@ const EventGuide = () => {
             </div>
 
             {/* Capacity & Pricing */}
-            <div className="pt-4 border-t border-neutral-100">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-4">Capacity & Pricing</h3>
-              <div className="space-y-4">
+            <div className="pt-5 border-t border-neutral-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-4 block">Capacity & Pricing</span>
+              <div className="space-y-1">
                 <FieldRow
                   name="Total Seats"
                   required
@@ -170,9 +170,9 @@ const EventGuide = () => {
             </div>
 
             {/* Eligibility */}
-            <div className="pt-4 border-t border-neutral-100">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-4">Eligibility Filters</h3>
-              <div className="space-y-4">
+            <div className="pt-5 border-t border-neutral-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-4 block">Eligibility Filters</span>
+              <div className="space-y-1">
                 <FieldRow
                   name="Allowed Programs"
                   type="Checkboxes"
@@ -187,9 +187,9 @@ const EventGuide = () => {
             </div>
 
             {/* Registration Form */}
-            <div className="pt-4 border-t border-neutral-100">
-              <h3 className="text-sm font-black uppercase tracking-widest text-neutral-400 mb-4">Registration Form Customization</h3>
-              <div className="space-y-4">
+            <div className="pt-5 border-t border-neutral-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-4 block">Registration Form Customization</span>
+              <div className="space-y-1">
                 <FieldRow
                   name="Required Student Info"
                   type="Checkboxes"
@@ -206,56 +206,60 @@ const EventGuide = () => {
         </section>
 
         {/* Custom Field Types */}
-        <section className="bg-white border-2 border-black rounded-sm p-8 mb-8">
-          <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
-            <i className="ri-magic-line text-orange-600" />
+        <section className="bg-white border border-neutral-200 rounded-xl p-8 mb-8 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2.5">
+            <i className="ri-magic-line text-orange-600 text-xl" />
             Custom Field Types
           </h2>
-          <p className="text-neutral-600 text-sm mb-6">
+          <p className="text-neutral-500 text-sm mb-6 leading-relaxed">
             Custom fields let you collect additional information from students during registration. Here are the available types:
           </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-2 border-black">
-              <thead>
-                <tr className="bg-neutral-100 border-b-2 border-black">
-                  <th className="px-5 py-3 text-xs font-black uppercase tracking-widest">Type</th>
-                  <th className="px-5 py-3 text-xs font-black uppercase tracking-widest">Use Case</th>
-                  <th className="px-5 py-3 text-xs font-black uppercase tracking-widest">Example</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-200">
-                <tr>
-                  <td className="px-5 py-3 font-bold text-sm">Text</td>
-                  <td className="px-5 py-3 text-sm text-neutral-600">Short answers</td>
-                  <td className="px-5 py-3 text-sm text-neutral-500 italic">Team Name, Dietary Preference</td>
-                </tr>
-                <tr className="bg-neutral-50">
-                  <td className="px-5 py-3 font-bold text-sm">Link / URL</td>
-                  <td className="px-5 py-3 text-sm text-neutral-600">Web links</td>
-                  <td className="px-5 py-3 text-sm text-neutral-500 italic">GitHub Repo, Project Demo</td>
-                </tr>
-                <tr>
-                  <td className="px-5 py-3 font-bold text-sm">Long Text</td>
-                  <td className="px-5 py-3 text-sm text-neutral-600">Paragraphs, detailed answers</td>
-                  <td className="px-5 py-3 text-sm text-neutral-500 italic">Why do you want to join?</td>
-                </tr>
-                <tr className="bg-neutral-50">
-                  <td className="px-5 py-3 font-bold text-sm">Dropdown</td>
-                  <td className="px-5 py-3 text-sm text-neutral-600">Select from predefined options</td>
-                  <td className="px-5 py-3 text-sm text-neutral-500 italic">T-Shirt Size (S, M, L, XL)</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="overflow-hidden border border-neutral-200 rounded-xl shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-neutral-50 border-b border-neutral-200">
+                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Type</th>
+                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Use Case</th>
+                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Example</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  <tr>
+                    <td className="px-5 py-3.5 font-semibold text-neutral-800 text-sm">Text</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-600">Short answers</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-400 italic">Team Name, Dietary Preference</td>
+                  </tr>
+                  <tr>
+                    <td className="px-5 py-3.5 font-semibold text-neutral-800 text-sm">Link / URL</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-600">Web links</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-400 italic">GitHub Repo, Project Demo</td>
+                  </tr>
+                  <tr>
+                    <td className="px-5 py-3.5 font-semibold text-neutral-800 text-sm">Long Text</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-600">Paragraphs, detailed answers</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-400 italic">Why do you want to join?</td>
+                  </tr>
+                  <tr>
+                    <td className="px-5 py-3.5 font-semibold text-neutral-800 text-sm">Dropdown</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-600">Select from predefined options</td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-400 italic">T-Shirt Size (S, M, L, XL)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
         {/* Tips */}
-        <section className="bg-[#000000] text-[#ffffff] border-2 border-[#000000] rounded-sm p-8 mb-8">
-          <h2 className="text-xl font-black mb-5 flex items-center gap-2">
-            <i className="ri-lightbulb-flash-line text-yellow-400" />
+        <section className="bg-neutral-900 text-white rounded-xl p-8 mb-8 shadow-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/10 blur-[80px] rounded-full pointer-events-none -mr-16 -mt-16" />
+          
+          <h2 className="text-lg font-bold mb-5 flex items-center gap-2.5 text-white relative z-10">
+            <i className="ri-lightbulb-line text-amber-400 text-xl" />
             Pro Tips
           </h2>
-          <ul className="space-y-3 text-sm text-[#d4d4d4]">
+          <ul className="space-y-4 text-sm text-neutral-300 relative z-10">
             {[
               'Set a registration deadline 1-2 hours before the event to avoid last-minute chaos.',
               'Use custom fields to collect team info for hackathons — like Team Name, GitHub Repo URL, and Tech Stack.',
@@ -264,24 +268,13 @@ const EventGuide = () => {
               'Require LinkedIn/GitHub profiles for tech events to get a sense of participant skill levels.',
               'Upload an attractive event banner — events with images get significantly more registrations.',
             ].map((tip, i) => (
-              <li key={i} className="flex items-start gap-2">
+              <li key={i} className="flex items-start gap-2.5">
                 <i className="ri-arrow-right-s-line text-orange-500 mt-0.5 flex-shrink-0" />
-                {tip}
+                <span>{tip}</span>
               </li>
             ))}
           </ul>
         </section>
-
-        {/* CTA */}
-        {/* <div className="text-center py-8">
-          <Link
-            to="/create"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-orange-600 text-white border-2 border-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-black hover:border-black transition-all shadow-[4px_4px_0px_#000] hover:-translate-y-1"
-          >
-            <i className="ri-add-line text-lg" />
-            Create Your First Event
-          </Link>
-        </div> */}
       </div>
     </div>
   );
@@ -289,16 +282,16 @@ const EventGuide = () => {
 
 /* Helper component for field rows */
 const FieldRow = ({ name, required, type, desc, example }) => (
-  <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 py-3 border-b border-neutral-50">
+  <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 py-4 border-b border-neutral-100/70">
     <div className="sm:w-44 flex-shrink-0">
-      <span className="font-bold text-sm text-black">{name}</span>
-      {required && <span className="text-orange-600 ml-1">*</span>}
-      <span className="block text-[10px] font-bold uppercase tracking-widest text-neutral-400 mt-0.5">{type}</span>
+      <span className="font-semibold text-sm text-neutral-800">{name}</span>
+      {required && <span className="text-orange-600 ml-0.5">*</span>}
+      <span className="block text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">{type}</span>
     </div>
-    <div className="flex-1">
-      <p className="text-sm text-neutral-700 leading-relaxed">{desc}</p>
+    <div className="flex-grow">
+      <p className="text-sm text-neutral-600 leading-relaxed">{desc}</p>
       {example && (
-        <p className="text-xs text-neutral-400 mt-1 italic">
+        <p className="text-xs text-neutral-400 mt-1.5 italic">
           Example: {example}
         </p>
       )}

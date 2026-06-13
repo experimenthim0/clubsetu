@@ -95,10 +95,10 @@ const ClubDetails = () => {
 
   const getBadgeClass = (type) => {
     if (type === "live")
-      return "bg-red-50 text-red-600 border-red-300";
+      return "bg-orange-50 text-orange-600 border-orange-200";
     if (type === "upcoming")
-      return "bg-green-50 text-green-600 border-green-300";
-    return "bg-neutral-100 text-neutral-500 border-neutral-300";
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    return "bg-neutral-50 text-neutral-600 border-neutral-200";
   };
 
   const formatDate = (dateString) => {
@@ -123,44 +123,44 @@ const ClubDetails = () => {
     return (
       <Link
         to={`/event/${event.slug || event._id}`}
-        className={`group flex flex-col bg-white border-2 rounded-sm p-4 gap-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm
-          ${type === "live" ? "border-orange-500" : "border-gray-200 hover:border-gray-300"}
-          ${type === "past" ? "opacity-70" : ""}
+        className={`group flex flex-col bg-white border rounded-xl p-5 gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md
+          ${type === "live" ? "border-orange-500 ring-1 ring-orange-500" : "border-neutral-200 hover:border-neutral-300"}
+          ${type === "past" ? "opacity-75" : ""}
         `}
       >
         {/* Top row: badge + date */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <span
-            className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 border rounded-sm flex-shrink-0 ${getBadgeClass(type)}`}
+            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 border rounded-md flex-shrink-0 ${getBadgeClass(type)}`}
           >
             {badgeLabel}
           </span>
-          <span className="text-[12px] font-medium text-neutral-400 uppercase">
+          <span className="text-xs font-semibold text-neutral-450 uppercase">
             {formatDate(event.startTime)}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="font-black text-black text-[1rem] leading-snug group-hover:text-orange-600 transition-colors duration-150">
+        <h3 className="font-bold text-neutral-900 text-[1.05rem] leading-snug group-hover:text-orange-600 transition-colors duration-150">
           {event.title}
         </h3>
 
         {/* Description */}
-        <p className="text-[12px] text-neutral-500 line-clamp-2 leading-relaxed flex-1">
+        <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed flex-1">
           {event.description}
         </p>
 
         {/* Footer: venue + action */}
-        <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-gray-100 mt-auto flex-wrap">
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100 mt-auto flex-wrap">
           {event.venue ? (
-            <span className="flex items-center gap-1 text-[10.5px] font-medium text-neutral-500 min-w-0">
-              <i className="ri-map-pin-2-line text-[11px] flex-shrink-0" />
+            <span className="flex items-center gap-1 text-[11px] font-medium text-neutral-500 min-w-0">
+              <i className="ri-map-pin-line text-orange-600 text-sm flex-shrink-0" />
               <span className="truncate">{event.venue}</span>
             </span>
           ) : (
             <span />
           )}
-          <span className="text-[10px] font-bold  tracking-widest text-orange-600 flex-shrink-0">
+          <span className="text-xs font-bold text-orange-600 flex-shrink-0">
             {actionLabel}
           </span>
         </div>
@@ -175,7 +175,7 @@ const ClubDetails = () => {
         <div className="absolute top-0 right-0 w-72 h-72 bg-orange-500/10 blur-[120px] rounded-full -mr-20 -mt-20 pointer-events-none" />
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-8 relative z-10">
           {/* Logo */}
-          <div className="w-28 h-28 bg-white border-[2.5px] border-gray-200 rounded-full flex-shrink-0 overflow-hidden">
+          <div className="w-28 h-28 bg-white border border-gray-200 rounded-full flex-shrink-0 overflow-hidden">
             {club.clubLogo ? (
               <img
                 src={club.clubLogo}
@@ -183,7 +183,7 @@ const ClubDetails = () => {
                 className="w-full h-full object-contain rounded-full"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-black font-black text-4xl rounded-full">
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-black font-bold text-4xl rounded-full">
                 {club.clubName.charAt(0)}
               </div>
             )}
@@ -191,10 +191,10 @@ const ClubDetails = () => {
 
           {/* Name + desc */}
           <div className="flex-1 text-center sm:text-left min-w-0">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-none mb-3 break-words">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3 break-words">
               {club.clubName}
             </h1>
-            <p className="text-neutral-400 max-w-xl text-sm font-medium leading-relaxed">
+            <p className="text-neutral-450 max-w-xl text-sm font-medium leading-relaxed">
               {club.description ||
                 "The official student group dedicated to community, innovation, and campus spirit."}
             </p>
@@ -204,7 +204,7 @@ const ClubDetails = () => {
                 {canEdit && (
                   <Link
                     to="/create"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white border-2 border-black rounded-sm hover:bg-black transition font-bold text-xs uppercase tracking-widest"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
                   >
                     <i className="ri-add-line" /> Create Event
                   </Link>
@@ -213,22 +213,22 @@ const ClubDetails = () => {
                   <>
                     <Link
                       to={`/club/edit/${club._id || club.id}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-xs uppercase tracking-widest"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
                     >
                       <i className="ri-settings-3-line" /> Club Settings
                     </Link>
                     <Link
                       to={`/club/${club._id || club.id}/team`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-black border-2 border-black rounded-sm hover:bg-black hover:text-white transition font-bold text-xs uppercase tracking-widest"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
                     >
                       <i className="ri-team-line" /> Manage Members
                     </Link>
-                    <button
+                    {/* <button
                       onClick={handleDeleteClub}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white border-2 border-red-800 rounded-sm hover:bg-red-800 transition font-bold text-xs uppercase tracking-widest"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
                     >
                       <i className="ri-delete-bin-line" /> Delete Club
-                    </button>
+                    </button> */}
                   </>
                 )}
               </div>
@@ -247,21 +247,21 @@ const ClubDetails = () => {
         */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Faculty Coordinator */}
-          <div className="bg-white text-black border-2 border-gray-200 p-4 sm:p-5 rounded-xl min-w-0">
-            <p className="text-[10px] font-black tracking-widest text-neutral-400 mb-1 uppercase">
+          <div className="bg-white text-black border border-neutral-200 p-4 sm:p-5 rounded-xl min-w-0 shadow-sm">
+            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
               Faculty Coord.
             </p>
-            <p className="font-medium text-sm sm:text-base text-black break-words leading-snug">
+            <p className="font-semibold text-sm sm:text-base text-neutral-800 break-words leading-snug">
               {club.facultyName || club.facultyCoordinator?.name || "Not Assigned"}
             </p>
           </div>
 
           {/* Student Lead */}
-          <div className="bg-white text-black border-2 border-gray-200 p-4 sm:p-4 rounded-xl min-w-0">
-            <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1 uppercase">
+          <div className="bg-white text-black border border-neutral-200 p-4 sm:p-4 rounded-xl min-w-0 shadow-sm">
+            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
               Student Lead
             </p>
-            <p className="font-medium text-sm sm:text-base text-black break-words leading-snug">
+            <p className="font-semibold text-sm sm:text-base text-neutral-800 break-words leading-snug">
               {club.studentCoordinators && club.studentCoordinators.length > 0
                 ? club.studentCoordinators.join(", ")
                 : "Not Assigned"}
@@ -270,8 +270,8 @@ const ClubDetails = () => {
 
           {/* Socials — spans 2 cols on mobile, 1 col on sm+ */}
           
-          <div className="col-span-2 sm:col-span-1 bg-white border-2 border-gray-200 p-2 sm:p-4 rounded-xl">
-            <p className="text-[10px] font-semibold tracking-widest text-neutral-400 mb-1 uppercase">
+          <div className="col-span-2 sm:col-span-1 bg-white border border-neutral-200 p-2 sm:p-4 rounded-xl shadow-sm">
+            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
               Connect with us
             </p>
             <div className="flex flex-wrap gap-2">
@@ -308,7 +308,7 @@ const ClubDetails = () => {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 flex items-center justify-center rounded-sm bg-white transition-all hover:-translate-y-0.5 hover:border-gray-400"
+                    className="w-9 h-9 flex items-center justify-center rounded-l hover:border-neutral-300 transition-all"
                     title={link.platform}
                   >
                     {getIcon()}
@@ -336,21 +336,19 @@ const ClubDetails = () => {
           ].map(({ num, label, accent }) => (
             <div
               key={label}
-              className={`border-2 p-4 rounded-sm ${
+              className={`border p-4 rounded-xl shadow-sm transition-all duration-300 ${
                 accent
-                  ? "bg-white border-orange-600"
-                  : "bg-white border-gray-200"
+                  ? "bg-white border-orange-500 ring-1 ring-orange-500"
+                  : "bg-white border-neutral-200"
               }`}
             >
               <div
-                className={`text-3xl font-black leading-none ${
-                  accent ? "text-orange-600" : "text-orange-600"
-                }`}
+                className="text-3xl font-bold leading-none text-orange-600"
               >
                 {num}
               </div>
               <div
-                className={`text-[9px] font-black uppercase tracking-widest mt-1 ${
+                className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${
                   accent ? "text-orange-600" : "text-neutral-400"
                 }`}
               >
@@ -364,10 +362,10 @@ const ClubDetails = () => {
         {liveEvents.length > 0 && (
           <section>
             <div className="flex items-center gap-4 my-6">
-              <h2 className="text-2xl font-black italic tracking-wider whitespace-nowrap">
+              <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
                 Live Events
               </h2>
-              <div className="h-0.5 flex-1 bg-red-600" />
+              <div className="h-[1px] flex-1 bg-red-200" />
               <span className="relative flex h-3 w-3 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
@@ -384,10 +382,10 @@ const ClubDetails = () => {
         {/* ── Upcoming Events ── */}
         <section>
           <div className="flex items-center gap-4 my-6">
-            <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap">
+            <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
               Upcoming
             </h2>
-            <div className="h-0.5 flex-1 bg-black" />
+            <div className="h-[1px] flex-1 bg-neutral-250 bg-neutral-200" />
           </div>
           {upcomingEvents.length > 0 ? (
             <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
@@ -396,8 +394,8 @@ const ClubDetails = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white border-2 border-dashed border-neutral-200 py-10 text-center rounded-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+            <div className="bg-white border border-dashed border-neutral-200 py-10 text-center rounded-xl">
+              <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
                 No upcoming events planned yet.
               </p>
             </div>
@@ -408,10 +406,10 @@ const ClubDetails = () => {
         {pastEvents.length > 0 && (
           <section>
             <div className="flex items-center gap-4 my-6">
-              <h2 className="text-2xl font-black uppercase italic tracking-wider whitespace-nowrap opacity-60">
+              <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap opacity-60">
                 Past Events
               </h2>
-              <div className="h-0.5 flex-1 bg-neutral-300" />
+              <div className="h-[1px] flex-1 bg-neutral-200" />
             </div>
             <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               {pastEvents.map((e) => (
@@ -424,10 +422,10 @@ const ClubDetails = () => {
         {/* ── Gallery ── */}
         <section>
           <div className="flex items-center gap-4 my-6">
-            <h2 className="text-2xl font-black uppercase italic tracking-tight whitespace-nowrap">
+            <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
               Gallery
             </h2>
-            <div className="h-0.5 flex-1 bg-black" />
+            <div className="h-[1px] flex-1 bg-neutral-200" />
           </div>
 
           {club.clubGallery && club.clubGallery.length > 0 ? (
@@ -435,7 +433,7 @@ const ClubDetails = () => {
               {club.clubGallery.map((image, index) => (
                 <div
                   key={index}
-                  className="aspect-square overflow-hidden rounded-sm bg-gray-100"
+                  className="aspect-square overflow-hidden rounded-xl bg-gray-100 border border-neutral-250/50 shadow-sm"
                 >
                   <img
                     src={image}
@@ -446,8 +444,8 @@ const ClubDetails = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white border-2 border-dashed border-neutral-200 py-10 text-center rounded-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+            <div className="bg-white border border-dashed border-neutral-200 py-10 text-center rounded-xl">
+              <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
                 No images found. Lagta hai Clubhead ji add krna bhul gye.
               </p>
             </div>
@@ -458,16 +456,16 @@ const ClubDetails = () => {
         {club.clubSponsors && club.clubSponsors.length > 0 && (
           <section>
             <div className="flex items-center gap-4 my-6">
-              <h2 className="text-2xl font-black uppercase italic tracking-tight whitespace-nowrap">
+              <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
                 Our Sponsors
               </h2>
-              <div className="h-0.5 flex-1 bg-black" />
+              <div className="h-[1px] flex-1 bg-neutral-200" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {club.clubSponsors.map((image, index) => (
                 <div
                   key={index}
-                  className="bg-white border-2 border-gray-100 rounded-sm p-4 flex items-center justify-center h-32 hover:border-gray-300 transition-colors"
+                  className="bg-white border border-neutral-200 rounded-xl p-4 flex items-center justify-center h-32 hover:border-neutral-300 transition-colors shadow-sm"
                 >
                   <img
                     src={image}

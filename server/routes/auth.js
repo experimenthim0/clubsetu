@@ -106,6 +106,8 @@ router.post("/register/student", async (req, res) => {
         program,
         email,
         password: await bcrypt.hash(password, 10),
+        verificationToken,
+        verificationTokenExpire,
       },
     });
 
@@ -131,7 +133,7 @@ router.post("/register/student", async (req, res) => {
           </p>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
           <p style="font-size: 12px; text-align: center; color: #999;">
-            If you didn't create an account on ClubSetu, you can safely ignore this email.
+            If you didn't create an account on CampusNode, you can safely ignore this email.
           </p>
         </div>`;
 
@@ -177,8 +179,8 @@ router.post("/login/student", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!student.isVerified) {
-      // isVerified field removed from schema — skip check, all users are considered verified
+    if (!student.isVerified && (student.verificationToken || student.verificationTokenExpire)) {
+      return res.status(401).json({ message: "Please verify your email to login." });
     }
 
     const isMatch = await bcrypt.compare(password, student.password);
@@ -247,7 +249,8 @@ router.post("/login/admin", async (req, res) => {
       return res.json({ needs2FA: true, email: admin.email, message: "Verification code sent to your email." });
     }
 
-    const clubId = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+    const club = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+    const clubId = club?.id ?? null;
     const token = generateToken(admin, admin.role, "admin", clubId);
     const userObj = { ...sanitizeUser(admin), clubId };
 
@@ -296,7 +299,7 @@ router.post("/register/external", async (req, res) => {
 
     await sendEmail({
       email,
-      subject: "Your ClubSetu Event Access Code",
+      subject: "Your CampusNode Event Access Code",
       message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
         <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu</h1>
         <h2>Event Access Code</h2>
@@ -394,7 +397,8 @@ router.post("/verify-2fa", async (req, res) => {
         data: { otp: null, otpExpire: null },
       });
 
-      const clubId = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+      const club = admin.role === "facultyCoordinator" ? await getAdminClubId(admin.id) : null;
+      const clubId = club?.id ?? null;
       const token = generateToken(admin, admin.role, "admin", clubId);
       const userObj = { ...sanitizeUser(admin), clubId };
 
@@ -478,7 +482,7 @@ router.post("/forgot-password", async (req, res) => {
       <h1 style="color: #FF4400; text-align: center;"><span style="color:#000;">Club</span>Setu</h1>
       <h2 style="text-align: center;">Reset Your Password</h2>
       <p style="font-size: 16px; text-align: center;">
-        We received a request to reset your ClubSetu account password.
+        We received a request to reset your CampusNode account password.
       </p>
       <div style="text-align: center; margin: 30px 0;">
         <a href="${resetUrl}" style="background-color: #FF4400; color: white; padding: 12px 24px;
@@ -492,7 +496,7 @@ router.post("/forgot-password", async (req, res) => {
         <a href="${resetUrl}" style="color: #FF7518;">${resetUrl}</a>
       </p>
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-      <p style="font-size: 12px; text-align: center; color: #999;">© 2026 ClubSetu. All rights reserved.</p>
+      <p style="font-size: 12px; text-align: center; color: #999;">© 2026 CampusNode. All rights reserved.</p>
     </div>`;
 
     try {

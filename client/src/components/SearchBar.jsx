@@ -192,7 +192,7 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
             <span>Searching...</span>
           </div>
         ) : results.length > 0 ? (
-          <>
+          <div key={query} className="contents">
             <div className="search-results-header">
               <span>{results.length} result{results.length !== 1 ? "s" : ""} found</span>
             </div>
@@ -222,7 +222,7 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
                 <i className="ri-arrow-right-up-line search-result-arrow" />
               </Link>
             ))}
-          </>
+          </div>
         ) : (
           <div className="search-no-results">
             <i className="ri-search-line search-no-results-icon" />

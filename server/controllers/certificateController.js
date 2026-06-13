@@ -61,26 +61,32 @@ export const downloadCertificate = async (req, res) => {
     }
 
     const userName = participation.student?.name;
+    if (!userName) {
+      return res.status(422).json({ message: "Participant name is missing." });
+    }
     const safeFileName = userName.replace(/\s+/g, "_");
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}_Certificate.pdf"`);
 
     const n = template;
     const docSize = [n.imageWidth || 841.89, n.imageHeight || 595.28];
-    const doc = new PDFDocument({ size: docSize });
-    doc.pipe(res);
-
+    let backgroundBuffer;
     try {
       const parsedUrl = new URL(template.imageUrl);
       if (parsedUrl.hostname !== "res.cloudinary.com") {
         throw new Error("Untrusted image source");
       }
       const response = await fetch(template.imageUrl);
-      const buffer = Buffer.from(await response.arrayBuffer());
-      doc.image(buffer, 0, 0, { width: docSize[0], height: docSize[1] });
-    } catch {
-      doc.rect(20, 20, docSize[0] - 40, docSize[1] - 40).stroke();
+      if (!response.ok) throw new Error(`Cloudinary returned ${response.status}`);
+      backgroundBuffer = Buffer.from(await response.arrayBuffer());
+    } catch (error) {
+      return res.status(502).json({ message: "Certificate background could not be loaded.", error: error.message });
     }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFileName}_Certificate.pdf"`);
+
+    const doc = new PDFDocument({ size: docSize });
+    doc.pipe(res);
+    doc.image(backgroundBuffer, 0, 0, { width: docSize[0], height: docSize[1] });
 
     const fontSrc = CUSTOM_FONTS[n.font];
     if (fontSrc && fs.existsSync(fontSrc)) {
@@ -157,6 +163,9 @@ export const uploadTemplateProxy = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Unsupported template image type." });
     }
 
     const result = await uploadImage(req.file.buffer, "certificates");

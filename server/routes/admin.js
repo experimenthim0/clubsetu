@@ -2,9 +2,9 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
 import prisma from "../lib/prisma.js";
-import { slugify } from "../utils/slugify.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import { createObjectId } from "../utils/objectId.js";
+import { sanitizeUser } from "../utils/sanitizeUser.js";
 
 const router = express.Router();
 
@@ -35,7 +35,7 @@ router.post("/login", async (req, res) => {
     res.json({
       success: true,
       message: "Admin login successful",
-      admin: { ...admin, _id: admin.id, clubId: club?.id }, // Include clubId for frontend compatibility
+      admin: { ...sanitizeUser(admin), clubId: club?.id },
       token
     });
   } catch (err) {
@@ -162,24 +162,37 @@ router.get("/user-info/:id", verifyToken, allowRoles("admin"), async (req, res) 
 
     const membership = await prisma.clubMembership.findFirst({
       where: { studentId: student.id, role: "CLUB_HEAD" },
-      include: { club: { select: { clubName: true } } },
+      include: {
+        club: {
+          select: {
+            clubName: true,
+            bankName: true,
+            accountHolderName: true,
+            accountNumber: true,
+            ifscCode: true,
+            upiId: true,
+            bankPhone: true,
+          },
+        },
+      },
     });
+    const club = membership?.club;
 
     res.json({
       name: student.name,
       email: student.email,
       role: membership ? "club" : "member",
       clubId: membership?.clubId ?? null,
-      clubName: membership?.club?.clubName ?? null,
+      clubName: club?.clubName ?? null,
       bankInfo: {
-        bankName: student.bankName,
-        accountHolderName: student.accountHolderName,
-        accountNumber: student.accountNumber
-          ? student.accountNumber.slice(-4).padStart(student.accountNumber.length, "X")
+        bankName: club?.bankName ?? null,
+        accountHolderName: club?.accountHolderName ?? null,
+        accountNumber: club?.accountNumber
+          ? club.accountNumber.slice(-4).padStart(club.accountNumber.length, "X")
           : null,
-        ifscCode: student.ifscCode,
-        upiId: student.upiId,
-        bankPhone: student.bankPhone,
+        ifscCode: club?.ifscCode ?? null,
+        upiId: club?.upiId ?? null,
+        bankPhone: club?.bankPhone ?? null,
       },
     });
   } catch {

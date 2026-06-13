@@ -37,14 +37,14 @@ const SocialLink = ({ icon, label, username, href, color }) => (
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="group flex items-center gap-3 p-4 border border-white/10 rounded-lg hover:border-orange-500/60 hover:bg-white/5 transition-all duration-200"
+    className="group flex items-center gap-3 p-4 border border-white/10 rounded-xl hover:border-orange-500/60 hover:bg-white/5 transition-all duration-200"
   >
-    <div className={`w-10 h-10 ${color} rounded-md flex items-center justify-center shrink-0`}>
+    <div className={`w-10 h-10 ${color} rounded-lg flex items-center justify-center shrink-0`}>
       <i className={`${icon} text-white text-lg`} />
     </div>
     <div className="min-w-0">
-      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-500">{label}</p>
-      <p className="text-[13px] font-bold text-[#f5f5f5]/80 group-hover:text-orange-400 truncate transition-colors">{username}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{label}</p>
+      <p className="text-xs font-semibold text-neutral-300 group-hover:text-orange-400 truncate transition-colors">{username}</p>
     </div>
     <i className="ri-arrow-right-up-line ml-auto text-neutral-600 group-hover:text-orange-500 transition-colors" />
   </a>
@@ -53,44 +53,44 @@ const SocialLink = ({ icon, label, username, href, color }) => (
 /* ─── Section label ─── */
 const SectionLabel = ({ children }) => (
   <div className="flex items-center gap-3 mb-6">
-    <span className="block h-px flex-1 bg-neutral-200" />
-    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-neutral-400 whitespace-nowrap">{children}</span>
-    <span className="block h-px flex-1 bg-neutral-200" />
+    <span className="block h-[1px] flex-1 bg-neutral-200" />
+    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 whitespace-nowrap">{children}</span>
+    <span className="block h-[1px] flex-1 bg-neutral-200" />
   </div>
 );
 
 /* ══════════════════════════════════════════════════════════════ */
 const Contribute = () => {
   return (
-    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#0a0a0a]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#0a0a0a]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* ── Google font import ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
         .mono { font-family: 'DM Mono', monospace; }
-        .step-bg { -webkit-text-stroke: 1px #d1d5db; color: transparent; font-size: clamp(80px, 15vw, 140px); }
-        .dark .step-bg { -webkit-text-stroke: 1px #404040; }
+        .step-bg { -webkit-text-stroke: 1px #e5e7eb; color: transparent; font-size: clamp(80px, 15vw, 140px); }
+        .dark .step-bg { -webkit-text-stroke: 1px #262626; }
       `}</style>
 
       {/* ── Hero ── */}
-      <div className="border-b-2 border-[#000000] bg-[#000000] text-[#ffffff] overflow-hidden relative">
+      <div className="border-b border-neutral-800 bg-neutral-900 text-white overflow-hidden relative">
         {/* decorative grid */}
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
         {/* big decorative word */}
-        <p className="absolute right-0 top-1/2 -translate-y-1/2 mono font-black text-[#ffffff] opacity-[0.04] text-[200px] leading-none select-none pointer-events-none pr-8 hidden lg:block">BUILD</p>
+        <p className="absolute right-0 top-1/2 -translate-y-1/2 mono font-black text-white opacity-[0.03] text-[200px] leading-none select-none pointer-events-none pr-8 hidden lg:block">BUILD</p>
 
         <div className="max-w-4xl mx-auto px-6 lg:px-10 pt-16 pb-14 relative">
           <div className="inline-flex items-center gap-2 mb-5">
-            <span className="w-5 h-5 rounded-sm bg-orange-600 flex items-center justify-center">
+            <span className="w-5 h-5 rounded-md bg-orange-600 flex items-center justify-center">
               <i className="ri-open-source-line text-[#ffffff] text-xs" />
             </span>
-            <span className="mono text-[10px] tracking-[0.2em] text-orange-400 uppercase">Open Source · NIT Jalandhar</span>
+            <span className="mono text-[10px] tracking-wider text-orange-400 uppercase">Open Source · NIT Jalandhar</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-5">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight mb-5">
             Contribute to<br />
             Campus<span className="text-orange-500">Node</span>
           </h1>
-          <p className="text-neutral-400 text-[15px] max-w-lg leading-relaxed">
+          <p className="text-neutral-400 text-sm max-w-lg leading-relaxed">
             Built for and by NIT Jalandhar students. We welcome developers, designers, and anyone passionate about improving campus life.
           </p>
         </div>
@@ -111,16 +111,16 @@ const Contribute = () => {
 
             ].map((tech, i) => (
               <Reveal key={tech.label} delay={i * 60}>
-                <div className="group bg-white border-2 border-neutral-200 hover:border-orange-500 rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(234,88,12,0.12)]">
+                <div className="group bg-white border border-neutral-250 border-neutral-200 hover:border-orange-500 rounded-xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <i className={`${tech.icon} text-2xl text-orange-600 mb-3 block`} />
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-1">{tech.label}</p>
-                  <p className="text-[14px] font-black text-black">{tech.value}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">{tech.label}</p>
+                  <p className="text-[14px] font-bold text-neutral-800">{tech.value}</p>
                   <span className="mono text-[10px] text-neutral-400">{tech.note}</span>
                 </div>
               </Reveal>
             ))}
           </div>
-          <p className="text-[13px] text-neutral-600 mt-5 leading-relaxed">
+          <p className="text-sm text-neutral-600 mt-5 leading-relaxed">
             CampusNode is a full-stack event management platform. Club heads create and manage events, handle registrations with custom forms, process payments through Razorpay, and track payouts — all in one place.
           </p>
         </Reveal>
@@ -128,7 +128,7 @@ const Contribute = () => {
         {/* ── How to Contribute ── */}
         <Reveal>
           <SectionLabel>How to Contribute</SectionLabel>
-          <div className="space-y-0 border-l-2 border-black ml-6">
+          <div className="space-y-0 border-l border-neutral-200 ml-6">
             {[
               { step: '01', title: 'Fork the Repository', desc: 'Fork the CampusNode repo on GitHub and clone it to your local machine.', icon: 'ri-git-branch-line' },
               { step: '02', title: 'Set Up Locally', desc: 'Install dependencies for both client and server. Set up your .env file with database URL and other keys.', icon: 'ri-terminal-box-line' },
@@ -139,8 +139,8 @@ const Contribute = () => {
               <Reveal key={item.step} delay={i * 80}>
                 <div className="relative flex gap-6 pl-8 pb-10 group">
                   {/* dot on timeline */}
-                  <div className="absolute -left-[13px] top-1 w-6 h-6 bg-[#000000] dark:bg-[#f5f5f5] rounded-full border-4 border-[#F8F7F4] dark:border-[#0a0a0a] group-hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-[#ffffff] dark:bg-[#000000] rounded-full" />
+                  <div className="absolute -left-[12.5px] top-1.5 w-6 h-6 bg-white rounded-full border border-neutral-200 group-hover:border-orange-500 transition-colors duration-200 flex items-center justify-center shadow-sm">
+                    <div className="w-1.5 h-1.5 bg-orange-600 rounded-full" />
                   </div>
 
                   {/* big step number behind */}
@@ -150,10 +150,10 @@ const Contribute = () => {
                     </div>
                     <div className="relative pt-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <i className={`${item.icon} text-orange-600`} />
-                        <h3 className="font-black text-black text-[15px]">{item.title}</h3>
+                        <i className={`${item.icon} text-orange-600 text-sm`} />
+                        <h3 className="font-bold text-neutral-800 text-[15px]">{item.title}</h3>
                       </div>
-                      <p className="text-[13px] text-neutral-600 leading-relaxed max-w-lg">{item.desc}</p>
+                      <p className="text-xs text-neutral-500 leading-relaxed max-w-lg">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -177,13 +177,13 @@ const Contribute = () => {
               { icon: 'ri-file-text-line', title: 'Documentation', desc: 'Improve README, API docs, inline comments.' },
             ].map((area, i) => (
               <Reveal key={area.title} delay={i * 40}>
-                <div className="group flex items-start gap-4 p-4 bg-white border-2 border-neutral-200 rounded-xl hover:border-orange-500 hover:shadow-[0_2px_16px_rgba(234,88,12,0.10)] transition-all duration-200 cursor-default">
+                <div className="group flex items-start gap-4 p-4 bg-white border border-neutral-200 rounded-xl hover:border-orange-500 hover:shadow-md transition-all duration-300 cursor-default">
                   <div className="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:border-orange-600 transition-all duration-200">
                     <i className={`${area.icon} text-orange-600 group-hover:text-white transition-colors`} />
                   </div>
                   <div>
-                    <h3 className="font-black text-[13px] text-black mb-0.5">{area.title}</h3>
-                    <p className="text-[12px] text-neutral-500 leading-relaxed">{area.desc}</p>
+                    <h3 className="font-bold text-sm text-neutral-800 mb-0.5">{area.title}</h3>
+                    <p className="text-xs text-neutral-500 leading-relaxed">{area.desc}</p>
                   </div>
                 </div>
               </Reveal>
@@ -194,23 +194,24 @@ const Contribute = () => {
         {/* ── Contact ── */}
         <Reveal>
           <SectionLabel>Maintainer</SectionLabel>
-          <div className="bg-[#000000] rounded-2xl overflow-hidden border-2 border-[#000000]">
+          <div className="bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 shadow-lg relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 blur-[80px] rounded-full pointer-events-none -mr-16 -mt-16" />
             {/* orange top stripe */}
             <div className="h-1.5 bg-orange-600 w-full" />
 
             <div className="p-8">
               <div className="flex items-start gap-4 mb-8">
-                <div className="w-14 h-14 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 text-2xl text-[#ffffff]">
+                <div className="w-14 h-14 rounded-2xl bg-orange-600 flex items-center justify-center shrink-0 text-2xl text-[#ffffff] shadow-md shadow-orange-600/10">
                   <i className="ri-user-3-line" />
                 </div>
                 <div>
-                  <p className="text-[9px] mono uppercase tracking-[0.2em] text-neutral-500 mb-1">Project Maintainer</p>
-                  <h3 className="text-xl font-black text-[#ffffff]">Nikhil Yadav</h3>
-                  <p className="text-[13px] text-neutral-400 mt-1">Student · NIT Jalandhar</p>
+                  <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Project Maintainer</p>
+                  <h3 className="text-xl font-bold text-[#ffffff]">Nikhil Yadav</h3>
+                  <p className="text-xs text-neutral-400 mt-1">Student · NIT Jalandhar</p>
                 </div>
               </div>
 
-              <p className="text-neutral-400 text-[13px] leading-relaxed mb-7">
+              <p className="text-neutral-400 text-xs leading-relaxed mb-7">
                 Feel free to reach out for questions, suggestions, or collaboration on CampusNode.
               </p>
 
@@ -223,8 +224,8 @@ const Contribute = () => {
                   <i className="ri-mail-line text-white" />
                 </div>
                 <div>
-                  <p className="text-[9px] mono uppercase tracking-[0.2em] text-neutral-500">Email</p>
-                  <p className="text-[13px] font-bold text-[#ffffff] group-hover:text-orange-400 transition-colors">contact.nikhim@gmail.com</p>
+                  <p className="text-[10px] uppercase tracking-wider text-neutral-500">Email</p>
+                  <p className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">contact.nikhim@gmail.com</p>
                 </div>
                 <i className="ri-arrow-right-up-line ml-auto text-neutral-600 group-hover:text-orange-500 transition-colors" />
               </a>
@@ -243,7 +244,7 @@ const Contribute = () => {
         {/* ── Code of Conduct ── */}
         <Reveal>
           <SectionLabel>Code of Conduct</SectionLabel>
-          <div className="bg-white border-2 border-neutral-200 rounded-2xl p-7">
+          <div className="bg-white border border-neutral-200 rounded-2xl p-7 shadow-sm">
             <ul className="space-y-4">
               {[
                 'Be respectful and inclusive in all interactions.',
@@ -252,11 +253,11 @@ const Contribute = () => {
                 'Report bugs through GitHub Issues with clear reproduction steps.',
                 "Give credit where it's due — acknowledge others' contributions.",
               ].map((rule, i) => (
-                <li key={i} className="flex items-start gap-3 text-[13px] text-neutral-700 leading-relaxed">
+                <li key={i} className="flex items-start gap-3 text-sm text-neutral-650 leading-relaxed">
                   <span className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
                     <i className="ri-check-line text-emerald-600 text-[10px]" />
                   </span>
-                  {rule}
+                  <span>{rule}</span>
                 </li>
               ))}
             </ul>
@@ -264,8 +265,8 @@ const Contribute = () => {
         </Reveal>
 
         {/* ── Footer nav ── */}
-        <div className="flex items-center justify-between pt-4 border-t-2 border-black">
-          <Link to="/" className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-black hover:text-orange-600 transition-colors">
+        <div className="flex items-center justify-between pt-4 border-t border-neutral-200">
+          <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-700 hover:text-orange-600 transition-colors">
             <i className="ri-arrow-left-line" /> Back to Home
           </Link>
           <span className="mono text-[10px] text-neutral-400">CampusNode · Open Source</span>

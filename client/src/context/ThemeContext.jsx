@@ -16,12 +16,15 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
+    const favicon = document.getElementById('dynamic-favicon');
     if (isDark) {
       root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
+      if (favicon) favicon.href = '/darkthemelogo.png';
     } else {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
+      if (favicon) favicon.href = '/lightthemelogo2.png';
     }
   }, [isDark]);
 
