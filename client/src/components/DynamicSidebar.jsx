@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
+  Plus,
 } from "lucide-react";
 
 /**
@@ -110,6 +111,19 @@ const DynamicSidebar = ({ user }) => {
           </div>
         </div>
       </div>
+
+      {/* ── Create Event Action (Club account only) ── */}
+      {role === "club" && (
+        <div className="px-4 pt-5 pb-2 shrink-0">
+          <Link
+            to="/create"
+            className="flex items-center justify-center gap-2.5 px-4 py-3 bg-orange-500 hover:bg-orange-600 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-white dark:text-white border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-[0_2px_5px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-px transition-all font-bold text-[12px] uppercase tracking-wider w-full cursor-pointer"
+          >
+            <Plus size={16} className="text-white dark:text-white" strokeWidth={2.8} />
+            <span>Create Event</span>
+          </Link>
+        </div>
+      )}
 
       {/* ── Navigation Links ─────────────────────────────────────────── */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Dashboard navigation">
@@ -211,7 +225,7 @@ const DynamicSidebar = ({ user }) => {
       </nav>
 
       {/* ── Exit Dashboard ───────────────────────────────────────────── */}
-      <div className="px-3 pb-5 pt-2 border-t border-gray-200 dark:border-zinc-800 mt-auto">
+      <div className="px-3 pb-1 pt-2 border-t border-gray-200 dark:border-zinc-800 mt-auto">
         <Link
           to="/"
           className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-700 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-400 dark:hover:text-red-400 transition-all duration-200"

@@ -380,7 +380,10 @@ const BottomNav = () => {
                 <LogoutIcon size={18} />
                 Logout
               </button>
-              <p className="text-center text-[10px] text-neutral-500 font-medium mt-2"><h3 className="logofont uppercase tracking-wider">Campus<span className='text-orange-600 font-bold'>Node</span></h3> Developed By Team Xplore </p>
+              <span className="text-center text-[10px] text-neutral-500 font-medium mt-2 block select-none">
+                <span className="logofont tracking-wider font-light text-[18px] text-black dark:text-neutral-200">Campus<span className="text-orange-600 dark:text-orange-500">Node</span></span>
+                <span className="block mt-0.5 text-[9px] text-neutral-400">Developed By Team Xplore</span>
+              </span>
             </div>
           </div>
         </>

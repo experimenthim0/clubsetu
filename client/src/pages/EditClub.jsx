@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext";
-
+import { Link } from "react-router-dom";
 const slugifyClubName = (value = "") =>
   value
     .toLowerCase()
@@ -256,7 +256,7 @@ const EditClub = () => {
                 name="clubName"
                 value={formData.clubName}
                 onChange={handleChange}
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium transition-colors  rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors  rounded-sm"
               />
             </div>
             <div>
@@ -269,7 +269,7 @@ const EditClub = () => {
                 value={formData.category}
                 onChange={handleChange}
                 placeholder="Technical, Cultural, Sports..."
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium transition-colors rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
               />
             </div>
             {/* <div>
@@ -279,7 +279,7 @@ const EditClub = () => {
                                 name="clubEmail" 
                                 value={formData.clubEmail} 
                                 onChange={handleChange}
-                                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-bold transition-colors rounded-sm"
+                                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-bold transition-colors rounded-sm"
                             />
                         </div> */}
             <div>
@@ -291,7 +291,7 @@ const EditClub = () => {
                 name="facultyName"
                 value={formData.facultyName}
                 onChange={handleChange}
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium transition-colors rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
               />
             </div>
             <div>
@@ -304,7 +304,7 @@ const EditClub = () => {
                 value={formData.studentCoordinators}
                 onChange={handleChange}
                 placeholder="Name 1, Name 2, Name 3"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium transition-colors rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
               />
             </div>
           </div>
@@ -317,7 +317,7 @@ const EditClub = () => {
               value={formData.description}
               onChange={handleChange}
               rows="5"
-              className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium leading-relaxed transition-colors rounded-sm"
+              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium leading-relaxed transition-colors rounded-sm"
             ></textarea>
           </div>
         </div>
@@ -338,7 +338,7 @@ const EditClub = () => {
               value={formData.clubLogo}
               onChange={handleChange}
               placeholder="https://example.com/logo.png"
-              className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-mono text-xs rounded-sm"
+              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
             />
           </div>
           <div>
@@ -351,7 +351,7 @@ const EditClub = () => {
               onChange={handleChange}
               placeholder="https://url1.jpg, https://url2.jpg..."
               rows="4"
-              className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-mono text-xs rounded-sm"
+              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
             ></textarea>
           </div>
           <div>
@@ -364,7 +364,7 @@ const EditClub = () => {
               onChange={handleChange}
               placeholder="https://sponsor1-logo.jpg, https://sponsor2-logo.jpg..."
               rows="4"
-              className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-mono text-xs rounded-sm"
+              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
             ></textarea>
           </div>
         </div>
@@ -386,7 +386,7 @@ const EditClub = () => {
                 value={formData.clubInstagram}
                 onChange={handleChange}
                 placeholder="https://instagram.com/club"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium text-xs rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
               />
             </div>
             <div>
@@ -399,7 +399,7 @@ const EditClub = () => {
                 value={formData.clubLinkedin}
                 onChange={handleChange}
                 placeholder="https://linkedin.com/company/club"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium text-xs rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
               />
             </div>
             <div>
@@ -412,7 +412,7 @@ const EditClub = () => {
                 value={formData.clubX}
                 onChange={handleChange}
                 placeholder="https://x.com/club"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium text-xs rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
               />
             </div>
             <div>
@@ -425,7 +425,7 @@ const EditClub = () => {
                 value={formData.clubWebsite}
                 onChange={handleChange}
                 placeholder="https://club.com"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium text-xs rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
               />
             </div>
             <div>
@@ -438,7 +438,7 @@ const EditClub = () => {
                 value={formData.clubWhatsapp}
                 onChange={handleChange}
                 placeholder="Contact number or group link"
-                className="w-full p-3 border-2 border-gray-300 focus:bg-orange-50 outline-none font-medium text-xs rounded-sm"
+                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
               />
             </div>
           </div>
@@ -451,20 +451,24 @@ const EditClub = () => {
               <button
                 type="button"
                 onClick={() => navigate(`/club/${clubSlug || clubId}`)}
-                className="flex-1 py-3 border-2 border-gray-300 tracking-wide hover:bg-neutral-120 transition-colors font-medium rounded-sm hover:cursor-pointer"
+                className="flex-1 py-3  tracking-wide hover:bg-neutral-120 transition-colors font-medium rounded-full bg-red-500 text-white hover:bg-red-700 cursor-pointer"
               >
                 Discard
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className={`flex-1 py-3 text-white font-medium tracking-wide transition-all rounded-sm active:translate-x-1 active:translate-y-1 active:shadow-none hover:cursor-pointer ${isSaving ? " bg-[#848b92] cursor-not-allowed shadow-none" : "bg-[#0f1419] hover:bg-[#0f1419]/70"}`}
+                className={`flex-1 py-3 text-white font-medium tracking-wide transition-all rounded-full active:translate-x-1 active:translate-y-1 active:shadow-none hover:cursor-pointer ${isSaving ? " bg-[#848b92] cursor-not-allowed shadow-none" : "bg-[#0f1419] hover:bg-[#0f1419]/70"}`}
               >
                 {isSaving ? "Syncing..." : "Update Club"}
               </button>
             </div>
           </div>
         </div>
+          <a className=" tracking-wide hover:bg-neutral-120 transition-colors font-medium rounded-sm hover:cursor-pointer text-[12px] text-blue-400 hover:underline" href={`/club/${clubSlug || clubId}`}>
+            View Club Page 
+            <i className="ri-external-link-fill"></i>
+          </a>
       </form>
     </div>
   );

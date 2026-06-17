@@ -3,6 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <script>
+      // Helper to dynamically round the favicon using HTML Canvas
+      window.setRoundedFavicon = function(src) {
+        const favicon = document.getElementById('dynamic-favicon');
+        if (!favicon) return;
+        const img = new Image();
+        img.src = src;
+        img.onload = function() {
+          try {
+            const canvas = document.createElement('canvas');
+            const size = Math.min(img.width, img.height) || 64;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Create circular clipping path
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw image centered and scaled
+            ctx.drawImage(img, 0, 0, size, size);
+            
+            favicon.href = canvas.toDataURL('image/png');
+          } catch (e) {
+            // Fallback to unrounded image if canvas clipping fails
+            favicon.href = src;
+          }
+        };
+        img.onerror = function() {
+          favicon.href = src;
+        };
+      };
+
       // FOUC prevention — apply dark class before React mounts
       (function(){
         try {
@@ -10,11 +44,9 @@
           const isDark = theme === 'dark';
           if(isDark) document.documentElement.classList.add('dark');
           
-          // Set initial favicon
-          const favicon = document.getElementById('dynamic-favicon');
-          if(favicon) {
-            favicon.href = isDark ? '/darkthemelogo.png' : '/lightthemelogo2.png';
-          }
+          // Set initial rounded favicon
+          const faviconSrc = isDark ? '/darkthemelogo.png' : '/lightthemelogo2.png';
+          window.setRoundedFavicon(faviconSrc);
         } catch(e){}
       })();
     </script>
@@ -26,7 +58,7 @@
         font-display: block;
       }
     </style>
-    <link rel="icon" id="dynamic-favicon" type="image/png" href="/lightthemelogo2.png" />
+    <link rel="icon" id="dynamic-favicon" type="image/png" href="/lightthemelogo2.png"  />
     <link rel="apple-touch-icon" href="/lightthemelogo2.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CampusNode - Event Management</title>
@@ -49,7 +81,7 @@
           </svg>
         </div>
         <div style="margin-top:28px;text-align:center;">
-          <div id="pre-brand" style="font-family:'logofont',serif;font-size:28px;font-weight:700;letter-spacing:0.04em;">Campus<span style="color:#ea580c;font-weight:300;">Node</span></div>
+          <div id="pre-brand" style="font-family:'logofont',serif;font-size:28px;font-weight:300;letter-spacing:0.04em;">Campus<span style="color:#ea580c;">Node</span></div>
           <div id="pre-loading" style="margin-top:8px;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;font-family:Inter,system-ui,sans-serif;">Loading…</div>
           <script>
             (function(){

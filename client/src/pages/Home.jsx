@@ -62,7 +62,6 @@ const clubFeatures = [
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
   <div className={`flex items-center gap-2 mb-5 ${light ? 'text-orange-600' : 'text-orange-600'}`}>
-    <span className={`block w-6 h-0.5 ${light ? 'bg-orange-600' : 'bg-orange-600'}`} />
     <span className="text-[11px] font-bold uppercase tracking-[0.15em]">{children}</span>
   </div>
 );
@@ -140,18 +139,23 @@ const Home = () => {
           {/* Headline */}
 
           <ScrollReveal delay={0.2}>
-            <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black mb-0">
-              Discover<br />
-              <span className="text-orange-600">Clubs & Events</span><br />
-              at NITJ...
+            <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black dark:text-white mb-0">
+              Your Campus,<br />
+              <span className="text-orange-600">Connected.</span>
             </h1>
           </ScrollReveal>
 
           {/* Sub + CTAs */}
           <ScrollReveal delay={0.3}>
             <div className="mt-12 flex flex-wrap items-end gap-10 justify-between">
-              <p className="text-[17px] font-light text-neutral-700 max-w-sm leading-relaxed">
-               Stop hunting through a dozen WhatsApp groups just to find out what's happening. From late-night hackathons to cultural fests, CampusNode brings the best of NITJ campus life right to your screen. Find your tribe, join the clubs you love, and never miss a beat again.</p>
+              <div className="max-w-xl">
+                <h2 className="text-lg md:text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-3 leading-snug">
+                  Events, Clubs, Lost & Found, and More — All in One Place.
+                </h2>
+                <p className="text-sm md:text-[15px] font-light text-neutral-700 dark:text-neutral-350 leading-relaxed">
+                  CampusNode is a student platform for NIT Jalandhar that helps students discover campus events, join clubs and societies, find opportunities, stay updated with announcements, and recover lost items through an organized Lost & Found system. Our goal is to create a connected campus where students can easily access information, engage with communities, and never miss important opportunities.
+                </p>
+              </div>
               <div className="flex gap-3 flex-wrap">
                <Link
   to="/events"
@@ -182,8 +186,8 @@ const Home = () => {
       </section>
 
       {/* ── TICKER ───────────────────────────────────────────────────────── */}
-      <div
-        className="overflow-hidden bg-orange-600 py-2"
+      {/* <div
+        className="overflow-hidden bg-orange-600 py-2 max-w-7xl mx-auto "
         style={{ whiteSpace: 'nowrap' }}
       >
         <div
@@ -221,7 +225,7 @@ const Home = () => {
             opacity: 1;
           }
         `}</style>
-      </div>
+      </div> */}
 
       {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
@@ -427,15 +431,15 @@ const Home = () => {
       <ScrollReveal direction="left">
         <div>
           <SectionLabel>Our Vision</SectionLabel>
-          <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black mb-8">
-            The Digital Pulse of<br /><span className="text-orange-600">NITJ Campus Life.</span>
+          <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-8">
+            Creating a Truly<br /><span className="text-orange-600">Connected Campus.</span>
           </h2>
-          <div className="space-y-6 text-neutral-700 leading-relaxed text-[17px]">
+          <div className="space-y-6 text-neutral-700 dark:text-neutral-300 leading-relaxed text-[17px]">
             <p>
-              CampusNode is the unified digital gateway designed specifically for the NIT Jalandhar community. We eliminate the chaos of multiple WhatsApp groups and scattered posters by providing a single, seamless platform where clubs can thrive and students can discover their passions.
+              CampusNode serves as the central hub for the NIT Jalandhar community. By bringing together events, clubs, announcements, and a structured Lost & Found system, we simplify campus life. We believe that accessing campus resources, engaging with student organizations, and finding opportunities should be simple and seamless.
             </p>
             <p>
-              By centralizing event registrations, club memberships, and campus updates, we are building a more connected and engaged student body. Our mission is to ensure that no opportunity at NITJ goes unnoticed and every talent finds its stage.
+              Our vision is to build a vibrant and digitally integrated ecosystem where student groups can reach their audience effectively and students can easily discover their passions, collaborate on ideas, and never miss out on key campus events and opportunities.
             </p>
           </div>
 
@@ -482,8 +486,8 @@ const Home = () => {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
           <ScrollReveal direction="up">
   <div className="mb-16">
-    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black mb-4">
-      The Minds Behind <span className="border-b-4 border-orange-600">CampusNode</span>
+    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-4">
+      The Minds Behind <span className="border-b-4 border-orange-600 logofont font-light">Campus<span className="text-orange-600 dark:text-orange-500">Node</span></span>
     </h2>
     <p className="text-neutral-600 max-w-2xl mx-auto text-[18px] leading-relaxed">
       We are a team of passionate student developers and campus leaders dedicated to 

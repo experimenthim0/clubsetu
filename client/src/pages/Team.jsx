@@ -121,7 +121,7 @@ const Team = () => {
           
           <ScrollReveal direction="up" delay={0.2}>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-6">
-              The Minds Behind Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+              The Minds Behind <span className="logofont font-light">Campus<span className="text-orange-600 dark:text-orange-500">Node</span></span>
             </h2>
           </ScrollReveal>
           

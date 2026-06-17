@@ -47,9 +47,12 @@ const AdminLayout = () => {
           className="flex-1 overflow-y-auto relative"
           style={{ height: "calc(100vh - 4rem)" }}
         >
-          <Outlet />
-
-          <DashboardFooter />
+          <div className="min-h-full flex flex-col">
+            <div className="flex-grow">
+              <Outlet />
+            </div>
+            <DashboardFooter />
+          </div>
         </main>
       </div>
     </div>

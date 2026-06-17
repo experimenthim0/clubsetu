@@ -37,9 +37,9 @@ const HomeFooter = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <img src="nitjlogo.png" alt="" className="w-11 h-12"/>
-              <span className="font-light text-[24px] tracking-wider text-black dark:text-white leading-none select-none logofont">Campus
-             <span className="text-orange-600 font-light tracking-wider">Node</span>
-            </span>
+              <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none logofont">
+                Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+              </span>
             </div>
             {/* <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
              CampusNode is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}

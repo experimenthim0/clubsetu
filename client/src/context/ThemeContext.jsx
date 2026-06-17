@@ -16,15 +16,21 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    const favicon = document.getElementById('dynamic-favicon');
+    const faviconSrc = isDark ? '/darkthemelogo.png' : '/lightthemelogo2.png';
+
     if (isDark) {
       root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      if (favicon) favicon.href = '/darkthemelogo.png';
     } else {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-      if (favicon) favicon.href = '/lightthemelogo2.png';
+    }
+
+    if (window.setRoundedFavicon) {
+      window.setRoundedFavicon(faviconSrc);
+    } else {
+      const favicon = document.getElementById('dynamic-favicon');
+      if (favicon) favicon.href = faviconSrc;
     }
   }, [isDark]);
 

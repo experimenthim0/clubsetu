@@ -4,7 +4,6 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
 import DynamicSidebar from "./DynamicSidebar";
-import PageLoader from "./PageLoader";
 import DashboardFooter from "./DashboardFooter";
 
 /**
@@ -61,20 +60,6 @@ const isSidebarRoute = (pathname) => {
 const AppLayout = () => {
   const location = useLocation();
   const isDashboardRoute = isSidebarRoute(location.pathname);
-  const [dashboardLoading, setDashboardLoading] = React.useState(false);
-
-  // Trigger workspace loader on dashboard route transition
-  React.useEffect(() => {
-    if (isDashboardRoute) {
-      setDashboardLoading(true);
-      const timer = setTimeout(() => {
-        setDashboardLoading(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setDashboardLoading(false);
-    }
-  }, [location.pathname, isDashboardRoute]);
 
   // ── Read user from localStorage (same pattern as Navbar/BottomNav) ────
   let user = null;
@@ -113,12 +98,12 @@ const AppLayout = () => {
             className="flex-1 overflow-y-auto pb-20 md:pb-0 relative"
             style={{ height: "calc(100vh - 4rem)" }}
           >
-            {/* Workspace transition loader — only overlays main content area */}
-            <PageLoader visible={dashboardLoading} absolute={true} />
-
-            <Outlet />
-
-            <DashboardFooter />
+            <div className="min-h-full flex flex-col">
+              <div className="flex-grow">
+                <Outlet />
+              </div>
+              <DashboardFooter />
+            </div>
           </main>
         </div>
 

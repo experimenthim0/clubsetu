@@ -157,7 +157,7 @@ const SendNotification = () => {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="e.g., Important Venue Change"
-              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400"
+              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-normal bg-white text-black outline-none focus:border-orange-600  transition-colors placeholder:font-normal placeholder:text-neutral-400"
             />
           </div>
 
@@ -172,7 +172,7 @@ const SendNotification = () => {
               required
               rows={4}
               placeholder="Write your message here..."
-              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-bold bg-white text-black outline-none focus:border-orange-600 focus:bg-orange-50 transition-colors placeholder:font-normal placeholder:text-neutral-400 resize-y"
+              className="w-full border-2 border-gray-300 rounded-sm px-4 py-3 text-sm font-light bg-white text-black outline-none focus:border-orange-600  transition-colors placeholder:font-normal placeholder:text-neutral-400 resize-y"
             />
           </div>
 
@@ -180,7 +180,7 @@ const SendNotification = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 bg-orange-600 border-2 border-gray-400 text-white font-black text-[14px] uppercase tracking-widest rounded-sm hover:bg-yellow-400 hover:text-black transition-all duration-200 mt-2 ${
+            className={`w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-[14px] uppercase tracking-widest rounded-full transition-all duration-200 mt-2 ${
               loading ? "opacity-70 cursor-not-allowed" : "hover:-translate-y-1 "
             }`}
           >

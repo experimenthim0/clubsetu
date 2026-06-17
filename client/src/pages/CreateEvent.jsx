@@ -258,7 +258,7 @@ const CreateEvent = () => {
                     <p className="text-neutral-600 mt-2">Fill in the details to publish a new event</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-300 rounded-sm p-8 space-y-6 ">
+                <form onSubmit={handleSubmit} className="bg-white border border-neutral-300 rounded-sm p-8 space-y-6 ">
                     {error && (
                         <div className="flex items-center gap-2 bg-red-50 border-2 border-red-400 text-red-700 text-[13px] font-bold px-4 py-3 rounded-sm">
                             <i className="ri-error-warning-line text-lg" />
@@ -629,7 +629,7 @@ const CreateEvent = () => {
                         <button
                             type="button"
                             onClick={addCustomField}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <i className="ri-add-circle-line text-lg" /> Add Custom Field
                         </button>
@@ -694,7 +694,7 @@ const CreateEvent = () => {
                         <button
                             type="button"
                             onClick={addSponsor}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <i className="ri-add-circle-line text-lg" /> Add Sponsor
                         </button>
@@ -748,7 +748,7 @@ const CreateEvent = () => {
                         <button
                             type="button"
                             onClick={addMedia}
-                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 border-2 border-dashed border-neutral-300 rounded-sm text-sm font-bold text-neutral-500 hover:border-orange-600 hover:text-orange-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <i className="ri-add-circle-line text-lg" /> Add Media
                         </button>
@@ -757,11 +757,11 @@ const CreateEvent = () => {
                     {/* Actions */}
                     <div className="flex gap-4 pt-6 border-t-2 border-neutral-100">
                         <button type="button" onClick={() => navigate(-1)}
-                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-neutral-100 transition-colors">
+                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-neutral-100 transition-colors">
                             Cancel
                         </button>
                         <button type="submit"
-                            className="flex-1 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-colors">
+                            className="flex-1 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-orange-600 hover:border-orange-600 transition-colors">
                             Create Event
                         </button>
                     </div>

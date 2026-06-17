@@ -14,5 +14,5 @@ export const EVENT_VENUES = [
   "LT",
   "Online",
   "Department Building",
-  "Others",
+  "Other",
 ];

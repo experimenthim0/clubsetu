@@ -314,24 +314,12 @@ const Navbar = () => {
 
             {user ? (
               <>
-                {/* Create Event — club only */}
-                {(role === "club") && (
-                  <Link
-                    to="/create"
-                    className="flex items-center gap-1.5 px-4 py-2 border-2 border-[#9ca3af] text-[#000000] dark:text-[#f5f5f5] text-[11px] font-bold tracking-widest rounded-sm hover:bg-[#9ca3af] hover:text-[#ffffff] dark:hover:bg-[#f5f5f5] dark:hover:text-[#000000] dark:hover:border-[#f5f5f5] transition-all duration-150 hover:-translate-y-px"
-                  >
-                    <i className="ri-add-line text-sm" />
-                    Create Event
-                  </Link>
-                )}
-
-
                 {/* ── Notification Bell (Members, Faculty, Clubs, Admins) ── */}
                 {(role === "member" || role === "facultyCoordinator" || role === "club" || role === "admin" || role === "student") && (
                   <div className="relative" ref={notifDropdownRef}>
                     <button
                       onClick={handleNotificationClick}
-                      className="relative p-2 rounded-sm text-neutral-700 dark:text-neutral-300 border-transparent hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
+                      className="relative p-2 rounded-sm text-neutral-700 dark:text-neutral-300 border-transparent  transition-colors duration-150 cursor-pointer"
                     >
                      {/* <i className="ri-notification-3-line text-lg" /> */}
                      <BellIcon />
@@ -398,7 +386,7 @@ const Navbar = () => {
                   {/* ── Dropdown panel ── */}
                   {dropdownOpen && (
                     <div
-                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white dark:bg-neutral-900 border-2 border-gray-400 dark:border-neutral-800 rounded-sm z-50 overflow-hidden mt-2 shadow-lg"
+                      className="absolute top-[calc(100%+10px)] right-0 w-52 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-sm z-50 overflow-hidden mt-2 shadow-lg"
                       role="menu"
                     >
                       {/* User header */}
@@ -472,14 +460,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="relative py-1 text-[11px] font-bold tracking-widest text-black dark:text-neutral-200 group transition-colors hover:text-orange-600 dark:hover:text-orange-500"
+                  className="relative py-1 pl-3 text-[13px] font-bold tracking-widest text-black dark:text-neutral-200 group transition-colors hover:text-orange-600 dark:hover:text-orange-500"
                 >
                   Login
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                  <span className="absolute ml-2 bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </Link>
                 <Link
                   to="/register/student"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-black dark:border-neutral-100 text-[11px] font-bold tracking-widest rounded-sm hover:bg-orange-600 dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-black dark:border-neutral-100 text-[11px] font-bold tracking-widest rounded-full hover:bg-orange-600 dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
                 >
                   <i className="ri-user-add-line text-sm" />
                   Register

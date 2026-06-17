@@ -102,8 +102,8 @@ const Aboutfeatures = () => {
           {/* Eyebrow */}
           <div className="flex items-center gap-2.5 mb-8 relative z-10">
             <span className="w-2 h-2 rounded-full bg-orange-500" />
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-neutral-700">
-              CampusNode — Campus Events Platform
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-neutral-700 flex items-center gap-1.5 flex-wrap">
+              <span className="logofont font-light normal-case text-xs text-black dark:text-neutral-200">Campus<span className="text-orange-500">Node</span></span> — Campus Events Platform
             </span>
           </div>
 
