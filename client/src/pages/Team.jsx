@@ -133,7 +133,7 @@ const Team = () => {
         </div>
 
         {/* Responsive Grid Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-8 sm:gap-y-12">
           {TEAM_MEMBERS.map((member, index) => (
             <ScrollReveal
               key={member.id}

@@ -105,7 +105,7 @@ const ClubCard = ({ club }) => {
         {/* Upper section: Logo, Title, Category */}
         <div className="flex items-start gap-4">
           {/* Logo container: custom shadow and smooth borders */}
-          <div className="w-14 h-14 bg-neutral-50 dark:bg-neutral-900 rounded-xl flex items-center justify-center border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+          <div className="w-14 h-14 bg-neutral-50 dark:bg-neutral-900 rounded-full flex items-center justify-center border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300">
             <img
               ref={imgRef}
               src={displayUrl}
@@ -212,10 +212,10 @@ const ClubCard = ({ club }) => {
             <Link
               to={`/club/${club.slug || club._id}`}
               style={buttonStyle}
-              className="flex items-center justify-center gap-1 w-full py-2.5 border border-neutral-300 dark:border-neutral-850 rounded-xl text-[11px] font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-300 shadow-sm"
+              className="flex items-center justify-center gap-1 w-full py-2.5 border border-neutral-300 dark:border-neutral-850 rounded-xl text-[11px] font-black  tracking-wider text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all duration-300 shadow-sm"
             >
               <ArrowUpRightIcon size={16}>
-                Explore
+                View Page
               </ArrowUpRightIcon>
             </Link>
           </div>

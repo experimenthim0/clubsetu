@@ -56,6 +56,12 @@ const ClubDetails = () => {
     fetchClubDetails();
   }, [slug]);
 
+  useEffect(() => {
+    if (club) {
+      document.title = `${club.clubName} - CampusNode`;
+    }
+  }, [club]);
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">

@@ -126,6 +126,7 @@ model Event {
   allowedYears         String[]        @default([])
   imageUrl             String?
   registeredCount      Int             @default(0)
+  views                Int             @default(0)
   waitingListIds       String[]        @default([])
   requiredFields       String[]        @default([])
   customFields         Json?

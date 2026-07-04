@@ -11,6 +11,12 @@ const ClubsPage = ({ isHome = false }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isHome) {
+      document.title = "Clubs & Societies - CampusNode";
+    }
+  }, [isHome]);
+
+  useEffect(() => {
     const fetchClubs = async () => {
       try {
         const res = await axios.get(

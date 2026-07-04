@@ -23,8 +23,8 @@ const HomeFooter = () => {
     // { label: 'NITJ Website', href: 'https://nitj.ac.in' },
     { label: 'Contact', href: 'mailto:clubsetu@nikhim.me' },
     { label: 'Team', to: '/team' },
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Privacy Policy', to: '/privacy' },
+    { label: 'Terms of Service', to: '/terms' },
   ];
 
   return (
@@ -81,7 +81,7 @@ const HomeFooter = () => {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-500 transition-colors font-medium dark:hover:text-orange-500 "
+                    className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium dark:hover:text-orange-500"
                   >
                     {link.label}
                   </Link>
@@ -98,13 +98,22 @@ const HomeFooter = () => {
             </h4>
             <ul className="space-y-3">
               {otherLinks.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-500 transition-colors font-medium cursor-pointer"
-                  >
-                    {link.label}
-                  </a>
+                <li key={link.label}>
+                  {link.to ? (
+                    <Link
+                      to={link.to}
+                      className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium dark:hover:text-orange-600"
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium cursor-pointer dark:hover:text-orange-600"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

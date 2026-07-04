@@ -10,7 +10,7 @@ import {ArrowRightIcon} from '../components/ui/arrow-right';
 import { InstagramIcon } from '@/components/ui/instagram';
 import { GithubIcon } from '@/components/ui/github';
 import { LinkedinIcon } from '@/components/ui/linkedin';
-import { MailIcon } from 'lucide-react';
+import { MailIcon, Github, Linkedin, Twitter } from 'lucide-react';
 import { AtSignIcon } from '@/components/ui/at-sign';
 import { EarthIcon } from '@/components/ui/earth';
 // Ticker items
@@ -88,7 +88,11 @@ const BtnSecondary = ({ to, children }) => (
 
 const Home = () => {
 
- const [tab, setTab] = useState("students");
+  const [tab, setTab] = useState("students");
+
+  useEffect(() => {
+    document.title = "CampusNode | NITJ Clubs & Events";
+  }, []);
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -246,7 +250,7 @@ const Home = () => {
               <BtnSecondary to="/events">
               <ArrowRightIcon size={20} >
 
-                View All Events 
+                Explore All Events 
               </ArrowRightIcon>
               </BtnSecondary>
             </div>
@@ -275,7 +279,7 @@ const Home = () => {
               <BtnSecondary to="/clubs">
               <ArrowRightIcon  size={20}>
 
-                View More 
+                Explore All 
               </ArrowRightIcon>
               </BtnSecondary>
             </div>
@@ -482,89 +486,140 @@ const Home = () => {
 </section>
 
       {/* ── FACULTY & TEAM ────────────────────────────────────────────────── */}
-      <section id="team" className="py-24 bg-[#fefce8]/30 border-b border-neutral-300 scroll-mt-20">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center">
-          <ScrollReveal direction="up">
-  <div className="mb-16">
-    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-4">
-      The Minds Behind <span className="border-b-4 border-orange-600 logofont font-light">Campus<span className="text-orange-600 dark:text-orange-500">Node</span></span>
-    </h2>
-    <p className="text-neutral-600 max-w-2xl mx-auto text-[18px] leading-relaxed">
-      We are a team of passionate student developers and campus leaders dedicated to 
-      bridging the gap between NITJ clubs and students through seamless digital experiences.
-    </p>
-  </div>
-</ScrollReveal>
+      <section id="team" className="py-24 bg-neutral-50/50 dark:bg-neutral-950/20 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
+        {/* Glow accent */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-orange-500/[0.02] dark:bg-orange-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
-          {/* Faculty Coordinator */}
-          <ScrollReveal direction="up" delay={0.1}>
-            <div className="mb-20">
-              <div className="inline-block relative">
-              
-                <div 
-                  onMouseMove={handleMouseMove}
-                  className="feature-card relative border-2 rounded-sm  border-gray-200 bg-white p-8 max-w-md mx-auto group hover:-translate-y-1 transition-all"
-                >
-                  <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                    <div className="w-24 h-24 shrink-0  border-2 border-gray-500 bg-neutral-500 overflow-hidden flex items-center justify-center">
-                      <i className="ri-user-star-line text-4xl text-neutral-300" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-[11px] font-semibold tracking-[0.2em] text-orange-600 mb-1"> Coordinator</div>
-                      <h3 className="text-2xl font-black text-black mb-2">Himanshu Yadav</h3>
-                      <div className="flex gap-3 text-neutral-700">
-                        <a href="#" className="hover:text-orange-600">
-                          <LinkedinIcon/>
-                          </a>
-                        <a href="#" className="hover:text-orange-600">
-                         <AtSignIcon />
-                          </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col items-center mb-16 text-center max-w-3xl mx-auto">
+            <ScrollReveal direction="up" delay={0.1}>
+              <span className="text-orange-600 dark:text-orange-500 font-bold tracking-[0.2em] text-xs uppercase block mb-3">
+                The Innovators
+              </span>
+            </ScrollReveal>
+            
+            <ScrollReveal direction="up" delay={0.2}>
+              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 dark:text-white mb-6">
+                The Minds Behind <span className="logofont font-light">Campus<span className="text-orange-600 dark:text-orange-500">Node</span></span>
+              </h2>
+            </ScrollReveal>
+            
+            <ScrollReveal direction="up" delay={0.3}>
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-light">
+                We are student innovators, creators, and engineers building the digital gateway for NITJ.
+              </p>
+            </ScrollReveal>
+          </div>
 
-          {/* Team Members Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Responsive Grid Layout */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-8 sm:gap-y-12">
             {[
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#",portfolio:"#" },
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
-              { name: "Coming Soon", role: "Coming Soon", github: "#", linkedin: "#" },
-            ].map((member, i) => (
-              <ScrollReveal key={i} direction="up" delay={0.1 + (i * 0.05)}>
-                <div 
-                  onMouseMove={handleMouseMove}
-                  className="feature-card border-2 border-gray-200 bg-white rounded-sm overflow-hidden flex transition-all group"
-                >
-                  <div className="relative z-10 flex w-full">
-                    <div className="w-1/3 aspect-[3/4] bg-neutral-100 border-r-2 border-gray-100 flex items-center justify-center text-neutral-300 overflow-hidden">
-                      <i className="ri-user-3-line text-4xl" />
+              {
+                id: '1',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              },
+              {
+                id: '2',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              },
+              {
+                id: '3',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              },
+              {
+                id: '4',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com' }
+              },
+              {
+                id: '5',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              },
+              {
+                id: '6',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com' }
+              },
+              {
+                id: '7',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              },
+              {
+                id: '8',
+                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
+                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
+              }
+            ].map((member, index) => (
+              <ScrollReveal
+                key={member.id}
+                direction="up"
+                delay={0.1 + (index % 4) * 0.08}
+              >
+                <div className="flex flex-col group">
+                  {/* Image Container with square aspect ratio, rounded borders, and scale transition */}
+                  <figure className="relative aspect-square overflow-hidden rounded-3xl bg-neutral-200 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850 hover:border-neutral-355 dark:hover:border-neutral-700/60 transition-colors duration-300 hover:scale-[1.02] transition-transform duration-300 ease-out">
+                    <img
+                      src={member.imageUrl}
+                      alt="Team Member"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/[0.02] dark:bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  </figure>
+
+                  {/* Details */}
+                  <figcaption className="mt-4 flex flex-col gap-2">
+                    <div>
+                      <h3 className="text-base font-bold text-neutral-900 dark:text-white tracking-wide leading-snug">
+                        Coming Soon..
+                      </h3>
+                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mt-0.5">
+                        Coming Soon..
+                      </p>
                     </div>
-                    <div className="w-2/3 p-4 flex flex-col justify-center text-left">
-                      <h3 className="font-bold text-[18px] text-black leading-tight mb-1 transition-colors tracking-wider">{member.name}</h3>
-                      <p className="text-[12px] font-medium text-neutral-500 mb-4">{member.role}</p>
-                      <div className="flex gap-2.5 mt-auto">
-                        <a href={member.github} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
-                          {/* <i className="ri-github-fill" /> */}
-                         <GithubIcon/>
+
+                    {/* Social links */}
+                    <div className="flex flex-row gap-3.5 items-center">
+                      {member.socials.github && (
+                        <a
+                          href={member.socials.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-450 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors duration-250"
+                          aria-label="GitHub"
+                        >
+                          <Github size={15} />
                         </a>
-                        <a href={member.linkedin} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
-                          <LinkedinIcon/>
+                      )}
+                      {member.socials.linkedin && (
+                        <a
+                          href={member.socials.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-455 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-white transition-colors duration-250"
+                          aria-label="LinkedIn"
+                        >
+                          <Linkedin size={15} />
                         </a>
-                        {member.portfolio && (
-                        <a href={member.portfolio} className="w-8 h-8 flex items-center justify-center  text-black rounded-sm transition-colors">
-                          <EarthIcon/>
+                      )}
+                      {member.socials.twitter && (
+                        <a
+                          href={member.socials.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-455 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors duration-250"
+                          aria-label="Twitter/X"
+                        >
+                          <Twitter size={15} />
                         </a>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </div>
+                  </figcaption>
                 </div>
               </ScrollReveal>
             ))}

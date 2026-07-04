@@ -9,6 +9,12 @@ import { Skeleton } from '../components/ui/Skeleton';
 const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive = false }) => {
   const { showNotification } = useNotification();
   const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    if (!hideHeader) {
+      document.title = "Events - CampusNode";
+    }
+  }, [hideHeader]);
   const [loading, setLoading] = useState(true);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -346,7 +352,7 @@ return (
             <img className='w-full h-full object-cover rounded-full' src="cat.png" alt="" />
         </div>
         <h3 className="text-xl font-black text-neutral-800 mb-2">
-          {onlyActive ? 'No Live or Upcoming Events' : (events.length === 0 ? 'No Events Found' : 'No Matching Events')}
+          {onlyActive ? 'No Active or Upcoming Events' : (events.length === 0 ? 'No Events Found' : 'No Matching Events')}
         </h3>
         <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
           {onlyActive 
