@@ -80,8 +80,8 @@ router.post("/", verifyToken, allowRoles("club", "facultyCoordinator", "admin"),
       });
       recipients = participations.map((p) => p.studentId).filter(Boolean);
     } else if (targetType === "ALL_STUDENTS") {
-      if (req.user.role !== "admin") {
-        return res.status(403).json({ message: "Only admins can broadcast to all students." });
+      if (req.user.role !== "admin" && req.user.role !== "club") {
+        return res.status(403).json({ message: "Only admins and club heads can broadcast to all students." });
       }
     } else {
       return res.status(400).json({ message: "Invalid notification target." });
@@ -148,8 +148,14 @@ router.get(
         where: {
           createdAt: { gte: userCreatedAt },
           OR: [
-            { senderStudentId: { not: null } },
-            { senderAdminId: { not: null } },
+            { recipientStudentId: userId },
+            {
+              recipientStudentId: null,
+              OR: [
+                { senderStudentId: { not: null } },
+                { senderAdminId: { not: null } },
+              ],
+            },
           ],
         },
         include: senderInclude,

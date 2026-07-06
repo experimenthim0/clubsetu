@@ -106,7 +106,7 @@ const Home = () => {
   if (isMaintenance) {
     return <Maintainance />;
   }
-  const bgImages = ["csh.jpeg", "mainbuilding.jpeg"];
+  const bgImages = ["hostels-day.jpeg","csh.jpeg", "mainbuilding.jpeg","hostels-night.jpeg","mainbld.jpeg"];
   const [bgIndex, setBgIndex] = useState(0);
 
   useEffect(() => {
@@ -262,7 +262,7 @@ const Home = () => {
 
       {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
       <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4">
           <ScrollReveal direction="up">
             <div className="mb-12">
              

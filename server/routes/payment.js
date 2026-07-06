@@ -116,7 +116,10 @@ router.post(
       let registrationStatus = "REGISTERED";
 
       await prisma.$transaction(async (tx) => {
-        const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
+        const events = await tx.$queryRaw`
+          SELECT * FROM "Event" WHERE id = ${eventId} FOR UPDATE
+        `;
+        const latestEvent = events[0];
         if (!latestEvent) throw new Error("Event not found");
 
         const student = await tx.studentUser.findUnique({ where: { id: studentId } });

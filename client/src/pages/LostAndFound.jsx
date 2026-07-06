@@ -20,6 +20,48 @@ const LostAndFound = () => {
     whatsapp: ''
   });
   const [selectedContact, setSelectedContact] = useState(null);
+  const [reportModalItem, setReportModalItem] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [activeOnly, setActiveOnly] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    isDanger: false
+  });
+
+  const triggerConfirm = ({ title, message, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', isDanger = false }) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      },
+      confirmText,
+      cancelText,
+      isDanger
+    });
+  };
+  const getFilteredItems = () => {
+    const list = activeTab === 'browse' ? items : myItems;
+    return list.filter(item => {
+      if (typeFilter !== 'ALL' && item.type !== typeFilter) {
+        return false;
+      }
+      if (activeOnly && item.status === 'REUNITED') {
+        return false;
+      }
+      return true;
+    });
+  };
   
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -32,20 +74,26 @@ const LostAndFound = () => {
   }, [activeTab]);
 
   const fetchItems = async () => {
+    setFetching(true);
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found`, { withCredentials: true });
       setItems(res.data);
     } catch (err) {
       toast.error('Failed to load items');
+    } finally {
+      setFetching(false);
     }
   };
 
   const fetchMyItems = async () => {
+    setFetching(true);
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found/my-posts`, { withCredentials: true });
       setMyItems(res.data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -69,36 +117,81 @@ const LostAndFound = () => {
     }
   };
 
-  const handleResolve = async (id) => {
+  const handleResolve = (id) => {
+    triggerConfirm({
+      title: 'Mark as Reunited?',
+      message: 'Are you sure you want to mark this item as reunited? It will stay visible in browse feed for 24 hours before auto-hiding.',
+      confirmText: 'Yes, Reunited',
+      cancelText: 'Cancel',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await axios.patch(`${import.meta.env.VITE_API_URL}/api/lost-found/${id}/reunite`, {}, { withCredentials: true });
+          toast.success('Item marked as Reunited');
+          fetchItems();
+          fetchMyItems();
+        } catch (err) {
+          toast.error('Failed to update status');
+        }
+      }
+    });
+  };
+
+  const handleClaim = (item) => {
+    triggerConfirm({
+      title: item.type === 'LOST' ? 'Found this item?' : 'Is this your item?',
+      message: 'Are you sure you want to claim this item? False claims can lead to temporary or permanent account restrictions.',
+      confirmText: 'Yes, Claim',
+      cancelText: 'Cancel',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${item.id}/claim`, {}, { withCredentials: true });
+          setSelectedContact({ ...item, contact_info: res.data.contact });
+          toast.success('Claim initiated!');
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to claim item');
+        }
+      }
+    });
+  };
+
+  const handleReportLiar = (itemId, liarId) => {
+    triggerConfirm({
+      title: 'Report False Claim?',
+      message: 'Are you sure you want to report this user for false claiming? If confirmed, they will face a permanent account suspension.',
+      confirmText: 'Report & Restrict',
+      cancelText: 'Cancel',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${itemId}/report-liar`, { liarId }, { withCredentials: true });
+          toast.success('User reported and restricted.');
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to report');
+        }
+      }
+    });
+  };
+
+  const handleReport = (itemId) => {
+    setReportModalItem(itemId);
+    setReportReason('');
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) return toast.error('Please select or enter a reason.');
+    setReportSubmitting(true);
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/api/lost-found/${id}/reunite`, {}, { withCredentials: true });
-      toast.success('Item marked as Reunited');
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${reportModalItem}/report`, { reason: reportReason.trim() }, { withCredentials: true });
+      toast.success('Report submitted. The post owner has been notified.');
+      setReportModalItem(null);
+      setReportReason('');
       fetchItems();
-      fetchMyItems();
-    } catch (err) {
-      toast.error('Failed to update status');
-    }
-  };
-
-  const handleClaim = async (item) => {
-    if (!window.confirm('Are you sure this item belongs to you or you found it? False claims can lead to account restriction.')) return;
-    
-    try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${item.id}/claim`, {}, { withCredentials: true });
-      setSelectedContact({ ...item, contact_info: res.data.contact });
-      toast.success('Claim initiated!');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to claim item');
-    }
-  };
-
-  const handleReportLiar = async (itemId, liarId) => {
-    if (!window.confirm('Report this user for false claiming? They will be restricted.')) return;
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${itemId}/report-liar`, { liarId }, { withCredentials: true });
-      toast.success('User reported and restricted.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to report');
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -183,13 +276,6 @@ const LostAndFound = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link 
-              to="/lost-found/guide"
-              className="p-2.5  text-gray-500 dark:text-neutral-400 rounded-full  hover:text-orange-500 transition-all group"
-              title="View Community Guidelines"
-            >
-              <i className="ri-information-line text-lg" />
-            </Link>
             {user && (
               <button
                 onClick={() => setShowModal(true)}
@@ -201,17 +287,61 @@ const LostAndFound = () => {
           </div>
         </div>
 
-        {/* Cards Grid */}
+        {/* Status & Type Toggles / Filters */}
+        <div className="flex flex-wrap items-center justify-between mt-6 gap-4 p-4 bg-gray-50 dark:bg-neutral-900/40 border border-gray-200 dark:border-neutral-800/40 rounded-2xl">
+          {/* Left Side: Type Filters (All, Lost, Found) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mr-2">Filter Type:</span>
+            {['ALL', 'LOST', 'FOUND'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  typeFilter === type
+                    ? 'bg-black dark:bg-orange-600 text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700/50'
+                }`}
+              >
+                {type === 'ALL' ? 'All Posts' : type}
+              </button>
+            ))}
+          </div>
+
+          {/* Right Side: Active Only Status Toggle */}
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={activeOnly}
+                onChange={(e) => setActiveOnly(e.target.checked)}
+                className="w-4 h-4 rounded text-orange-500 bg-white dark:bg-neutral-800 border-gray-300 dark:border-neutral-750 focus:ring-orange-500 accent-orange-500 cursor-pointer"
+              />
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Active Only <span className="text-gray-400 dark:text-neutral-500 font-normal">(hide Reunited)</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Loading Spinner */}
+        {fetching ? (
+          <div className="mt-12 flex flex-col items-center justify-center py-20 gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Loading posts...</p>
+          </div>
+        ) : (
+          <>
+            {/* Cards Grid */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(activeTab === 'browse' ? items : myItems).map((item) => (
+          {getFilteredItems().map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-[#1a1a1a] border-2 border-gray-300 dark:border-neutral-800 rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-transform duration-200 group flex flex-col"
             >
               {/* Image */}
-              <div className="aspect-video bg-gray-50 relative overflow-hidden">
+              <div className="aspect-video bg-gray-100 dark:bg-neutral-900 relative overflow-hidden">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-200">
                     <i className="ri-image-line text-4xl" />
@@ -225,8 +355,8 @@ const LostAndFound = () => {
 
                 {/* Resolved overlay */}
                 {item.status === 'REUNITED' && (
-                  <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-[2px] flex items-center justify-center z-10">
-                    <span className="px-5 py-1.5 bg-black dark:bg-orange-600 text-white rounded-full text-xs font-semibold -rotate-6">Reunited ✓</span>
+                  <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-[0.5px] flex items-center justify-center z-10">
+                    <span className="px-5 py-1.5 bg-green-600 dark:bg-green-600 text-white rounded-full text-xs font-semibold shadow-lg">✓ Reunited</span>
                   </div>
                 )}
               </div>
@@ -236,12 +366,21 @@ const LostAndFound = () => {
                 <h3 className="text-base font-bold text-gray-900 dark:text-white leading-snug line-clamp-1 mb-1">{item.title}</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed line-clamp-2 mb-4 flex-1">{item.description}</p>
 
-                <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-4">
+                <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-4 flex-wrap">
                   <i className="ri-calendar-line" />
                   <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                   <span className="mx-1">·</span>
                   <i className="ri-user-line" />
                   <span>{activeTab === 'browse' ? (item.user?.name || 'Someone') : 'You'}</span>
+                  {activeTab === 'my-items' && item.reportedBy && item.reportedBy.length > 0 && (
+                    <>
+                      <span className="mx-1">·</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 font-semibold">
+                        <i className="ri-flag-line text-[10px]" />
+                        {item.reportedBy.length} {item.reportedBy.length === 1 ? 'report' : 'reports'}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -254,12 +393,21 @@ const LostAndFound = () => {
                     </button>
                   )}
                   {activeTab === 'browse' && user && item.userId !== user.id && item.status === 'ACTIVE' && (
-                    <button
-                      onClick={() => handleClaim(item)}
-                      className="flex-1 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 rounded-lg text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                    >
-                      {item.type === 'LOST' ? "I found this" : "It's Mine"}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleClaim(item)}
+                        className="flex-1 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 rounded-lg text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                      >
+                        {item.type === 'LOST' ? "I found this" : "It's Mine"}
+                      </button>
+                      <button
+                        onClick={() => handleReport(item.id)}
+                        className="px-3 py-2 bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-neutral-700 rounded-lg text-xs hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-800/50 transition-colors"
+                        title="Report this post"
+                      >
+                        <i className="ri-flag-line text-sm" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -267,12 +415,77 @@ const LostAndFound = () => {
           ))}
         </div>
 
-        {(activeTab === 'browse' ? items : myItems).length === 0 && (
+        {getFilteredItems().length === 0 && (
           <div className="py-24 text-center">
             <i className="ri-search-line text-5xl text-gray-200 dark:text-neutral-800 mb-4 block" />
             <h3 className="text-xl font-semibold text-gray-300 dark:text-neutral-700">No items found</h3>
           </div>
         )}
+          </>
+        )}
+
+        {/* Rules & Limits Quick Guide */}
+        <div className="mt-16 p-8 bg-white dark:bg-[#111111] border-2 border-gray-300 dark:border-neutral-800 rounded-3xl relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-950/40 rounded-full flex items-center justify-center text-orange-500">
+              <i className="ri-shield-check-line text-lg" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Community Rules & Guidelines</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Please review key limits and restrictions to keep the community safe.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
+              <div className="flex items-center gap-2 mb-2 text-orange-500">
+                <i className="ri-edit-line text-lg" />
+                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Daily Post Limit</h4>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                To prevent spam, each user is allowed to post a maximum of <strong>2 items per day</strong>.
+              </p>
+            </div>
+
+            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
+              <div className="flex items-center gap-2 mb-2 text-red-500">
+                <i className="ri-flag-line text-lg" />
+                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Post Report Limits</h4>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                If a post receives <strong>3+ reports</strong>, it is flagged as fraud (poster suspended for <strong>7 days</strong>). Making <strong>2 false reports</strong> suspends you for <strong>2 days</strong>.
+              </p>
+            </div>
+
+            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
+              <div className="flex items-center gap-2 mb-2 text-red-600">
+                <i className="ri-error-warning-line text-lg" />
+                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Strict Suspensions</h4>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Falsely claiming items results in <strong>permanent suspension</strong>. Everyday reporting triggers blocks. For appeals, email <strong>clubsetu@nikhim.me</strong>.
+              </p>
+            </div>
+
+            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
+              <div className="flex items-center gap-2 mb-2 text-emerald-500">
+                <i className="ri-time-line text-lg" />
+                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Reunited Visibility</h4>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Reunited posts remain visible in the browse feed for <strong>24 hours</strong> with reduced blur before auto-hiding.
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Link 
+              to="/lost-found/guide"
+              className="text-xs font-semibold text-orange-500 hover:text-orange-600 flex items-center gap-1 transition-colors"
+            >
+              View Full Community Guidelines <i className="ri-arrow-right-line" />
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Post Modal */}
@@ -416,6 +629,112 @@ const LostAndFound = () => {
                 className="w-full mt-2 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {reportModalItem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-md p-7 relative">
+            <button
+              onClick={() => { setReportModalItem(null); setReportReason(''); }}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
+            >
+              <i className="ri-close-line" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-500">
+                <i className="ri-flag-line text-lg" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Report Post</h2>
+            </div>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-5 ml-[52px]">The post owner will be notified with your reason.</p>
+
+            <div className="space-y-2 mb-4">
+              {[
+                'This item is not real / fake post',
+                'Inappropriate or offensive content',
+                'Spam or promotional post',
+                'Misleading description or image',
+                'Duplicate post',
+                'Suspicious activity / potential scam'
+              ].map((reason) => (
+                <label
+                  key={reason}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    reportReason === reason
+                      ? 'border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
+                      : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reportReason"
+                    value={reason}
+                    checked={reportReason === reason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    className="accent-red-500 w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{reason}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Or describe your concern</label>
+              <textarea
+                value={!['This item is not real / fake post','Inappropriate or offensive content','Spam or promotional post','Misleading description or image','Duplicate post','Suspicious activity / potential scam'].includes(reportReason) ? reportReason : ''}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Tell us why you're reporting this post..."
+                className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-red-400 focus:outline-none transition-colors h-20 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setReportModalItem(null); setReportReason(''); }}
+                className="flex-1 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReport}
+                disabled={!reportReason.trim() || reportSubmitting}
+                className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-sm p-6 relative shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{confirmModal.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">{confirmModal.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="flex-1 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+              >
+                {confirmModal.cancelText}
+              </button>
+              <button
+                onClick={confirmModal.onConfirm}
+                className={`flex-1 py-2.5 text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
+                  confirmModal.isDanger 
+                    ? 'bg-red-500 hover:bg-red-600' 
+                    : 'bg-orange-500 hover:bg-orange-600'
+                }`}
+              >
+                {confirmModal.confirmText}
               </button>
             </div>
           </div>

@@ -55,6 +55,7 @@ model StudentUser {
   memberships             ClubMembership[]
   createdEvents           Event[]          @relation("EventCreatedBy")
   sentNotifications       Notification[]   @relation("NotificationSenderStudent")
+  receivedNotifications   Notification[]   @relation("NotificationRecipientStudent")
   participations          Participation[]
   lostFoundItems          LostFoundItem[]
   lostFoundReports        LostFoundReport[] @relation("ReportReporter")
@@ -204,15 +205,19 @@ model Media {
 }
 
 model Notification {
-  id              String       @id @db.VarChar(24)
-  senderStudentId String?      @db.VarChar(24)
-  senderAdminId   String?      @db.VarChar(24)
-  title           String
-  message         String
-  createdAt       DateTime     @default(now())
-  readBy          String[]     @default([])
-  senderAdmin     AdminRole?   @relation("NotificationSenderAdmin", fields: [senderAdminId], references: [id])
-  senderStudent   StudentUser? @relation("NotificationSenderStudent", fields: [senderStudentId], references: [id])
+  id                 String       @id @db.VarChar(24)
+  senderStudentId    String?      @db.VarChar(24)
+  senderAdminId      String?      @db.VarChar(24)
+  recipientStudentId String?      @db.VarChar(24)
+  lostFoundItemId    String?      @db.VarChar(24)
+  title              String
+  message            String
+  createdAt          DateTime     @default(now())
+  readBy             String[]     @default([])
+  senderAdmin        AdminRole?   @relation("NotificationSenderAdmin", fields: [senderAdminId], references: [id])
+  senderStudent      StudentUser? @relation("NotificationSenderStudent", fields: [senderStudentId], references: [id])
+  recipientStudent   StudentUser? @relation("NotificationRecipientStudent", fields: [recipientStudentId], references: [id])
+  lostFoundItem      LostFoundItem? @relation(fields: [lostFoundItemId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
 }
@@ -280,6 +285,7 @@ model LostFoundItem {
   userId         String            @db.VarChar(24)
   user           StudentUser       @relation(fields: [userId], references: [id])
   reports        LostFoundReport[]
+  notifications  Notification[]
   reunitedAt     DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt

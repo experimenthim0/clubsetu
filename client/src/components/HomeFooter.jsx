@@ -11,12 +11,9 @@ const HomeFooter = () => {
   const quickLinks = [
     { label: 'Events', to: '/events' },
     { label: 'Clubs', to: '/clubs' },
-  
     { label: 'Event Guide', to: '/event-guide' },
-   
-     { label: 'FAQ', to: '/faq' },
-    // { label: 'Register', to: '/register' },
-    // { label: 'Login', to: '/login' },
+    { label: 'L&F Guide', to: '/lost-found/guide' },
+    { label: 'FAQ', to: '/faq' },
   ];
 
   const otherLinks = [

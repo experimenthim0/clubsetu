@@ -177,10 +177,10 @@ const AppLayout = () => {
         href="https://whatsapp.com/channel/0029VbAhXba7z4kgTBY3nS0Z"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-24 right-6 md:bottom-6 md:right-6 z-50 flex items-center justify-center w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.3)] transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
+        className="fixed bottom-20 right-3 md:bottom-6 md:right-4 z-50 flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.3)] transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
         aria-label="Join our WhatsApp Channel"
       >
-        <i className="ri-whatsapp-line text-3xl" />
+        <i className="ri-whatsapp-line text-2xl" />
         <span className="absolute right-16 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-neutral-900 dark:bg-neutral-800 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md pointer-events-none border border-neutral-800/20 translate-x-2 group-hover:translate-x-0">
           Join WhatsApp Channel
         </span>

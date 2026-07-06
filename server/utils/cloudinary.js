@@ -30,4 +30,17 @@ export const uploadImage = (fileBuffer, folder = 'certificates') => {
   });
 };
 
+export const deleteImage = (publicId) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        console.error("Cloudinary Delete Error:", error);
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
 export default cloudinary;

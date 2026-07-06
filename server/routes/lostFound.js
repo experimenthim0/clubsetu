@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import prisma from "../lib/prisma.js";
 import { verifyToken } from "../middleware/auth.js";
-import { generateSignature, uploadImage } from "../utils/cloudinary.js";
+import { generateSignature, uploadImage, deleteImage } from "../utils/cloudinary.js";
 import { createObjectId } from "../utils/objectId.js";
 
 const router = express.Router();
@@ -105,6 +105,23 @@ router.post("/upload", verifyToken, upload.single("image"), async (req, res) => 
     }
 
     const result = await uploadImage(req.file.buffer, "lost-found");
+    const publicId = result.public_id;
+
+    // Schedule checking the database in 2 minutes. If post creation failed or cancelled, delete from Cloudinary.
+    setTimeout(async () => {
+      try {
+        const item = await prisma.lostFoundItem.findFirst({
+          where: { imagePublicId: publicId }
+        });
+        if (!item) {
+          console.log(`[Auto-Cleanup] Deleting orphaned image: ${publicId}`);
+          await deleteImage(publicId);
+        }
+      } catch (err) {
+        console.error(`[Auto-Cleanup Error] Failed to delete orphaned image ${publicId}:`, err);
+      }
+    }, 2 * 60 * 1000); // 2 minutes
+
     res.json({ 
       secure_url: result.secure_url,
       public_id: result.public_id
@@ -130,11 +147,20 @@ router.get("/signature", verifyToken, (req, res) => {
   }
 });
 
-// GET /api/lost-found - Fetch all active items, sorted by newest first
+// GET /api/lost-found - Fetch all active items + recently reunited (within 1 day), sorted by newest first
 router.get("/", verifyToken, async (req, res) => {
   try {
+    const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
     const items = await prisma.lostFoundItem.findMany({
-      where: { status: "ACTIVE" },
+      where: {
+        OR: [
+          { status: "ACTIVE" },
+          {
+            status: "REUNITED",
+            reunitedAt: { gte: oneDayAgo }
+          }
+        ]
+      },
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { name: true, email: true } }
@@ -170,15 +196,24 @@ router.patch("/:id/reunite", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Item not found or unauthorized." });
     }
 
-    const updated = await prisma.lostFoundItem.update({
-      where: { id: req.params.id },
-      data: { 
-        status: "REUNITED",
-        reunitedAt: new Date()
-      }
-    });
+    // Delete all reports and notification alerts associated with this item upon reunification
+    await prisma.$transaction([
+      prisma.lostFoundReport.deleteMany({
+        where: { itemId: req.params.id }
+      }),
+      prisma.notification.deleteMany({
+        where: { lostFoundItemId: req.params.id }
+      }),
+      prisma.lostFoundItem.update({
+        where: { id: req.params.id },
+        data: { 
+          status: "REUNITED",
+          reunitedAt: new Date()
+        }
+      })
+    ]);
     
-    res.json({ message: "Item marked as reunited", item: updated });
+    res.json({ message: "Item marked as reunited" });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
@@ -187,44 +222,109 @@ router.patch("/:id/reunite", verifyToken, async (req, res) => {
 // POST /api/lost-found/:id/report - Report fraud
 router.post("/:id/report", verifyToken, async (req, res) => {
   try {
-    const item = await prisma.lostFoundItem.findUnique({
-      where: { id: req.params.id }
-    });
-    
-    if (!item) return res.status(404).json({ message: "Item not found." });
-    if (item.userId === req.user.userId) {
-      return res.status(400).json({ message: "You cannot report your own item." });
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ message: "Please provide a reason for reporting." });
     }
 
-    if (item.reportedBy.includes(req.user.userId)) {
-      return res.status(400).json({ message: "You have already reported this item." });
-    }
+    const { userId } = req.user;
 
-    const newReportedBy = [...item.reportedBy, req.user.userId];
-    let isFraud = item.isFraud;
-    
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
+      // Select the row with FOR UPDATE lock to serialize concurrent reports
+      const items = await tx.$queryRaw`
+        SELECT * FROM "LostFoundItem" WHERE id = ${req.params.id} FOR UPDATE
+      `;
+      const dbItem = items[0];
+
+      if (!dbItem) {
+        throw new Error("NOT_FOUND");
+      }
+      if (dbItem.userId === userId) {
+        throw new Error("OWN_POST");
+      }
+      if (dbItem.reportedBy.includes(userId)) {
+        throw new Error("ALREADY_REPORTED");
+      }
+
+      const newReportedBy = [...dbItem.reportedBy, userId];
+      let isFraud = dbItem.isFraud;
+
       if (newReportedBy.length >= 3) {
         isFraud = true;
         await tx.studentUser.update({
-          where: { id: item.userId },
+          where: { id: dbItem.userId },
           data: {
             shopBlockedUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
           }
         });
       }
 
-      await tx.lostFoundItem.update({
+      const updated = await tx.lostFoundItem.update({
         where: { id: req.params.id },
         data: {
           reportedBy: newReportedBy,
           isFraud
         }
       });
+
+      return { updated, itemTitle: dbItem.title, ownerId: dbItem.userId };
     });
+
+    // Get reporter name
+    const reporter = await prisma.studentUser.findUnique({
+      where: { id: userId },
+      select: { name: true }
+    });
+
+    // 1. Notify the post owner about the report
+    const ownerNotification = await prisma.notification.create({
+      data: {
+        id: createObjectId(),
+        senderStudentId: req.user.userId,
+        recipientStudentId: result.ownerId, // targeted only to the post owner
+        lostFoundItemId: req.params.id,     // links to the item for cascade delete
+        title: "⚠️ Your L&F post was reported",
+        message: `${reporter?.name || 'Someone'} reported your post "${result.itemTitle}" — Reason: ${reason.trim()}`
+      }
+    });
+
+    // 2. Notify the reporter confirming their submission
+    const reporterNotification = await prisma.notification.create({
+      data: {
+        id: createObjectId(),
+        senderStudentId: req.user.userId,
+        recipientStudentId: req.user.userId, // targeted only to the reporter
+        lostFoundItemId: req.params.id,      // links to the item for cascade delete
+        title: "Report Submitted Successfully",
+        message: `You successfully reported the post "${result.itemTitle}" — Reason: ${reason.trim()}`
+      }
+    });
+
+    // Send real-time notifications via socket if available
+    if (req.io) {
+      // Emit to post owner
+      req.io.to(result.ownerId).emit("new-notification", {
+        ...ownerNotification,
+        _id: ownerNotification.id
+      });
+      // Emit to reporter
+      req.io.to(req.user.userId).emit("new-notification", {
+        ...reporterNotification,
+        _id: reporterNotification.id
+      });
+    }
 
     res.json({ message: "Report submitted. Thank you for keeping the community safe." });
   } catch (error) {
+    if (error.message === "NOT_FOUND") {
+      return res.status(404).json({ message: "Item not found." });
+    }
+    if (error.message === "OWN_POST") {
+      return res.status(400).json({ message: "You cannot report your own item." });
+    }
+    if (error.message === "ALREADY_REPORTED") {
+      return res.status(400).json({ message: "You have already reported this item." });
+    }
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 });

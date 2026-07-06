@@ -833,21 +833,21 @@ const EventDetails = () => {
 
               {/* ── Already Registered / Registration ID ── */}
               {alreadyRegistered && (
-                <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 rounded-xl">
+                <div className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 rounded-full">
                   <i className="ri-checkbox-circle-line text-orange-600 text-lg shrink-0" />
                   <p className="text-[13px] font-semibold text-orange-700 dark:text-orange-400">You are already registered for this event.</p>
                 </div>
               )}
 
               {registrationId && (
-                <div className="mx-6 mt-4 flex flex-col items-center gap-3 px-4 py-5 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-xl">
+                <div className="mx-6 mt-4 flex flex-col items-center gap-3 px-4 py-5 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-full">
                   <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-green-600">
                     <i className="ri-checkbox-circle-fill text-xl" />
                   </div>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-green-700 dark:text-green-400">Registration Successful!</p>
                   <div className="text-center">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Your Registration ID</p>
-                    <p className="text-lg font-black text-black dark:text-white tracking-widest font-mono bg-white dark:bg-neutral-800 px-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md">
+                    <p className="text-lg font-black text-black dark:text-white tracking-widest font-mono bg-white dark:bg-neutral-800 px-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-full">
                       {registrationId}
                     </p>
                   </div>
@@ -866,7 +866,7 @@ const EventDetails = () => {
                       : handleRegister)
                     : undefined}
                   disabled={btnConfig.disabled || isRegistering}
-                  className={`w-full py-4 px-6 text-[13px] font-black uppercase tracking-[0.15em] border-2 rounded-xl transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full py-4 px-6 text-[13px] font-black uppercase tracking-[0.15em] border-2 rounded-full transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isRegistering ? (
                     <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
@@ -970,7 +970,7 @@ const EventDetails = () => {
                 : handleRegister)
               : undefined}
             disabled={btnConfig.disabled || isRegistering}
-            className={`px-6 py-3 text-[12px] font-black uppercase tracking-[0.12em] border-2 rounded-xl transition-all flex items-center gap-2 shrink-0 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-6 py-3 text-[12px] font-black uppercase tracking-[0.12em] border-2 rounded-xlFended transition-all flex items-center gap-2 shrink-0 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isRegistering ? (
               <><i className="ri-loader-4-line animate-spin text-sm" /> …</>
