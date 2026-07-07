@@ -171,12 +171,26 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   // Sort events by status priority: LIVE first, then UPCOMING, then ENDED
   let liveEvents = filtered.filter(e => e.status === 'LIVE');
   let upcomingEvents = filtered.filter(e => e.status === 'UPCOMING');
-  let endedEvents = onlyActive ? [] : filtered.filter(e => e.status === 'ENDED');
+  let endedEvents = filtered.filter(e => e.status === 'ENDED');
 
   // Sort upcoming by startTime ascending (soonest first)
   upcomingEvents.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
   // Sort ended by startTime descending (most recent first)
   endedEvents.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+  const hasNoActiveEvents = liveEvents.length === 0 && upcomingEvents.length === 0;
+
+  if (onlyActive) {
+    if (hasNoActiveEvents) {
+      endedEvents = endedEvents.slice(0, 3);
+    } else {
+      endedEvents = [];
+    }
+  } else {
+    if (hasNoActiveEvents) {
+      endedEvents = endedEvents.slice(0, 3);
+    }
+  }
 
   // Apply limit: fill slots with priority LIVE → UPCOMING → ENDED
   if (limit) {
@@ -343,39 +357,26 @@ return (
   </div>
 )}
 
-    {/* If No Events At All */}
-    {totalFiltered === 0 && (
-      <div className="text-center py-10 px-4 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+    {/* If No Active/Upcoming Events or No Filter Matches */}
+    {(hasNoActiveEvents || totalFiltered === 0) && (
+      <div className="text-center py-10 px-4 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50 mb-18">
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-5 ">
-           {/* <i className="ri-calendar-event-line text-2xl text-neutral-400" />
-            */}
             <img className='w-full h-full object-cover rounded-full' src="cat.png" alt="" />
         </div>
         <h3 className="text-xl font-black text-neutral-800 mb-2">
-          {onlyActive ? 'No Active or Upcoming Events' : (events.length === 0 ? 'No Events Found' : 'No Matching Events')}
+          {events.length === 0 
+            ? 'No Events Found' 
+            : (hasNoActiveEvents ? 'No Active or Upcoming Events' : 'No Matching Events')}
         </h3>
         <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
-          {onlyActive 
-            ? "There aren't any active events happening right now. Don't worry! You can still browse our past events to see what's been happening on campus." 
-            : (events.length === 0 ? 'Please check back later for new events.' : 'Try adjusting your filters or search query to find what you\'re looking for.')}
-        </p>
-        <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
-          {onlyActive 
-            ? "Go to our events page to see all the events that have happened in the past!" 
-            : (events.length === 0 ? '' : '')}
+          {events.length === 0 
+            ? 'Please check back later for new events.' 
+            : (hasNoActiveEvents 
+               ? "There aren't any active events happening right now. Don't worry! You can still browse our past events below." 
+               : "Try adjusting your filters or search query to find what you're looking for.")}
         </p>
         
-        {/* {onlyActive && (
-          <Link
-            to="/events"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-black/5"
-          >
-            Explore Past Events
-            <i className="ri-arrow-right-up-line text-sm" />
-          </Link>
-        )} */}
-
-        {!onlyActive && (events.length > 0) && (
+        {!(events.length === 0 || hasNoActiveEvents) && (
            <button
            onClick={() => {
              setFilterStatus('ALL');
@@ -458,7 +459,7 @@ return (
              Past Events
              </h2>
         )}
-        {hideHeader && (liveEvents.length > 0 || upcomingEvents.length > 0) && (
+        {hideHeader && (
              <h3 className="text-md font-bold text-neutral-400 mb-4 flex items-center gap-2 uppercase tracking-wide">
              <i className="ri-history-line"></i>
              Past Events

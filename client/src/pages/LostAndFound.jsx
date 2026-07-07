@@ -4,68 +4,121 @@ import { toast, Toaster } from 'react-hot-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
+/* ─────────────────────────────────────────────
+   DESIGN TOKENS  (mirrors Tailwind + CSS vars)
+   Accent:   #E8500A  (ember orange)
+   Lost:     amber-tinted (#FEF3C7 / text-amber-700)
+   Found:    emerald-tinted (#D1FAE5 / text-emerald-700)
+   Reunited: slate-tinted  (blur + muted overlay)
+───────────────────────────────────────────── */
+
+// ── Inline style block injected once ─────────
+const GLOBAL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --accent:       #E8500A;
+    --accent-light: #FFF0E8;
+    --accent-dark:  #C23F06;
+    --surface:      #FAFAF9;
+    --surface-card: #FFFFFF;
+    --border:       #E5E4E0;
+    --text-primary: #1A1917;
+    --text-secondary: #6B6963;
+    --text-muted:   #A8A49D;
+    --lost-bg:      #FFFBEB;
+    --lost-text:    #92400E;
+    --lost-border:  #FDE68A;
+    --found-bg:     #ECFDF5;
+    --found-text:   #065F46;
+    --found-border: #A7F3D0;
+    --reunited-bg:  #F8FAFC;
+    --reunited-text:#475569;
+    --shadow-card:  0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.10), 0 16px 40px rgba(0,0,0,0.07);
+    --radius-card:  16px;
+    --radius-pill:  999px;
+  }
+
+  .dark {
+    --surface:      #0D0D0C;
+    --surface-card: #161614;
+    --border:       #2A2A27;
+    --text-primary: #F5F4F0;
+    --text-secondary:#9E9990;
+    --text-muted:   #5C5A55;
+    --lost-bg:      #2A1A08;
+    --lost-text:    #FCD34D;
+    --lost-border:  rgba(232,80,10,0.2);
+    --found-bg:     #052E1A;
+    --found-text:   #6EE7B7;
+    --found-border: rgba(16,185,129,0.2);
+    --shadow-card:  0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.4), 0 16px 40px rgba(0,0,0,0.35);
+  }
+  .lf-modal::-webkit-scrollbar { width: 6px; }
+  .lf-modal::-webkit-scrollbar-track { background: transparent; }
+  .lf-modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+`;
+
+// ── Utility: inject styles once ───────────────
+let stylesInjected = false;
+function ensureStyles() {
+  if (stylesInjected || typeof document === 'undefined') return;
+  const el = document.createElement('style');
+  el.id = 'lf-styles';
+  el.textContent = GLOBAL_STYLES;
+  document.head.appendChild(el);
+  stylesInjected = true;
+}
+
+// ── Component ─────────────────────────────────
 const LostAndFound = () => {
-  const [items, setItems] = useState([]);
-  const [myItems, setMyItems] = useState([]);
-  const [activeTab, setActiveTab] = useState('browse');
-  const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    type: 'Lost',
-    image_url: '',
-    image_public_id: '',
-    whatsapp: ''
+  ensureStyles();
+
+  const [items,           setItems          ] = useState([]);
+  const [myItems,         setMyItems        ] = useState([]);
+  const [activeTab,       setActiveTab      ] = useState('browse');
+  const [showModal,       setShowModal      ] = useState(false);
+  const [loading,         setLoading        ] = useState(false);
+  const [uploading,       setUploading      ] = useState(false);
+  const [formData,        setFormData       ] = useState({
+    title: '', description: '', type: 'Lost',
+    image_url: '', image_public_id: '', whatsapp: ''
   });
   const [selectedContact, setSelectedContact] = useState(null);
   const [reportModalItem, setReportModalItem] = useState(null);
-  const [reportReason, setReportReason] = useState('');
-  const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [fetching, setFetching] = useState(false);
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [activeOnly, setActiveOnly] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: null,
-    confirmText: 'Confirm',
-    cancelText: 'Cancel',
-    isDanger: false
+  const [reportReason,    setReportReason   ] = useState('');
+  const [reportSubmitting,setReportSubmitting] = useState(false);
+  const [fetching,        setFetching       ] = useState(false);
+  const [typeFilter,      setTypeFilter     ] = useState('ALL');
+  const [activeOnly,      setActiveOnly     ] = useState(false);
+  const [confirmModal,    setConfirmModal   ] = useState({
+    isOpen: false, title: '', message: '', onConfirm: null,
+    confirmText: 'Confirm', cancelText: 'Cancel', isDanger: false
   });
+
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   const triggerConfirm = ({ title, message, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', isDanger = false }) => {
     setConfirmModal({
-      isOpen: true,
-      title,
-      message,
+      isOpen: true, title, message, isDanger, confirmText, cancelText,
       onConfirm: () => {
         onConfirm();
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
-      },
-      confirmText,
-      cancelText,
-      isDanger
+      }
     });
   };
+
   const getFilteredItems = () => {
     const list = activeTab === 'browse' ? items : myItems;
     return list.filter(item => {
-      if (typeFilter !== 'ALL' && item.type !== typeFilter) {
-        return false;
-      }
-      if (activeOnly && item.status === 'REUNITED') {
-        return false;
-      }
+      if (typeFilter !== 'ALL' && item.type !== typeFilter) return false;
+      if (activeOnly && item.status === 'REUNITED') return false;
       return true;
     });
   };
-  
-  const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const role = localStorage.getItem('role');
 
   useEffect(() => {
     if (!user) return;
@@ -78,11 +131,8 @@ const LostAndFound = () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found`, { withCredentials: true });
       setItems(res.data);
-    } catch (err) {
-      toast.error('Failed to load items');
-    } finally {
-      setFetching(false);
-    }
+    } catch { toast.error('Failed to load items'); }
+    finally { setFetching(false); }
   };
 
   const fetchMyItems = async () => {
@@ -90,11 +140,8 @@ const LostAndFound = () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found/my-posts`, { withCredentials: true });
       setMyItems(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setFetching(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setFetching(false); }
   };
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -108,128 +155,89 @@ const LostAndFound = () => {
       toast.success('Post created successfully!');
       setShowModal(false);
       setFormData({ title: '', description: '', type: 'Lost', image_url: '', image_public_id: '', whatsapp: '' });
-      fetchItems();
-      fetchMyItems();
+      fetchItems(); fetchMyItems();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create post');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleResolve = (id) => {
     triggerConfirm({
       title: 'Mark as Reunited?',
-      message: 'Are you sure you want to mark this item as reunited? It will stay visible in browse feed for 24 hours before auto-hiding.',
-      confirmText: 'Yes, Reunited',
-      cancelText: 'Cancel',
-      isDanger: false,
+      message: 'This item will remain visible in the browse feed for 24 hours before auto-hiding.',
+      confirmText: 'Mark Reunited', isDanger: false,
       onConfirm: async () => {
         try {
           await axios.patch(`${import.meta.env.VITE_API_URL}/api/lost-found/${id}/reunite`, {}, { withCredentials: true });
-          toast.success('Item marked as Reunited');
-          fetchItems();
-          fetchMyItems();
-        } catch (err) {
-          toast.error('Failed to update status');
-        }
+          toast.success('Marked as Reunited');
+          fetchItems(); fetchMyItems();
+        } catch { toast.error('Failed to update status'); }
       }
     });
   };
 
   const handleClaim = (item) => {
     triggerConfirm({
-      title: item.type === 'LOST' ? 'Found this item?' : 'Is this your item?',
-      message: 'Are you sure you want to claim this item? False claims can lead to temporary or permanent account restrictions.',
-      confirmText: 'Yes, Claim',
-      cancelText: 'Cancel',
-      isDanger: false,
+      title: item.type === 'LOST' ? 'Found this item?' : 'Is this yours?',
+      message: 'False claims can lead to temporary or permanent account restrictions.',
+      confirmText: 'Yes, Claim', isDanger: false,
       onConfirm: async () => {
         try {
           const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${item.id}/claim`, {}, { withCredentials: true });
           setSelectedContact({ ...item, contact_info: res.data.contact });
           toast.success('Claim initiated!');
-        } catch (err) {
-          toast.error(err.response?.data?.message || 'Failed to claim item');
-        }
+        } catch (err) { toast.error(err.response?.data?.message || 'Failed to claim item'); }
       }
     });
   };
 
-  const handleReportLiar = (itemId, liarId) => {
-    triggerConfirm({
-      title: 'Report False Claim?',
-      message: 'Are you sure you want to report this user for false claiming? If confirmed, they will face a permanent account suspension.',
-      confirmText: 'Report & Restrict',
-      cancelText: 'Cancel',
-      isDanger: true,
-      onConfirm: async () => {
-        try {
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${itemId}/report-liar`, { liarId }, { withCredentials: true });
-          toast.success('User reported and restricted.');
-        } catch (err) {
-          toast.error(err.response?.data?.message || 'Failed to report');
-        }
-      }
-    });
-  };
-
-  const handleReport = (itemId) => {
-    setReportModalItem(itemId);
-    setReportReason('');
-  };
+  const handleReport = (itemId) => { setReportModalItem(itemId); setReportReason(''); };
 
   const submitReport = async () => {
     if (!reportReason.trim()) return toast.error('Please select or enter a reason.');
     setReportSubmitting(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${reportModalItem}/report`, { reason: reportReason.trim() }, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${reportModalItem}/report`,
+        { reason: reportReason.trim() }, { withCredentials: true });
       toast.success('Report submitted. The post owner has been notified.');
-      setReportModalItem(null);
-      setReportReason('');
+      setReportModalItem(null); setReportReason('');
       fetchItems();
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to report');
-    } finally {
-      setReportSubmitting(false);
-    }
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to report'); }
+    finally { setReportSubmitting(false); }
   };
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error('File size exceeds 5MB limit.');
+    if (file.size > 5 * 1024 * 1024) return toast.error('File size exceeds 5 MB limit.');
     setUploading(true);
-    const formDataUpload = new FormData();
-    formDataUpload.append('image', file);
+    const fd = new FormData();
+    fd.append('image', file);
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/upload`, formDataUpload, {
-        withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/upload`, fd,
+        { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } });
       setFormData(prev => ({ ...prev, image_url: data.secure_url, image_public_id: data.public_id }));
       toast.success('Image uploaded!');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    } catch (err) { toast.error(err.response?.data?.message || 'Upload failed'); }
+    finally { setUploading(false); }
   };
 
-  // Login Gate
+  // ── Counts for hero stats ──
+  const totalActive  = items.filter(i => i.status === 'ACTIVE').length;
+  const totalLost    = items.filter(i => i.type === 'LOST').length;
+  const totalReunited = items.filter(i => i.status === 'REUNITED').length;
+
+  // ── Login gate ────────────────────────────────────────────
   if (!user) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-[#FDFCFB] dark:bg-[#0a0a0a]">
-        <div className="bg-white dark:bg-[#1a1a1a] p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-neutral-800 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500 dark:text-orange-400">
-            <i className="ri-lock-2-line text-2xl"></i>
+      <div className="myfont min-h-screen bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#1A1917] dark:text-[#F5F4F0] flex items-center justify-center p-6">
+        <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl p-10 max-w-sm w-full text-center shadow-[0_1px_3px_rgba(0,0,0,0.06),_0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3),_0_4px_16px_rgba(0,0,0,0.25)]">
+          <div className="w-16 h-16 rounded-2xl bg-[#FFF0E8] dark:bg-[#E8500A]/12 text-[#E8500A] text-2xl flex items-center justify-center mx-auto mb-5 border border-[#E8500A]/15">
+            <i className="ri-lock-2-line" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Login Required</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">You must be logged in to access the CampusNode Lost & Found community.</p>
-          <button 
-            onClick={() => navigate('/login')}
-            className="w-full py-3 bg-black dark:bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-500 dark:hover:bg-orange-700 transition-colors"
-          >
+          <h2 className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] mb-2.5">Access Restricted</h2>
+          <p className="text-sm text-[#6B6963] dark:text-[#9E9990] mb-7 leading-relaxed">You must be logged in to access the CampusNode Lost &amp; Found community.</p>
+          <button className="w-full p-[13px] bg-[#1A1917] dark:bg-[#F5F4F0] text-white dark:text-[#161614] border-none rounded-xl text-sm font-bold cursor-pointer transition-all hover:opacity-88 active:translate-y-0 hover:-translate-y-0.5 mt-2 font-myfont" onClick={() => navigate('/login')}>
             Go to Login
           </button>
         </div>
@@ -237,396 +245,391 @@ const LostAndFound = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0a0a0a] myfont pb-20">
-      <Toaster position="top-right" />
+  const REPORT_REASONS = [
+    'This item is not real / fake post',
+    'Inappropriate or offensive content',
+    'Spam or promotional post',
+    'Misleading description or image',
+    'Duplicate post',
+    'Suspicious activity / potential scam',
+  ];
 
-      {/* Hero Section */}
-      <div className="bg-white text-black py-16 px-6 relative overflow-hidden">
-        <div className="max-w-[1200px] mx-auto relative z-10 text-center">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4">
-            Lost <span className="text-orange-500">&</span> Found
+  const filtered = getFilteredItems();
+
+  // ── Main render ───────────────────────────────────────────
+  return (
+    <div className="myfont min-h-screen bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#1A1917] dark:text-[#F5F4F0] transition-colors duration-300">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: 'var(--surface-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            fontSize: '13px',
+            fontFamily: "'myfont', sans-serif",
+          }
+        }}
+      />
+
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <header className="bg-white dark:bg-[#161614] border-b border-[#E5E4E0] dark:border-[#2A2A27] py-16 px-6 md:px-8 relative overflow-hidden">
+        {/* Glow / Pattern overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,var(--border)_1px,transparent_0)] bg-[size:28px_28px] opacity-50 pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.12em] uppercase text-[#E8500A] bg-[#FFF0E8] dark:bg-[#E8500A]/12 px-3 py-1.5 rounded-full mb-5">
+            <i className="ri-map-pin-line" />
+            CampusNode Community
+          </div>
+          <h1 className="font-myfont text-[clamp(48px,8vw,88px)] font-normal leading-[0.95] tracking-[-0.02em] text-[#1A1917] dark:text-[#F5F4F0] mb-5">
+            Lost <em className="italic text-[#E8500A]">&amp;</em> Found
           </h1>
-          <p className="text-gray-400 text-sm font-medium text-center max-w-xl mx-auto leading-relaxed">
-            A community space to help reunite lost belongings with their owners within the CampusNode network.
+          <p className="text-sm md:text-base font-light leading-relaxed text-[#6B6963] dark:text-[#9E9990] max-w-lg">
+            A community space to reunite lost belongings with their owners across the CampusNode network.
           </p>
         </div>
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-      </div>
+      </header>
 
-      <div className="max-w-[1200px] mx-auto px-6 mt-10">
-
-        {/* Actions Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-500 dark:border-neutral-800 pb-6 gap-4">
-          <div className="flex bg-gray-100 dark:bg-neutral-900 p-1 rounded-lg gap-1">
+      {/* ── Sticky Control Bar ───────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-white dark:bg-[#161614] border-b border-[#E5E4E0] dark:border-[#2A2A27] backdrop-blur-md bg-opacity-95 dark:bg-opacity-95">
+        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center gap-3 flex-wrap">
+          <div className="flex bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl p-1 gap-0.5">
             <button
+              className={`px-4.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer border-none bg-transparent text-[#6B6963] dark:text-[#9E9990] hover:text-[#1A1917] dark:hover:text-[#F5F4F0] transition-all duration-150 whitespace-nowrap ${activeTab === 'browse' ? 'bg-white dark:bg-[#252522] text-[#1A1917] dark:text-[#F5F4F0] shadow-sm' : ''}`}
               onClick={() => setActiveTab('browse')}
-              className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all  ${activeTab === 'browse' ? 'bg-black dark:bg-orange-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'} `}
             >
               Browse All
             </button>
-            {user && (
-              <button
-                onClick={() => setActiveTab('my-items')}
-                className={`px-5 py-2 text-sm font-semibold rounded-md cursor-pointer transition-all ${activeTab === 'my-items' ? 'bg-black dark:bg-orange-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
-              >
-                My Posts
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {user && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="px-6 py-2.5 bg-orange-500 text-white rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors shadow-sm cursor-pointer"
-              >
-                + Post an Item
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Status & Type Toggles / Filters */}
-        <div className="flex flex-wrap items-center justify-between mt-6 gap-4 p-4 bg-gray-50 dark:bg-neutral-900/40 border border-gray-200 dark:border-neutral-800/40 rounded-2xl">
-          {/* Left Side: Type Filters (All, Lost, Found) */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mr-2">Filter Type:</span>
-            {['ALL', 'LOST', 'FOUND'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  typeFilter === type
-                    ? 'bg-black dark:bg-orange-600 text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700/50'
-                }`}
-              >
-                {type === 'ALL' ? 'All Posts' : type}
-              </button>
-            ))}
-          </div>
-
-          {/* Right Side: Active Only Status Toggle */}
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={activeOnly}
-                onChange={(e) => setActiveOnly(e.target.checked)}
-                className="w-4 h-4 rounded text-orange-500 bg-white dark:bg-neutral-800 border-gray-300 dark:border-neutral-750 focus:ring-orange-500 accent-orange-500 cursor-pointer"
-              />
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                Active Only <span className="text-gray-400 dark:text-neutral-500 font-normal">(hide Reunited)</span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Loading Spinner */}
-        {fetching ? (
-          <div className="mt-12 flex flex-col items-center justify-center py-20 gap-3">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-500 border-t-transparent"></div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Loading posts...</p>
-          </div>
-        ) : (
-          <>
-            {/* Cards Grid */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {getFilteredItems().map((item) => (
-            <div
-              key={item.id}
-              className="bg-white dark:bg-[#1a1a1a] border-2 border-gray-300 dark:border-neutral-800 rounded-2xl overflow-hidden hover:-translate-y-0.5 transition-transform duration-200 group flex flex-col"
+            <button
+              className={`px-4.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer border-none bg-transparent text-[#6B6963] dark:text-[#9E9990] hover:text-[#1A1917] dark:hover:text-[#F5F4F0] transition-all duration-150 whitespace-nowrap ${activeTab === 'my-items' ? 'bg-white dark:bg-[#252522] text-[#1A1917] dark:text-[#F5F4F0] shadow-sm' : ''}`}
+              onClick={() => setActiveTab('my-items')}
             >
-              {/* Image */}
-              <div className="aspect-video bg-gray-100 dark:bg-neutral-900 relative overflow-hidden">
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-200">
-                    <i className="ri-image-line text-4xl" />
-                  </div>
-                )}
-
-                {/* Type badge */}
-                <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${item.type === 'LOST' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
-                  {item.type}
-                </span>
-
-                {/* Resolved overlay */}
-                {item.status === 'REUNITED' && (
-                  <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-[0.5px] flex items-center justify-center z-10">
-                    <span className="px-5 py-1.5 bg-green-600 dark:bg-green-600 text-white rounded-full text-xs font-semibold shadow-lg">✓ Reunited</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Body */}
-              <div className="p-5 flex flex-col flex-1">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white leading-snug line-clamp-1 mb-1">{item.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed line-clamp-2 mb-4 flex-1">{item.description}</p>
-
-                <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-4 flex-wrap">
-                  <i className="ri-calendar-line" />
-                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                  <span className="mx-1">·</span>
-                  <i className="ri-user-line" />
-                  <span>{activeTab === 'browse' ? (item.user?.name || 'Someone') : 'You'}</span>
-                  {activeTab === 'my-items' && item.reportedBy && item.reportedBy.length > 0 && (
-                    <>
-                      <span className="mx-1">·</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 font-semibold">
-                        <i className="ri-flag-line text-[10px]" />
-                        {item.reportedBy.length} {item.reportedBy.length === 1 ? 'report' : 'reports'}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {activeTab === 'my-items' && item.status === 'ACTIVE' && (
-                    <button
-                      onClick={() => handleResolve(item.id)}
-                      className="flex-1 py-2 bg-black dark:bg-orange-600 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 dark:hover:bg-orange-700 transition-colors"
-                    >
-                      Mark as Reunited
-                    </button>
-                  )}
-                  {activeTab === 'browse' && user && item.userId !== user.id && item.status === 'ACTIVE' && (
-                    <>
-                      <button
-                        onClick={() => handleClaim(item)}
-                        className="flex-1 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 rounded-lg text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                      >
-                        {item.type === 'LOST' ? "I found this" : "It's Mine"}
-                      </button>
-                      <button
-                        onClick={() => handleReport(item.id)}
-                        className="px-3 py-2 bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-neutral-700 rounded-lg text-xs hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-800/50 transition-colors"
-                        title="Report this post"
-                      >
-                        <i className="ri-flag-line text-sm" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {getFilteredItems().length === 0 && (
-          <div className="py-24 text-center">
-            <i className="ri-search-line text-5xl text-gray-200 dark:text-neutral-800 mb-4 block" />
-            <h3 className="text-xl font-semibold text-gray-300 dark:text-neutral-700">No items found</h3>
+              My Posts
+            </button>
           </div>
-        )}
-          </>
-        )}
 
-        {/* Rules & Limits Quick Guide */}
-        <div className="mt-16 p-8 bg-white dark:bg-[#111111] border-2 border-gray-300 dark:border-neutral-800 rounded-3xl relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-950/40 rounded-full flex items-center justify-center text-orange-500">
-              <i className="ri-shield-check-line text-lg" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Community Rules & Guidelines</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Please review key limits and restrictions to keep the community safe.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
-              <div className="flex items-center gap-2 mb-2 text-orange-500">
-                <i className="ri-edit-line text-lg" />
-                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Daily Post Limit</h4>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                To prevent spam, each user is allowed to post a maximum of <strong>2 items per day</strong>.
-              </p>
-            </div>
-
-            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
-              <div className="flex items-center gap-2 mb-2 text-red-500">
-                <i className="ri-flag-line text-lg" />
-                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Post Report Limits</h4>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                If a post receives <strong>3+ reports</strong>, it is flagged as fraud (poster suspended for <strong>7 days</strong>). Making <strong>2 false reports</strong> suspends you for <strong>2 days</strong>.
-              </p>
-            </div>
-
-            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
-              <div className="flex items-center gap-2 mb-2 text-red-600">
-                <i className="ri-error-warning-line text-lg" />
-                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Strict Suspensions</h4>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Falsely claiming items results in <strong>permanent suspension</strong>. Everyday reporting triggers blocks. For appeals, email <strong>clubsetu@nikhim.me</strong>.
-              </p>
-            </div>
-
-            <div className="p-5 bg-gray-50 dark:bg-neutral-900/60 rounded-2xl border border-gray-200 dark:border-neutral-800/40">
-              <div className="flex items-center gap-2 mb-2 text-emerald-500">
-                <i className="ri-time-line text-lg" />
-                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">Reunited Visibility</h4>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Reunited posts remain visible in the browse feed for <strong>24 hours</strong> with reduced blur before auto-hiding.
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-6 flex justify-end">
-            <Link 
-              to="/lost-found/guide"
-              className="text-xs font-semibold text-orange-500 hover:text-orange-600 flex items-center gap-1 transition-colors"
-            >
-              View Full Community Guidelines <i className="ri-arrow-right-line" />
-            </Link>
-          </div>
+          <button className="ml-auto inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#E8500A] text-white text-xs font-semibold rounded-full hover:bg-[#C23F06] transition-all hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(232,80,10,0.25)] hover:shadow-[0_4px_16px_rgba(232,80,10,0.35)] active:translate-y-0 whitespace-nowrap cursor-pointer" onClick={() => setShowModal(true)}>
+            <i className="ri-add-line" />
+            Post an Item
+          </button>
         </div>
       </div>
 
-      {/* Post Modal */}
+      {/* ── Filter Pills Bar ─────────────────────────────── */}
+      <div className="bg-[#FAFAF9] dark:bg-[#0D0D0C] border-b border-[#E5E4E0] dark:border-[#2A2A27]">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-[10px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mr-1">Filter</span>
+
+          <button
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 cursor-pointer ${
+              typeFilter === 'ALL'
+                ? 'bg-[#1A1917] dark:bg-[#F5F4F0] text-white dark:text-[#161614] border-[#1A1917] dark:border-[#F5F4F0]'
+                : 'bg-white dark:bg-[#161614] text-[#6B6963] dark:text-[#9E9990] border-[#E5E4E0] dark:border-[#2A2A27] hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:text-[#1A1917] dark:hover:text-[#F5F4F0]'
+            }`}
+            onClick={() => setTypeFilter('ALL')}
+          >
+            All Posts
+          </button>
+          <button
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 cursor-pointer ${
+              typeFilter === 'LOST'
+                ? 'bg-[#FFFBEB] dark:bg-[#2A1A08]/60 text-[#92400E] dark:text-[#FCD34D] border-[#FDE68A] dark:border-[#78350F]'
+                : 'bg-white dark:bg-[#161614] text-[#6B6963] dark:text-[#9E9990] border-[#E5E4E0] dark:border-[#2A2A27] hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:text-[#1A1917] dark:hover:text-[#F5F4F0]'
+            }`}
+            onClick={() => setTypeFilter('LOST')}
+          >
+            Lost
+          </button>
+          <button
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 cursor-pointer ${
+              typeFilter === 'FOUND'
+                ? 'bg-[#ECFDF5] dark:bg-[#052E1A]/60 text-[#065F46] dark:text-[#6EE7B7] border-[#A7F3D0] dark:border-[#065F46]'
+                : 'bg-white dark:bg-[#161614] text-[#6B6963] dark:text-[#9E9990] border-[#E5E4E0] dark:border-[#2A2A27] hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:text-[#1A1917] dark:hover:text-[#F5F4F0]'
+            }`}
+            onClick={() => setTypeFilter('FOUND')}
+          >
+            Found
+          </button>
+
+          <label
+            className="ml-auto flex items-center gap-2 cursor-pointer select-none"
+            onClick={() => setActiveOnly(v => !v)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={`w-[34px] h-5 rounded-full bg-[#E5E4E0] dark:bg-[#2A2A27] relative transition-colors duration-200 shrink-0 ${activeOnly ? 'bg-[#E8500A]' : ''}`}>
+              <div className={`absolute top-[3px] left-[3px] w-3.5 h-3.5 rounded-full bg-white transition-transform duration-200 shadow-sm ${activeOnly ? 'translate-x-[14px]' : ''}`} />
+            </div>
+            <span className="text-xs font-semibold text-[#6B6963] dark:text-[#9E9990] whitespace-nowrap">Active only</span>
+          </label>
+        </div>
+      </div>
+
+      {/* ── Content ──────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-6 py-10 pb-20">
+
+        {/* Section label */}
+        <div className="font-mono text-[11px] font-semibold tracking-[0.1em] uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-5 flex items-center gap-3">
+          {activeTab === 'browse' ? 'Community feed' : 'Your posts'}
+          {!fetching && (
+            <span className="font-mono text-[11px] text-[#A8A49D] dark:text-[#5C5A55]">
+              {filtered.length} {filtered.length === 1 ? 'item' : 'items'}
+            </span>
+          )}
+          <div className="flex-grow h-px bg-[#E5E4E0] dark:bg-[#2A2A27]" />
+        </div>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {fetching ? (
+            <div className="col-span-full py-20 px-6 flex flex-col items-center gap-3.5">
+              <div className="w-9 h-9 border-3 border-[#E5E4E0] dark:border-[#2A2A27] border-t-[#E8500A] rounded-full animate-spin" />
+              <span className="text-xs text-[#A8A49D] dark:text-[#5C5A55] font-mono">
+                Loading posts…
+              </span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="col-span-full py-20 px-6 text-center">
+              <div className="w-20 h-20 rounded-2xl bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] flex items-center justify-center text-3xl text-[#A8A49D] dark:text-[#5C5A55] mx-auto mb-5">
+                <i className="ri-search-2-line" />
+              </div>
+              <h3 className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] mb-2">Nothing here yet</h3>
+              <p className="text-sm text-[#A8A49D] dark:text-[#5C5A55]">
+                {activeTab === 'browse'
+                  ? 'No posts match your current filters.'
+                  : "You haven't posted anything yet."}
+              </p>
+            </div>
+          ) : (
+            filtered.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                activeTab={activeTab}
+                user={user}
+                onResolve={handleResolve}
+                onClaim={handleClaim}
+                onReport={handleReport}
+              />
+            ))
+          )}
+        </div>
+
+        {/* ── Community Rules ───────────────────────────── */}
+        <div className="mt-14 p-9 bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl">
+          <div className="flex items-start justify-between gap-4 mb-7">
+            <div className="flex flex-col">
+              <div className="font-mono text-[10px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">
+                <i className="ri-shield-check-line" style={{ marginRight: 4 }} />
+                Community Standards
+              </div>
+              <h2 className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] leading-none">Rules &amp; Guidelines</h2>
+            </div>
+            <Link to="/lost-found/guide" className="text-xs font-semibold text-[#E8500A] hover:translate-x-1 transition-transform inline-flex items-center gap-1 shrink-0 mt-1 cursor-pointer">
+              Full guide <i className="ri-arrow-right-line" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                icon: 'ri-edit-line',
+                title: 'Daily Post Limit',
+                body: 'To prevent spam, each user may post a maximum of <strong>2 items per day</strong> across all categories.'
+              },
+              {
+                icon: 'ri-flag-line',
+                title: 'Post Report Limits',
+                body: '<strong>3+ reports</strong> on a post flags it as fraud (poster suspended <strong>7 days</strong>). Two false reports suspends you for <strong>2 days</strong>.'
+              },
+              {
+                icon: 'ri-error-warning-line',
+                title: 'Strict Suspensions',
+                body: 'Falsely claiming items results in <strong>permanent suspension</strong>. For appeals, email <strong>clubsetu@nikhim.me</strong>.'
+              },
+              {
+                icon: 'ri-time-line',
+                title: 'Reunited Visibility',
+                body: 'Reunited posts stay visible in the browse feed for <strong>24 hours</strong> with reduced opacity before auto-hiding.'
+              },
+            ].map((rule) => (
+              <div className="p-5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:shadow-sm transition-all duration-150" key={rule.title}>
+                <div className="w-9 h-9 border border-[#E5E4E0] dark:border-[#2A2A27] bg-white dark:bg-[#161614] rounded-lg flex items-center justify-center text-base text-[#6B6963] dark:text-[#9E9990] mb-3.5">
+                  <i className={rule.icon} />
+                </div>
+                <h4 className="text-xs font-bold text-[#1A1917] dark:text-[#F5F4F0] mb-2">{rule.title}</h4>
+                <p className="text-xs leading-relaxed text-[#6B6963] dark:text-[#9E9990]" dangerouslySetInnerHTML={{ __html: rule.body }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* ═══════════ MODALS ══════════════════════════════════ */}
+
+      {/* ── Post Modal ───────────────────────────────────── */}
       {showModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-lg p-8 relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
-            >
-              <i className="ri-close-line" />
-            </button>
-
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Post an Item</h2>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Help the community find what's been lost or claimed.</p>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[6px] flex items-center justify-center p-6 transition-all duration-200" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="p-7 pb-0 flex items-start justify-between gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Item Title</label>
-                <input
-                  type="text" name="title" value={formData.title} onChange={handleChange}
-                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors"
-                  placeholder="e.g. Blue water bottle at Library" required
-                />
+                <p className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] leading-none mb-1">Post an Item</p>
+                <p className="text-xs text-[#A8A49D] dark:text-[#5C5A55]">Help the community find what's been lost or claimed.</p>
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Type</label>
-                <select
-                  name="type" value={formData.type} onChange={handleChange}
-                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 focus:border-orange-400 focus:outline-none transition-colors"
-                >
-                  <option value="Lost">Lost</option>
-                  <option value="Found">Found</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Description</label>
-                <textarea
-                  name="description" value={formData.description} onChange={handleChange}
-                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors h-24 resize-none"
-                  placeholder="Where, when, and any unique marks…" required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">WhatsApp Number <span className="font-normal text-gray-300 dark:text-neutral-700">(optional)</span></label>
-                <input
-                  type="text" name="whatsapp" value={formData.whatsapp} onChange={handleChange}
-                  className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-orange-400 focus:outline-none transition-colors"
-                  placeholder="e.g. 9876543210"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Item Image <span className="font-normal text-gray-300 dark:text-neutral-700">(max 5 MB)</span></label>
-                <input type="file" id="file-input" accept="image/*" onChange={handleFileChange} className="hidden" />
-                <label
-                  htmlFor="file-input"
-                  className={`flex items-center justify-center gap-2 border border-dashed border-gray-300 dark:border-neutral-800 rounded-lg p-4 text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-                >
-                  <i className={uploading ? 'ri-loader-4-line animate-spin' : 'ri-upload-2-line'} />
-                  {uploading ? 'Uploading…' : formData.image_url ? 'Change image' : 'Select image'}
-                </label>
-
-                {formData.image_url && (
-                  <div className="relative mt-3 rounded-lg overflow-hidden border border-gray-200 dark:border-neutral-800 h-36">
-                    <img src={formData.image_url} alt="Preview" className="w-full h-full object-contain" />
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                      className="absolute top-2 right-2 bg-black/60 text-white w-7 h-7 rounded-full flex items-center justify-center hover:bg-black transition-colors"
-                    >
-                      <i className="ri-close-line text-sm" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="submit" disabled={loading || uploading}
-                className="w-full py-3 bg-black dark:bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-500 dark:hover:bg-orange-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Publishing…' : 'Publish Post'}
+              <button className="w-8 h-8 rounded-full bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] text-[#6B6963] dark:text-[#9E9990] hover:bg-[#E5E4E0] dark:hover:bg-[#2A2A27] hover:text-[#1A1917] dark:hover:text-[#F5F4F0] flex items-center justify-center cursor-pointer transition-all shrink-0" onClick={() => setShowModal(false)}>
+                <i className="ri-close-line" />
               </button>
-            </form>
+            </div>
+            <div className="p-7 pt-5">
+              <form onSubmit={handleSubmit}>
+
+                <div className="mb-4.5">
+                  <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">Item type</label>
+                  <div className="flex gap-2">
+                    {['Lost', 'Found'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`flex-grow p-2.5 text-center rounded-lg text-xs font-bold transition-colors cursor-pointer border-[1.5px] ${formData.type === t ? (t === 'Lost' ? 'bg-[#FFFBEB] dark:bg-[#2A1A08]/60 text-[#92400E] dark:text-[#FCD34D] border-[#FDE68A] dark:border-[#78350F]' : 'bg-[#ECFDF5] dark:bg-[#052E1A]/60 text-[#065F46] dark:text-[#6EE7B7] border-[#A7F3D0] dark:border-[#065F46]') : 'bg-[#FAFAF9] dark:bg-[#0D0D0C] border-[#E5E4E0] dark:border-[#2A2A27] text-[#6B6963] dark:text-[#9E9990] hover:border-[#A8A49D] dark:hover:border-[#5C5A55]'}`}
+                        onClick={() => setFormData(p => ({ ...p, type: t }))}
+                      >
+                        <i className={t === 'Lost' ? 'ri-question-mark' : 'ri-checkbox-circle-line'} style={{ marginRight: 6 }} />
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-4.5">
+                  <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">Title</label>
+                  <input
+                    className="w-full px-3.5 py-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border-[1.5px] border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg text-sm text-[#1A1917] dark:text-[#F5F4F0] outline-none transition-colors duration-150 focus:border-[#E8500A] focus:ring-2 focus:ring-[#E8500A]/10"
+                    type="text" name="title"
+                    value={formData.title} onChange={handleChange}
+                    placeholder="e.g. Blue water bottle at Library"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4.5">
+                  <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">Description</label>
+                  <textarea
+                    className="w-full px-3.5 py-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border-[1.5px] border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg text-sm text-[#1A1917] dark:text-[#F5F4F0] outline-none transition-colors duration-150 focus:border-[#E8500A] focus:ring-2 focus:ring-[#E8500A]/10 resize-none h-24"
+                    name="description"
+                    value={formData.description} onChange={handleChange}
+                    placeholder="Where, when, and any unique identifying marks…"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4.5">
+                  <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">
+                    WhatsApp number
+                    <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: 4, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                  </label>
+                  <input
+                    className="w-full px-3.5 py-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border-[1.5px] border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg text-sm text-[#1A1917] dark:text-[#F5F4F0] outline-none transition-colors duration-150 focus:border-[#E8500A] focus:ring-2 focus:ring-[#E8500A]/10"
+                    type="text" name="whatsapp"
+                    value={formData.whatsapp} onChange={handleChange}
+                    placeholder="e.g. 9876543210"
+                  />
+                </div>
+
+                <div className="mb-4.5">
+                  <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">
+                    Photo
+                    <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: 4, textTransform: 'none', letterSpacing: 0 }}>(max 5 MB)</span>
+                  </label>
+                  <input type="file" id="lf-file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                  <label
+                    htmlFor="lf-file-input"
+                    className="w-full border-[1.5px] border-dashed border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-colors duration-150 text-[#6B6963] dark:text-[#9E9990] text-xs hover:border-[#E8500A] hover:bg-[#FFF0E8] dark:hover:bg-[#E8500A]/5"
+                    style={uploading ? { opacity: 0.5, pointerEvents: 'none' } : {}}
+                  >
+                    <i className={`mb-1.5 text-lg ${uploading ? 'ri-loader-4-line animate-spin' : 'ri-cloud-upload-line'}`} />
+                    {uploading ? 'Uploading…' : formData.image_url ? 'Replace image' : 'Click to select an image'}
+                  </label>
+                  {formData.image_url && (
+                    <div className="w-full h-[140px] flex items-center justify-center bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg overflow-hidden mt-3 relative">
+                      <img className="w-full h-full object-contain" src={formData.image_url} alt="Preview" />
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 w-7 h-7 bg-black/65 hover:bg-black/90 text-white rounded-full flex items-center justify-center text-xs transition-colors cursor-pointer border-none"
+                        onClick={() => setFormData(p => ({ ...p, image_url: '', image_public_id: '' }))}
+                      >
+                        <i className="ri-close-line" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full p-[13px] bg-[#1A1917] dark:bg-[#F5F4F0] text-white dark:text-[#161614] border-none rounded-xl text-sm font-bold cursor-pointer transition-all hover:opacity-88 active:translate-y-0 hover:-translate-y-0.5 mt-2 font-myfont"
+                  disabled={loading || uploading}
+                >
+                  {loading
+                    ? <><i className="ri-loader-4-line animate-spin" style={{ marginRight: 6 }} />Publishing…</>
+                    : 'Publish Post'
+                  }
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Contact Modal */}
-      {selectedContact && selectedContact.contact_info && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-sm p-7 relative">
-            <button
-              onClick={() => setSelectedContact(null)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
-            >
-              <i className="ri-close-line" />
-            </button>
-
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Contact Details</h2>
-
-            <div className="space-y-4">
+      {/* ── Contact Modal ─────────────────────────────────── */}
+      {selectedContact?.contact_info && (
+        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[6px] flex items-center justify-center p-6 transition-all duration-200" onClick={(e) => e.target === e.currentTarget && setSelectedContact(null)}>
+          <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl w-full max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="p-7 pb-0 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Posted by</p>
-                <p className="text-base font-bold text-gray-800 dark:text-gray-200">{selectedContact.contact_info.name}</p>
+                <p className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] leading-none mb-1">Contact Details</p>
+                <p className="text-xs text-[#A8A49D] dark:text-[#5C5A55]">Reach out to the post owner directly.</p>
               </div>
-
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Email</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 break-all">{selectedContact.contact_info.email}</p>
+              <button className="w-8 h-8 rounded-full bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] text-[#6B6963] dark:text-[#9E9990] hover:bg-[#E5E4E0] dark:hover:bg-[#2A2A27] hover:text-[#1A1917] dark:hover:text-[#F5F4F0] flex items-center justify-center cursor-pointer transition-all shrink-0" onClick={() => setSelectedContact(null)}>
+                <i className="ri-close-line" />
+              </button>
+            </div>
+            <div className="p-7 pt-5">
+              <div className="mb-4">
+                <div className="text-[10px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-0.5">Posted by</div>
+                <div className="text-sm font-semibold text-[#1A1917] dark:text-[#F5F4F0] break-all">{selectedContact.contact_info.name}</div>
+              </div>
+              <div className="mb-4">
+                <div className="text-[10px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-0.5">Email</div>
+                <div className="text-sm font-semibold text-[#1A1917] dark:text-[#F5F4F0] break-all" style={{ fontSize: 14 }}>{selectedContact.contact_info.email}</div>
               </div>
 
               {selectedContact.contact_info.whatsapp ? (
-                <div className="pt-3 space-y-2">
-                  <div className="flex gap-2">
+                <>
+                  <div className="mb-4">
+                    <div className="text-[10px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-0.5">Phone</div>
+                    <div className="text-sm font-semibold text-[#1A1917] dark:text-[#F5F4F0] font-mono break-all">+91 {selectedContact.contact_info.whatsapp}</div>
+                  </div>
+                  <div className="flex gap-2 mt-5">
                     <a
                       href={`https://wa.me/91${selectedContact.contact_info.whatsapp}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white p-2.5 rounded-lg text-sm font-semibold hover:bg-green-600 transition-colors"
+                      className="flex-grow p-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-decoration-none border-none"
                     >
                       <i className="ri-whatsapp-line" /> Message
                     </a>
-                    <a
-                      href={`tel:+91${selectedContact.contact_info.whatsapp}`}
-                      className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white p-2.5 rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors"
-                    >
+                    <a href={`tel:+91${selectedContact.contact_info.whatsapp}`} className="flex-grow p-2.5 bg-[#E8500A] hover:bg-[#C23F06] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-decoration-none border-none text-center">
                       <i className="ri-phone-line" /> Call
                     </a>
                   </div>
-                  <p className="text-center text-xs text-gray-400 dark:text-gray-500">+91 {selectedContact.contact_info.whatsapp}</p>
-                </div>
+                </>
               ) : (
-                <p className="text-xs text-gray-400 dark:text-gray-500 italic pt-2 border-t border-gray-100 dark:border-neutral-800">No phone number provided — reach out via email.</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 12 }}>
+                  No phone number provided — reach out via email.
+                </p>
               )}
 
               <button
+                className="w-full p-[13px] bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#6B6963] dark:text-[#9E9990] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl text-sm font-bold cursor-pointer transition-all hover:opacity-88 mt-5 font-myfont"
                 onClick={() => setSelectedContact(null)}
-                className="w-full mt-2 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 Close
               </button>
@@ -635,112 +638,196 @@ const LostAndFound = () => {
         </div>
       )}
 
-      {/* Report Modal */}
+      {/* ── Report Modal ─────────────────────────────────── */}
       {reportModalItem && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-md p-7 relative">
-            <button
-              onClick={() => { setReportModalItem(null); setReportReason(''); }}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors text-gray-600 dark:text-gray-400"
-            >
-              <i className="ri-close-line" />
-            </button>
-
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-500">
-                <i className="ri-flag-line text-lg" />
+        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[6px] flex items-center justify-center p-6 transition-all duration-200" onClick={(e) => e.target === e.currentTarget && (setReportModalItem(null), setReportReason(''))}>
+          <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="p-7 pb-0 flex items-start justify-between gap-4">
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  background: '#FFF1F2', border: '1px solid #FCA5A5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#EF4444', fontSize: 18, flexShrink: 0
+                }}>
+                  <i className="ri-flag-line" />
+                </div>
+                <div>
+                  <p className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] leading-none mb-1">Report Post</p>
+                  <p className="text-xs text-[#A8A49D] dark:text-[#5C5A55]">The post owner will be notified with your reason.</p>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Report Post</h2>
+              <button className="w-8 h-8 rounded-full bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] text-[#6B6963] dark:text-[#9E9990] hover:bg-[#E5E4E0] dark:hover:bg-[#2A2A27] hover:text-[#1A1917] dark:hover:text-[#F5F4F0] flex items-center justify-center cursor-pointer transition-all shrink-0" onClick={() => { setReportModalItem(null); setReportReason(''); }}>
+                <i className="ri-close-line" />
+              </button>
             </div>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-5 ml-[52px]">The post owner will be notified with your reason.</p>
-
-            <div className="space-y-2 mb-4">
-              {[
-                'This item is not real / fake post',
-                'Inappropriate or offensive content',
-                'Spam or promotional post',
-                'Misleading description or image',
-                'Duplicate post',
-                'Suspicious activity / potential scam'
-              ].map((reason) => (
-                <label
-                  key={reason}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                    reportReason === reason
-                      ? 'border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
-                      : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800/50'
-                  }`}
-                >
+            <div className="p-7 pt-5">
+              {REPORT_REASONS.map(reason => (
+                <label key={reason} className={`flex items-center gap-2.5 p-3.5 bg-white dark:bg-[#161614] border-[1.5px] rounded-xl text-xs cursor-pointer transition-all mb-2 select-none ${reportReason === reason ? 'bg-[#FFF1F2] dark:bg-red-500/10 text-[#991B1B] dark:text-red-400 border-red-500 dark:border-red-800' : 'border-[#E5E4E0] dark:border-[#2A2A27] text-[#6B6963] dark:text-[#9E9990] hover:border-[#A8A49D] dark:hover:border-[#5C5A55]'}`}>
                   <input
                     type="radio"
                     name="reportReason"
                     value={reason}
                     checked={reportReason === reason}
                     onChange={(e) => setReportReason(e.target.value)}
-                    className="accent-red-500 w-4 h-4"
+                    style={{ width: 15, height: 15, flexShrink: 0 }}
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{reason}</span>
+                  {reason}
                 </label>
               ))}
-            </div>
 
-            <div className="mb-5">
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Or describe your concern</label>
-              <textarea
-                value={!['This item is not real / fake post','Inappropriate or offensive content','Spam or promotional post','Misleading description or image','Duplicate post','Suspicious activity / potential scam'].includes(reportReason) ? reportReason : ''}
-                onChange={(e) => setReportReason(e.target.value)}
-                placeholder="Tell us why you're reporting this post..."
-                className="w-full border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-lg p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-neutral-700 focus:border-red-400 focus:outline-none transition-colors h-20 resize-none"
-              />
-            </div>
+              <div className="mb-4.5 mt-3">
+                <label className="block text-[11px] font-semibold tracking-wider uppercase text-[#A8A49D] dark:text-[#5C5A55] mb-1.5">Or describe your concern</label>
+                <textarea
+                  className="w-full px-3.5 py-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border-[1.5px] border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg text-sm text-[#1A1917] dark:text-[#F5F4F0] outline-none transition-colors duration-150 focus:border-[#E8500A] focus:ring-2 focus:ring-[#E8500A]/10 resize-none h-[76px]"
+                  value={!REPORT_REASONS.includes(reportReason) ? reportReason : ''}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="Tell us why you're reporting this post…"
+                />
+              </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setReportModalItem(null); setReportReason(''); }}
-                className="flex-1 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitReport}
-                disabled={!reportReason.trim() || reportSubmitting}
-                className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {reportSubmitting ? 'Submitting...' : 'Submit Report'}
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="flex-grow p-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#6B6963] dark:text-[#9E9990] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl text-xs font-bold cursor-pointer transition-all hover:opacity-88 text-center"
+                  onClick={() => { setReportModalItem(null); setReportReason(''); }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={`flex-grow p-2.5 text-white rounded-xl text-xs font-bold transition-all hover:opacity-88 cursor-pointer text-center ${!reportReason.trim() || reportSubmitting ? 'bg-[#1A1917]/40 dark:bg-[#F5F4F0]/40 text-[#6B6963] dark:text-[#9E9990] cursor-not-allowed' : 'bg-[#EF4444]'}`}
+                  onClick={submitReport}
+                  disabled={!reportReason.trim() || reportSubmitting}
+                >
+                  {reportSubmitting ? 'Submitting…' : 'Submit Report'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Custom Confirmation Modal */}
+      {/* ── Confirm Modal ─────────────────────────────────── */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-neutral-800 w-full max-w-sm p-6 relative shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{confirmModal.title}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">{confirmModal.message}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                className="flex-1 py-2.5 bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-              >
-                {confirmModal.cancelText}
-              </button>
-              <button
-                onClick={confirmModal.onConfirm}
-                className={`flex-1 py-2.5 text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                  confirmModal.isDanger 
-                    ? 'bg-red-500 hover:bg-red-600' 
-                    : 'bg-orange-500 hover:bg-orange-600'
-                }`}
-              >
-                {confirmModal.confirmText}
-              </button>
+        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[6px] flex items-center justify-center p-6 transition-all duration-200">
+          <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl w-full max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="p-7 pt-8 text-center">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl mx-auto mb-4 border" style={{
+                background: confirmModal.isDanger ? '#FFF1F2' : 'var(--accent-light)',
+                color: confirmModal.isDanger ? '#EF4444' : 'var(--accent)',
+                border: `1px solid ${confirmModal.isDanger ? '#FCA5A5' : 'rgba(232,80,10,0.2)'}`,
+              }}>
+                <i className={confirmModal.isDanger ? 'ri-alert-line' : 'ri-checkbox-circle-line'} />
+              </div>
+              <p className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] leading-none mb-1 text-center">{confirmModal.title}</p>
+              <p className="text-sm text-[#6B6963] dark:text-[#9E9990] mt-2 mb-7 text-center leading-relaxed">
+                {confirmModal.message}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="flex-grow p-2.5 bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#6B6963] dark:text-[#9E9990] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl text-xs font-bold cursor-pointer transition-all hover:opacity-88 text-center"
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                >
+                  {confirmModal.cancelText}
+                </button>
+                <button
+                  className="flex-grow p-2.5 text-white rounded-xl text-xs font-bold cursor-pointer transition-all hover:opacity-88 text-center"
+                  style={{
+                    background: confirmModal.isDanger ? '#EF4444' : 'var(--accent)'
+                  }}
+                  onClick={confirmModal.onConfirm}
+                >
+                  {confirmModal.confirmText}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+};
+
+// ── ItemCard sub-component ────────────────────
+const ItemCard = ({ item, activeTab, user, onResolve, onClaim, onReport }) => {
+  const isReunited = item.status === 'REUNITED';
+  const isLost     = item.type === 'LOST';
+
+  return (
+    <article className={`bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl overflow-hidden flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06),_0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3),_0_4px_16px_rgba(0,0,0,0.25)] transition-all duration-200 hover:-translate-y-1 hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),_0_16px_40px_rgba(0,0,0,0.07)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4),_0_16px_40px_rgba(0,0,0,0.35)] cursor-default ${isReunited ? 'opacity-80 hover:opacity-100' : ''}`}>
+      {/* Image */}
+      <div className="aspect-video bg-[#FAFAF9] dark:bg-[#0D0D0C] relative overflow-hidden">
+        {item.imageUrl
+          ? <img className="w-full h-full object-contain transition-transform duration-500 hover:scale-105" src={item.imageUrl} alt={item.title} loading="lazy" />
+          : (
+            <div className="w-full h-full flex items-center justify-center text-[#E5E4E0] dark:text-[#2A2A27] text-4xl">
+              <i className="ri-image-line" />
+            </div>
+          )
+        }
+
+        {/* Type badge */}
+        <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full font-mono text-[10px] font-medium tracking-[0.08em] uppercase backdrop-blur-md ${isLost ? 'bg-[#FFFBEB]/95 dark:bg-[#2A1A08]/92 text-[#92400E] dark:text-[#FCD34D] border border-[#FDE68A] dark:border-[#78350F]' : 'bg-[#ECFDF5]/95 dark:bg-[#052E1A]/92 text-[#065F46] dark:text-[#6EE7B7] border border-[#A7F3D0] dark:border-[#065F46]'}`}>
+          {isLost ? '● Lost' : '● Found'}
+        </span>
+
+        {/* Reunited overlay */}
+        {isReunited && (
+          <div className="absolute inset-0 bg-white/35 dark:bg-black/35 backdrop-blur-[3px] flex flex-col items-center justify-center gap-2 z-10">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white dark:bg-[#0F1F18] text-[#065F46] dark:text-[#6EE7B7] border border-[#A7F3D0] dark:border-[#065F46] rounded-full text-xs font-bold shadow-md shadow-black/5">
+              <i className="ri-check-double-line" />
+              Reunited
+            </span>
+            
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="p-5 flex flex-col flex-grow">
+        <h3 className="text-sm font-bold text-[#1A1917] dark:text-[#F5F4F0] line-clamp-1 mb-1.5">{item.title}</h3>
+        <p className="text-xs font-light leading-relaxed text-[#6B6963] dark:text-[#9E9990] line-clamp-2 mb-4 flex-grow">{item.description}</p>
+
+        {/* Metadata */}
+        <div className="flex items-center gap-1 text-xs text-[#A8A49D] dark:text-[#5C5A55] flex-wrap mb-3.5">
+          <i className="ri-calendar-line" />
+          <span>{new Date(item.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+          <span className="text-[#E5E4E0] dark:text-[#2A2A27] text-sm">·</span>
+          <i className="ri-user-line" />
+          <span>{activeTab === 'browse' ? (item.user?.name || 'Anonymous') : 'You'}</span>
+
+          {activeTab === 'my-items' && item.reportedBy?.length > 0 && (
+            <>
+              <span className="text-[#E5E4E0] dark:text-[#2A2A27] text-sm">·</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFFBEB] dark:bg-[#2A1A08]/60 text-[#92400E] dark:text-[#FCD34D] border border-[#FDE68A] dark:border-[#78350F] text-[11px] font-semibold">
+                <i className="ri-flag-line" />
+                {item.reportedBy.length} {item.reportedBy.length === 1 ? 'report' : 'reports'}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          {activeTab === 'my-items' && item.status === 'ACTIVE' && (
+            <button className="flex-grow px-3 py-2 bg-[#1A1917] dark:bg-[#F5F4F0] text-white dark:text-[#161614] text-xs font-bold text-center rounded-lg hover:opacity-85 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer" onClick={() => onResolve(item.id)}>
+              <i className="ri-check-line" style={{ marginRight: 5 }} />
+              Mark Reunited
+            </button>
+          )}
+
+          {activeTab === 'browse' && user && item.userId !== user.id && item.status === 'ACTIVE' && (
+            <>
+              <button className="flex-grow px-3 py-2 bg-transparent text-[#E8500A] border border-[#E8500A] text-xs font-bold text-center rounded-lg hover:bg-[#FFF0E8] dark:hover:bg-[#E8500A]/12 transition-all cursor-pointer whitespace-nowrap" onClick={() => onClaim(item)}>
+                {isLost ? 'I found this' : "It's mine"}
+              </button>
+              <button className="p-2 bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#6B6963] dark:text-[#9E9990] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-lg text-sm flex items-center justify-center hover:border-red-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer" onClick={() => onReport(item.id)} title="Report post">
+                <i className="ri-flag-line" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </article>
   );
 };
 

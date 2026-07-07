@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { Clock, MapPin, Calendar, Bookmark, Compass, User } from 'lucide-react';
 import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
 import ClubLeaderboard from '../components/ClubLeaderboard';
@@ -49,16 +51,77 @@ const clubFeatures = [
   { icon: <i className="ri-award-line" />, title: "Club showcase", desc: "Dedicated profile for your past achievements." },
 ];
 
- let user = null;
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined") {
-      user = JSON.parse(storedUser);
+const CountdownTimer = ({ startTime, endTime }) => {
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  function calculateTimeLeft() {
+    const now = new Date().getTime();
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+
+    if (now > end) {
+      return { status: 'PAST', text: 'Ended' };
+    } else if (now >= start && now <= end) {
+      const diff = end - now;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      return {
+        status: 'LIVE',
+        text: `Ends in ${hours}h ${mins}m ${secs}s`,
+        hours, mins, secs
+      };
+    } else {
+      const diff = start - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      let text = '';
+      if (days > 0) {
+        text = `${days}d ${hours}h ${mins}m`;
+      } else {
+        text = `${hours}h ${mins}m ${secs}s`;
+      }
+      return {
+        status: 'UPCOMING',
+        text: `Starts in ${text}`,
+        days, hours, mins, secs
+      };
     }
-  } catch (err) {
-    console.error("Error parsing user from local storage", err);
-    localStorage.removeItem("user");
   }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [startTime, endTime]);
+
+  if (timeLeft.status === 'PAST') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200">
+        Finished
+      </span>
+    );
+  }
+
+  if (timeLeft.status === 'LIVE') {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200 animate-pulse">
+        🔴 Live • {timeLeft.text}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+      ⏳ {timeLeft.text}
+    </span>
+  );
+};
+
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
   <div className={`flex items-center gap-2 mb-5 ${light ? 'text-orange-600' : 'text-orange-600'}`}>
@@ -87,12 +150,43 @@ const BtnSecondary = ({ to, children }) => (
 );
 
 const Home = () => {
-
+  const [user, setUser] = useState(null);
+  const [registrations, setRegistrations] = useState([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [openMapEventId, setOpenMapEventId] = useState(null);
   const [tab, setTab] = useState("students");
 
   useEffect(() => {
     document.title = "CampusNode | NITJ Clubs & Events";
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser && storedUser !== "undefined") {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        fetchTimelineEvents(parsed.id || parsed._id);
+      }
+    } catch (err) {
+      console.error("Error parsing user from local storage", err);
+    }
   }, []);
+
+  const fetchTimelineEvents = async (userId) => {
+    if (!userId) return;
+    setTimelineLoading(true);
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${userId}`);
+      const sorted = (res.data || []).sort((a, b) => {
+        const timeA = new Date(a.eventId?.startTime || 0).getTime();
+        const timeB = new Date(b.eventId?.startTime || 0).getTime();
+        return timeA - timeB;
+      });
+      setRegistrations(sorted);
+    } catch (err) {
+      console.error("Failed to load registrations for timeline", err);
+    } finally {
+      setTimelineLoading(false);
+    }
+  };
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -116,157 +210,285 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
+
   return (
-    <div className="myfont text-black bg-white">
+    <div className="myfont text-neutral-900 bg-white dark:text-neutral-100 dark:bg-[#0a0a0a] transition-colors duration-300">
 
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
-        {/* Background Image & Overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          {bgImages.map((img, idx) => (
-            <img 
-              key={idx}
-              src={img} 
-              alt="University Campus" 
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${bgIndex === idx ? 'opacity-100' : 'opacity-0'}`}
-            />
-          ))}
-          <div className="absolute inset-0 bg-white/20 dark:bg-black/60 backdrop-blur-[2px]"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/60 dark:to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/90 to-transparent dark:from-[#0a0a0a]/90 dark:to-transparent"></div>
-        </div>
+      {user ? (
+        <>
+          {/* ── "MY NODE" CONTROL PANEL ─────────────────────────────────────── */}
+          <section className="relative pt-28 pb-12 bg-neutral-50 dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800/80 text-neutral-900 dark:text-white transition-colors duration-300 overflow-hidden">
+            {/* Glow Effects */}
+            <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-orange-500/[0.05] dark:bg-orange-600/[0.08] rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-yellow-500/[0.03] dark:bg-yellow-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
+            
+            <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-neutral-200 dark:border-neutral-800">
+                {/* User Greeting Widget */}
+                <div className="flex items-center gap-4">
+                  {/* <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-orange-500/20">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'S'}
+                  </div> */}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-orange-500 animate-pulse">My Node Panel</span>
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-black tracking-tight text-neutral-900 dark:text-white mt-1">
+                      Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500 dark:from-orange-400 dark:to-amber-400">{firstName}</span>
+                    </h1>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 font-light mt-1">
+                      Ready to manage your campus drive today?
+                    </p>
+                  </div>
+                </div>
 
-        <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
-
-         
-
-          {/* Headline */}
-
-          <ScrollReveal delay={0.2}>
-            <h1 className="font-black text-[clamp(52px,8vw,108px)] leading-[1] tracking-[3px] text-black dark:text-white mb-0">
-              Your Campus,<br />
-              <span className="text-orange-600">Connected.</span>
-            </h1>
-          </ScrollReveal>
-
-          {/* Sub + CTAs */}
-          <ScrollReveal delay={0.3}>
-            <div className="mt-12 flex flex-wrap items-end gap-10 justify-between">
-              <div className="max-w-xl">
-                <h2 className="text-lg md:text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-3 leading-snug">
-                  Events, Clubs, Lost & Found, and More — All in One Place.
-                </h2>
-                <p className="text-sm md:text-[15px] font-light text-neutral-700 dark:text-neutral-350 leading-relaxed">
-                  CampusNode is a student platform for NIT Jalandhar that helps students discover campus events, join clubs and societies, find opportunities, stay updated with announcements, and recover lost items through an organized Lost & Found system. Our goal is to create a connected campus where students can easily access information, engage with communities, and never miss important opportunities.
-                </p>
-              </div>
-              <div className="flex gap-3 flex-wrap">
-               <Link
-  to="/events"
-  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
->
-  <i className="ri-calendar-event-line text-lg mr-2" /> Browse Events
-</Link>
-
-<Link
-  to="/clubs"
-  className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
->
-  <i className="ri-group-line text-lg mr-2" /> Explore Clubs
-</Link>
-
-{!user && (
-  <Link
-    to="/login"
-    className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
-  >
-    <i className="ri-login-box-line text-lg mr-2" /> Login / Signup
-  </Link>
-)}
+                {/* Quick Actions Grid */}
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-3">
+                  <Link
+                    to="/events"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
+                  >
+                    <Compass className="w-4 h-4 text-orange-500" /> Browse Events
+                  </Link>
+                  <Link
+                    to="/lost-and-found"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
+                  >
+                    <i className="ri-search-line text-orange-500" /> Lost & Found
+                  </Link>
+                  <Link
+                    to="/my-events"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
+                  >
+                    <Bookmark className="w-4 h-4 text-orange-500" /> My Tickets
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-xs font-semibold tracking-wider text-white transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm shadow-orange-600/10"
+                  >
+                    <User className="w-4 h-4" /> My Profile
+                  </Link>
+                </div>
               </div>
             </div>
-          </ScrollReveal>
-        </div>
-      </section>
+          </section>
 
-      {/* ── TICKER ───────────────────────────────────────────────────────── */}
-      {/* <div
-        className="overflow-hidden bg-orange-600 py-2 max-w-7xl mx-auto "
-        style={{ whiteSpace: 'nowrap' }}
-      >
-        <div
-          className="inline-flex"
-          style={{ animation: 'ticker 22s linear infinite', width: 'max-content' }}
-        >
-          {[...tickerItems, ...tickerItems].map((item, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-3.5 px-9 text-white text-[12px] font-bold uppercase tracking-[0.1em]"
-            >
-              <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full flex-shrink-0" />
-              {item}
-            </span>
-          ))}
-        </div>
-        <style>{`
-          @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-          .feature-card { position: relative; }
-          .feature-card::before {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            background: radial-gradient(
-              300px circle at var(--x-px) var(--y-px),
-              rgba(244, 87, 52, 0.25),
-              transparent 30%
-            );
-            z-index: 1;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-          }
-          .feature-card:hover::before {
-            opacity: 1;
-          }
-        `}</style>
-      </div> */}
+          {/* ── PERSONALIZED TIMELINE ───────────────────────────────────────── */}
+          <section className="py-16 bg-[#fefce8]/20 dark:bg-neutral-950/20 border-b-2 border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+            <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+              <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <SectionLabel>Your Timeline</SectionLabel>
+                  <h2 className="font-black text-[clamp(28px,4vw,40px)] text-neutral-900 dark:text-white leading-tight tracking-tight">
+                    My Registered Events
+                  </h2>
+                </div>
+                <Link
+                  to="/my-events"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline transition-all"
+                >
+                  Manage Tickets & QR Codes <ArrowRightIcon className="w-4 h-4 text-orange-600 shrink-0" />
+                </Link>
+              </div>
 
-      {/* ── LATEST EVENTS ────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
+              {timelineLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-neutral-500 dark:text-neutral-400">
+                  <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-semibold tracking-wider uppercase">Loading your timeline...</p>
+                </div>
+              ) : registrations.length === 0 ? (
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm max-w-xl mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-1">Your timeline is empty</h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-6">
+                    You haven't registered for any events yet. Check out the latest campus fests and technical sessions below!
+                  </p>
+                  <Link
+                    to="/events"
+                    className="inline-flex items-center justify-center px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
+                  >
+                    Find Events to Join
+                  </Link>
+                </div>
+              ) : (
+                <div className="relative border-l-2 border-orange-100 dark:border-orange-900/40 pl-6 md:pl-8 ml-4 md:ml-6 space-y-8">
+                  {registrations.map((reg) => {
+                    const event = reg.eventId;
+                    if (!event) return null;
+                    
+                    return (
+                      <div key={reg._id} className="relative group">
+                        {/* Timeline Node Icon */}
+                        <div className="absolute -left-[35px] md:-left-[43px] top-1.5 w-6 h-6 md:w-8 md:h-8 rounded-full bg-white dark:bg-neutral-900 border-2 border-orange-500 flex items-center justify-center text-orange-600 shadow-sm z-10 group-hover:scale-110 transition-transform">
+                          <Clock className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
+                        </div>
+
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                            <div className="space-y-2">
+                              {/* Event Title */}
+                              <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                                <Link to={`/event/${event.slug || event.id || event._id}`}>
+                                  {event.title}
+                                </Link>
+                              </h3>
+                              
+                              {/* DateTime */}
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                <span className="font-semibold text-orange-600 uppercase tracking-wide">
+                                  {new Date(event.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {new Date(event.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} - {new Date(event.endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Live Countdown Badge */}
+                            <div>
+                              <CountdownTimer startTime={event.startTime} endTime={event.endTime} />
+                            </div>
+                          </div>
+
+                          {/* Map trigger and venue */}
+                          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex flex-col items-start gap-1">
+                            <button
+                              onClick={() => setOpenMapEventId(openMapEventId === event._id ? null : event._id)}
+                              className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+                            >
+                              <MapPin className="w-4 h-4 text-orange-500 shrink-0" />
+                              <span>Venue: <strong className="text-neutral-900 dark:text-white">{event.venue}</strong></span>
+                              {event.venue !== 'Online' && (
+                                <span className="text-[10px] text-orange-600 hover:underline">
+                                  ({openMapEventId === event._id ? 'Close Map' : 'Locate on Map'})
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Collapsible interactive map */}
+                            {openMapEventId === event._id && event.venue !== 'Online' && (
+                              <div className="mt-3 w-full h-[240px] rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm relative transition-all">
+                                <iframe
+                                  title={`Map location for ${event.venue}`}
+                                  width="100%"
+                                  height="100%"
+                                  style={{ border: 0 }}
+                                  loading="lazy"
+                                  allowFullScreen
+                                  src={`https://maps.google.com/maps?q=${encodeURIComponent(event.venue + ' NIT Jalandhar')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) }
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          {/* ── HERO ─────────────────────────────────────────────────────────── */}
+          <section className="relative flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
+            {/* Background Image & Overlay */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+              {bgImages.map((img, idx) => (
+                <img 
+                  key={idx}
+                  src={img} 
+                  alt="University Campus" 
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${bgIndex === idx ? 'opacity-100' : 'opacity-0'}`}
+                />
+              ))}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-white/20 to-white dark:from-[#0a0a0a]/10 dark:via-[#0a0a0a]/60 dark:to-[#0a0a0a]"></div>
+            </div>
+
+            <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
+              {/* Headline */}
+              <ScrollReveal delay={0.2}>
+                <h1 className="font-black text-[clamp(36px,5.5vw,76px)] leading-[1.1] tracking-[2px] text-black dark:text-white mb-0 text-center mx-auto max-w-5xl">
+                  Discover Events. <span className="text-orange-600">Register in 1-Click.</span> Recover Lost Items.
+                </h1> 
+              </ScrollReveal>
+
+              {/* Sub + CTAs */}
+              <ScrollReveal delay={0.3}>
+                <div className="mt-10 flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
+                  <div className="max-w-2xl">
+                    <p className="text-sm md:text-base font-light text-black dark:text-neutral-300 leading-relaxed">
+                      The central student hub for NIT Jalandhar. Track club announcements, secure event tickets, and locate missing belongings—all without the WhatsApp clutter.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 flex-wrap justify-center">
+                    <Link
+                      to="/events"
+                      className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+                    >
+                      <i className="ri-calendar-event-line text-lg mr-2" /> Browse Events
+                    </Link>
+
+                    <Link
+                      to="/clubs"
+                      className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+                    >
+                      <i className="ri-group-line text-lg mr-2" /> Explore Clubs
+                    </Link>
+
+                    <Link
+                      to="/login"
+                      className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+                    >
+                      <i className="ri-login-box-line text-lg mr-2" /> Login / Signup
+                    </Link>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ── LATEST EVENTS (Shared) ────────────────────────────────────────── */}
+      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
           <ScrollReveal direction="up">
             <div className="mb-12">
               <SectionLabel>Latest Happenings</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide">
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide">
                 What's Buzzing<br />on Campus
               </h2>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={0.2}>
-            <EventFeed limit={6} hideHeader={true} showFilters={false} onlyActive={true} />
+            {/* Show past events only when user is not logged in */}
+            <EventFeed limit={6} hideHeader={true} showFilters={false} onlyActive={!!user} />
           </ScrollReveal>
           <ScrollReveal delay={0.3}>
             <div className="flex justify-center mt-12">
               <BtnSecondary to="/events">
-              <ArrowRightIcon size={20} >
-
-                Explore All Events 
-              </ArrowRightIcon>
+                <ArrowRightIcon size={20}>
+                  Explore All Events 
+                </ArrowRightIcon>
               </BtnSecondary>
             </div>
           </ScrollReveal>
         </div>
       </section>
 
-      
-
-      {/* ── CLUBS ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
+      {/* ── CLUBS (Shared) ─────────────────────────────────────────────────── */}
+      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4">
           <ScrollReveal direction="up">
             <div className="mb-12">
-             
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide text-center">
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide text-center">
                 NITJ Clubs & Societies
               </h2>
             </div>
@@ -277,31 +499,28 @@ const Home = () => {
           <ScrollReveal delay={0.3}>
             <div className="flex justify-center mt-12">
               <BtnSecondary to="/clubs">
-              <ArrowRightIcon  size={20}>
-
-                Explore All 
-              </ArrowRightIcon>
+                <ArrowRightIcon size={20}>
+                  Explore All 
+                </ArrowRightIcon>
               </BtnSecondary>
             </div>
           </ScrollReveal>
         </div>
       </section>
 
-
-      {/* ── LEADERBOARD ──────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 border-b-2 border-neutral-300">
+      {/* ── LEADERBOARD (Shared) ──────────────────────────────────────────── */}
+      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <div className="lg:col-span-4">
               <ScrollReveal direction="left">
                 <SectionLabel>Campus Rankings</SectionLabel>
-                <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black leading-[1.1] tracking-wide mb-6">
+                <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide mb-6">
                   Club<br /><span className="text-orange-600 text-6xl">Hall of Fame</span>
                 </h2>
-                <p className="text-neutral-500 leading-relaxed mb-8">
+                <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed mb-8">
                   Recognition for the most active student organizations at NITJ. Activity is measured by the total number of events successfully hosted and registered through CampusNode.
                 </p>
-              
               </ScrollReveal>
             </div>
             <div className="lg:col-span-8">
@@ -313,177 +532,165 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── FOR STUDENTS ─────────────────────────────────────────────────── */}
-         <section className="py-20 bg-[#fefce8]/30 border-b border-neutral-200">
-      <div className="max-w-6xl mx-auto px-6">
-
-        {/* Tab switcher */}
-        <div className="flex border-b border-neutral-200 mb-12">
-          {["students", "clubs"].map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px
-                ${tab === t
-                  ? "border-orange-600 text-orange-600"
-                  : "border-transparent text-neutral-400 hover:text-neutral-600"
-                }`}
-            >
-              {t === "students" ? "For Students" : "For Clubs & Societies"}
-            </button>
-          ))}
-        </div>
-
-        {/* ── STUDENTS ── */}
-        {tab === "students" && (
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-
-            {/* Left: text */}
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
-                Students
-              </p>
-              <h2 className="text-4xl font-black leading-tight tracking-tight text-black mb-8">
-                Never miss a<br />campus beat{" "}
-                <span className="text-orange-600">again.</span>
-              </h2>
-
-              <div className="flex flex-col gap-4">
-                {studentItems.map((item, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
-                      {item.icon}
-                    </div>
-                    <div className="pt-0.5">
-                      <p className="text-xs text-neutral-400 line-through mb-0.5">{item.problem}</p>
-                      <p className="text-sm font-semibold text-black leading-snug">{item.solution}</p>
-                    </div>
-                  </div>
+      {!user && (
+        <>
+          {/* ── FOR STUDENTS (Public Only) ─────────────────────────────────── */}
+          <section className="py-20 bg-[#fefce8]/30 border-b border-neutral-200">
+            <div className="max-w-6xl mx-auto px-6">
+              {/* Tab switcher */}
+              <div className="flex border-b border-neutral-200 mb-12">
+                {["students", "clubs"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px
+                      ${tab === t
+                        ? "border-orange-600 text-orange-600"
+                        : "border-transparent text-neutral-400 hover:text-neutral-600"
+                      }`}
+                  >
+                    {t === "students" ? "For Students" : "For Clubs & Societies"}
+                  </button>
                 ))}
               </div>
 
-              <button className="mt-8 inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-5 py-2.5 rounded-lg">
-                Join now
-                <i className="ri-arrow-right-line" />
-              </button>
-            </div>
+              {/* ── STUDENTS ── */}
+              {tab === "students" && (
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                  {/* Left: text */}
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                      Students
+                    </p>
+                    <h2 className="text-4xl font-black leading-tight tracking-tight text-black mb-8">
+                      Never miss a<br />campus beat{" "}
+                      <span className="text-orange-600">again.</span>
+                    </h2>
 
-            {/* Right: image */}
-            <div className="relative hidden md:block">
-              <img
-                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80"
-                alt="Student life"
-                className="w-full h-[400px] object-cover rounded-xl border border-neutral-200"
-                style={{ filter: "saturate(0.9)" }}
-              />
-              <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-500 dark:border-gray-200 rounded-lg px-4 py-3">
-                <p className="text-lg font-black text-[#0d1422] leading-none">1-Click</p>
-                <p className="text-[11px] text-[#0d1422] mt-0.5">Event Registration</p>
+                    <div className="flex flex-col gap-4">
+                      {studentItems.map((item, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
+                            {item.icon}
+                          </div>
+                          <div className="pt-0.5">
+                            <p className="text-xs text-neutral-400 line-through mb-0.5">{item.problem}</p>
+                            <p className="text-sm font-semibold text-black leading-snug">{item.solution}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button className="mt-8 inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-5 py-2.5 rounded-lg">
+                      Join now
+                      <i className="ri-arrow-right-line" />
+                    </button>
+                  </div>
+
+                  {/* Right: image */}
+                  <div className="relative hidden md:block">
+                    <img
+                      src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80"
+                      alt="Student life"
+                      className="w-full h-[400px] object-cover rounded-xl border border-neutral-200"
+                      style={{ filter: "saturate(0.9)" }}
+                    />
+                    <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-500 dark:border-gray-200 rounded-lg px-4 py-3">
+                      <p className="text-lg font-black text-[#0d1422] leading-none">1-Click</p>
+                      <p className="text-[11px] text-[#0d1422] mt-0.5">Event Registration</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── CLUB HEADS ── */}
+              {tab === "clubs" && (
+                <div>
+                  <div className="mb-10">
+                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                      Clubs & Societies
+                    </p>
+                    <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
+                      Less logistics,{" "}
+                      <span className="text-orange-600">more impact.</span>
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {clubFeatures.map((f, i) => (
+                      <div
+                        key={i}
+                        className="p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
+                      >
+                        <div className="w-9 h-9 bg-orange-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:bg-orange-700 transition-colors">
+                          {f.icon}
+                        </div>
+                        <p className="text-sm font-semibold text-black mb-1">{f.title}</p>
+                        <p className="text-xs text-neutral-500 leading-relaxed">{f.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ── ABOUT CAMPUSNODE ("Our Vision") (Public Only) ──────────────── */}
+          <section className="py-24 bg-[#fefce8]/30 border-b border-neutral-300">
+            <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <ScrollReveal direction="left">
+                  <div>
+                    <SectionLabel>Our Vision</SectionLabel>
+                    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-8">
+                      Creating a Truly<br /><span className="text-orange-600">Connected Campus.</span>
+                    </h2>
+                    <div className="space-y-6 text-neutral-700 dark:text-neutral-300 leading-relaxed text-[17px]">
+                      <p>
+                        CampusNode serves as the central hub for the NIT Jalandhar community. By bringing together events, clubs, announcements, and a structured Lost & Found system, we simplify campus life. We believe that accessing campus resources, engaging with student organizations, and finding opportunities should be simple and seamless.
+                      </p>
+                      <p>
+                        Our vision is to build a vibrant and digitally integrated ecosystem where student groups can reach their audience effectively and students can easily discover their passions, collaborate on ideas, and never miss out on key campus events and opportunities.
+                      </p>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-neutral-200">
+                      <div>
+                        <div className="text-4xl font-black text-black">25+</div>
+                        <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
+                      </div>
+                      <div>
+                        <div className="text-4xl font-black text-black">5k+</div>
+                        <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
+                      </div>
+                      <div>
+                        <div className="text-4xl font-black text-black">100%</div>
+                        <div className="text-[11px] font-bold  tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+
+                <ScrollReveal direction="right" delay={0.2}>
+                  <div className="flex gap-4 items-center justify-center lg:justify-end">
+                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-100 overflow-hidden translate-y-8 ">
+                      <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                        <img src="mainbuilding.jpeg" alt="oh not found" className="w-full h-full object-cover"/>
+                      </div>
+                    </div>
+                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-200 overflow-hidden -translate-y-4 ">
+                      <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                        <img src="itbuilding.jpeg" alt="ohhhhhh not found yaar" className="w-full h-full object-cover"/>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ── CLUB HEADS ── */}
-        {tab === "clubs" && (
-          <div>
-            <div className="mb-10">
-              <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
-                Clubs & Societies
-              </p>
-              <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
-                Less logistics,{" "}
-                <span className="text-orange-600">more impact.</span>
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {clubFeatures.map((f, i) => (
-                <div
-                  key={i}
-                  className="p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
-                >
-                  <div className="w-9 h-9 bg-orange-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:bg-orange-700 transition-colors">
-                    {f.icon}
-                  </div>
-                  <p className="text-sm font-semibold text-black mb-1">{f.title}</p>
-                  <p className="text-xs text-neutral-500 leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Quote */}
-            {/* <div className="border-l-4 border-orange-600 pl-5 py-1">
-              <p className="text-base font-semibold text-black leading-snug">
-                "Finally, no more manually checking 500 screenshots of payment proofs."
-              </p>
-              <p className="text-xs text-neutral-400 mt-1">— Club Coordinator, Engineering fest</p>
-            </div> */}
-          </div>
-        )}
-
-      </div>
-    </section>
-
-
-    
-
-      {/* ---- ABOUT CAMPUSNODE ---- */}
-     <section className="py-24 bg-[#fefce8]/30 border-b border-neutral-300">
-  <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-      <ScrollReveal direction="left">
-        <div>
-          <SectionLabel>Our Vision</SectionLabel>
-          <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-8">
-            Creating a Truly<br /><span className="text-orange-600">Connected Campus.</span>
-          </h2>
-          <div className="space-y-6 text-neutral-700 dark:text-neutral-300 leading-relaxed text-[17px]">
-            <p>
-              CampusNode serves as the central hub for the NIT Jalandhar community. By bringing together events, clubs, announcements, and a structured Lost & Found system, we simplify campus life. We believe that accessing campus resources, engaging with student organizations, and finding opportunities should be simple and seamless.
-            </p>
-            <p>
-              Our vision is to build a vibrant and digitally integrated ecosystem where student groups can reach their audience effectively and students can easily discover their passions, collaborate on ideas, and never miss out on key campus events and opportunities.
-            </p>
-          </div>
-
-          {/* Stats - Updated for Campus Scope */}
-          <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-neutral-200">
-            <div>
-              <div className="text-4xl font-black text-black">25+</div>
-              <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
-            </div>
-            <div>
-              <div className="text-4xl font-black text-black">5k+</div>
-              <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
-            </div>
-            <div>
-              <div className="text-4xl font-black text-black">100%</div>
-              <div className="text-[11px] font-bold  tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
-            </div>
-          </div>
-        </div>
-      </ScrollReveal>
-
-      <ScrollReveal direction="right" delay={0.2}>
-        <div className="flex gap-4 items-center justify-center lg:justify-end">
-          {/* Visual placeholders for App Mockups or Campus Photos */}
-          <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-100 overflow-hidden translate-y-8 ">
-             <div className="w-full h-full flex items-center justify-center text-neutral-300">
-               {/* <i className="ri-smartphone-line text-6xl" /> */}
-               <img src="mainbuilding.jpeg" alt="oh not found" className="w-full h-full object-cover"/>
-             </div>
-          </div>
-          <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-200 overflow-hidden -translate-y-4 ">
-            <div className="w-full h-full flex items-center justify-center text-neutral-400">
-             <img src="itbuilding.jpeg" alt="ohhhhhh not found yaar" className="w-full h-full object-cover"/>
-            </div>
-          </div>
-        </div>
-      </ScrollReveal>
-    </div>
-  </div>
-</section>
+          </section>
+        </>
+      )}
 
       {/* ── FACULTY & TEAM ────────────────────────────────────────────────── */}
       <section id="team" className="py-24 bg-neutral-50/50 dark:bg-neutral-950/20 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
