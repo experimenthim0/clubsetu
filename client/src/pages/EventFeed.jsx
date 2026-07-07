@@ -182,12 +182,12 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   if (onlyActive) {
     if (hasNoActiveEvents) {
-      endedEvents = endedEvents.slice(0, 3);
+      endedEvents = hideHeader ? endedEvents.slice(0, 3) : endedEvents;
     } else {
       endedEvents = [];
     }
   } else {
-    if (hasNoActiveEvents) {
+    if (hasNoActiveEvents && hideHeader) {
       endedEvents = endedEvents.slice(0, 3);
     }
   }
