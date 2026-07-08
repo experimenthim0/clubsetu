@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 const EditProfile = () => {
     const { showNotification } = useNotification();
@@ -9,6 +10,8 @@ const EditProfile = () => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         githubProfile: '',
@@ -274,23 +277,43 @@ const EditProfile = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Current Password</label>
-                            <input 
-                                type="password" 
-                                name="currentPassword" 
-                                value={formData.currentPassword || ''} 
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
-                            />
+                            <div className="relative">
+                                <input 
+                                    type={showCurrentPassword ? "text" : "password"} 
+                                    name="currentPassword" 
+                                    value={formData.currentPassword || ''} 
+                                    onChange={handleChange}
+                                    placeholder="Enter current password"
+                                    className="w-full px-4 py-2.5 pr-10 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                                >
+                                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">New Password (Optional)</label>
-                            <input 
-                                type="password" 
-                                name="newPassword" 
-                                value={formData.newPassword || ''} 
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
-                            />
+                            <div className="relative">
+                                <input 
+                                    type={showNewPassword ? "text" : "password"} 
+                                    name="newPassword" 
+                                    value={formData.newPassword || ''} 
+                                    onChange={handleChange}
+                                    placeholder="Enter new password (optional)"
+                                    className="w-full px-4 py-2.5 pr-10 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                                >
+                                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <p className="text-[10px] text-neutral-400 italic">
@@ -323,18 +346,18 @@ const EditProfile = () => {
                     )}
                 </div>
 
-                <div className="pt-6 flex flex-col sm:flex-row gap-4">
+                <div className="pt-6 flex flex-col sm:flex-row justify-end gap-4">
                     <button 
                         type="button" 
                         onClick={() => navigate('/profile')}
-                        className="flex-1 py-2.5 border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors hover:bg-neutral-50 cursor-pointer shadow-sm"
+                        className="py-2.5 px-8 border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors hover:bg-neutral-50 cursor-pointer shadow-sm"
                     >
                         Discard
                     </button>
                     <button 
                         type="submit" 
                         disabled={isSaving}
-                        className={`flex-1 py-2.5 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer ${isSaving ? 'bg-neutral-300 cursor-not-allowed shadow-none' : 'bg-orange-600 hover:bg-orange-700'}`}
+                        className={`py-2.5 px-8 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer ${isSaving ? 'bg-neutral-300 cursor-not-allowed shadow-none' : 'bg-orange-600 hover:bg-orange-700'}`}
                     >
                         {isSaving ? 'Saving…' : 'Update Profile'}
                     </button>

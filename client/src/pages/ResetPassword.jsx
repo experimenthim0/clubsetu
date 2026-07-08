@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -12,6 +13,8 @@ const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,37 +82,57 @@ const ResetPassword = () => {
               <label className="block text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">
                 New Password
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
-                placeholder="••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">
                 Confirm New Password
               </label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
-                placeholder="••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-black text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_#EA580C] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Resetting...' : 'Update Password'}
-            </button>
+            <div className="flex justify-center mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3.5 bg-black text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_#EA580C] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {loading ? 'Resetting...' : 'Update Password'}
+              </button>
+            </div>
           </form>
 
           <div className="mt-8 text-center">

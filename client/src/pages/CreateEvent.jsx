@@ -222,9 +222,11 @@ const CreateEvent = () => {
 
         const payload = {
             ...formData,
+            startTime: new Date(formData.startTime).toISOString(),
+            endTime: new Date(formData.endTime).toISOString(),
             entryFee: Number(formData.entryFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
-            registrationDeadline: formData.registrationDeadline ? formData.registrationDeadline : null,
+            registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
@@ -757,11 +759,11 @@ const CreateEvent = () => {
                     {/* Actions */}
                     <div className="flex gap-4 pt-6 border-t-2 border-neutral-100">
                         <button type="button" onClick={() => navigate(-1)}
-                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-neutral-100 transition-colors">
+                            className="flex-1 px-6 py-3 bg-neutral-100 text-neutral-850 font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-neutral-200 transition-colors border-0 outline-none">
                             Cancel
                         </button>
                         <button type="submit"
-                            className="flex-1 px-6 py-3 bg-black border-2 border-black text-white font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-orange-600 hover:border-orange-600 transition-colors">
+                            className="flex-1 px-6 py-3 bg-black text-white font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-orange-600 transition-colors border-0 outline-none">
                             Create Event
                         </button>
                     </div>

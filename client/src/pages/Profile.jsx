@@ -7,6 +7,7 @@ const Profile = () => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isClubAdded, setIsClubAdded] = useState(false);
+  const [winnings, setWinnings] = useState([]);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -25,6 +26,36 @@ const Profile = () => {
           })
           .catch(err => {
             console.error("Error fetching club details in Profile.jsx:", err);
+          });
+      }
+
+      if (storedRole === 'member' || storedRole === 'student') {
+        axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${storedUser.id || storedUser._id}`)
+          .then(res => {
+            const participations = res.data || [];
+            const winningsList = [];
+            participations.forEach(p => {
+              const ev = p.eventId || p.event;
+              if (ev && ev.showWinner && ev.winners) {
+                const match = ev.winners.find(w => 
+                  (w.rollNo && w.rollNo.trim() === storedUser.rollNo?.trim()) ||
+                  (w.name && w.name.toLowerCase().includes(storedUser.name.toLowerCase()))
+                );
+                if (match) {
+                  winningsList.push({
+                    eventTitle: ev.title,
+                    eventSlug: ev.slug || ev.id || ev._id,
+                    rank: match.rank,
+                    date: ev.startTime,
+                    clubName: ev.club?.clubName
+                  });
+                }
+              }
+            });
+            setWinnings(winningsList);
+          })
+          .catch(err => {
+            console.error("Error fetching winnings in Profile.jsx:", err);
           });
       }
     }
@@ -117,18 +148,47 @@ const Profile = () => {
                 </div>
             </div>
             <div className="flex md:justify-end">
-                <a href="/profile/edit" className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold text-xs shadow-sm cursor-pointer">
+                <a href="/profile/edit" className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition font-semibold text-xs shadow-sm cursor-pointer border-0">
                     <i className="ri-edit-line text-sm" /> Edit Profile
                 </a>
             </div>
       </div>
     </div>
 
+    {/* Achievements / Trophy Room */}
+    {(role === 'member' || role === 'student') && winnings.length > 0 && (
+      <div className="mb-12 p-6 md:p-8 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900/40 rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider mb-6 flex items-center gap-2 text-amber-800 dark:text-amber-400">
+          <i className="ri-trophy-line text-amber-600 text-xl" /> Achievements & Winnings
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {winnings.map((w, index) => (
+            <div key={index} className="flex items-center gap-4 bg-white dark:bg-neutral-900 p-4 border border-amber-100 dark:border-amber-900/20 rounded-xl shadow-xs">
+              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center shrink-0">
+                <i className="ri-award-fill text-amber-600 text-lg" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider leading-none mb-1">
+                  {w.rank === 1 ? '🥇 1st Place / Winner' : w.rank === 2 ? '🥈 2nd Place / Runner Up' : w.rank === 3 ? '🥉 3rd Place' : `#${w.rank} Position`}
+                </p>
+                <Link to={`/event/${w.eventSlug}`} className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 hover:text-orange-600 dark:hover:text-orange-500 hover:underline truncate block">
+                  {w.eventTitle}
+                </Link>
+                {w.clubName && (
+                  <p className="text-[10px] text-neutral-400 font-medium">by {w.clubName}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
     {(role === 'member' || role === 'student') && (
       <div className="mt-8">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-50 hover:border-orange-500/50 hover:text-orange-600 transition-colors shadow-sm cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-350 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
         >
           <i className="ri-calendar-event-line text-sm" /> View My Events
         </Link>
@@ -139,19 +199,19 @@ const Profile = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-50 hover:border-orange-500/50 hover:text-orange-600 transition-colors shadow-sm cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-350 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
         >
           <i className="ri-calendar-event-line text-sm" /> My Events
         </Link>
         <Link 
           to="/payments" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer border-0"
         >
           <i className="ri-money-dollar-circle-line text-sm" /> Payment Tracking
         </Link>
         <Link 
           to={`/club/edit/${user.clubId || user.id}`} 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer border-0"
         >
           <i className="ri-community-line text-sm" /> {!isClubAdded ? "Add Club on Website" : "Edit Club Details"}
         </Link>

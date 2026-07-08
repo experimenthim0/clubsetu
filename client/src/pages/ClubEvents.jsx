@@ -297,7 +297,7 @@ const ClubEvents = () => {
                               Design Certificate
                           </Link>
                       )}
-                      {canEdit && !isPast && (
+                      {canEdit && (
                           <Link
                               to={`/events/edit/${event.id || event._id}`}
                               className="px-3 py-1.5 bg-neutral-50 text-neutral-700 border border-neutral-200 rounded-lg hover:bg-neutral-200 transition font-bold text-xs shadow-sm"

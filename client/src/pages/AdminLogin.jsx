@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
 
@@ -56,22 +58,33 @@ const AdminLogin = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-black  tracking-widest mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full px-4 py-3 border-2 border-black rounded-sm focus:border-orange-600 outline-none transition-colors font-bold"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter admin password"
+                  required
+                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:border-orange-600 outline-none transition-colors font-bold"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-black text-white font-black uppercase tracking-widest border-2 border-black rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all  active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50"
-            >
-              {loading ? 'Authenticating...' : 'Go to Dashboard'}
-            </button>
+            <div className="flex justify-center mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3.5 bg-black text-white font-black uppercase tracking-widest border-2 border-black rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all  active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? 'Authenticating...' : 'Go to Dashboard'}
+              </button>
+            </div>
           </form>
         </div>
         <p className="text-center text-[10px] text-neutral-400 mt-6 font-bold uppercase tracking-widest">

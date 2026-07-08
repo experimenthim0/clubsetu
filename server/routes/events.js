@@ -96,7 +96,7 @@ const eventSchema = z.object({
 });
 
 const eventUpdateSchema = z.object({
-  body: eventSchema.shape.body.partial(),
+  body: eventSchema.shape.body.partial().passthrough(),
   query: z.object({}).passthrough().optional(),
   params: z.object({}).passthrough().optional(),
 });
@@ -377,6 +377,8 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
       registrationDeadline,
       sponsors,
       media,
+      showWinner,
+      provideCertificate,
     } = req.body;
 
     if (!req.user.clubId && req.user.role !== "admin") {
@@ -428,6 +430,8 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
         allowedPrograms: allowedPrograms || ["BTECH", "MTECH", "OTHER"],
         allowedYears: allowedYears || [],
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+        showWinner: showWinner || false,
+        provideCertificate: provideCertificate || false,
         slug: await slugifyUnique(title, 'event', 'slug'),
         reviewStatus: "PENDING",
         sponsors: { createMany: { data: (sponsors || []).map(s => ({ id: createObjectId(), ...s })) } },

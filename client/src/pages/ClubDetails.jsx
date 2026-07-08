@@ -280,7 +280,7 @@ const ClubDetails = () => {
             <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
               Connect with us
             </p>
-            <div className="flex flex-wrap gap-2">
+            {/* <div className="flex flex-wrap gap-2">
               {club.socialLinks?.map((link, i) => {
                 const platform = link.platform?.toLowerCase() || "website";
                 const iconProps = { className: "w-5 h-5" };
@@ -321,7 +321,36 @@ const ClubDetails = () => {
                   </a>
                 );
               })}
-            </div>
+            </div> */}
+             <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+                {club.socialLinks.map((link, i) => {
+                  const platform = link.platform?.toLowerCase() || "website";
+                  const iconProps = { className: "w-4 h-4" };
+
+                  const getIcon = () => {
+                    if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28}/>;
+                    if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28}/>;
+                    if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28}/>;
+                    if (platform.includes("github")) return <GithubIcon {...iconProps} size={28}/>;
+                    if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28}/>;
+                    if (platform.includes("website")) return <EarthIcon {...iconProps} size={28}/>;
+                    return <i className="ri-links-line text-sm" />;
+                  };
+
+                  return (
+                    <a
+                      key={link._id || i}
+                      href={platform === "whatsapp" ? `https://wa.me/${link.url.replace(/\s+/g, "")}` : link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-lg  flex items-center justify-center text-neutral-600 dark:text-neutral-300 transition-all duration-300"
+                      title={link.platform}
+                    >
+                      {getIcon()}
+                    </a>
+                  );
+                })}
+              </div>
           </div>
         </div>
 

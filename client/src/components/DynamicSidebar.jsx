@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   User,
@@ -10,6 +10,7 @@ import {
   Package,
   LogOut,
   ChevronRight,
+  ChevronLeft,
   ShieldCheck,
   Plus,
 } from "lucide-react";
@@ -32,13 +33,16 @@ const getRoleLabel = (role) => {
 /**
  * Sidebar nav link component — reused for every link.
  */
-const SidebarLink = ({ to, icon: Icon, label, isActive }) => (
+const SidebarLink = ({ to, icon: Icon, label, isActive, isCollapsed }) => (
   <Link
     to={to}
-    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+    title={isCollapsed ? label : undefined}
+    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all duration-200 ${
+      isCollapsed ? "justify-center" : ""
+    } ${
       isActive
-        ? "border border-orange-600 text-orange-600 "
-        : "text-slate-700 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white"
+        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold border-0"
+        : "text-slate-700 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-zinc-900 hover:text-black dark:hover:text-white font-medium"
     }`}
   >
     <Icon
@@ -48,8 +52,8 @@ const SidebarLink = ({ to, icon: Icon, label, isActive }) => (
         isActive ? "text-orange-600" : "text-slate-600 dark:text-slate-400 group-hover:text-black dark:group-hover:text-white"
       }`}
     />
-    <span className="truncate">{label}</span>
-    {isActive && (
+    {!isCollapsed && <span className="truncate">{label}</span>}
+    {!isCollapsed && isActive && (
       <ChevronRight size={14} className="ml-auto text-orange-600 shrink-0" />
     )}
   </Link>
@@ -58,22 +62,29 @@ const SidebarLink = ({ to, icon: Icon, label, isActive }) => (
 /**
  * Section header label inside the sidebar.
  */
-const SectionLabel = ({ children }) => (
-  <p className="px-3 mb-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-400">
-    {children}
-  </p>
-);
+const SectionLabel = ({ children, isCollapsed }) => {
+  if (isCollapsed) return <hr className="border-gray-200 dark:border-zinc-800 my-4" />;
+  return (
+    <p className="px-3 mb-2 mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-400">
+      {children}
+    </p>
+  );
+};
 
 /**
  * Club name sub-header inside the Management section.
  */
-const ClubHeader = ({ name }) => (
-  <p className="px-3 py-1.5 mb-1 text-[10px] font-bold uppercase tracking-widest text-orange-600 bg-white dark:bg-zinc-900 rounded-md">
-    {name}
-  </p>
-);
+const ClubHeader = ({ name, isCollapsed }) => {
+  if (isCollapsed) return null;
+  return (
+    <p className="px-3 py-1.5 mb-1 text-[10px] font-bold uppercase tracking-widest text-orange-600 bg-white dark:bg-zinc-900 rounded-md">
+      {name}
+    </p>
+  );
+};
 
 const DynamicSidebar = ({ user }) => {
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem("sidebar_collapsed") === "true");
   const location = useLocation();
   const role = localStorage.getItem("role");
   const queryParams = new URLSearchParams(location.search);
@@ -89,38 +100,56 @@ const DynamicSidebar = ({ user }) => {
     .slice(0, 2)
     .toUpperCase();
 
+  const toggleSidebar = () => {
+    const newVal = !isCollapsed;
+    setIsCollapsed(newVal);
+    localStorage.setItem("sidebar_collapsed", String(newVal));
+  };
+
   return (
     <aside
-      className="hidden md:flex flex-col w-64 shrink-0 bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-slate-300 border-r border-gray-200 dark:border-zinc-800 overflow-y-auto"
+      className={`hidden md:flex flex-col shrink-0 bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-slate-300 border-r border-gray-200 dark:border-zinc-800 transition-all duration-300 overflow-y-auto ${isCollapsed ? "w-16" : "w-64"}`}
       style={{ height: "calc(100vh - 4rem)" }}
       aria-label="Dashboard sidebar"
     >
-      {/* ── User Info ────────────────────────────────────────────────── */}
-      <div className="px-5 pt-6 pb-4 border-b border-gray-300 dark:border-zinc-800">
-        <div className="flex items-center gap-3">
-          {/* <div className="w-10 h-10 rounded-lg  flex items-center justify-center text-white text-sm font-bold shrink-0 select-none">
-           <img src="nitjlogo.png" alt="" />
-          </div> */}
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-black dark:text-white truncate">
-              {userName}
-            </p>
-            <p className="text-[11px] text-orange-600 font-medium tracking-wide">
-              {getRoleLabel(role)}
-            </p>
+      {/* ── User Info & Collapse Toggle Row ── */}
+      <div className="px-3 py-4 border-b border-gray-200 dark:border-zinc-800 shrink-0">
+        <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-3 items-center" : "px-1"}`}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm shrink-0 select-none">
+              {initials}
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-black dark:text-white truncate">
+                  {userName}
+                </p>
+                <p className="text-[11px] text-orange-600 font-medium tracking-wide">
+                  {getRoleLabel(role)}
+                </p>
+              </div>
+            )}
           </div>
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-zinc-900 text-slate-500 dark:text-slate-400 cursor-pointer transition-colors border-0 outline-none shrink-0"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
         </div>
       </div>
 
       {/* ── Create Event Action (Club account only) ── */}
       {role === "club" && (
-        <div className="px-4 pt-5 pb-2 shrink-0">
+        <div className={`pt-5 pb-2 shrink-0 ${isCollapsed ? "px-2" : "px-4"}`}>
           <Link
             to="/create"
-            className="flex items-center justify-center gap-2.5 px-4 py-3 bg-orange-500 hover:bg-orange-600 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-white dark:text-white border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-[0_2px_5px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-px transition-all font-bold text-[12px] uppercase tracking-wider w-full cursor-pointer"
+            title={isCollapsed ? "Create Event" : undefined}
+            className="flex items-center justify-center gap-2.5 px-3 py-3 bg-orange-500 hover:bg-orange-600 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-white dark:text-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-px transition-all font-bold text-[12px] uppercase tracking-wider w-full cursor-pointer border-0 outline-none"
           >
             <Plus size={16} className="text-white dark:text-white" strokeWidth={2.8} />
-            <span>Create Event</span>
+            {!isCollapsed && <span>Create Event</span>}
           </Link>
         </div>
       )}
@@ -129,22 +158,22 @@ const DynamicSidebar = ({ user }) => {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Dashboard navigation">
 
         {/* ── General (all users) ── */}
-        <SectionLabel>General</SectionLabel>
-        <SidebarLink to="/profile" icon={User} label="Profile" isActive={isActive("/profile")} />
+        <SectionLabel isCollapsed={isCollapsed}>General</SectionLabel>
+        <SidebarLink to="/profile" icon={User} label="Profile" isActive={isActive("/profile")} isCollapsed={isCollapsed} />
 
         {/* ── Member: My Events ── */}
         {role === "member" && (
-          <SidebarLink to="/my-events" icon={CalendarDays} label="My Events" isActive={isActive("/my-events")} />
+          <SidebarLink to="/my-events" icon={CalendarDays} label="My Events" isActive={isActive("/my-events")} isCollapsed={isCollapsed} />
         )}
 
         {/* ── Management: membership-based club links ── */}
         {((user?.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (
           <>
-            <SectionLabel>Management</SectionLabel>
+            <SectionLabel isCollapsed={isCollapsed}>Management</SectionLabel>
 
             {user?.memberships?.map((m) => (
               <div key={m.clubId} className="space-y-1 mb-3">
-                <ClubHeader name={m.clubName} />
+                <ClubHeader name={m.clubName} isCollapsed={isCollapsed} />
 
                 {/* Club Events — shown for heads, coordinators, and members with specific permissions */}
                 {(m.role === "CLUB_HEAD" || m.role === "COORDINATOR" || m.role === "facultyCoordinator" || m.canEditEvents || m.canCheckRegistration || m.canTakeAttendance || m.permissions?.canEditEvents || m.permissions?.canCheckRegistration || m.permissions?.canTakeAttendance) && (
@@ -153,6 +182,7 @@ const DynamicSidebar = ({ user }) => {
                     icon={CalendarDays}
                     label="Club Events"
                     isActive={isActive(`/club-events/${m.clubId}`)}
+                    isCollapsed={isCollapsed}
                   />
                 )}
 
@@ -163,6 +193,7 @@ const DynamicSidebar = ({ user }) => {
                     icon={Users}
                     label="Team Management"
                     isActive={isActive(`/club/${m.clubId}/team`)}
+                    isCollapsed={isCollapsed}
                   />
                 )}
 
@@ -174,12 +205,14 @@ const DynamicSidebar = ({ user }) => {
                       icon={Wallet}
                       label="Payments"
                       isActive={isActive("/payments")}
+                      isCollapsed={isCollapsed}
                     />
                     <SidebarLink
                       to="/send-notification"
                       icon={Bell}
                       label="Notifications"
                       isActive={isActive("/send-notification")}
+                      isCollapsed={isCollapsed}
                     />
                   </>
                 )}
@@ -191,6 +224,7 @@ const DynamicSidebar = ({ user }) => {
                     icon={LayoutGrid}
                     label="Club Page"
                     isActive={isActive(`/club/edit/${m.clubId}`)}
+                    isCollapsed={isCollapsed}
                   />
                 )}
               </div>
@@ -199,24 +233,27 @@ const DynamicSidebar = ({ user }) => {
             {/* Faculty Coordinator fallback (if not in memberships) */}
             {role === "facultyCoordinator" && user?.clubId && (!user.memberships || !user.memberships.find((m) => m.clubId === user.clubId)) && (
               <div className="space-y-1 mb-3">
-                <ClubHeader name="Faculty Review" />
+                <ClubHeader name="Faculty Review" isCollapsed={isCollapsed} />
                 <SidebarLink
                   to="/my-events"
                   icon={CalendarDays}
                   label="Review Events"
                   isActive={isActive("/my-events")}
+                  isCollapsed={isCollapsed}
                 />
                 <SidebarLink
                   to={`/club/${user.clubId}/team`}
                   icon={Users}
                   label="Team Management"
                   isActive={isActive(`/club/${user.clubId}/team`)}
+                  isCollapsed={isCollapsed}
                 />
                 <SidebarLink
                   to={`/club/edit/${user.clubId}`}
                   icon={LayoutGrid}
                   label="Club Page"
                   isActive={isActive(`/club/edit/${user.clubId}`)}
+                  isCollapsed={isCollapsed}
                 />
               </div>
             )}
@@ -225,17 +262,18 @@ const DynamicSidebar = ({ user }) => {
       </nav>
 
       {/* ── Exit Dashboard ───────────────────────────────────────────── */}
-      <div className="px-3 pb-1 pt-2 border-t border-gray-200 dark:border-zinc-800 mt-auto">
+      <div className="px-3 pb-2 pt-2 border-t border-gray-200 dark:border-zinc-800 mt-auto shrink-0">
         <Link
           to="/"
-          className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-700 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-400 dark:hover:text-red-400 transition-all duration-200"
+          title={isCollapsed ? "Exit Dashboard" : undefined}
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-700 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-400 dark:hover:text-red-400 transition-all duration-200 ${isCollapsed ? "justify-center" : ""}`}
         >
           <LogOut
             size={18}
             strokeWidth={1.8}
             className="shrink-0 text-red-600 group-hover:text-red-400 transition-colors duration-200"
           />
-          <span className="text-black dark:text-slate-300 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">Exit Dashboard</span>
+          {!isCollapsed && <span className="text-black dark:text-slate-300 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">Exit Dashboard</span>}
         </Link>
       </div>
     </aside>

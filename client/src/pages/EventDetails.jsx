@@ -74,6 +74,7 @@ const EventDetails = () => {
   const [externalName, setExternalName] = useState('');
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [registrationId, setRegistrationId] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
 
   useEffect(() => {
@@ -174,6 +175,7 @@ const EventDetails = () => {
           showNotification('You have been added to the waitlist.', 'info');
         } else if (res.data.status === 'REGISTERED') {
           setRegistrationId(res.data.qrCode);
+          setShowSuccessModal(true);
           showNotification('Successfully registered!', 'success');
         } else {
           showNotification(res.data.message || 'Successfully registered!', 'success');
@@ -201,6 +203,7 @@ const EventDetails = () => {
           showNotification('You have been added to the waitlist.', 'info');
         } else if (res.data.status === 'REGISTERED') {
           setRegistrationId(res.data.qrCode);
+          setShowSuccessModal(true);
           showNotification('Successfully registered!', 'success');
         } else {
           showNotification(res.data.message || 'Successfully registered!', 'success');
@@ -417,63 +420,54 @@ const EventDetails = () => {
   ];
 
   // ── Auto-generated FAQ ──────────────────────────────────────────────────
+  // ── Auto-generated FAQ ──────────────────────────────────────────────────
   const faqItems = [
     {
-      question: 'When does the event start and end?',
-      answer: `The event starts on ${new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} and ends on ${new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}.`,
+      question: 'When and where is the event scheduled?',
+      answer: `The event starts on ${new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} and ends on ${new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}. It will be held at ${venue}.`,
     },
     {
-      question: 'Where is the event being held?',
-      answer: `The event will be held at ${venue}.`,
+      question: 'What are the registration details, deadline, and entry fees?',
+      answer: `${
+        registrationDeadline
+          ? `Registration closes on ${new Date(registrationDeadline).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(registrationDeadline).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}.`
+          : 'There is no separate registration deadline — registrations remain open until the event starts.'
+      } ${
+        entryFee > 0
+          ? `The entry fee is ₹${entryFee} (non-refundable), payable securely via Razorpay upon registration.`
+          : 'This event is completely free to attend!'
+      } ${
+        user
+          ? (event.customFields && event.customFields.length > 0
+            ? 'Click the "Get Tickets" button to complete the required custom fields and submit your registration.'
+            : 'Simply click the "Get Tickets" button to register instantly.')
+          : 'Please log in with your student account first to submit your registration.'
+      }`,
     },
     {
-      question: 'What is the registration deadline?',
-      answer: registrationDeadline
-        ? `Registration closes on ${new Date(registrationDeadline).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${new Date(registrationDeadline).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}. Make sure to register before the deadline!`
-        : `There is no separate deadline — registration closes when the event starts on ${new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} at ${new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}.`,
+      question: 'What is the seat capacity, program eligibility, and are certificates provided?',
+      answer: `${
+        isUnlimited
+          ? 'This event has unlimited seat capacity.'
+          : isFull
+            ? `All ${totalSeats} seats are filled. However, you can register to join the waitlist and secure a spot if any attendee cancels.`
+            : `There are ${totalSeats - registeredCount} spots remaining out of ${totalSeats} total seats.`
+      } ${
+        event.allowedPrograms && event.allowedPrograms.length > 0
+          ? `Eligibility is open to the following programs: ${event.allowedPrograms.join(', ')}.`
+          : 'All academic programs are welcome to register.'
+      } ${
+        event.provideCertificate
+          ? 'Digital certificates will be issued to participants after the event closes, downloadable directly from your profile.'
+          : 'No certificates will be provided for this event.'
+      }`,
     },
     {
-      question: 'Is there an entry fee?',
-      answer: entryFee > 0
-        ? `Yes, the entry fee is ₹${entryFee}. Payment is processed securely through Razorpay. Please note that the entry fee is non-refundable.`
-        : 'No, this event is completely free to attend! Just register and show up.',
-    },
-    {
-      question: 'How do I register for this event?',
-      answer: user
-        ? (event.customFields && event.customFields.length > 0
-          ? `Click the "Get Tickets" button and fill out the registration form with the required information.${entryFee > 0 ? ` You will then be redirected to pay ₹${entryFee} via Razorpay.` : ''}`
-          : `Simply click the "Get Tickets" button to register instantly.${entryFee > 0 ? ` You will be redirected to pay ₹${entryFee} via Razorpay.` : ''} Make sure your profile is up to date.`)
-        : `You need to log in with your student account first, then click the "Get Tickets" button to register.${entryFee > 0 ? ` The entry fee of ₹${entryFee} is payable via Razorpay.` : ''}`,
-    },
-    {
-      question: 'How many seats are available?',
-      answer: isUnlimited
-        ? 'This event has unlimited seats — everyone who registers can attend!'
-        : isFull
-          ? `All ${totalSeats} seats are currently filled (${registeredCount} registered). You can still join the waitlist and you'll be notified if a spot opens up.`
-          : `There are ${totalSeats} total seats, of which ${registeredCount} are already filled. ${totalSeats - registeredCount} spots remaining — register soon!`,
-    },
-    ...(event.allowedPrograms && event.allowedPrograms.length > 0 ? [{
-      question: 'Who is eligible to participate?',
-      answer: `This event is open to students from the following programs: ${event.allowedPrograms.join(', ')}.${event.allowedYears && event.allowedYears.length > 0 ? ` Eligible years: ${event.allowedYears.join(', ')}.` : ' All years are welcome.'}`,
-    }] : []),
-    ...(event.showWinner ? [{
-      question: 'Is this a competition? Are there prizes?',
-      answer: `Yes, this is a competitive event! Winners will be announced after the event concludes.${showWinners ? ` The results are already out — scroll up to the Winners section to see the results.` : ' Stay tuned for the results after the event ends.'}`,
-    }] : []),
-    ...(event.provideCertificate ? [{
-      question: 'Will certificates be provided?',
-      answer: 'Yes! Participants will receive certificates after the event. You can download your certificate from the "My Events" section on CampusNode.',
-    }] : []),
-    {
-      question: `Who is organizing this event?`,
-      answer: `This event is organized by ${displayName}.${clubSlugOrId ? ' You can visit their club page for more events and information.' : ''}`,
-    },
-    ...(!isUnlimited ? [{
-      question: 'What happens if seats are full?',
-      answer: `If all ${totalSeats} seats are filled, you can join the waitlist. You'll be automatically registered if a spot opens up, and we'll notify you.`,
-    }] : []),
+      question: 'Who is organizing this event and can I cancel my ticket?',
+      answer: `This event is organized by ${displayName}.${
+        clubSlugOrId ? ' You can click the organizer name in the sidebar to visit their club page.' : ''
+      } If you need to cancel your registration, you can do so in the "My Events" section on CampusNode before the event begins.`,
+    }
   ];
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -770,43 +764,22 @@ const EventDetails = () => {
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Starts</p>
                     <p className="text-[16px] font-bold text-black dark:text-white leading-snug">
-                      {new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                      {new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })}
                     </p>
                     <p className="text-[14px] font-semibold text-orange-600">
-                      {new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                     </p>
                   </div>
                   <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Ends</p>
                     <p className="text-[14px] font-semibold text-neutral-700 dark:text-neutral-300">
-                      {new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                      {new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Kolkata' })}
                       {' · '}
-                      {new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* ── Venue Module ── */}
-              <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-2 flex items-center gap-1.5">
-                  <i className="ri-map-pin-2-line text-orange-500 text-xs" /> VENUE
-                </p>
-                <p className="text-[15px] font-bold text-black dark:text-white">{venue}</p>
-              </div>
-
-              {/* ── Pricing Module ── */}
-              <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-2 flex items-center gap-1.5">
-                  <i className="ri-ticket-2-line text-orange-500 text-xs" /> PRICE
-                </p>
-                <p className={`text-[22px] font-black leading-none ${entryFee > 0 ? 'text-black dark:text-white' : 'text-green-600 dark:text-green-400'}`}>
-                  {entryFee > 0 ? `₹${entryFee}` : 'Free'}
-                </p>
-                {entryFee > 0 && (
-                  <p className="text-[11px] text-neutral-400 mt-1">Non-refundable</p>
-                )}
               </div>
 
               {/* ── Seat Progress ── */}
@@ -816,9 +789,9 @@ const EventDetails = () => {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Availability</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-black dark:text-white">{fillPct}% Full</span>
                   </div>
-                  <div className="w-full h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${fillPct >= 90 ? 'bg-orange-600' : fillPct >= 60 ? 'bg-yellow-400' : 'bg-black dark:bg-white'}`}
+                      className={`h-full rounded-full transition-all duration-700 ${fillPct >= 90 ? 'bg-red-500' : fillPct >= 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                       style={{ width: `${fillPct}%` }}
                     />
                   </div>
@@ -840,43 +813,74 @@ const EventDetails = () => {
               )}
 
               {registrationId && (
-                <div className="mx-6 mt-4 flex flex-col items-center gap-3 px-4 py-5 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-full">
-                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-green-600">
-                    <i className="ri-checkbox-circle-fill text-xl" />
+                <div className="mx-6 mt-4 flex flex-col items-center gap-3.5 px-6 py-6 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 rounded-2xl">
+                  <div className="w-12 h-12 bg-emerald-100/80 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-600">
+                    <i className="ri-checkbox-circle-fill text-2xl" />
                   </div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-green-700 dark:text-green-400">Registration Successful!</p>
                   <div className="text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Your Registration ID</p>
-                    <p className="text-lg font-black text-black dark:text-white tracking-widest font-mono bg-white dark:bg-neutral-800 px-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-full">
+                    <p className="text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Registration Successful!</p>
+                    <p className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 mt-1">Check your dashboard for the ticket QR code</p>
+                  </div>
+                  
+                  <div className="w-full bg-white dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-850 p-4 rounded-xl text-center shadow-sm">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1.5">Ticket ID / Ref Number</p>
+                    <p className="text-base font-black text-neutral-900 dark:text-neutral-100 tracking-wider font-mono select-all">
                       {registrationId}
                     </p>
                   </div>
-                  <p className="text-[11px] text-neutral-500 text-center max-w-[220px]">
-                    View your ticket and QR code in <Link to="/my-events" className="text-orange-600 font-bold underline">My Events</Link>.
-                  </p>
+
+                  <Link 
+                    to="/my-events" 
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-orange-600 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 hover:underline"
+                  >
+                    View My Tickets <i className="ri-arrow-right-s-line" />
+                  </Link>
                 </div>
               )}
 
               {/* ── Primary CTA ── */}
               <div className="px-6 py-5">
-                <button
-                  onClick={!btnConfig.disabled && !isRegistering
-                    ? (isEnded
-                      ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' })
-                      : handleRegister)
-                    : undefined}
-                  disabled={btnConfig.disabled || isRegistering}
-                  className={`w-full py-4 px-6 text-[13px] font-black uppercase tracking-[0.15em] border-2 rounded-full transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isRegistering ? (
-                    <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
-                  ) : btnConfig.label}
-                </button>
-
-                {status === 'UPCOMING' && (
-                  <div className="mt-3 flex justify-center">
-                    <CalendarDropdown event={event} />
+                {/* Horizontal Metadata Anchor */}
+                <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 mb-4 px-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <i className="ri-map-pin-2-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
+                    <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">{venue}</span>
                   </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <i className="ri-ticket-2-line text-neutral-400 dark:text-neutral-500 text-sm" />
+                    <span className={`font-black text-sm ${entryFee > 0 ? 'text-black dark:text-white' : 'text-green-600 dark:text-green-400'}`}>
+                      {entryFee > 0 ? `₹${entryFee}` : 'Free'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={!btnConfig.disabled && !isRegistering
+                      ? (isEnded
+                        ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' })
+                        : handleRegister)
+                      : undefined}
+                    disabled={btnConfig.disabled || isRegistering}
+                    className={`flex-1 py-3 px-6 text-[13px] font-black uppercase tracking-[0.15em] border-2 rounded-full transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    {isRegistering ? (
+                      <><i className="ri-loader-4-line animate-spin text-base" /> Processing…</>
+                    ) : btnConfig.label}
+                  </button>
+
+                  {status === 'UPCOMING' && (
+                    <CalendarDropdown
+                      event={event}
+                      btnClassName="w-12 h-12 flex items-center justify-center border border-neutral-200 dark:border-neutral-800 rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-850 text-neutral-600 dark:text-neutral-400 cursor-pointer shadow-sm transition-colors shrink-0"
+                    />
+                  )}
+                </div>
+
+                {registrationDeadline && !isEnded && (
+                  <p className="text-[11px] font-medium text-neutral-550 dark:text-neutral-450 mt-3 text-center">
+                    Registration closes: {new Date(registrationDeadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+                  </p>
                 )}
               </div>
 
@@ -970,7 +974,7 @@ const EventDetails = () => {
                 : handleRegister)
               : undefined}
             disabled={btnConfig.disabled || isRegistering}
-            className={`px-6 py-3 text-[12px] font-black uppercase tracking-[0.12em] border-2 rounded-xlFended transition-all flex items-center gap-2 shrink-0 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-6 py-3 text-[12px] font-black uppercase tracking-[0.12em] border-2 rounded-full transition-all flex items-center gap-2 shrink-0 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isRegistering ? (
               <><i className="ri-loader-4-line animate-spin text-sm" /> …</>
@@ -1086,6 +1090,38 @@ const EventDetails = () => {
                 {isRegistering ? 'Processing...' : (event.entryFee > 0 ? 'Pay & Register' : 'Register')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── Registration Success Modal ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto ticket-backdrop-animate">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full relative overflow-hidden flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
+            <div className="relative">
+              <img src="/Success popup.svg" alt="Registration Successful" className="w-48 h-48 mx-auto animate-bounce-slow" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
+            </div>
+            
+            <h3 className="text-xl font-black text-neutral-900 dark:text-white mt-4">Registration Successful!</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
+              You are in! Your ticket has been confirmed. You can show the QR code below at the venue entry.
+            </p>
+            
+            {registrationId && (
+              <div className="my-5 p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-850 rounded-2xl">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1.5">Your Registration ID</p>
+                <p className="text-lg font-black text-neutral-900 dark:text-neutral-100 tracking-wider font-mono select-all">
+                  {registrationId}
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-full transition shadow-sm border-0 outline-none text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Acknowledge & Close
+            </button>
           </div>
         </div>
       )}

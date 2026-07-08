@@ -41,6 +41,12 @@ const EditEvent = () => {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const toLocalISOString = (dateObj) => {
+        if (!dateObj) return '';
+        const date = new Date(dateObj);
+        const tzOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    };
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -48,8 +54,8 @@ const EditEvent = () => {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
                 const event = res.data;
                 if (event) {
-                    const start = new Date(event.startTime).toISOString().slice(0, 16);
-                    const end = new Date(event.endTime).toISOString().slice(0, 16);
+                    const start = toLocalISOString(event.startTime);
+                    const end = toLocalISOString(event.endTime);
                     const unlimited = !event.totalSeats || event.totalSeats === 0;
                     const yearArr = event.allowedYears || [];
                     setFormData({
@@ -63,7 +69,7 @@ const EditEvent = () => {
                         imageUrl: event.imageUrl || '',
                         requiredFields: event.requiredFields || [],
                         customFields: event.customFields || [],
-                        registrationDeadline: event.registrationDeadline ? new Date(event.registrationDeadline).toISOString().slice(0, 16) : '',
+                        registrationDeadline: event.registrationDeadline ? toLocalISOString(event.registrationDeadline) : '',
                         allowedPrograms: event.allowedPrograms || ['BTECH', 'MTECH', 'OTHER'],
                         allowedYears: yearArr,
                         winners: event.winners || [], // ← added
@@ -265,7 +271,7 @@ const EditEvent = () => {
     const addWinner = () => {
         setFormData(prev => ({
             ...prev,
-            winners: [...prev.winners, { rank: prev.winners.length + 1, name: '' }]
+            winners: [...prev.winners, { rank: prev.winners.length + 1, name: '', rollNo: '', error: null }]
         }));
     };
 
@@ -282,6 +288,30 @@ const EditEvent = () => {
             updated[index] = { ...updated[index], [field]: value };
             return { ...prev, winners: updated };
         });
+    };
+
+    const handleRollNoLookup = async (index, rollNoVal) => {
+        if (!rollNoVal || !rollNoVal.trim()) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/lookup/${rollNoVal.trim()}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const { name, branch } = res.data;
+            const displayName = branch ? `${name}(${branch})` : name;
+            
+            setFormData(prev => {
+                const updated = [...prev.winners];
+                updated[index] = { ...updated[index], name: displayName, error: null };
+                return { ...prev, winners: updated };
+            });
+        } catch (err) {
+            setFormData(prev => {
+                const updated = [...prev.winners];
+                updated[index] = { ...updated[index], name: '', error: 'Student not found.' };
+                return { ...prev, winners: updated };
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -306,10 +336,13 @@ const EditEvent = () => {
 
         const payload = {
             ...formData,
+            startTime: new Date(formData.startTime).toISOString(),
+            endTime: new Date(formData.endTime).toISOString(),
             entryFee: Number(formData.entryFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
-            registrationDeadline: formData.registrationDeadline ? formData.registrationDeadline : null,
+            registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
+            winners: (formData.winners || []).map(({ error, ...rest }) => rest),
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
         };
@@ -869,16 +902,36 @@ const EditEvent = () => {
                                                 className={inputCls}
                                             />
                                         </div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter name"
-                                                value={winner.name}
-                                                onChange={(e) => updateWinner(index, 'name', e.target.value)}
-                                                className={inputCls}
-                                            />
-                                        </div>
+                                         <div className="flex-1">
+                                             <label className="text-[10px] font-bold uppercase mb-1 block">Roll Number</label>
+                                             <input
+                                                 type="text"
+                                                 placeholder="Enter roll number"
+                                                 value={winner.rollNo || ''}
+                                                 onChange={(e) => {
+                                                     const val = e.target.value;
+                                                     updateWinner(index, 'rollNo', val);
+                                                     if (val.trim().length >= 4) {
+                                                         handleRollNoLookup(index, val);
+                                                     }
+                                                 }}
+                                                 onBlur={(e) => handleRollNoLookup(index, e.target.value)}
+                                                 className={inputCls}
+                                             />
+                                         </div>
+                                         <div className="flex-1">
+                                             <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
+                                             <input
+                                                 type="text"
+                                                 placeholder="Identified Name"
+                                                 value={winner.name}
+                                                 className={`${inputCls} bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed`}
+                                                 readOnly
+                                             />
+                                             {winner.error && (
+                                                 <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
+                                             )}
+                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => removeWinner(index)}
@@ -911,12 +964,12 @@ const EditEvent = () => {
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t-2 border-neutral-100">
                         <button type="button" onClick={() => navigate('/profile')}
-                            className="flex-1 px-6 py-3 bg-white border-2 border-black text-black font-black text-xs rounded-xl tracking-widest hover:bg-neutral-200 transition-colors order-2 sm:order-1">
+                            className="flex-1 px-6 py-3 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-colors font-black text-xs rounded-full tracking-widest order-2 sm:order-1 border-0 outline-none cursor-pointer">
                             Discard Changes
                         </button>
                         <button type="submit"
                             disabled={isSaving}
-                            className={`flex-1 px-6 py-3 border-2 border-black text-white font-black text-xs rounded-xl tracking-widest transition-all  active:translate-x-1 active:translate-y-1 active:shadow-none order-1 sm:order-2 ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600 hover:border-orange-600'}`}>
+                            className={`flex-1 px-6 py-3 text-white font-black text-xs rounded-full tracking-widest transition-all active:translate-x-1 active:translate-y-1 active:shadow-none order-1 sm:order-2 border-0 outline-none cursor-pointer ${isSaving ? 'bg-neutral-400 cursor-not-allowed shadow-none' : 'bg-black hover:bg-orange-600'}`}>
                             {isSaving ? 'Syncing...' : 'Update Event Details'}
                         </button>
                     </div>

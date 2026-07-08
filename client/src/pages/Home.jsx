@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Clock, MapPin, Calendar, Bookmark, Compass, User } from 'lucide-react';
+
+import { Clock, MapPin, Calendar, Bookmark, Compass, User, Plus, Wallet, Users, Bell, LayoutDashboard, Search } from 'lucide-react';
 import EventFeed from './EventFeed';
 import Clubspage from './Clubspage';
 import ClubLeaderboard from '../components/ClubLeaderboard';
@@ -151,24 +152,67 @@ const BtnSecondary = ({ to, children }) => (
 
 const Home = () => {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [openMapEventId, setOpenMapEventId] = useState(null);
   const [tab, setTab] = useState("students");
+  const [celebrationEvent, setCelebrationEvent] = useState(null);
+  const [celebrationWinnerRank, setCelebrationWinnerRank] = useState(null);
 
   useEffect(() => {
     document.title = "CampusNode | NITJ Clubs & Events";
     try {
       const storedUser = localStorage.getItem("user");
+      const storedRole = localStorage.getItem("role");
       if (storedUser && storedUser !== "undefined") {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
+        setRole(storedRole);
         fetchTimelineEvents(parsed.id || parsed._id);
       }
     } catch (err) {
       console.error("Error parsing user from local storage", err);
     }
   }, []);
+
+  useEffect(() => {
+    if (registrations.length > 0 && user) {
+      const acknowledged = JSON.parse(localStorage.getItem('acknowledged_winnings') || '[]');
+      
+      const unacknowledgedWin = registrations.find(p => {
+        const ev = p.eventId || p.event;
+        if (ev && ev.showWinner && ev.winners && !acknowledged.includes(ev.id || ev._id)) {
+          const winInfo = ev.winners.find(w => 
+            (w.rollNo && w.rollNo.trim() === user.rollNo?.trim()) ||
+            (w.name && w.name.toLowerCase().includes(user.name.toLowerCase()))
+          );
+          if (winInfo) {
+            p._winnerRank = winInfo.rank;
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (unacknowledgedWin) {
+        const ev = unacknowledgedWin.eventId || unacknowledgedWin.event;
+        setCelebrationEvent(ev);
+        setCelebrationWinnerRank(unacknowledgedWin._winnerRank);
+      }
+    }
+  }, [registrations, user]);
+
+  const acknowledgeWin = () => {
+    if (celebrationEvent) {
+      const eventId = celebrationEvent.id || celebrationEvent._id;
+      const acknowledged = JSON.parse(localStorage.getItem('acknowledged_winnings') || '[]');
+      acknowledged.push(eventId);
+      localStorage.setItem('acknowledged_winnings', JSON.stringify(acknowledged));
+      setCelebrationEvent(null);
+      setCelebrationWinnerRank(null);
+    }
+  };
 
   const fetchTimelineEvents = async (userId) => {
     if (!userId) return;
@@ -212,6 +256,56 @@ const Home = () => {
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
 
+  const isStudent = !role || role === 'member' || role === 'student';
+  const isClub = role === 'club';
+  const isFaculty = role === 'facultyCoordinator';
+  const isAdmin = role === 'admin' || role === 'lostFoundAdmin' || role === 'paymentAdmin';
+
+  let dashboardTag = 'My Node Panel';
+  let greetingName = firstName;
+  let greetingSubtext = 'Ready to manage your campus drive today?';
+  let quickActions = [];
+
+  if (isStudent) {
+    dashboardTag = 'Student Hub';
+    greetingSubtext = 'Explore active club fests, technical hackathons, and sports events!';
+    quickActions = [
+      { to: '/events', label: 'Browse Events', icon: Compass },
+      { to: '/lost-and-found', label: 'Lost & Found', icon: Search },
+      { to: '/my-events', label: 'My Tickets', icon: Bookmark },
+      { to: '/profile', label: 'My Profile', icon: User, primary: true },
+    ];
+  } else if (isClub) {
+    dashboardTag = 'Club Organizer Portal';
+    greetingName = user?.clubName || user?.name || 'Club Organizer';
+    greetingSubtext = 'Manage your events, coordinate payouts, and issue certificates.';
+    quickActions = [
+      { to: '/create', label: 'Create Event', icon: Plus },
+      { to: '/payments', label: 'Track Payments', icon: Wallet },
+      { to: `/club/${user?.clubId || user?.id || 'my-club'}/team`, label: 'Members', icon: Users },
+      { to: '/profile', label: 'Club Profile', icon: User, primary: true },
+    ];
+  } else if (isFaculty) {
+    dashboardTag = 'Faculty Coordinator Panel';
+    greetingName = user?.name ? `Prof. ${user.name.split(' ')[0]}` : 'Faculty Coordinator';
+    greetingSubtext = 'Review club requests, approve pending events, and view logs.';
+    quickActions = [
+      { to: '/my-events', label: 'Review Events', icon: Calendar },
+      { to: '/clubs', label: 'Explore Clubs', icon: Users },
+      { to: '/notifications', label: 'Announcements', icon: Bell },
+      { to: '/profile', label: 'My Profile', icon: User, primary: true },
+    ];
+  } else if (isAdmin) {
+    dashboardTag = 'Admin Command Center';
+    greetingSubtext = 'Oversee campus fests, payouts, moderation queues, and broadcasts.';
+    quickActions = [
+      { to: '/admin-dashboard', label: 'Admin Panel', icon: LayoutDashboard },
+      { to: '/send-notification', label: 'Broadcast Info', icon: Bell },
+      { to: '/events', label: 'Browse Events', icon: Compass },
+      { to: '/profile', label: 'My Profile', icon: User, primary: true },
+    ];
+  }
+
   return (
     <div className="myfont text-neutral-900 bg-white dark:text-neutral-100 dark:bg-[#0a0a0a] transition-colors duration-300">
 
@@ -227,170 +321,263 @@ const Home = () => {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-neutral-200 dark:border-neutral-800">
                 {/* User Greeting Widget */}
                 <div className="flex items-center gap-4">
-                  {/* <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-orange-500/20">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'S'}
-                  </div> */}
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-orange-500 animate-pulse">My Node Panel</span>
+                      <span className="text-xs font-semibold uppercase tracking-widest text-orange-500 animate-pulse">{dashboardTag}</span>
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-black tracking-tight text-neutral-900 dark:text-white mt-1">
-                      Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500 dark:from-orange-400 dark:to-amber-400">{firstName}</span>
+                      Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500 dark:from-orange-400 dark:to-amber-400">{greetingName}</span>
                     </h1>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 font-light mt-1">
-                      Ready to manage your campus drive today?
+                      {greetingSubtext}
                     </p>
                   </div>
                 </div>
 
                 {/* Quick Actions Grid */}
                 <div className="grid grid-cols-2 sm:flex sm:items-center gap-3">
-                  <Link
-                    to="/events"
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
-                  >
-                    <Compass className="w-4 h-4 text-orange-500" /> Browse Events
-                  </Link>
-                  <Link
-                    to="/lost-and-found"
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
-                  >
-                    <i className="ri-search-line text-orange-500" /> Lost & Found
-                  </Link>
-                  <Link
-                    to="/my-events"
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-semibold tracking-wider text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm"
-                  >
-                    <Bookmark className="w-4 h-4 text-orange-500" /> My Tickets
-                  </Link>
-                  <Link
-                    to="/profile"
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-xs font-semibold tracking-wider text-white transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm shadow-orange-600/10"
-                  >
-                    <User className="w-4 h-4" /> My Profile
-                  </Link>
+                  {quickActions.map((action, idx) => {
+                    const IconComponent = action.icon;
+                    return (
+                      <Link
+                        key={idx}
+                        to={action.to}
+                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm ${
+                          action.primary 
+                            ? "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-600/10 border-0" 
+                            : "bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
+                        }`}
+                      >
+                        <IconComponent className={action.primary ? "w-4 h-4 text-white" : "w-4 h-4 text-orange-500"} />
+                        {action.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* ── PERSONALIZED TIMELINE ───────────────────────────────────────── */}
+          {/* ── PERSONALIZED TIMELINE / MANAGEMENT PANEL ─────────────────────── */}
           <section className="py-16 bg-[#fefce8]/20 dark:bg-neutral-950/20 border-b-2 border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
               <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <SectionLabel>Your Timeline</SectionLabel>
+                  <SectionLabel>{isStudent ? "Your Timeline" : "Management Dashboard"}</SectionLabel>
                   <h2 className="font-black text-[clamp(28px,4vw,40px)] text-neutral-900 dark:text-white leading-tight tracking-tight">
-                    My Registered Events
+                    {isStudent ? "My Registered Events" : isClub ? "Club Hub" : isFaculty ? "Approvals Dashboard" : "Platform Management"}
                   </h2>
                 </div>
-                <Link
-                  to="/my-events"
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline transition-all"
-                >
-                  Manage Tickets & QR Codes <ArrowRightIcon className="w-4 h-4 text-orange-600 shrink-0" />
-                </Link>
+                {isStudent && (
+                  <Link
+                    to="/my-events"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline transition-all"
+                  >
+                    Manage Tickets & QR Codes <ArrowRightIcon className="w-4 h-4 text-orange-600 shrink-0" />
+                  </Link>
+                )}
               </div>
 
-              {timelineLoading ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3 text-neutral-500 dark:text-neutral-400">
-                  <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs font-semibold tracking-wider uppercase">Loading your timeline...</p>
-                </div>
-              ) : registrations.length === 0 ? (
-                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm max-w-xl mx-auto">
-                  <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-6 h-6" />
+              {isStudent ? (
+                timelineLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-neutral-500 dark:text-neutral-400">
+                    <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs font-semibold tracking-wider uppercase">Loading your timeline...</p>
                   </div>
-                  <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-1">Your timeline is empty</h3>
-                  <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-6">
-                    You haven't registered for any events yet. Check out the latest campus fests and technical sessions below!
-                  </p>
-                  <Link
-                    to="/events"
-                    className="inline-flex items-center justify-center px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
-                  >
-                    Find Events to Join
-                  </Link>
-                </div>
-              ) : (
-                <div className="relative border-l-2 border-orange-100 dark:border-orange-900/40 pl-6 md:pl-8 ml-4 md:ml-6 space-y-8">
-                  {registrations.map((reg) => {
-                    const event = reg.eventId;
-                    if (!event) return null;
-                    
-                    return (
-                      <div key={reg._id} className="relative group">
-                        {/* Timeline Node Icon */}
-                        <div className="absolute -left-[35px] md:-left-[43px] top-1.5 w-6 h-6 md:w-8 md:h-8 rounded-full bg-white dark:bg-neutral-900 border-2 border-orange-500 flex items-center justify-center text-orange-600 shadow-sm z-10 group-hover:scale-110 transition-transform">
-                          <Clock className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
-                        </div>
+                ) : registrations.length === 0 ? (
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm max-w-xl mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto mb-4">
+                      <Calendar className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-1">Your timeline is empty</h3>
+                    <p className="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed mb-6">
+                      You haven't registered for any events yet. Check out the latest campus fests and technical sessions below!
+                    </p>
+                    <Link
+                      to="/events"
+                      className="inline-flex items-center justify-center px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
+                    >
+                      Find Events to Join
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="relative border-l-2 border-orange-100 dark:border-orange-900/40 pl-6 md:pl-8 ml-4 md:ml-6 space-y-8">
+                    {registrations.map((reg) => {
+                      const event = reg.eventId;
+                      if (!event) return null;
+                      
+                      return (
+                        <div key={reg._id} className="relative group">
+                          {/* Timeline Node Icon */}
+                          <div className="absolute -left-[35px] md:-left-[43px] top-1.5 w-6 h-6 md:w-8 md:h-8 rounded-full bg-white dark:bg-neutral-900 border-2 border-orange-500 flex items-center justify-center text-orange-600 shadow-sm z-10 group-hover:scale-110 transition-transform">
+                            <Clock className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
+                          </div>
 
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300">
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                            <div className="space-y-2">
-                              {/* Event Title */}
-                              <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
-                                <Link to={`/event/${event.slug || event.id || event._id}`}>
-                                  {event.title}
-                                </Link>
-                              </h3>
-                              
-                              {/* DateTime */}
-                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-                                <span className="font-semibold text-orange-600 uppercase tracking-wide">
-                                  {new Date(event.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                                </span>
-                                <span>•</span>
-                                <span>
-                                  {new Date(event.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} - {new Date(event.endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                              <div className="space-y-2">
+                                {/* Event Title */}
+                                <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                                  <Link to={`/event/${event.slug || event.id || event._id}`}>
+                                    {event.title}
+                                  </Link>
+                                </h3>
+                                
+                                {/* DateTime */}
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                  <span className="font-semibold text-orange-600 uppercase tracking-wide">
+                                    {new Date(event.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                  </span>
+                                  <span>•</span>
+                                  <span>
+                                    {new Date(event.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} - {new Date(event.endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Live Countdown Badge */}
+                              <div>
+                                <CountdownTimer startTime={event.startTime} endTime={event.endTime} />
                               </div>
                             </div>
 
-                            {/* Live Countdown Badge */}
-                            <div>
-                              <CountdownTimer startTime={event.startTime} endTime={event.endTime} />
-                            </div>
-                          </div>
+                            {/* Map trigger and venue */}
+                            <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex flex-col items-start gap-1">
+                              <button
+                                onClick={() => setOpenMapEventId(openMapEventId === event._id ? null : event._id)}
+                                className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
+                              >
+                                <MapPin className="w-4 h-4 text-orange-500 shrink-0" />
+                                <span>Venue: <strong className="text-neutral-900 dark:text-white">{event.venue}</strong></span>
+                                {event.venue !== 'Online' && (
+                                  <span className="text-[10px] text-orange-600 hover:underline">
+                                    ({openMapEventId === event._id ? 'Close Map' : 'Locate on Map'})
+                                  </span>
+                                )}
+                              </button>
 
-                          {/* Map trigger and venue */}
-                          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex flex-col items-start gap-1">
-                            <button
-                              onClick={() => setOpenMapEventId(openMapEventId === event._id ? null : event._id)}
-                              className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-orange-600 dark:hover:text-orange-500 transition-colors"
-                            >
-                              <MapPin className="w-4 h-4 text-orange-500 shrink-0" />
-                              <span>Venue: <strong className="text-neutral-900 dark:text-white">{event.venue}</strong></span>
-                              {event.venue !== 'Online' && (
-                                <span className="text-[10px] text-orange-600 hover:underline">
-                                  ({openMapEventId === event._id ? 'Close Map' : 'Locate on Map'})
-                                </span>
+                              {/* Collapsible interactive map */}
+                              {openMapEventId === event._id && event.venue !== 'Online' && (
+                                <div className="mt-3 w-full h-[240px] rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm relative transition-all">
+                                  <iframe
+                                    title={`Map location for ${event.venue}`}
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(event.venue + ' NIT Jalandhar')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                                  />
+                                </div>
                               )}
-                            </button>
-
-                            {/* Collapsible interactive map */}
-                            {openMapEventId === event._id && event.venue !== 'Online' && (
-                              <div className="mt-3 w-full h-[240px] rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm relative transition-all">
-                                <iframe
-                                  title={`Map location for ${event.venue}`}
-                                  width="100%"
-                                  height="100%"
-                                  style={{ border: 0 }}
-                                  loading="lazy"
-                                  allowFullScreen
-                                  src={`https://maps.google.com/maps?q=${encodeURIComponent(event.venue + ' NIT Jalandhar')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-                                />
-                              </div>
-                            )}
+                            </div>
                           </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : (
+                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {isClub && (
+                    <>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <Calendar className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Events & Attendance</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Organize campus fests, hackathons, and technical talks. Use the check-in scanner to verify QR code tickets and record live attendance.
+                          </p>
+                        </div>
+                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          Manage Club Events <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
                       </div>
-                    );
-                  })}
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <Wallet className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Finance & Payouts</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Track event registrations fees, view verified receipts, update bank details, and monitor payout requests.
+                          </p>
+                        </div>
+                        <Link to="/payments" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          Track Financials & Payments <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                  {isFaculty && (
+                    <>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <Calendar className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Pending Proposals</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Review detailed proposals for upcoming club events. Approve them for public release or send them back with coordinator comments.
+                          </p>
+                        </div>
+                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          Review Proposals <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                      </div>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <Users className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Club Co-ordination</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Oversee active student memberships, coordinate schedules, and send urgent notifications or alerts to students.
+                          </p>
+                        </div>
+                        <Link to="/clubs" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          View Club Directory <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                  {isAdmin && (
+                    <>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <LayoutDashboard className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Core System Stats</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Access system statistics, register or block clubs, review payout requests, and maintain core platform configurations.
+                          </p>
+                        </div>
+                        <Link to="/admin-dashboard" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          Open Admin Control Panel <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                      </div>
+                      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-4">
+                            <Bell className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2">Broadcast Announcements</h3>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-sm mb-6 leading-relaxed">
+                            Send direct push notifications and official announcements to all registered student accounts.
+                          </p>
+                        </div>
+                        <Link to="/send-notification" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
+                          Create System Broadcast <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ) }
+              )}
             </div>
           </section>
         </>
@@ -833,6 +1020,34 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Celebration Winner Modal ── */}
+      {celebrationEvent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg px-4 py-6 overflow-y-auto ticket-backdrop-animate">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full relative overflow-hidden flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
+            <div className="relative">
+              <img src="/Trophy.svg" alt="Trophy" className="w-36 h-36 mx-auto animate-bounce-slow" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
+            </div>
+            
+            <h3 className="text-2xl font-black text-amber-600 dark:text-amber-500 mt-4 uppercase tracking-wider">Congratulations!</h3>
+            <p className="text-base font-extrabold text-neutral-900 dark:text-white mt-1 leading-tight">
+              You secured Rank #{celebrationWinnerRank} in {celebrationEvent.title}!
+            </p>
+            
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-4 leading-relaxed italic px-2">
+              "Hard work pays off! Congratulations to the winners of {celebrationEvent.title}. Keep striving for excellence and inspiring those around you."
+            </p>
+            
+            <button
+              onClick={acknowledgeWin}
+              className="mt-6 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-full transition shadow-sm border-0 outline-none text-xs uppercase tracking-wider cursor-pointer"
+            >
+              Claim Victory 🏆
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Home Footer */}
       <HomeFooter />

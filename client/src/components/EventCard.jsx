@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { loadRazorpay } from '../utils/razorpay';
 import CalendarDropdown from './CalendarDropdown';
 import { getColorSync } from 'colorthief';
@@ -59,6 +59,22 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
         weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
+    const getDeadlineText = () => {
+        const dl = new Date(registrationDeadline || startTime);
+        const ev = new Date(startTime);
+        
+        const timeOptions = { hour: '2-digit', minute: '2-digit' };
+        const dateOptions = { month: 'short', day: 'numeric' };
+        
+        const isSameDay = dl.toDateString() === ev.toDateString();
+        
+        if (isSameDay) {
+            return `Reg. by ${dl.toLocaleTimeString('en-US', timeOptions)}`;
+        } else {
+            return `Reg. by ${dl.toLocaleDateString('en-US', dateOptions)}, ${dl.toLocaleTimeString('en-US', timeOptions)}`;
+        }
+    };
+
     const isLive = status === 'LIVE';
     const isEnded = status === 'ENDED';
     const isUpcoming = !isLive && status === 'UPCOMING';
@@ -84,16 +100,27 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgb(229, 231, 235)', // border-gray-200
           };
 
+    const navigate = useNavigate();
+
+    const handleCardClick = (e) => {
+        // Prevent navigation if the user is clicking on nested buttons, links, or dropdowns
+        if (e.target.closest('button') || e.target.closest('.calendar-dropdown') || e.target.closest('a')) {
+            return;
+        }
+        navigate(`/event/${slug || _id}`);
+    };
+
     return (
         <div 
             style={customStyles}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="border border-neutral-200 dark:border-neutral-800/80 rounded-xl overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1 flex flex-col h-full shadow-sm group"
+            onClick={handleCardClick}
+            className="border border-neutral-200 dark:border-neutral-800/80 rounded-xl overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1 flex flex-col h-full shadow-sm group cursor-pointer"
         >
 
             {/* Image */}
-            <div className="relative w-full aspect-4/5 overflow-hidden bg-slate-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/80">
+            <div className="relative w-full aspect-[21/9] overflow-hidden bg-slate-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/80">
                 <img
                     ref={imgRef}
                     src={displayUrl}
@@ -129,7 +156,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             </div>
 
             {/* Body */}
-            <div className="px-4 pt-4 pb-3 flex flex-auto flex-col">
+            <div className="p-4 flex flex-auto flex-col">
                 <h3 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-2 line-clamp-1">{title}</h3>
 
                 {/* Info row */}
@@ -143,7 +170,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                     <div className="w-5 flex items-center justify-center shrink-0">
                                         <i className="ri-time-line text-orange-600 text-sm" />
                                     </div>
-                                    <span className="font-semibold text-neutral-800 dark:text-neutral-200">{formattedTime}</span>
+                                    <span className="font-medium text-neutral-500 dark:text-neutral-200 text-xs">{formattedTime}</span>
                                 </div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <div className="w-5 flex items-center justify-center shrink-0">
@@ -197,45 +224,36 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 ) : (
                     
                     /* SHOW DETAILS WHILE ACTIVE OR IF showWinner IS FALSE */
-                    <div className="space-y-1.5 text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-neutral-600 dark:text-neutral-400">
+                        {/* Temporal Info: Date & Deadline merged (Spans 2 columns) */}
+                        <div className="col-span-2 flex items-center gap-1.5 font-medium text-neutral-700 dark:text-neutral-300">
+                            <i className="ri-time-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
+                            <span className="truncate">
+                                {formattedTime} {isEnded ? '(Ended)' : `(${getDeadlineText()})`}
+                            </span>
+                        </div>
+
+                        {/* Location / Venue */}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <i className="ri-map-pin-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
+                            <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">{venue}</span>
+                        </div>
+
+                        {/* Host Information */}
                         {(event.club?.clubName || event.createdBy?.clubName) && (
-                            <div className="flex items-center gap-2">
-                            
-                                <span className="font-medium text-xs">
-                                    <span className="text-orange-500 font-semibold mr-1">Hosted By</span>
-                                    <span className="text-neutral-800 dark:text-neutral-200 font-semibold">{event.club?.clubName || event.createdBy?.clubName}</span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <i className="ri-shield-user-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
+                                <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
+                                    {event.club?.clubName || event.createdBy?.clubName}
                                 </span>
                             </div>
                         )}
-                        <div className="flex items-center gap-2">
-                            <div className="w-5 flex items-center justify-center shrink-0">
-                                <i className="ri-time-line text-orange-600 text-sm" />
-                            </div>
-                            <span className="font-medium">{formattedTime}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-5 flex items-center justify-center shrink-0">
-                                <i className="ri-map-pin-line text-orange-600 text-sm" />
-                            </div>
-                            <span className="font-medium">{venue}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-5 flex items-center justify-center shrink-0">
-                                <i className="ri-group-line text-orange-600 text-sm" />
-                            </div>
-                            <span className="font-medium">
-                                {seatsText}
-                                {isUnlimited && <span className="text-xs text-neutral-500 dark:text-neutral-400">Unlimited Seats</span>}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-orange-600">
-                            <div className="w-5 flex items-center justify-center shrink-0">
-                                <i className="ri-hourglass-fill text-sm" />
-                            </div>
-                            <span className="font-bold text-[10px] tracking-wide uppercase">
-                                {isEnded ? 'Event Ended' : `Deadline: ${new Date(registrationDeadline || startTime).toLocaleString('en-US', {
-                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                })}`}
+
+                        {/* Seats / Capacity */}
+                        <div className="flex items-center gap-1.5 col-span-2 min-w-0">
+                            <i className="ri-group-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
+                            <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
+                                {isUnlimited ? 'Unlimited Seats' : seatsText}
                             </span>
                         </div>
                     </div>
@@ -243,12 +261,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             </div>
 
             {/* Footer: Entry Fee + Action on same line */}
-            <div className="px-5 pb-4">
-                <div className="flex items-center gap-3 border-t border-neutral-100 dark:border-neutral-800/80 pt-3">
+            <div className="px-5 pb-4 mt-auto">
+                <div className="flex items-center gap-2 border-t border-neutral-100 dark:border-neutral-800/80 pt-3">
                     {/* Entry fee badge */}
                     {entryFee !== 0 && (
                       <span
-                        className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border shrink-0 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/60"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg border shrink-0 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/60"
                       >
                         <i className="ri-money-rupee-circle-line" /> ₹{entryFee}
                       </span>
@@ -258,14 +276,14 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     {isRegistered ? (
                         <Link
                             to={`/event/${slug || _id}`}
-                            className="flex-1 block text-center py-1.5 bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-950/80 transition-colors"
+                            className="flex-1 block text-center py-2 bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 rounded-full text-xs font-bold uppercase tracking-wider cursor-pointer shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-950/80 transition-colors"
                         >
-                            ✓ Registered / View
+                            View Details
                         </Link>
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer shadow-sm ${
+                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer shadow-sm ${
                                 (isEnded || isLive)
                                     ? 'bg-neutral-800 dark:bg-neutral-900 text-white border-neutral-800 dark:border-neutral-800 hover:bg-orange-600 hover:border-orange-600 dark:hover:bg-orange-600 dark:hover:border-orange-600'
                                     : isFull
@@ -273,12 +291,17 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                         : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
                             }`}
                         >
-                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Waitlist' : 'Register / View'}
+                            {(isEnded || isLive) ? 'View Details' : isFull ? 'Join Waitlist' : 'Register Now'}
                         </Link>
                     )}
                     
                     {/* Add to Calendar button for upcoming events */}
-                    {isUpcoming && <CalendarDropdown event={event} />}
+                    {isUpcoming && (
+                      <CalendarDropdown
+                        event={event}
+                        btnClassName="p-2 border rounded-lg shadow-sm hover:bg-neutral-150 dark:hover:bg-neutral-900 transition-colors duration-200 shrink-0 flex items-center justify-center border-neutral-200 dark:border-neutral-800/80 h-9 w-9 text-neutral-600 dark:text-neutral-450 cursor-pointer"
+                      />
+                    )}
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { generateGoogleCalendarLink, downloadICS } from '../utils/calendar';
 import { CalendarDays, Download, Calendar, Check,CalendarCheck2 } from 'lucide-react';
 
-const CalendarDropdown = ({ event }) => {
+const CalendarDropdown = ({ event, btnClassName }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
     const dropdownRef = useRef(null);
@@ -56,6 +56,16 @@ const CalendarDropdown = ({ event }) => {
         setIsOpen(false);
     };
 
+    const defaultBtnClass = `flex items-center justify-center p-2 rounded-sm transition-colors border-2 ${
+        isSynced 
+            ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 cursor-not-allowed pointer-events-none' 
+            : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200'
+    }`;
+
+    const activeBtnClass = btnClassName 
+        ? `${btnClassName} ${isSynced ? 'bg-green-50 text-green-700 border-green-350 pointer-events-none' : ''}`
+        : defaultBtnClass;
+
     return (
         <div className="relative" ref={dropdownRef}>
             <button
@@ -64,11 +74,7 @@ const CalendarDropdown = ({ event }) => {
                     e.preventDefault();
                     setIsOpen(!isOpen);
                 }}
-                className={`flex items-center justify-center p-2 rounded-sm transition-colors border-2  ${
-                    isSynced 
-                        ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 cursor-not-allowed pointer-events-none' 
-                        : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200'
-                }`}
+                className={activeBtnClass}
                 title={isSynced ? "Added to Calendar" : "Sync to Calendar"}
             >
                 {isSynced ? (

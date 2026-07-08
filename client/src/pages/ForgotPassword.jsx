@@ -83,13 +83,15 @@ const ForgotPassword = () => {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-orange-600 text-white font-bold uppercase tracking-wider rounded-md shadow hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Sending Link...' : 'Send Reset Link'}
-          </button>
+          <div className="flex justify-center mt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-orange-600 text-white font-bold uppercase tracking-wider rounded-md shadow hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {loading ? 'Sending Link...' : 'Send Reset Link'}
+            </button>
+          </div>
         </form>
 
         {/* Message */}

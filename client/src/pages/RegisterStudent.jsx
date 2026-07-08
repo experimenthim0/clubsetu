@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
+import { Eye, EyeOff } from 'lucide-react';
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
@@ -21,6 +22,7 @@ const RegisterStudent = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const isOtherProgram = formData.program === 'OTHER';
 
   const handleChange = (e) => {
@@ -153,22 +155,33 @@ const RegisterStudent = () => {
           {/* Password */}
           <div>
             <label htmlFor="password" className={labelCls}>Password</label>
-            <input id="password" name="password" type="password" required className={inputCls}
-              placeholder="Create a password" value={formData.password} onChange={handleChange} />
+            <div className="relative">
+              <input id="password" name="password" type={showPassword ? "text" : "password"} required className={`${inputCls} pr-10`}
+                placeholder="Create a password" value={formData.password} onChange={handleChange} />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-black text-white border-2 border-black text-[12px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-2"
-          >
-            {loading ? (
-              <><i className="ri-loader-4-line animate-spin" /> Registering…</>
-            ) : (
-              <><i className="ri-user-add-line text-sm" /> Register</>
-            )}
-          </button>
+          <div className="flex justify-center mt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center justify-center gap-2 px-8 py-3 bg-black text-white border-2 border-black text-[12px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {loading ? (
+                <><i className="ri-loader-4-line animate-spin" /> Registering…</>
+              ) : (
+                <><i className="ri-user-add-line text-sm" /> Register</>
+              )}
+            </button>
+          </div>
         </form>
 
         {/* Footer */}

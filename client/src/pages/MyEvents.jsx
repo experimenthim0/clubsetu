@@ -87,10 +87,10 @@ const MyEvents = () => {
   ctx.letterSpacing = "4px"; 
   ctx.font = 'bold 30px "logofont"'; 
   ctx.fillStyle = '#0a0a0a';
-  ctx.fillText('Club', brandX, brandY);
-  const clubWidth = ctx.measureText('Club').width;
+  ctx.fillText('CAMPUS', brandX, brandY);
+  const clubWidth = ctx.measureText('CAMPUS').width;
   ctx.fillStyle = '#ea580c';
-  ctx.fillText('Setu', brandX + clubWidth, brandY);
+  ctx.fillText('NODE', brandX + clubWidth, brandY);
   ctx.letterSpacing = "0px";
 
   // Event Name
@@ -110,8 +110,8 @@ const MyEvents = () => {
 
   const eventDate = new Date(selectedTicket.eventId?.startTime);
   drawData('Attendee', user?.name || 'Guest User', 60, 215);
-  drawData('Date', eventDate.toLocaleDateString(undefined, { dateStyle: 'medium' }), 60, 305);
-  drawData('Time', eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }), 280, 305);
+  drawData('Date', eventDate.toLocaleDateString(undefined, { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }), 60, 305);
+  drawData('Time', eventDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }), 280, 305);
   drawData('Venue', selectedTicket.eventId?.venue || 'TBA', 460, 305);
 
   // --- 5. STUB CONTENT ---
@@ -384,54 +384,49 @@ const MyEvents = () => {
                 return (
                   <div
                     key={reg.id || reg._id}
-                    className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col gap-2.5"
                   >
-                    {/* Top stripe: title + timeline badge */}
-                    <div className="flex flex-row sm:flex-row sm:items-center justify-between px-5 md:px-6 pt-5 pb-3 border-b border-neutral-100 bg-neutral-50/30 gap-3">
-                      <h3 className="text-lg font-bold text-neutral-900 leading-tight">
-                        <Link to={`/event/${event.slug || event.id || event._id}`} className="hover:text-orange-600 transition-colors">
-                          {event.title}
-                        </Link>
-                      </h3>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                          isPast
-                            ? 'bg-neutral-50 text-neutral-500 border-neutral-200'
-                            : isLive
-                            ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse-slow'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}
-                      >
-                        {isPast ? 'Past Event' : isLive ? 'Live Now' : 'Upcoming'}
+                    {/* Top Row: Title + Past/Live Badge */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+                          <Link to={`/event/${event.slug || event.id || event._id}`} className="hover:text-orange-600 transition-colors">
+                            {event.title}
+                          </Link>
+                        </h3>
+                        {isPast && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-neutral-50 text-neutral-500 border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 shrink-0">
+                            Past Event
+                          </span>
+                        )}
+                        {isLive && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-455 dark:border-rose-900/30 animate-pulse-slow shrink-0">
+                            Live Now
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Meta Info Row */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                      <span className="flex items-center gap-1 font-medium"><MapPin className="w-3.5 h-3.5" /> {event.venue}</span>
+                      <span className="text-neutral-300 dark:text-neutral-700">|</span>
+                      <span className="flex items-center gap-1 text-orange-600 dark:text-orange-500 font-medium">
+                        <Clock className="w-3.5 h-3.5" /> {new Date(event.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                       </span>
                     </div>
 
-                    {/* Bottom row: meta info | status + action */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between px-5 md:px-6 py-4 gap-6">
-                      {/* Left — venue & date */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-2 text-xs font-medium uppercase tracking-wider text-neutral-500">
-                        <span className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 shrink-0 text-neutral-400" />
-                          {event.venue}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 shrink-0 text-orange-600" />
-                          {new Date(event.startTime).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-                        </span>
-                      </div>
-
-                      {/* Right — registration status + action */}
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                            reg.status === 'CONFIRMED' || reg.status === 'REGISTERED'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-orange-50 text-orange-700 border-orange-200'
-                          }`}
-                        >
-                          {reg.status}
-                        </span>
-
+                    {/* Action Row */}
+                    <div className="flex items-center gap-2 mt-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                      <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border-0 ${
+                        reg.status === 'CONFIRMED' || reg.status === 'REGISTERED'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-400'
+                          : 'bg-orange-50 text-orange-700 dark:bg-orange-950/25 dark:text-orange-450'
+                      }`}>
+                        ✓ {reg.status === 'CONFIRMED' || reg.status === 'REGISTERED' ? 'Registered' : reg.status}
+                      </span>
+                      
+                      <div className="ml-auto flex gap-2">
                         <button
                           onClick={async () => { 
                             setSelectedTicket(reg); 
@@ -443,20 +438,20 @@ const MyEvents = () => {
                               console.error(err);
                             }
                           }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm cursor-pointer"
+                          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm cursor-pointer border-0 outline-none"
                         >
                           Show Ticket
                         </button>
 
                         {!isPast && (
                           event.entryFee > 0 ? (
-                            <span className="text-xs font-medium text-neutral-400 bg-neutral-50 px-3 py-1.5 border border-neutral-200 rounded-lg cursor-not-allowed whitespace-nowrap">
+                            <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-850 px-3 py-1.5 rounded-full cursor-not-allowed whitespace-nowrap">
                               <i className="ri-lock-2-line mr-1" /> Paid Entry
                             </span>
                           ) : (
                             <button
                               onClick={() => handleDeregister(event.id || event._id)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer whitespace-nowrap"
+                              className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 transition-colors cursor-pointer border-0 outline-none rounded-full whitespace-nowrap"
                             >
                               Deregister
                             </button>
@@ -467,14 +462,13 @@ const MyEvents = () => {
 
                     {/* Prominent Certificate Button for Past Events */}
                     {isPast && reg.status === 'CONFIRMED' && event.provideCertificate && (
-                     <div className="px-5 md:px-6 pb-5 pt-2 border-t border-neutral-100 bg-neutral-50/10 flex md:justify-start">
+                      <div className="pt-2">
                         <a
                           href={`${import.meta.env.VITE_API_URL}/api/certificates/${event.id || event._id}/download`}
-                          className="inline-flex items-center justify-center gap-2 bg-neutral-100 hover:bg-neutral-200 w-full md:w-auto px-4 py-2 text-neutral-800 transition border border-neutral-200 rounded-lg font-bold text-xs shadow-sm cursor-pointer"
+                          className="inline-flex items-center justify-center gap-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 w-full px-4 py-2 text-neutral-800 dark:text-neutral-250 transition border border-neutral-200 dark:border-neutral-700 rounded-full font-bold text-xs shadow-sm cursor-pointer"
                         >
-                          <DownloadIcon size={16}>
-                            Download E-Certificate
-                          </DownloadIcon>
+                          <DownloadIcon size={16} />
+                          Download E-Certificate
                         </a>
                       </div>
                     )}
@@ -615,7 +609,7 @@ const MyEvents = () => {
                       </span>
                       <span className="flex items-center gap-1.5 text-neutral-500">
                         <Clock className="w-4 h-4 shrink-0 text-orange-600" />
-                        {new Date(event.startTime).toLocaleString()}
+                        {new Date(event.startTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                       </span>
                       <span className="flex items-center gap-1.5 font-medium text-neutral-700">
                         <Users className="w-4 h-4 shrink-0 text-neutral-400" />
@@ -673,7 +667,7 @@ const MyEvents = () => {
                                 Design Certificate
                             </Link>
                           )}
-                          {(role === 'club' || user?.role === 'club' || role === 'admin') && !isPast && (
+                          {(role === 'club' || user?.role === 'club' || role === 'admin') && (
                             <>
                               <Link
                                 to={`/events/edit/${event.id || event._id}`}
@@ -784,8 +778,8 @@ const MyEvents = () => {
       )}
       {/* ── TICKET MODAL ── */}
       {ticketModalOpen && selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto">
-          <div className="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full relative overflow-hidden flex flex-col my-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto ticket-backdrop-animate">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full relative overflow-hidden flex flex-col my-auto shadow-2xl ticket-card-animate">
             {/* Header / Brand */}
             <div className="bg-orange-600 p-4 border-b border-orange-700 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -805,79 +799,82 @@ const MyEvents = () => {
 
               <div className="p-6">
                 {/* Event Name */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Event</p>
-                  <h4 className="text-xl font-bold text-neutral-900 leading-tight">
+                  <h4 className="text-lg font-bold text-neutral-900 leading-tight">
                     {selectedTicket.eventId?.title}
                   </h4>
                 </div>
 
-                {/* Grid for Student & ID */}
-                <div className="grid grid-cols-2 gap-4 mb-6 pt-4 border-t border-dashed border-neutral-200">
+                {/* Grid for Student & ID, Venue & Time */}
+                <div className="grid grid-cols-2 gap-4 my-4 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-100 dark:border-neutral-800">
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Student</p>
-                    <p className="text-sm font-semibold text-neutral-800 uppercase">{user?.name}</p>
-                    <p className="text-[11px] text-neutral-500 font-mono">{user?.rollNo || user?.email}</p>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Student</span>
+                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate block">{user?.name}</span>
+                    <span className="block text-[10px] text-neutral-500 font-mono truncate">{user?.rollNo || user?.email}</span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Reg ID</p>
-                    <p className="text-[11px] font-semibold bg-neutral-50 px-2.5 py-1 border border-neutral-200 rounded-lg inline-block font-mono text-neutral-700">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Registration ID</span>
+                    <span className="inline-block text-[11px] font-mono font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-200/60 dark:bg-neutral-800 px-2 py-0.5 rounded-md mt-0.5">
                       {selectedTicket.qrCode}
-                    </p>
+                    </span>
+                  </div>
+                  <div className="col-span-1">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Location</span>
+                    <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                      <span className="truncate">{selectedTicket.eventId?.venue}</span>
+                    </span>
+                  </div>
+                  <div className="col-span-1">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Date & Time</span>
+                    <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3.5 h-3.5 shrink-0 text-orange-600" />
+                      <span className="truncate">
+                        {new Date(selectedTicket.eventId?.startTime).toLocaleString(undefined, {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                          timeZone: 'Asia/Kolkata'
+                        })}
+                      </span>
+                    </span>
                   </div>
                 </div>
 
-                {/* Venue & Time */}
-                <div className="flex flex-col gap-3 mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-neutral-50 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0">
-                      <MapPin className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider leading-none mb-1">Venue</p>
-                      <p className="text-xs font-semibold text-neutral-800 truncate max-w-[200px] uppercase">{selectedTicket.eventId?.venue}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-neutral-50 border border-neutral-200 rounded-lg flex items-center justify-center shrink-0">
-                      <Clock className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider leading-none mb-1">Date & Time</p>
-                      <p className="text-xs font-semibold text-neutral-800 uppercase">
-                        {new Date(selectedTicket.eventId?.startTime).toLocaleString(undefined, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short'
-                        })}
-                      </p>
-                    </div>
-                  </div>
+                {/* Perforation Line & Ticket Notches */}
+                <div className="relative border-t-2 border-dashed border-neutral-200 dark:border-neutral-800 my-5 -mx-6">
+                  {/* Left Notch */}
+                  <div className="absolute -left-2.5 -top-2.5 w-5 h-5 bg-black/90 dark:bg-black rounded-full shadow-[inset_-2px_0_4px_rgba(0,0,0,0.2)]" />
+                  {/* Right Notch */}
+                  <div className="absolute -right-2.5 -top-2.5 w-5 h-5 bg-black/90 dark:bg-black rounded-full shadow-[inset_2px_0_4px_rgba(0,0,0,0.2)]" />
                 </div>
 
                 {/* QR Code Section */}
-                <div className="flex flex-col items-center gap-4 py-8 border-t border-neutral-200 bg-neutral-50 -mx-6 -mb-6">
-                  <div className="bg-white p-1 border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="flex flex-col items-center gap-3.5 py-4 px-6 bg-neutral-50 dark:bg-neutral-900/30 -mx-6 -mb-6">
+                  <div className="bg-white p-2 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
                     {qrDataUrl ? (
                       <img 
                         src={qrDataUrl} 
                         alt="Ticket QR Code" 
-                        className="w-60 h-60"
+                        className="w-40 h-40 max-w-[160px] object-contain"
                       />
                     ) : (
-                      <div className="w-60 h-60 flex items-center justify-center text-neutral-400">
+                      <div className="w-40 h-40 flex items-center justify-center text-neutral-400">
                         <i className="ri-loader-4-line animate-spin text-2xl" />
                       </div>
                     )}
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] font-semibold text-neutral-400 italic mb-1">Valid for one-time entry only</p>
-                    <p className="text-[9px] font-semibold text-neutral-400 italic">Powered by <span className='text-neutral-900 font-bold'>Club</span><span className="text-orange-600 font-bold">Setu</span></p>
+                    <p className="text-[10px] font-semibold text-neutral-400 italic mb-0.5">Valid for one-time entry only</p>
+                    <p className="text-[9px] font-semibold text-neutral-400 italic">
+                      Powered by <span className='text-neutral-900 dark:text-neutral-200 logofont font-light'>Campus</span><span className="text-orange-600 logofont font-light">Node</span>
+                    </p>
                   </div>
                   
                   {qrDataUrl && (
                     <button
                       onClick={handleDownloadTicket}
-                      className="mt-2 text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors flex items-center gap-1 cursor-pointer"
+                      className="mt-1 w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2.5 px-4 rounded-full shadow-sm flex items-center justify-center gap-2 cursor-pointer border-0 outline-none text-xs"
                     >
                       <i className="ri-download-line text-sm" /> Download Ticket
                     </button>
