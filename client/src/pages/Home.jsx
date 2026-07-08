@@ -271,7 +271,7 @@ const Home = () => {
     greetingSubtext = 'Explore active club fests, technical hackathons, and sports events!';
     quickActions = [
       { to: '/events', label: 'Browse Events', icon: Compass },
-      { to: '/lost-and-found', label: 'Lost & Found', icon: Search },
+      { to: '/lost-found', label: 'Lost & Found', icon: Search },
       { to: '/my-events', label: 'My Tickets', icon: Bookmark },
       { to: '/profile', label: 'My Profile', icon: User, primary: true },
     ];
