@@ -221,17 +221,20 @@ const EditClub = () => {
     }
   };
 
+  const inputCls =
+    "w-full p-3 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white font-medium text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400";
+
   if (loading) return <div className="text-center py-20">Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <div className="flex justify-between items-center mb-6 md:mb-12">
-        <h1 className="text-2xl md:text-4xl font-medium tracking-wide text-black">
+      <div className="flex justify-between items-center mb-6 md:mb-10">
+        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-black dark:text-white">
           Edit Club Profile
         </h1>
         <button
           onClick={() => navigate(`/club/${clubSlug || clubId}`)}
-          className="text-xs font-bold tracking-wide text-neutral-400 hover:text-black transition-colors"
+          className="text-xs font-semibold text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
         >
           Cancel
         </button>
@@ -239,16 +242,13 @@ const EditClub = () => {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white border-2 border-gray-300 p-6 md:p-12 space-y-12 "
+        className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 md:p-10 space-y-10 rounded-2xl shadow-sm"
       >
         {/* Basic Info Section */}
-        <div className="space-y-6">
-          {/* <h3 className="font-medium tracking-wide text-xs border-b-2 border-neutral-120 pb-3 flex items-center gap-3">
-                        <i className="ri-information-fill text-orange-600 text-lg" /> Core Identity
-                    </h3> */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+              <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
                 Club Name
               </label>
               <input
@@ -256,11 +256,11 @@ const EditClub = () => {
                 name="clubName"
                 value={formData.clubName}
                 onChange={handleChange}
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors  rounded-sm"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+              <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
                 Category
               </label>
               <input
@@ -269,21 +269,11 @@ const EditClub = () => {
                 value={formData.category}
                 onChange={handleChange}
                 placeholder="Technical, Cultural, Sports..."
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
+                className={inputCls}
               />
             </div>
-            {/* <div>
-                            <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">Club Contact Email</label>
-                            <input 
-                                type="email" 
-                                name="clubEmail" 
-                                value={formData.clubEmail} 
-                                onChange={handleChange}
-                                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-bold transition-colors rounded-sm"
-                            />
-                        </div> */}
             <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+              <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
                 Faculty Coordinator/s (Comma separated names)
               </label>
               <input
@@ -291,11 +281,11 @@ const EditClub = () => {
                 name="facultyName"
                 value={formData.facultyName}
                 onChange={handleChange}
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+              <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
                 Student Coordinators (Comma separated names)
               </label>
               <input
@@ -304,12 +294,12 @@ const EditClub = () => {
                 value={formData.studentCoordinators}
                 onChange={handleChange}
                 placeholder="Name 1, Name 2, Name 3"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium transition-colors rounded-sm"
+                className={inputCls}
               />
             </div>
           </div>
           <div>
-            <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+            <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
               Club Mission / Description
             </label>
             <textarea
@@ -317,19 +307,18 @@ const EditClub = () => {
               value={formData.description}
               onChange={handleChange}
               rows="5"
-              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium leading-relaxed transition-colors rounded-sm"
+              className={`${inputCls} leading-relaxed`}
             ></textarea>
           </div>
         </div>
 
         {/* Visuals & Media */}
-        <div className="space-y-6">
-          <h3 className="font-medium tracking-wide text-xs border-b-2 border-neutral-120 pb-3 flex items-center gap-3">
-            <i className="ri-image-fill text-orange-600 text-lg" /> Media &
-            Visuals
+        <div className="space-y-5">
+          <h3 className="font-semibold tracking-wide text-xs text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-3 flex items-center gap-3 uppercase">
+            Media & Visuals
           </h3>
           <div>
-            <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+            <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
               Club Logo URL
             </label>
             <input
@@ -338,11 +327,11 @@ const EditClub = () => {
               value={formData.clubLogo}
               onChange={handleChange}
               placeholder="https://example.com/logo.png"
-              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
+              className={`${inputCls} font-mono text-xs`}
             />
           </div>
           <div>
-            <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+            <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
               Gallery Images (Comma separated URLs)
             </label>
             <textarea
@@ -351,11 +340,11 @@ const EditClub = () => {
               onChange={handleChange}
               placeholder="https://url1.jpg, https://url2.jpg..."
               rows="4"
-              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
+              className={`${inputCls} font-mono text-xs`}
             ></textarea>
           </div>
           <div>
-            <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
+            <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
               Club Sponsors (Comma separated URLs)
             </label>
             <textarea
@@ -364,111 +353,66 @@ const EditClub = () => {
               onChange={handleChange}
               placeholder="https://sponsor1-logo.jpg, https://sponsor2-logo.jpg..."
               rows="4"
-              className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-mono text-xs rounded-sm"
+              className={`${inputCls} font-mono text-xs`}
             ></textarea>
           </div>
         </div>
 
         {/* Social Links */}
-        <div className="space-y-6">
-          <h3 className="font-medium tracking-wide text-xs border-b-2 border-neutral-120 pb-3 flex items-center gap-3">
-            <i className="ri-share-fill text-orange-600 text-lg" /> Public
-            Presence
+        <div className="space-y-5">
+          <h3 className="font-semibold tracking-wide text-xs text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-3 flex items-center gap-3 uppercase">
+            Public Presence
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
-                Instagram URL
-              </label>
-              <input
-                type="url"
-                name="clubInstagram"
-                value={formData.clubInstagram}
-                onChange={handleChange}
-                placeholder="https://instagram.com/club"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
-                LinkedIn URL
-              </label>
-              <input
-                type="url"
-                name="clubLinkedin"
-                value={formData.clubLinkedin}
-                onChange={handleChange}
-                placeholder="https://linkedin.com/company/club"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
-                X / Twitter URL
-              </label>
-              <input
-                type="url"
-                name="clubX"
-                value={formData.clubX}
-                onChange={handleChange}
-                placeholder="https://x.com/club"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
-                Website URL
-              </label>
-              <input
-                type="url"
-                name="clubWebsite"
-                value={formData.clubWebsite}
-                onChange={handleChange}
-                placeholder="https://club.com"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-medium tracking-wide text-neutral-500 mb-2">
-                WhatsApp Group/No.
-              </label>
-              <input
-                type="text"
-                name="clubWhatsapp"
-                value={formData.clubWhatsapp}
-                onChange={handleChange}
-                placeholder="Contact number or group link"
-                className="w-full p-3 border-2 border-gray-300 focus:border-orange-400 outline-none font-medium text-xs rounded-sm"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { name: "clubInstagram", label: "Instagram URL", placeholder: "https://instagram.com/club" },
+              { name: "clubLinkedin", label: "LinkedIn URL", placeholder: "https://linkedin.com/company/club" },
+              { name: "clubX", label: "X / Twitter URL", placeholder: "https://x.com/club" },
+              { name: "clubWebsite", label: "Website URL", placeholder: "https://club.com" },
+              { name: "clubWhatsapp", label: "WhatsApp Group/No.", placeholder: "Contact number or group link" },
+            ].map((field) => (
+              <div key={field.name}>
+                <label className="block text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 uppercase">
+                  {field.label}
+                </label>
+                <input
+                  type={field.name === "clubWhatsapp" ? "text" : "url"}
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  placeholder={field.placeholder}
+                  className={`${inputCls} text-xs`}
+                />
+              </div>
+            ))}
           </div>
         </div>
-        {/* Financial Information */}
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-            <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-end w-full">
-              <button
-                type="button"
-                onClick={() => navigate(`/club/${clubSlug || clubId}`)}
-                className="flex-1 py-3  tracking-wide hover:bg-neutral-120 transition-colors font-medium rounded-full bg-red-500 text-white hover:bg-red-700 cursor-pointer"
-              >
-                Discard
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className={`flex-1 py-3 text-white font-medium tracking-wide transition-all rounded-full active:translate-x-1 active:translate-y-1 active:shadow-none hover:cursor-pointer ${isSaving ? " bg-[#848b92] cursor-not-allowed shadow-none" : "bg-[#0f1419] hover:bg-[#0f1419]/70"}`}
-              >
-                {isSaving ? "Syncing..." : "Update Club"}
-              </button>
-            </div>
+
+        {/* Actions */}
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row gap-4 justify-end w-full pt-6 border-t border-neutral-100 dark:border-neutral-800">
+            <button
+              type="button"
+              onClick={() => navigate(`/club/${clubSlug || clubId}`)}
+              className="flex-1 py-3 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors font-semibold rounded-xl cursor-pointer text-sm"
+            >
+              Discard
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={`flex-1 py-3 text-white font-semibold tracking-wide transition-all rounded-xl cursor-pointer text-sm ${isSaving ? "bg-neutral-400 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"}`}
+            >
+              {isSaving ? "Syncing..." : "Update Club"}
+            </button>
           </div>
-        </div>
-          <a className=" tracking-wide hover:bg-neutral-120 transition-colors font-medium rounded-sm hover:cursor-pointer text-[12px] text-blue-400 hover:underline" href={`/club/${clubSlug || clubId}`}>
-            View Club Page 
-            <i className="ri-external-link-fill"></i>
+          <a
+            className="text-xs text-orange-500 hover:text-orange-600 hover:underline transition-colors"
+            href={`/club/${clubSlug || clubId}`}
+          >
+            View Club Page →
           </a>
+        </div>
       </form>
     </div>
   );

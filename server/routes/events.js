@@ -73,9 +73,9 @@ const eventSchema = z.object({
     entryFee: z.coerce.number().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
     requiredFields: z.array(z.string()).optional(),
-    customFields: z.array(z.any()).optional(),
     allowedPrograms: z.array(z.string()).optional(),
     allowedYears: z.array(z.string()).optional(),
+    allowedBranches: z.array(z.string()).optional(),
     registrationDeadline: z.coerce.date().optional().nullable(),
     winners: z.array(z.any()).optional(),
     showWinner: z.boolean().optional(),
@@ -374,6 +374,7 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
       customFields,
       allowedPrograms,
       allowedYears,
+      allowedBranches,
       registrationDeadline,
       sponsors,
       media,
@@ -429,6 +430,7 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
         clubId: targetClubId,
         allowedPrograms: allowedPrograms || ["BTECH", "MTECH", "OTHER"],
         allowedYears: allowedYears || [],
+        allowedBranches: allowedBranches || [],
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
         showWinner: showWinner || false,
         provideCertificate: provideCertificate || false,
@@ -567,6 +569,33 @@ router.post(
         if (existing) return res.status(400).json({ message: "Already registered for this event." });
       } else {
         const studentId = req.user.userId;
+        const student = await prisma.studentUser.findUnique({ where: { id: studentId } });
+        if (!student) return res.status(404).json({ message: "User not found." });
+
+        if (
+          event.allowedPrograms?.length > 0 &&
+          student.program &&
+          !event.allowedPrograms.includes(student.program)
+        ) {
+          return res.status(403).json({ message: "Ineligible program." });
+        }
+
+        if (
+          event.allowedYears?.length > 0 &&
+          student.year &&
+          !event.allowedYears.includes(student.year)
+        ) {
+          return res.status(403).json({ message: "Ineligible year." });
+        }
+
+        if (
+          event.allowedBranches?.length > 0 &&
+          student.branch &&
+          !event.allowedBranches.includes(student.branch)
+        ) {
+          return res.status(403).json({ message: "Ineligible branch." });
+        }
+
         const existing = await prisma.participation.findFirst({
           where: { eventId, studentId },
         });
@@ -678,13 +707,22 @@ router.get(
         where: { eventId: req.params.id },
         include: {
           student: {
-            select: { id: true, name: true, email: true, rollNo: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              rollNo: true,
+              branch: true,
+              year: true,
+              program: true,
+            },
           },
         },
       });
 
       res.json({
         participations: participations.map((p) => ({
+          id: p.id,
           studentId: p.studentId,
           externalEmail: p.externalEmail,
           externalName: p.externalName,
@@ -692,6 +730,10 @@ router.get(
           qrCode: p.qrCode,
           attendedAt: p.attendedAt,
           markedByMemberId: p.markedByMemberId,
+          amountPaid: p.amountPaid,
+          formResponses: p.formResponses,
+          createdAt: p.createdAt,
+          timestamp: p.createdAt,
           student: p.student || null,
         })),
       });
@@ -727,6 +769,7 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
       "customFields",
       "allowedPrograms",
       "allowedYears",
+      "allowedBranches",
       "registrationDeadline",
       "winners",
       "showWinner",

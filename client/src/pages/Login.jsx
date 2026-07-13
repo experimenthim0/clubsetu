@@ -79,134 +79,161 @@ const Login = () => {
     }
   };
 
+  const inputCls =
+    "w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white text-sm font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400";
+
   return (
-  <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    
-    <div className="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 className="text-center text-3xl font-bold text-gray-800">
-        Sign in to Campus<span className="text-orange-600">Node</span>
-      </h2>
-    </div>
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col items-center justify-center px-5 py-12 transition-colors duration-300">
 
-    <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div className="bg-white py-8 px-6 shadow-xl rounded-xl border border-gray-200">
+      {/* Card */}
+      <div className="w-full max-w-md">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">
+            Campus<span className="text-orange-600">Node</span>
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            Sign in to your account
+          </p>
+        </div>
 
-        {!showOTP ? (
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && <div className="text-red-500 text-sm text-center font-medium">{error}</div>}
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email address"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-              />
-            </div>
+          {!showOTP ? (
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 text-sm font-medium text-center rounded-xl">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <Link to="/forgot-password" className="text-sm text-orange-600 hover:text-orange-700 hover:underline font-medium tracking-tight">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative mt-1">
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Email Address
+                </label>
                 <input
-                  name="password"
-                  type={showPassword ? "text" : "password"}
+                  name="email"
+                  type="email"
                   required
-                  value={formData.password}
+                  value={formData.email}
                   onChange={handleChange}
-                  placeholder="Enter your password"
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                  placeholder="Enter your email address"
+                  className={inputCls}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
               </div>
-            </div>
 
-            <div className="flex justify-center mt-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    Password
+                  </label>
+                  <Link to="/forgot-password" className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    className={`${inputCls} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`px-8 py-2.5 rounded-lg text-white transition shadow-md ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary/80 cursor-pointer'}`}
+                className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all mt-1 ${
+                  isLoading
+                    ? 'bg-neutral-400 cursor-not-allowed'
+                    : 'bg-orange-600 hover:bg-orange-700 cursor-pointer hover:-translate-y-0.5'
+                }`}
               >
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
-            </div>
-          </form>
-        ) : (
-          <form className="space-y-6" onSubmit={handleVerifyOTP}>
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">2-Step Verification</h3>
-              <p className="text-sm text-gray-600">Enter the 6-digit code sent to your email.</p>
-            </div>
-            
-            {error && <div className="text-red-500 text-sm text-center font-medium">{error}</div>}
+            </form>
+          ) : (
+            <form className="flex flex-col gap-5" onSubmit={handleVerifyOTP}>
+              <div className="text-center mb-2">
+                <h3 className="text-lg font-bold text-black dark:text-white">2-Step Verification</h3>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Enter the 6-digit code sent to your email.</p>
+              </div>
+              
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 text-sm font-medium text-center rounded-xl">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <input
-                type="text"
-                maxLength="6"
-                placeholder="000000"
-                required
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full text-center text-2xl tracking-widest px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              />
-            </div>
+              <div>
+                <input
+                  type="text"
+                  maxLength="6"
+                  placeholder="000000"
+                  required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className={`${inputCls} text-center text-2xl tracking-[0.3em] font-mono`}
+                />
+              </div>
 
-            <div className="flex flex-col items-center gap-3">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`px-8 py-2.5 rounded-lg text-white transition shadow-md ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary'}`}
-              >
-                {isLoading ? 'Verifying...' : 'Verify & Sign In'}
-              </button>
-              <button
-                 type="button"
-                 onClick={() => setShowOTP(false)}
-                 className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Back to Login
-              </button>
-            </div>
-          </form>
-        )}
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${
+                    isLoading
+                      ? 'bg-neutral-400 cursor-not-allowed'
+                      : 'bg-orange-600 hover:bg-orange-700 cursor-pointer'
+                  }`}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                </button>
+                <button
+                   type="button"
+                   onClick={() => setShowOTP(false)}
+                   className="text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  Back to Login
+                </button>
+              </div>
+            </form>
+          )}
 
-        <div className="mt-6 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+          {/* Divider */}
+          <div className="mt-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-neutral-200 dark:border-neutral-800"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 bg-white dark:bg-neutral-900 text-neutral-400 text-xs">New student?</span>
+            </div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">New student?</span>
-          </div>
-        </div>
 
-        <div className="mt-6 flex justify-center">
-          <Link
-            to="/register/student"
-            className="inline-block text-center py-2 px-8 rounded-lg border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition"
-          >
-            Register as Student
-          </Link>
+          {/* Register Link */}
+          <div className="mt-6 flex justify-center">
+            <Link
+              to="/register/student"
+              className="w-full text-center py-3 rounded-xl border border-neutral-200 dark:border-neutral-800 text-black dark:text-white font-semibold text-sm hover:border-orange-500 dark:hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-500 transition-all"
+            >
+              Register as Student
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default Login;

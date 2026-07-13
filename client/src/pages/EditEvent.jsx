@@ -7,6 +7,7 @@ import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
 import { MediaType } from '../types/index';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
+const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 
 const EditEvent = () => {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ const EditEvent = () => {
         registrationDeadline: '',
         allowedPrograms: ['BTECH', 'MTECH', 'OTHER'],
         allowedYears: [],
+        allowedBranches: [],
         winners: [], // ← added
         showWinner: false,
         provideCertificate: false,
@@ -38,9 +40,20 @@ const EditEvent = () => {
     const [isFree, setIsFree] = useState(true);
     const [isUnlimited, setIsUnlimited] = useState(false);
     const [allYears, setAllYears] = useState(true);
+    const [allBranches, setAllBranches] = useState(true);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+
+    const handleBranchToggle = (branch) => {
+        setFormData(prev => {
+            const current = prev.allowedBranches || [];
+            if (current.includes(branch)) {
+                return { ...prev, allowedBranches: current.filter(b => b !== branch) };
+            }
+            return { ...prev, allowedBranches: [...current, branch] };
+        });
+    };
     const toLocalISOString = (dateObj) => {
         if (!dateObj) return '';
         const date = new Date(dateObj);
@@ -58,6 +71,7 @@ const EditEvent = () => {
                     const end = toLocalISOString(event.endTime);
                     const unlimited = !event.totalSeats || event.totalSeats === 0;
                     const yearArr = event.allowedYears || [];
+                    const branchArr = event.allowedBranches || [];
                     setFormData({
                         title: event.title,
                         description: event.description || '',
@@ -72,6 +86,7 @@ const EditEvent = () => {
                         registrationDeadline: event.registrationDeadline ? toLocalISOString(event.registrationDeadline) : '',
                         allowedPrograms: event.allowedPrograms || ['BTECH', 'MTECH', 'OTHER'],
                         allowedYears: yearArr,
+                        allowedBranches: branchArr,
                         winners: event.winners || [], // ← added
                         showWinner: event.showWinner || false,
                         provideCertificate: event.provideCertificate || false,
@@ -79,6 +94,7 @@ const EditEvent = () => {
                     setIsFree(!event.entryFee || event.entryFee === 0);
                     setIsUnlimited(unlimited);
                     setAllYears(yearArr.length === 0);
+                    setAllBranches(branchArr.length === 0);
                     setSponsors(event.sponsors || []);
                     setMedia(event.media || []);
                     setSponsorErrors((event.sponsors || []).map(() => ({})));
@@ -342,6 +358,7 @@ const EditEvent = () => {
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
             registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
+            allowedBranches: allBranches ? [] : formData.allowedBranches,
             winners: (formData.winners || []).map(({ error, ...rest }) => rest),
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
@@ -548,47 +565,85 @@ const EditEvent = () => {
 
                     </div>
 
-                    {/* Allowed Programs */}
-                    <div>
-                        <label className={labelCls}>Allowed Programs</label>
-                        <p className="text-xs text-neutral-500 mb-3">Select which programs can register for this event</p>
-                        <div className="flex items-center gap-6">
-                            {PROGRAM_OPTIONS.map((prog) => (
-                                <label key={prog} className="inline-flex items-center cursor-pointer gap-2">
-                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
-                                        checked={formData.allowedPrograms.includes(prog)}
-                                        onChange={() => handleProgramToggle(prog)} />
-                                    <span className="text-sm font-medium text-neutral-700">{PROGRAM_LABELS[prog]}</span>
-                                </label>
-                            ))}
+                    {/* Registration Restrictions Card */}
+                    <div className="bg-neutral-50 dark:bg-neutral-950 p-6 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex flex-col gap-6">
+                        <div>
+                            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider">Registration Restrictions</h3>
+                            <p className="text-xs text-neutral-500 mt-1">Restrict event registration to specific programs, years, or branches.</p>
                         </div>
-                    </div>
 
-                    {/* Allowed Years */}
-                    <div>
-                        <label className={labelCls}>Allowed Years</label>
-                        <div className="flex items-center gap-4 mb-3">
-                            <label className="inline-flex items-center cursor-pointer gap-2">
-                                <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
-                                    checked={allYears} onChange={() => {
-                                        setAllYears(!allYears);
-                                        if (!allYears) setFormData({ ...formData, allowedYears: [] });
-                                    }} />
-                                <span className="text-sm font-medium text-neutral-700">Allow All Years</span>
-                            </label>
-                        </div>
-                        {!allYears && (
-                            <div className="flex flex-wrap gap-3">
-                                {YEARS.map(year => (
-                                    <label key={year} className="inline-flex items-center cursor-pointer gap-2">
-                                        <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
-                                            checked={formData.allowedYears.includes(year)}
-                                            onChange={() => handleYearToggle(year)} />
-                                        <span className="text-sm font-medium text-neutral-700">{year}</span>
+                        {/* Allowed Programs */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Programs</label>
+                            <div className="flex flex-wrap gap-5 mt-1">
+                                {PROGRAM_OPTIONS.map((prog) => (
+                                    <label key={prog} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                        <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                            checked={formData.allowedPrograms.includes(prog)}
+                                            onChange={() => handleProgramToggle(prog)} />
+                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{PROGRAM_LABELS[prog]}</span>
                                     </label>
                                 ))}
                             </div>
-                        )}
+                        </div>
+
+                        <hr className="border-neutral-200 dark:border-neutral-855" />
+
+                        {/* Allowed Years */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Years</label>
+                            <div className="flex items-center gap-4">
+                                <label className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                        checked={allYears} onChange={() => {
+                                            setAllYears(!allYears);
+                                            if (!allYears) setFormData(prev => ({ ...prev, allowedYears: [] }));
+                                        }} />
+                                    <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Allow All Years</span>
+                                </label>
+                            </div>
+                            {!allYears && (
+                                <div className="flex flex-wrap gap-4 mt-2 p-3 bg-white dark:bg-neutral-905 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                                    {YEARS.map(year => (
+                                        <label key={year} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                            <input type="checkbox" className="w-4 h-4 accent-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                                checked={formData.allowedYears.includes(year)}
+                                                onChange={() => handleYearToggle(year)} />
+                                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{year}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <hr className="border-neutral-200 dark:border-neutral-855" />
+
+                        {/* Allowed Branches */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Branches</label>
+                            <div className="flex items-center gap-4">
+                                <label className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                        checked={allBranches} onChange={() => {
+                                            setAllBranches(!allBranches);
+                                            if (!allBranches) setFormData(prev => ({ ...prev, allowedBranches: [] }));
+                                        }} />
+                                    <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Allow All Branches</span>
+                                </label>
+                            </div>
+                            {!allBranches && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-2 p-3 bg-white dark:bg-neutral-905 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                                    {BRANCHES.map(branch => (
+                                        <label key={branch} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                            <input type="checkbox" className="w-4 h-4 accent-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                                checked={(formData.allowedBranches || []).includes(branch)}
+                                                onChange={() => handleBranchToggle(branch)} />
+                                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{branch}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Status Toggles Grid */}
@@ -892,53 +947,55 @@ const EditEvent = () => {
                             
                             <div className="space-y-3">
                                 {formData.winners.map((winner, index) => (
-                                    <div key={index} className="flex gap-3 items-end bg-neutral-50 p-4 border border-neutral-200">
-                                        <div className="w-24">
-                                            <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
-                                            <input
-                                                type="number"
-                                                value={winner.rank}
-                                                onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
-                                                className={inputCls}
-                                            />
-                                        </div>
-                                         <div className="flex-1">
-                                             <label className="text-[10px] font-bold uppercase mb-1 block">Roll Number</label>
-                                             <input
-                                                 type="text"
-                                                 placeholder="Enter roll number"
-                                                 value={winner.rollNo || ''}
-                                                 onChange={(e) => {
-                                                     const val = e.target.value;
-                                                     updateWinner(index, 'rollNo', val);
-                                                     if (val.trim().length >= 4) {
-                                                         handleRollNoLookup(index, val);
-                                                     }
-                                                 }}
-                                                 onBlur={(e) => handleRollNoLookup(index, e.target.value)}
-                                                 className={inputCls}
-                                             />
-                                         </div>
-                                         <div className="flex-1">
-                                             <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
-                                             <input
-                                                 type="text"
-                                                 placeholder="Identified Name"
-                                                 value={winner.name}
-                                                 className={`${inputCls} bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed`}
-                                                 readOnly
-                                             />
-                                             {winner.error && (
-                                                 <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
-                                             )}
-                                         </div>
+                                    <div key={index} className="bg-neutral-50 p-4 border border-neutral-200 rounded-lg relative">
                                         <button
                                             type="button"
                                             onClick={() => removeWinner(index)}
-                                            className="p-3 text-red-500 hover:bg-red-50 transition-colors"
+                                            className="absolute top-3 right-3 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors sm:static sm:p-3"
                                         >
-                                            <i className="ri-delete-bin-line text-xl" />
+                                            <i className="ri-delete-bin-line text-lg" />
                                         </button>
+                                        <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_1fr] gap-3 pr-10 sm:pr-0 items-end">
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
+                                                <input
+                                                    type="number"
+                                                    value={winner.rank}
+                                                    onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
+                                                    className={inputCls}
+                                                />
+                                            </div>
+                                             <div>
+                                                 <label className="text-[10px] font-bold uppercase mb-1 block">Roll Number</label>
+                                                 <input
+                                                     type="text"
+                                                     placeholder="Enter roll number"
+                                                     value={winner.rollNo || ''}
+                                                     onChange={(e) => {
+                                                         const val = e.target.value;
+                                                         updateWinner(index, 'rollNo', val);
+                                                         if (val.trim().length >= 4) {
+                                                             handleRollNoLookup(index, val);
+                                                         }
+                                                     }}
+                                                     onBlur={(e) => handleRollNoLookup(index, e.target.value)}
+                                                     className={inputCls}
+                                                 />
+                                             </div>
+                                             <div>
+                                                 <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
+                                                 <input
+                                                     type="text"
+                                                     placeholder="Identified Name"
+                                                     value={winner.name}
+                                                     className={`${inputCls} bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed`}
+                                                     readOnly
+                                                 />
+                                                 {winner.error && (
+                                                     <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
+                                                 )}
+                                             </div>
+                                        </div>
                                     </div>
                                 ))}
                                 {formData.winners.length === 0 && (

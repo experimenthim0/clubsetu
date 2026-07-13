@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   const host = req.headers.host || '';
   
   // Use the production backend domain if VITE_API_URL is not set
-  const apiUrl = process.env.VITE_API_URL || 'https://api.clubsetu.co';
+  const apiUrl = process.env.VITE_API_URL || 'https://clubsetu-backend.onrender.com';
   
   try {
     // Fetch event details from backend

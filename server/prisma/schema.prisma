@@ -125,6 +125,7 @@ model Event {
   entryFee             Float           @default(0)
   allowedPrograms      String[]        @default(["BTECH", "MTECH", "OTHER"])
   allowedYears         String[]        @default([])
+  allowedBranches      String[]        @default([])
   imageUrl             String?
   registeredCount      Int             @default(0)
   views                Int             @default(0)

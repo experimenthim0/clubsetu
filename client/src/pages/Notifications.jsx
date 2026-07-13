@@ -2,9 +2,24 @@ import React, { useState, useEffect } from "react";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { BellIcon } from "../components/ui/bell";
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+const formatRelativeTime = (dateStr) => {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now - date;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return "Just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHr < 24) return `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+  if (diffDay === 1) return "Yesterday";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
 
 const Notifications = () => {
   const { notifications, unreadCount, setUnreadCount, setNotifications } =
@@ -58,63 +73,24 @@ const Notifications = () => {
     }
   };
 
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  };
-
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-[#0a0a0a] transition-colors duration-300">
-      
-      {/* ── Custom styling ── */}
-      <style>{`
-        .code-font { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-        .radar-pulse {
-          animation: pulse-ring 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
-        }
-        @keyframes pulse-ring {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.15); opacity: 0.4; }
-          100% { transform: scale(1.4); opacity: 0; }
-        }
-      `}</style>
+      <div className="max-w-3xl mx-auto px-5 md:px-6 py-10 md:py-12">
 
-      <div className="max-w-3xl mx-auto px-6 py-12">
-
-        {/* ── Header ── */}
-        <div className="mb-10">
+        {/* Header */}
+        <div className="mb-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/30 flex items-center justify-center text-orange-600">
-                    <BellIcon size={20} />
-                  </div>
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="radar-pulse absolute inline-flex h-full w-full rounded-full bg-orange-600 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-600" />
-                    </span>
-                  )}
-                </div>
-                
-                <h1 className="text-3xl font-black tracking-tight text-black dark:text-white leading-none">
-                  Notifications
-                </h1>
-                
-                {unreadCount > 0 && (
-                  <span className="code-font text-[9px] font-black uppercase tracking-widest bg-orange-600 text-white px-2 py-1.5 rounded-lg flex-shrink-0">
-                    {unreadCount} UNREAD
-                  </span>
-                )}
-              </div>
-              <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm ml-[calc(40px+0.75rem)]">
-                Updates and logs from clubs, event organizers, and system administration.
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-black dark:text-white">
+                Notifications
+              </h1>
+              {unreadCount > 0 && (
+                <p className="text-sm text-orange-600 font-semibold mt-1">
+                  {unreadCount} unread
+                </p>
+              )}
+              <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm mt-1">
+                Updates from clubs, event organizers, and system.
               </p>
             </div>
 
@@ -122,7 +98,7 @@ const Notifications = () => {
               <button
                 onClick={handleMarkAllAsRead}
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-neutral-900 text-black dark:text-white border-2 border-neutral-200 dark:border-neutral-800 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-orange-600 dark:hover:border-orange-600 transition-all cursor-pointer disabled:opacity-60 shrink-0 shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
               >
                 {loading ? (
                   <i className="ri-loader-4-line animate-spin text-sm" />
@@ -134,118 +110,97 @@ const Notifications = () => {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="mt-8 h-px bg-neutral-200 dark:bg-neutral-850 w-full" />
+          <div className="mt-6 h-px bg-neutral-200 dark:bg-neutral-800 w-full" />
         </div>
 
-        {/* ── Notification List ── */}
+        {/* Notification List */}
         {notifications?.length > 0 ? (
           <div className="space-y-4">
-            {notifications.map((notif, index) => {
+            {notifications.map((notif) => {
               const isRead = notif.readBy?.includes(user?._id || user?.id);
               return (
                 <div
                   key={notif._id}
-                  className={`group relative bg-white dark:bg-neutral-900 border-2 rounded-2xl transition-all duration-300 overflow-hidden shadow-sm
+                  className={`relative bg-white dark:bg-neutral-900 border rounded-xl transition-all duration-200 overflow-hidden
                     ${!isRead
-                      ? "border-orange-500/80 dark:border-orange-500/60 shadow-[4px_4px_0px_0px_rgba(234,88,12,0.1)]"
-                      : "border-neutral-200 dark:border-neutral-850 hover:border-neutral-350 dark:hover:border-neutral-800"
+                      ? "border-orange-200 dark:border-orange-900/40 bg-orange-50/50 dark:bg-orange-950/10"
+                      : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
                     }`}
                 >
-                  <div className="p-5 flex items-start gap-4">
-                    
-                    {/* Read status column icon */}
-                    <div className="shrink-0 pt-0.5">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-colors ${
-                        !isRead 
-                          ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30 text-orange-600' 
-                          : 'bg-neutral-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-850 text-neutral-400'
-                      }`}>
-                        <i className={`text-base ${!isRead ? 'ri-notification-3-fill animate-swing' : 'ri-notification-3-line'}`} />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      
-                      {/* Top Meta info row */}
-                      <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`code-font text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                            !isRead
-                              ? 'bg-orange-50 dark:bg-orange-950/20 text-orange-600 border border-orange-200/50'
-                              : 'bg-neutral-100 dark:bg-neutral-850 text-neutral-400 border border-neutral-200/40 dark:border-neutral-800/40'
-                          }`}>
-                            {notif.sender?.clubName || "CampusNode"}
-                          </span>
-                          {!isRead && (
-                            <span className="flex h-2 w-2 relative">
-                              <span className="radar-pulse absolute inline-flex h-full w-full rounded-full bg-orange-600 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-600" />
-                            </span>
-                          )}
-                        </div>
-                        <span className="code-font text-[10px] font-medium text-neutral-400">
-                          {formatDate(notif.createdAt)}
+                  <div className="p-5 md:p-6">
+                    {/* Top row: sender + time */}
+                    <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                          {notif.sender?.clubName || "CampusNode"}
                         </span>
+                        {!isRead && (
+                          <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
+                        )}
                       </div>
-
-                      {/* Title */}
-                      <h3 className={`text-sm sm:text-base font-bold leading-snug mb-1.5 transition-colors ${
-                        !isRead ? 'text-black dark:text-white' : 'text-neutral-700 dark:text-neutral-300'
-                      }`}>
-                        {notif.title}
-                      </h3>
-
-                      {/* Message body */}
-                      <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed break-words">
-                        {notif.message}
-                      </p>
-
-                      {/* Action buttons */}
-                      {(notif.eventId || !isRead) && (
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          {notif.eventId && (
-                            <Link
-                              to={`/event/${notif.eventId}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-orange-600 hover:text-white dark:hover:bg-orange-600 text-[10px] font-bold uppercase tracking-wider transition-colors"
-                            >
-                              <i className="ri-external-link-line text-sm" /> View Event
-                            </Link>
-                          )}
-                          {!isRead && (
-                            <button
-                              onClick={() => handleMarkAsRead(notif._id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-neutral-250 dark:border-neutral-800 text-neutral-400 hover:text-black dark:hover:text-white hover:border-neutral-350 transition-colors text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-                            >
-                              Mark as read
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      <span
+                        className="text-[11px] font-medium text-neutral-400"
+                        title={new Date(notif.createdAt).toLocaleString()}
+                      >
+                        {formatRelativeTime(notif.createdAt)}
+                      </span>
                     </div>
+
+                    {/* Title */}
+                    <h3 className={`text-sm sm:text-base font-bold leading-snug mb-1.5 ${
+                      !isRead ? "text-black dark:text-white" : "text-neutral-700 dark:text-neutral-300"
+                    }`}>
+                      {notif.title}
+                    </h3>
+
+                    {/* Message */}
+                    <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed break-words">
+                      {notif.message}
+                    </p>
+
+                    {/* Actions */}
+                    {(notif.eventId || !isRead) && (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        {notif.eventId && (
+                          <Link
+                            to={`/event/${notif.eventId}`}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-orange-600 dark:hover:bg-orange-600 hover:text-white dark:hover:text-white text-[11px] font-semibold transition-colors"
+                          >
+                            View Event
+                          </Link>
+                        )}
+                        {!isRead && (
+                          <button
+                            onClick={() => handleMarkAsRead(notif._id)}
+                            className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white hover:border-neutral-300 transition-colors text-[11px] font-semibold cursor-pointer"
+                          >
+                            Mark as read
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          
-          /* ── Empty State ── */
-          <div className="bg-white dark:bg-neutral-900 border-2 border-dashed border-neutral-200 dark:border-neutral-850 rounded-2xl py-16 flex flex-col items-center gap-5 text-center px-6">
-            <div className="w-14 h-14 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-2xl flex items-center justify-center text-neutral-300 dark:text-neutral-700">
-              <BellIcon size={24} />
+          /* Empty State */
+          <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl py-16 flex flex-col items-center gap-4 text-center px-6">
+            <div className="w-14 h-14 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex items-center justify-center text-neutral-300 dark:text-neutral-700">
+              <i className="ri-notification-off-line text-2xl"></i>
             </div>
             <div>
-              <p className="text-base font-black text-black dark:text-white tracking-tight">
-                System Status: Checked & Clear
+              <p className="text-base font-bold text-black dark:text-white">
+                You're all caught up!
               </p>
-              <p className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-                You are completely up to date. No new event alerts or system logs were found.
+              <p className="text-sm text-neutral-400 dark:text-neutral-500 mt-1.5">
+                No new notifications.
               </p>
             </div>
             <Link
               to="/"
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 hover:text-white dark:hover:text-white transition-colors cursor-pointer"
+              className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black text-xs font-semibold rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 hover:text-white dark:hover:text-white transition-colors cursor-pointer mt-2"
             >
               Go to Home
             </Link>

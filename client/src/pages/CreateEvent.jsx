@@ -6,6 +6,7 @@ import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
 import { MediaType } from '../types/index';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
+const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 
 const CreateEvent = () => {
     const navigate = useNavigate();
@@ -25,6 +26,7 @@ const CreateEvent = () => {
         clubId: JSON.parse(localStorage.getItem('user'))?.clubId,
         allowedPrograms: ['BTECH', 'MTECH', 'OTHER'],
         allowedYears: [],
+        allowedBranches: [],
         showWinner: false,
         provideCertificate: false,
     });
@@ -35,11 +37,22 @@ const CreateEvent = () => {
     const [isFree, setIsFree] = useState(true);
     const [isUnlimited, setIsUnlimited] = useState(false);
     const [allYears, setAllYears] = useState(true);
+    const [allBranches, setAllBranches] = useState(true);
     const [error, setError] = useState('');
     const [uploading, setUploading] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleBranchToggle = (branch) => {
+        setFormData(prev => {
+            const current = prev.allowedBranches || [];
+            if (current.includes(branch)) {
+                return { ...prev, allowedBranches: current.filter(b => b !== branch) };
+            }
+            return { ...prev, allowedBranches: [...current, branch] };
+        });
     };
 
     const handleFileChange = async (e) => {
@@ -228,6 +241,7 @@ const CreateEvent = () => {
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
             registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
+            allowedBranches: allBranches ? [] : formData.allowedBranches,
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
         };
@@ -423,47 +437,85 @@ const CreateEvent = () => {
 </div>
 
 
-                    {/* Allowed Programs */}
-                    <div>
-                        <label className={labelCls}>Allowed Programs</label>
-                        <p className="text-xs text-neutral-500 mb-3">Select which programs can register for this event</p>
-                        <div className="flex items-center gap-6">
-                            {PROGRAM_OPTIONS.map((prog) => (
-                                <label key={prog} className="inline-flex items-center cursor-pointer gap-2">
-                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
-                                        checked={formData.allowedPrograms.includes(prog)}
-                                        onChange={() => handleProgramToggle(prog)} />
-                                    <span className="text-sm font-medium text-neutral-700">{PROGRAM_LABELS[prog]}</span>
-                                </label>
-                            ))}
+                    {/* Registration Restrictions Card */}
+                    <div className="bg-neutral-50 dark:bg-neutral-950 p-6 border border-neutral-200 dark:border-neutral-800 rounded-2xl flex flex-col gap-6">
+                        <div>
+                            <h3 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider">Registration Restrictions</h3>
+                            <p className="text-xs text-neutral-500 mt-1">Restrict event registration to specific programs, years, or branches.</p>
                         </div>
-                    </div>
 
-                    {/* Allowed Years */}
-                    <div>
-                        <label className={labelCls}>Allowed Years</label>
-                        <div className="flex items-center gap-4 mb-3">
-                            <label className="inline-flex items-center cursor-pointer gap-2">
-                                <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
-                                    checked={allYears} onChange={() => {
-                                        setAllYears(!allYears);
-                                        if (!allYears) setFormData({ ...formData, allowedYears: [] });
-                                    }} />
-                                <span className="text-sm font-medium text-neutral-700">Allow All Years</span>
-                            </label>
-                        </div>
-                        {!allYears && (
-                            <div className="flex flex-wrap gap-3">
-                                {YEARS.map(year => (
-                                    <label key={year} className="inline-flex items-center cursor-pointer gap-2">
-                                        <input type="checkbox" className="w-4 h-4 text-orange-600 border-neutral-300 rounded focus:ring-orange-600"
-                                            checked={formData.allowedYears.includes(year)}
-                                            onChange={() => handleYearToggle(year)} />
-                                        <span className="text-sm font-medium text-neutral-700">{year}</span>
+                        {/* Allowed Programs */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Programs</label>
+                            <div className="flex flex-wrap gap-5 mt-1">
+                                {PROGRAM_OPTIONS.map((prog) => (
+                                    <label key={prog} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                        <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                            checked={formData.allowedPrograms.includes(prog)}
+                                            onChange={() => handleProgramToggle(prog)} />
+                                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{PROGRAM_LABELS[prog]}</span>
                                     </label>
                                 ))}
                             </div>
-                        )}
+                        </div>
+
+                        <hr className="border-neutral-200 dark:border-neutral-850" />
+
+                        {/* Allowed Years */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Years</label>
+                            <div className="flex items-center gap-4">
+                                <label className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                        checked={allYears} onChange={() => {
+                                            setAllYears(!allYears);
+                                            if (!allYears) setFormData(prev => ({ ...prev, allowedYears: [] }));
+                                        }} />
+                                    <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Allow All Years</span>
+                                </label>
+                            </div>
+                            {!allYears && (
+                                <div className="flex flex-wrap gap-4 mt-2 p-3 bg-white dark:bg-neutral-905 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                                    {YEARS.map(year => (
+                                        <label key={year} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                            <input type="checkbox" className="w-4 h-4 accent-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                                checked={formData.allowedYears.includes(year)}
+                                                onChange={() => handleYearToggle(year)} />
+                                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{year}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <hr className="border-neutral-200 dark:border-neutral-850" />
+
+                        {/* Allowed Branches */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Allowed Branches</label>
+                            <div className="flex items-center gap-4">
+                                <label className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                    <input type="checkbox" className="w-4 h-4 accent-orange-600 cursor-pointer border-neutral-300 rounded focus:ring-orange-600"
+                                        checked={allBranches} onChange={() => {
+                                            setAllBranches(!allBranches);
+                                            if (!allBranches) setFormData(prev => ({ ...prev, allowedBranches: [] }));
+                                        }} />
+                                    <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Allow All Branches</span>
+                                </label>
+                            </div>
+                            {!allBranches && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-2 p-3 bg-white dark:bg-neutral-905 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                                    {BRANCHES.map(branch => (
+                                        <label key={branch} className="inline-flex items-center cursor-pointer gap-2 select-none">
+                                            <input type="checkbox" className="w-4 h-4 accent-orange-600 border-neutral-300 rounded focus:ring-orange-600"
+                                                checked={(formData.allowedBranches || []).includes(branch)}
+                                                onChange={() => handleBranchToggle(branch)} />
+                                            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{branch}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Show Winners Toggle */}

@@ -13,7 +13,7 @@ import {ArrowRightIcon} from '../components/ui/arrow-right';
 import { InstagramIcon } from '@/components/ui/instagram';
 import { GithubIcon } from '@/components/ui/github';
 import { LinkedinIcon } from '@/components/ui/linkedin';
-import { MailIcon, Github, Linkedin, Twitter } from 'lucide-react';
+import { MailIcon, Github, Linkedin, Twitter, ExternalLink } from 'lucide-react';
 import { AtSignIcon } from '@/components/ui/at-sign';
 import { EarthIcon } from '@/components/ui/earth';
 // Ticker items
@@ -150,6 +150,261 @@ const BtnSecondary = ({ to, children }) => (
   </Link>
 );
 
+const DOMAINS = [
+  { id: 'core',     label: 'Core Architecture',     accent: 'var(--domain-core)' },
+  { id: 'frontend', label: 'Frontend Engineering',  accent: 'var(--domain-frontend)' },
+  { id: 'design',   label: 'Product Design',        accent: 'var(--domain-design)' },
+  { id: 'ops',      label: 'Operations & Relations', accent: 'var(--domain-ops)' },
+];
+
+const TEAM_MEMBERS = [];
+// add team members here
+
+const InitialsAvatar = ({ name }) => {
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('');
+
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center select-none bg-zinc-100 dark:bg-zinc-800"
+      aria-hidden="true"
+    >
+      <span
+        className="font-bold tracking-widest uppercase text-zinc-400 dark:text-zinc-500"
+        style={{
+          fontSize: 'clamp(1.25rem, 4vw, 2rem)',
+          letterSpacing: '0.12em',
+        }}
+      >
+        {initials}
+      </span>
+    </div>
+  );
+};
+
+const MemberCard = ({ member, domainAccent }) => {
+  const [hovered, setHovered] = useState(false);
+  const hasImage = Boolean(member.imageUrl);
+
+  return (
+    <div
+      className="flex flex-col"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setHovered(true)}
+      onBlurCapture={() => setHovered(false)}
+    >
+      <figure
+        className="relative overflow-hidden bg-zinc-100 dark:bg-zinc-900"
+        style={{
+          aspectRatio: '1 / 1',
+          borderRadius: '20px',
+          border: '1px solid',
+          borderColor: hovered
+            ? 'rgba(var(--border-hover-rgb), 0.5)'
+            : 'rgba(var(--border-base-rgb), 0.15)',
+          transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+          transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), border-color 0.25s ease',
+          willChange: 'transform',
+          boxShadow: hovered
+            ? '0 12px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)'
+            : '0 2px 8px rgba(0,0,0,0.04)',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: domainAccent,
+            opacity: hovered ? 1 : 0.45,
+            transition: 'opacity 0.25s ease',
+            zIndex: 2,
+          }}
+        />
+
+        {hasImage ? (
+          <img
+            src={member.imageUrl}
+            alt={member.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            style={{
+              transform: hovered ? 'scale(1.04)' : 'scale(1)',
+              transition: 'transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+          />
+        ) : (
+          <InitialsAvatar name={member.name} />
+        )}
+
+        <div
+          className="absolute inset-0 flex flex-col justify-end p-3"
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0) 55%)',
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 0.28s ease',
+            zIndex: 3,
+          }}
+        >
+          <div className="flex flex-wrap gap-1">
+            {(member.techStack || []).map((tech) => (
+              <span
+                key={tech}
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  padding: '2px 7px',
+                  borderRadius: '4px',
+                  background: 'rgba(255,255,255,0.13)',
+                  border: '0.5px solid rgba(255,255,255,0.22)',
+                  color: '#fff',
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)',
+                }}
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+      </figure>
+
+      <figcaption className="mt-3 flex flex-col gap-2">
+        <div>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white leading-snug">
+              {member.name}
+            </h3>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                background: 'var(--batch-bg)',
+                color: 'var(--batch-text)',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {member.batch}
+            </span>
+          </div>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+            {member.role}
+          </p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1.5 leading-relaxed line-clamp-2 italic">
+            {member.contribution}
+          </p>
+        </div>
+
+        <div className="flex flex-row gap-3 items-center mt-0.5">
+          {member.socials.github && (
+            <a
+              href={member.socials.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-200"
+            >
+              <Github size={14} />
+            </a>
+          )}
+          {member.socials.linkedin && (
+            <a
+              href={member.socials.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-200"
+            >
+              <Linkedin size={14} />
+            </a>
+          )}
+          {member.socials.twitter && (
+            <a
+              href={member.socials.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-200"
+            >
+              <Twitter size={14} />
+            </a>
+          )}
+          {member.socials.portfolio && (
+            <a
+              href={member.socials.portfolio}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors duration-200"
+            >
+              <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+      </figcaption>
+    </div>
+  );
+};
+
+const DomainSection = ({ domain, members }) => {
+  if (members.length === 0) return null;
+  const domainMeta = DOMAINS.find((d) => d.id === domain);
+  if (!domainMeta) return null;
+
+  return (
+    <div className="mb-16 last:mb-0">
+      <ScrollReveal direction="up" delay={0.1}>
+        <div className="flex items-center gap-3 mb-8">
+          <div
+            aria-hidden="true"
+            style={{
+              width: '18px',
+              height: '2px',
+              background: domainMeta.accent,
+              borderRadius: '1px',
+              flexShrink: 0,
+            }}
+          />
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
+            {domainMeta.label}
+          </span>
+          <div
+            aria-hidden="true"
+            style={{
+              flex: 1,
+              height: '0.5px',
+              background: 'var(--divider-color)',
+            }}
+          />
+        </div>
+      </ScrollReveal>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-8 sm:gap-y-12">
+        {members.map((member, idx) => (
+          <ScrollReveal
+            key={member.id}
+            direction="up"
+            delay={0.1 + idx * 0.08}
+          >
+            <MemberCard
+              member={member}
+              domainAccent={domainMeta.accent}
+            />
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Home = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
@@ -281,7 +536,7 @@ const Home = () => {
     greetingSubtext = 'Manage your events, coordinate payouts, and issue certificates.';
     quickActions = [
       { to: '/create', label: 'Create Event', icon: Plus },
-      { to: '/payments', label: 'Track Payments', icon: Wallet },
+      { to: '/my-events', label: 'My Events', icon: Calendar },
       { to: `/club/${user?.clubId || user?.id || 'my-club'}/team`, label: 'Members', icon: Users },
       { to: '/profile', label: 'Club Profile', icon: User, primary: true },
     ];
@@ -880,6 +1135,48 @@ const Home = () => {
       )}
 
       {/* ── FACULTY & TEAM ────────────────────────────────────────────────── */}
+      <style>{`
+        :root {
+          --domain-core:     #ea580c;
+          --domain-frontend: #2563eb;
+          --domain-design:   #9333ea;
+          --domain-ops:      #059669;
+
+          --avatar-bg:       #f4f4f5;
+          --avatar-text:     #71717a;
+
+          --batch-bg:        rgba(234,88,12,0.08);
+          --batch-text:      #ea580c;
+
+          --divider-color:   rgba(0,0,0,0.07);
+          --border-base-rgb: 0,0,0;
+          --border-hover-rgb: 234,88,12;
+        }
+
+        .dark {
+          --avatar-bg:       #27272a;
+          --avatar-text:     #a1a1aa;
+
+          --batch-bg:        rgba(249,115,22,0.12);
+          --batch-text:      #fb923c;
+
+          --divider-color:   rgba(255,255,255,0.07);
+          --border-base-rgb: 255,255,255;
+          --border-hover-rgb: 249,115,22;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          :root:not([data-theme="light"]) {
+            --avatar-bg:       #27272a;
+            --avatar-text:     #a1a1aa;
+            --batch-bg:        rgba(249,115,22,0.12);
+            --batch-text:      #fb923c;
+            --divider-color:   rgba(255,255,255,0.07);
+            --border-base-rgb: 255,255,255;
+            --border-hover-rgb: 249,115,22;
+          }
+        }
+      `}</style>
       <section id="team" className="py-24 bg-neutral-50/50 dark:bg-neutral-950/20 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
         {/* Glow accent */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-orange-500/[0.02] dark:bg-orange-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
@@ -899,125 +1196,63 @@ const Home = () => {
             </ScrollReveal>
             
             <ScrollReveal direction="up" delay={0.3}>
-              <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-light">
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm sm:text-base leading-relaxed font-light mb-6">
                 We are student innovators, creators, and engineers building the digital gateway for NITJ.
               </p>
+
             </ScrollReveal>
           </div>
 
-          {/* Responsive Grid Layout */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-8 sm:gap-y-12">
-            {[
-              {
-                id: '1',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              },
-              {
-                id: '2',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              },
-              {
-                id: '3',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              },
-              {
-                id: '4',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com' }
-              },
-              {
-                id: '5',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              },
-              {
-                id: '6',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com' }
-              },
-              {
-                id: '7',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              },
-              {
-                id: '8',
-                imageUrl: 'https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/no-profile-picture-icon.png',
-                socials: { github: 'https://github.com', linkedin: 'https://linkedin.com', twitter: 'https://twitter.com' }
-              }
-            ].map((member, index) => (
-              <ScrollReveal
-                key={member.id}
-                direction="up"
-                delay={0.1 + (index % 4) * 0.08}
+          {TEAM_MEMBERS.length > 0 ? (
+            <div>
+              {DOMAINS.map((domain) => {
+                const members = TEAM_MEMBERS.filter((m) => m.department === domain.id);
+                return (
+                  <DomainSection
+                    key={domain.id}
+                    domain={domain.id}
+                    members={members}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <ScrollReveal direction="up" delay={0.2}>
+              <div
+                className="mx-auto text-center"
+                style={{
+                  maxWidth: '480px',
+                  padding: '64px 32px',
+                  border: '0.5px solid',
+                  borderColor: 'rgba(234,88,12,0.18)',
+                  borderRadius: '20px',
+                  background: 'rgba(234,88,12,0.02)',
+                }}
               >
-                <div className="flex flex-col group">
-                  {/* Image Container with square aspect ratio, rounded borders, and scale transition */}
-                  <figure className="relative aspect-square overflow-hidden rounded-3xl bg-neutral-200 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-850 hover:border-neutral-355 dark:hover:border-neutral-700/60 transition-colors duration-300 hover:scale-[1.02] transition-transform duration-300 ease-out">
-                    <img
-                      src={member.imageUrl}
-                      alt="Team Member"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/[0.02] dark:bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                  </figure>
-
-                  {/* Details */}
-                  <figcaption className="mt-4 flex flex-col gap-2">
-                    <div>
-                      <h3 className="text-base font-bold text-neutral-900 dark:text-white tracking-wide leading-snug">
-                        Coming Soon..
-                      </h3>
-                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Coming Soon..
-                      </p>
-                    </div>
-
-                    {/* Social links */}
-                    <div className="flex flex-row gap-3.5 items-center">
-                      {member.socials.github && (
-                        <a
-                          href={member.socials.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-neutral-450 dark:text-neutral-500 hover:text-black dark:hover:text-white transition-colors duration-250"
-                          aria-label="GitHub"
-                        >
-                          <Github size={15} />
-                        </a>
-                      )}
-                      {member.socials.linkedin && (
-                        <a
-                          href={member.socials.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-neutral-455 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-white transition-colors duration-250"
-                          aria-label="LinkedIn"
-                        >
-                          <Linkedin size={15} />
-                        </a>
-                      )}
-                      {member.socials.twitter && (
-                        <a
-                          href={member.socials.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-neutral-455 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors duration-250"
-                          aria-label="Twitter/X"
-                        >
-                          <Twitter size={15} />
-                        </a>
-                      )}
-                    </div>
-                  </figcaption>
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: 'rgba(234,88,12,0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px',
+                  }}
+                  aria-hidden="true"
+                >
+                  <span style={{ fontSize: '22px' }}>⚡</span>
                 </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
+                  Team expansion in progress
+                </h3>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed font-light">
+                  Our roster is being assembled. Check back soon — great things are coming together.
+                </p>
+              </div>
+            </ScrollReveal>
+          )}
         </div>
       </section>
 

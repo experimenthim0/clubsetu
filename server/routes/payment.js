@@ -44,6 +44,22 @@ router.post(
         return res.status(403).json({ message: "Ineligible program." });
       }
 
+      if (
+        event.allowedYears?.length > 0 &&
+        student.year &&
+        !event.allowedYears.includes(student.year)
+      ) {
+        return res.status(403).json({ message: "Ineligible year." });
+      }
+
+      if (
+        event.allowedBranches?.length > 0 &&
+        student.branch &&
+        !event.allowedBranches.includes(student.branch)
+      ) {
+        return res.status(403).json({ message: "Ineligible branch." });
+      }
+
       if (!event.entryFee || event.entryFee === 0) {
         return res.status(400).json({ message: "This event is free" });
       }
@@ -131,6 +147,22 @@ router.post(
           !latestEvent.allowedPrograms.includes(student.program)
         ) {
           throw new Error("Ineligible program.");
+        }
+
+        if (
+          latestEvent.allowedYears?.length > 0 &&
+          student.year &&
+          !latestEvent.allowedYears.includes(student.year)
+        ) {
+          throw new Error("Ineligible year.");
+        }
+
+        if (
+          latestEvent.allowedBranches?.length > 0 &&
+          student.branch &&
+          !latestEvent.allowedBranches.includes(student.branch)
+        ) {
+          throw new Error("Ineligible branch.");
         }
 
         const existing = await tx.participation.findFirst({

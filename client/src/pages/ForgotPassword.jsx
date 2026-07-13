@@ -29,86 +29,101 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-md p-8">
-        {/* Header */}
-        <h2 className="text-center text-2xl font-bold text-gray-900">
-          Forgot <span className="text-orange-600">Password</span>
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-500">
-          Enter your email and we’ll send you a reset link
-        </p>
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col items-center justify-center px-5 py-12 transition-colors duration-300">
 
-        {/* Role Toggle */}
-        <div className="flex justify-center mt-6 mb-8">
-          <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setRole('student')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                role === 'student'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('club')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                role === 'club'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Club Head
-            </button>
-          </div>
+      <div className="w-full max-w-md">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">
+            Campus<span className="text-orange-600">Node</span>
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            Reset your password
+          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-              College Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:border-orange-600 focus:ring-1 focus:ring-orange-600 transition-colors"
-              placeholder="example@nitj.ac.in"
-            />
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+          {/* Header */}
+          <h2 className="text-lg font-bold text-black dark:text-white text-center">
+            Forgot Password
+          </h2>
+          <p className="mt-1 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            Enter your email and we'll send you a reset link
+          </p>
+
+          {/* Role Toggle */}
+          <div className="flex justify-center mt-6 mb-6">
+            <div className="inline-flex rounded-full border border-neutral-200 dark:border-neutral-800 overflow-hidden p-1 bg-neutral-50 dark:bg-neutral-950">
+              <button
+                type="button"
+                onClick={() => setRole('student')}
+                className={`px-5 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  role === 'student'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                Student
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('club')}
+                className={`px-5 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  role === 'club'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                Club Head
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-center mt-6">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                College Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white text-sm font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400"
+                placeholder="example@nitj.ac.in"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 bg-orange-600 text-white font-bold uppercase tracking-wider rounded-md shadow hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${
+                loading
+                  ? 'bg-neutral-400 cursor-not-allowed'
+                  : 'bg-orange-600 hover:bg-orange-700 cursor-pointer hover:-translate-y-0.5'
+              }`}
             >
               {loading ? 'Sending Link...' : 'Send Reset Link'}
             </button>
-          </div>
-        </form>
+          </form>
 
-        {/* Message */}
-        {message && (
-          <div className="mt-6 p-3 bg-orange-50 border border-orange-200 text-orange-700 text-sm font-medium text-center rounded-md">
-            {message}
-          </div>
-        )}
+          {/* Message */}
+          {message && (
+            <div className="mt-5 p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 text-sm font-medium text-center rounded-xl">
+              {message}
+            </div>
+          )}
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <Link
-            to="/login"
-            className="text-xs font-semibold uppercase tracking-wider text-gray-700 hover:text-orange-600 underline"
-          >
-            Back to Sign In
-          </Link>
+          {/* Footer */}
+          <div className="mt-6 pt-5 border-t border-neutral-100 dark:border-neutral-800 text-center">
+            <Link
+              to="/login"
+              className="text-sm font-semibold text-neutral-500 hover:text-orange-600 dark:text-neutral-400 dark:hover:text-orange-500 transition-colors"
+            >
+              ← Back to Sign In
+            </Link>
+          </div>
         </div>
       </div>
     </div>

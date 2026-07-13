@@ -6,6 +6,15 @@ import { useNotification } from '../context/NotificationContext';
 import { CheckCircle, XCircle, AlertTriangle, Users, BadgeCheck, Clock, ArrowLeft, Wifi, ScanLine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const formatTimeAgo = (date) => {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 10) return 'Just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  return `${Math.floor(diffMin / 60)}h ago`;
+};
+
 const CheckIn = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,11 +25,18 @@ const CheckIn = () => {
   const [scanning, setScanning] = useState(true);
   const [processing, setProcessing] = useState(false);
 
+  // Tab state: 'scan' or 'manual'
+  const [activeTab, setActiveTab] = useState('scan');
+  // Manual entry
+  const [manualId, setManualId] = useState('');
+  const [manualLoading, setManualLoading] = useState(false);
+
+  // Session attendance history
+  const [attendanceLog, setAttendanceLog] = useState([]);
+
   // Unified scan state
   const [scanState, setScanState] = useState('idle');
-  // Holds { participantName, rollNo, externalEmail } from 200 response
   const [scanResult, setScanResult] = useState(null);
-  // Local optimistic attended count
   const [attendedCount, setAttendedCount] = useState(0);
 
   const scannerRef = useRef(null);
@@ -49,17 +65,11 @@ const CheckIn = () => {
       setEvent(eventData);
       setAttendedCount(eventData.attendedCount ?? 0);
 
-      // RBAC: find membership for this event's club
       const memberships = storedUser?.memberships || [];
       const membership = memberships.find(m => m.clubId === eventData.clubId);
       
-      // If user has 'club' role globally or specifically for this club, allow access
-      // Also check specific permissions if present
       const isClubHead = membership?.role === 'CLUB_HEAD' || storedRole === 'club' || storedUser?.role === 'club';
       const isCoordinator = membership?.role === 'COORDINATOR';
-      // CHECK PERMISSION: ClubHead and Coordinator always have permission. 
-      // Members must have canTakeAttendance: true in their membership record.
-      // We check both flat and nested structures for backward compatibility.
       const hasAttendancePermission = 
         membership?.canTakeAttendance === true || 
         membership?.permissions?.canTakeAttendance === true;
@@ -85,8 +95,9 @@ const CheckIn = () => {
     }
   };
 
+  // QR Scanner init/cleanup
   useEffect(() => {
-    if (loading || !scanning) return;
+    if (loading || !scanning || activeTab !== 'scan') return;
 
     let html5QrCode = null;
     const timer = setTimeout(() => {
@@ -114,24 +125,34 @@ const CheckIn = () => {
         scannerRef.current = null;
       }
     };
-  }, [loading, scanning]);
+  }, [loading, scanning, activeTab]);
 
-  async function onScanSuccess(decodedText) {
-    // 1. Immediate synchronous lock to prevent rapid triggers from scanner library
-    if (isProcessingRef.current || (decodedText === lastScannedCodeRef.current)) {
-      return;
+  // Stop scanner when switching to manual tab
+  useEffect(() => {
+    if (activeTab === 'manual' && scannerRef.current) {
+      scannerRef.current.stop().then(() => scannerRef.current?.clear()).catch(() => {});
+      scannerRef.current = null;
     }
+  }, [activeTab]);
 
-    // 2. Set locks
-    isProcessingRef.current = true;
-    lastScannedCodeRef.current = decodedText;
-    
-    // 3. Pause the scanner to stop video processing during feedback
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.pause();
-      } catch (e) {
-        console.warn('Failed to pause scanner:', e);
+  const addToHistory = (status, name, identifier, statusType) => {
+    setAttendanceLog(prev => [{
+      id: Date.now(),
+      status: statusType,
+      name: name || 'Unknown',
+      identifier: identifier || '',
+      time: new Date(),
+    }, ...prev]);
+  };
+
+  async function processVerification(qrCode, isManual = false) {
+    if (!isManual) {
+      if (isProcessingRef.current || (qrCode === lastScannedCodeRef.current)) return;
+      isProcessingRef.current = true;
+      lastScannedCodeRef.current = qrCode;
+      
+      if (scannerRef.current) {
+        try { await scannerRef.current.pause(); } catch (e) { console.warn('Pause failed:', e); }
       }
     }
 
@@ -140,51 +161,67 @@ const CheckIn = () => {
     setScanResult(null);
 
     try {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/participation/verify/${decodedText}`);
+      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/participation/verify/${qrCode}`);
       setScanResult(res.data);
       setScanState('success');
       setAttendedCount(prev => prev + 1);
+      addToHistory('success', res.data.participantName, res.data.rollNo || res.data.externalEmail, 'success');
     } catch (err) {
       const status = err.response?.status;
       if (status === 409) {
         setScanState('already_marked');
-        // If the error response contains user data, we can still show who it was
-        if (err.response.data?.participantName) {
-          setScanResult(err.response.data);
-        }
+        if (err.response.data?.participantName) setScanResult(err.response.data);
+        addToHistory('already', err.response.data?.participantName, err.response.data?.rollNo || '', 'already');
       } else if (status === 403) {
         setScanState('unauthorized');
+        addToHistory('error', 'Unauthorized', qrCode, 'error');
       } else {
         setScanState('not_found');
+        addToHistory('error', 'Not Found', qrCode, 'error');
       }
     } finally {
-      // 4. Stay in feedback state for 3 seconds, then resume
-      setTimeout(async () => {
-        setScanState('idle');
-        setProcessing(false);
-        isProcessingRef.current = false;
-        lastScannedCodeRef.current = null;
-        
-        if (scannerRef.current) {
-          try {
-            await scannerRef.current.resume();
-          } catch (e) {
-            console.error('Failed to resume scanner:', e);
+      if (isManual) {
+        setTimeout(() => {
+          setScanState('idle');
+          setProcessing(false);
+        }, 2500);
+      } else {
+        setTimeout(async () => {
+          setScanState('idle');
+          setProcessing(false);
+          isProcessingRef.current = false;
+          lastScannedCodeRef.current = null;
+          if (scannerRef.current) {
+            try { await scannerRef.current.resume(); } catch (e) { console.error('Resume failed:', e); }
           }
-        }
-      }, 3000);
+        }, 3000);
+      }
     }
+  }
+
+  async function onScanSuccess(decodedText) {
+    await processVerification(decodedText, false);
   }
 
   function onScanFailure() {}
 
+  const handleManualSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = manualId.trim();
+    if (!trimmed) return;
+    setManualLoading(true);
+    await processVerification(trimmed, true);
+    setManualLoading(false);
+    setManualId('');
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] font-medium">
-        <div className="flex flex-col items-center gap-3 bg-white border border-[#E5E7EB] rounded-2xl p-10 md:px-12 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
-          <div className="w-11 h-11 border-[3px] border-[#E5E7EB] border-t-[#6366F1] rounded-full animate-spin"></div>
-          <p className="m-0 font-bold text-[15px] text-[#111827]">Initializing Scanner</p>
-          <p className="m-0 text-[13px] text-[#9CA3AF] font-medium">Please wait a moment</p>
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-[#0a0a0a] font-medium">
+        <div className="flex flex-col items-center gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 md:px-12 shadow-sm">
+          <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
+          <p className="m-0 font-bold text-sm text-neutral-800 dark:text-neutral-200">Initializing Scanner</p>
+          <p className="m-0 text-xs text-neutral-400 font-medium">Please wait a moment</p>
         </div>
       </div>
     );
@@ -197,15 +234,24 @@ const CheckIn = () => {
   const showOverlay = scanState !== 'idle';
 
   const overlayBg = {
-    processing:     'rgba(255, 255, 255, 0.92)',
+    processing:     'rgba(255, 255, 255, 0.95)',
     success:        'rgba(240, 253, 244, 0.97)',
     already_marked: 'rgba(255, 251, 235, 0.97)',
-    unauthorized:   'rgba(255, 241, 242, 0.97)',
-    not_found:      'rgba(255, 241, 242, 0.97)',
-  }[scanState] || 'rgba(255, 255, 255, 0.92)';
+    unauthorized:   'rgba(254, 242, 242, 0.97)',
+    not_found:      'rgba(254, 242, 242, 0.97)',
+  }[scanState] || 'rgba(255, 255, 255, 0.95)';
+
+  // Dark mode overlay options
+  const darkOverlayBg = {
+    processing:     'rgba(23, 23, 23, 0.95)',
+    success:        'rgba(6, 78, 59, 0.97)',
+    already_marked: 'rgba(120, 53, 4, 0.97)',
+    unauthorized:   'rgba(153, 27, 27, 0.97)',
+    not_found:      'rgba(153, 27, 27, 0.97)',
+  }[scanState] || 'rgba(23, 23, 23, 0.95)';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-medium text-[#111827]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-[#0a0a0a] font-medium text-neutral-800 dark:text-neutral-200 transition-colors duration-300">
       <style>{`
         @keyframes scan-sweep {
           0% { top: 8px; opacity: 0.8; }
@@ -219,24 +265,24 @@ const CheckIn = () => {
       `}</style>
 
       {/* Top Bar */}
-      <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40">
-        <div className="max-w-[1280px] mx-auto px-6 py-[14px] flex items-center justify-between">
+      <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-40">
+        <div className="max-w-[1280px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-[14px]">
-            <Link to="/my-events" className="flex items-center justify-center w-9 h-9 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] text-[#374151] transition-colors hover:bg-gray-100">
+            <Link to="/my-events" className="flex items-center justify-center w-9 h-9 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
               <ArrowLeft size={18} />
             </Link>
             <div>
               <div className="flex items-center gap-1.5 mb-[3px]">
-                <span className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Events</span>
-                <span className="text-[11px] text-[#D1D5DB]">/</span>
-                <span className="text-[11px] font-semibold text-[#6366F1] uppercase tracking-wider">Attendance</span>
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Events</span>
+                <span className="text-[10px] text-neutral-300 dark:text-neutral-700">/</span>
+                <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Attendance</span>
               </div>
-              <h1 className="m-0 text-[15px] font-bold text-[#111827] leading-tight">{event?.title}</h1>
+              <h1 className="m-0 text-base font-extrabold text-black dark:text-white leading-tight">{event?.title}</h1>
             </div>
           </div>
-          <div className="flex items-center gap-[7px] bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1.25">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span>
-            <span className="text-[11px] font-bold text-[#15803D] uppercase tracking-[0.08em]">Live</span>
+          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Live</span>
           </div>
         </div>
       </header>
@@ -247,101 +293,230 @@ const CheckIn = () => {
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-5">
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Registrations', val: event?.registeredCount ?? '—', icon: <Users size={18} color="#6366F1" />, bg: '#EEF2FF' },
-                { label: 'Attended', val: attendedCount, icon: <BadgeCheck size={18} color="#F97316" />, bg: '#FFF7ED' },
-                { label: 'Check-in Rate', val: `${attendRate}%`, icon: <CheckCircle size={18} color="#22C55E" />, bg: '#F0FDF4' }
+                { label: 'Registrations', val: event?.registeredCount ?? '—', icon: <Users size={18} className="text-orange-600" />, bg: 'bg-orange-50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/20' },
+                { label: 'Attended', val: attendedCount, icon: <BadgeCheck size={18} className="text-green-600 dark:text-green-400" />, bg: 'bg-green-50 dark:bg-green-950/10 border-green-100 dark:border-green-900/20' },
+                { label: 'Check-in Rate', val: `${attendRate}%`, icon: <CheckCircle size={18} className="text-blue-600 dark:text-blue-400" />, bg: 'bg-blue-50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/20' }
               ].map((stat, i) => (
-                <div key={i} className="bg-white border border-[#E5E7EB] rounded-2xl p-[16px_18px] flex items-center gap-[14px] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: stat.bg }}>
+                <div key={i} className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm ${stat.bg}`}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-neutral-950 shadow-sm border border-neutral-100 dark:border-neutral-800 flex-shrink-0">
                     {stat.icon}
                   </div>
                   <div>
-                    <p className="m-0 text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-0.5">{stat.label}</p>
-                    <p className="m-0 text-[22px] font-bold text-[#111827] font-mono tracking-tight">{stat.val}</p>
+                    <p className="m-0 text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-0.5">{stat.label}</p>
+                    <p className="m-0 text-2xl font-black text-black dark:text-white font-mono tracking-tight">{stat.val}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Progress Bar */}
-            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-[18px_20px] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-semibold text-[#374151] uppercase tracking-wider">Attendance Progress</span>
-                <span className="text-xs font-bold text-[#6366F1] font-mono">{attendedCount} / {event?.registeredCount ?? 0}</span>
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Attendance Progress</span>
+                <span className="text-xs font-bold text-orange-600 font-mono">{attendedCount} / {event?.registeredCount ?? 0}</span>
               </div>
-              <div className="h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
+              <div className="h-2 bg-neutral-100 dark:bg-neutral-850 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${attendRate}%` }}
                   transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                  className="h-full bg-gradient-to-r from-[#818CF8] to-[#6366F1] rounded-full"
+                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
                 />
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-[20px_22px] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#F3F4F6]">
-                <Clock size={14} className="text-[#9CA3AF]" />
-                <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-[0.08em]">Coordinator Instructions</span>
+            {/* Session History */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 p-[14px_18px] border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/60">
+                <Clock size={14} className="text-neutral-400 dark:text-neutral-500" />
+                <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Session History</span>
+                {attendanceLog.length > 0 && (
+                  <span className="ml-auto text-[10px] font-bold text-orange-600 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2 py-0.5">
+                    {attendanceLog.length} checked in
+                  </span>
+                )}
               </div>
-              <ol className="list-none m-0 p-0 flex flex-col gap-3">
-                {[
-                  "Position the student's QR code within the camera frame.",
-                  'Wait for the green confirmation screen before entry.',
-                  'Ensure a stable internet connection for real-time validation.',
-                  'Each QR code is single-use — duplicates will be rejected.',
-                ].map((text, i) => (
-                  <li key={i} className="flex gap-[14px] items-start">
-                    <span className="text-[11px] font-bold text-[#6366F1] font-mono flex-shrink-0 mt-[1px]">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span className="text-[13px] font-medium text-[#4B5563] leading-[1.55]">{text}</span>
-                  </li>
-                ))}
-              </ol>
+              <div className="max-h-[300px] overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                {attendanceLog.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center gap-2 text-center px-4">
+                    <p className="text-sm font-semibold text-neutral-400 dark:text-neutral-500">No check-ins yet this session</p>
+                    <p className="text-xs text-neutral-300 dark:text-neutral-600">Records will display here in real-time as they scan</p>
+                  </div>
+                ) : (
+                  <ul className="m-0 p-0 list-none">
+                    {attendanceLog.map((entry) => (
+                      <li key={entry.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-neutral-50/50 dark:hover:bg-neutral-850/40 transition-colors">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          entry.status === 'success' ? 'bg-green-50 dark:bg-green-950/20 text-green-600' :
+                          entry.status === 'already' ? 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-600' :
+                          'bg-red-50 dark:bg-red-950/20 text-red-600'
+                        }`}>
+                          {entry.status === 'success' && <CheckCircle size={14} />}
+                          {entry.status === 'already' && <AlertTriangle size={14} />}
+                          {entry.status === 'error' && <XCircle size={14} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="m-0 text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">{entry.name}</p>
+                          {entry.identifier && (
+                            <p className="m-0 text-xs text-neutral-400 dark:text-neutral-500 font-mono truncate">{entry.identifier}</p>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 flex-shrink-0">
+                          {formatTimeAgo(entry.time)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             {/* Connection Status */}
-            <div className="flex items-center gap-2 p-[10px_14px] bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl">
-              <Wifi size={14} className="text-[#22C55E]" />
-              <span className="text-xs font-semibold text-[#15803D]">Connected — Real-time validation active</span>
+            <div className="flex items-center gap-2 p-[10px_14px] bg-green-50 dark:bg-green-950/10 border border-green-200 dark:border-green-900/20 rounded-xl">
+              <Wifi size={14} className="text-green-500" />
+              <span className="text-xs font-semibold text-green-700 dark:text-green-400">Connected — Real-time validation active</span>
             </div>
           </div>
 
-          {/* RIGHT COLUMN — Scanner */}
-          <div className="lg:sticky lg:top-20">
-            <div className="bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.07)]">
-              <div className="flex items-center gap-2 p-[14px_18px] border-b border-[#F3F4F6] bg-[#FAFAFA]">
-                <ScanLine size={16} className="text-[#6366F1]" />
-                <span className="text-xs font-bold text-[#374151] uppercase tracking-wider">QR Scanner</span>
+          {/* RIGHT COLUMN — Scanner / Manual Entry */}
+          <div className="lg:sticky lg:top-24">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
+              
+              {/* Tab Toggle */}
+              <div className="flex border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/60 p-1.5 m-2.5 rounded-xl gap-1">
+                <button
+                  onClick={() => setActiveTab('scan')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg cursor-pointer ${
+                    activeTab === 'scan'
+                      ? 'text-orange-600 bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
+                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-white'
+                  }`}
+                >
+                  <ScanLine size={13} />
+                  Scan QR
+                </button>
+                <button
+                  onClick={() => setActiveTab('manual')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg cursor-pointer ${
+                    activeTab === 'manual'
+                      ? 'text-orange-600 bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
+                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-white'
+                  }`}
+                >
+                  <i className="ri-keyboard-line text-sm" />
+                  Manual Entry
+                </button>
               </div>
 
-              <div className="relative bg-[#0F0F10] overflow-hidden">
-                {/* Corner decorators */}
-                <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 left-0 border-t-[3px] border-l-[3px] border-[#6366F1]" />
-                <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 right-0 border-t-[3px] border-r-[3px] border-[#6366F1]" />
-                <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 left-0 border-b-[3px] border-l-[3px] border-[#6366F1]" />
-                <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 right-0 border-b-[3px] border-r-[3px] border-[#6366F1]" />
+              {activeTab === 'scan' ? (
+                <>
+                  <div className="relative bg-[#0F0F10] overflow-hidden m-4 rounded-xl">
+                    {/* Corner decorators */}
+                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 left-0 border-t-[3px] border-l-[3px] border-orange-500" />
+                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 right-0 border-t-[3px] border-r-[3px] border-orange-500" />
+                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 left-0 border-b-[3px] border-l-[3px] border-orange-500" />
+                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 right-0 border-b-[3px] border-r-[3px] border-orange-500" />
 
-                {/* Scan line animation */}
-                <div className="scan-line absolute left-3 right-3 h-[2px] bg-gradient-to-r from-transparent via-[#6366F1] to-transparent rounded shadow-[0_0_10px_2px_rgba(99,102,241,0.4)] z-[9]"></div>
+                    {/* Scan line animation */}
+                    <div className="scan-line absolute left-3 right-3 h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent rounded shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] z-[9]"></div>
 
-                <div id="reader" className="w-full"></div>
+                    <div id="reader" className="w-full"></div>
 
-                {/* Result Overlay */}
-                <AnimatePresence>
-                  {showOverlay && (
-                    <ScanOverlay scanState={scanState} scanResult={scanResult} overlayBg={overlayBg} />
-                  )}
-                </AnimatePresence>
-              </div>
+                    {/* Result Overlay */}
+                    <AnimatePresence>
+                      {showOverlay && (
+                        <ScanOverlay scanState={scanState} scanResult={scanResult} overlayBg={overlayBg} darkOverlayBg={darkOverlayBg} />
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-              <p className="m-0 p-[12px_18px] text-xs font-medium text-[#9CA3AF] text-center bg-[#FAFAFA] border-t border-[#F3F4F6]">
-                Point the camera at a student's QR code
-              </p>
+                  <p className="m-0 p-4 text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 text-center bg-neutral-50 dark:bg-neutral-950/20 border-t border-neutral-200 dark:border-neutral-800">
+                    Align registration QR code inside target corners
+                  </p>
+                </>
+              ) : (
+                /* Manual Entry Tab */
+                <div className="p-6">
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-4 leading-relaxed">
+                    Enter the student's registration ID to manually mark their attendance.
+                  </p>
+                  <form onSubmit={handleManualSubmit} className="flex flex-col gap-4">
+                    <input
+                      type="text"
+                      value={manualId}
+                      onChange={(e) => setManualId(e.target.value)}
+                      placeholder="e.g. registration ID..."
+                      className="w-full px-4 py-3 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl text-sm font-medium outline-none text-black dark:text-white focus:border-orange-500 transition-all placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
+                      disabled={manualLoading}
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={manualLoading || !manualId.trim()}
+                      className={`w-full py-3 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all ${
+                        manualLoading || !manualId.trim()
+                          ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed'
+                          : 'bg-orange-600 hover:bg-orange-700 cursor-pointer shadow-sm'
+                      }`}
+                    >
+                      {manualLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Marking...
+                        </span>
+                      ) : (
+                        'Mark Attendance'
+                      )}
+                    </button>
+                  </form>
+
+                  {/* Manual Feedback */}
+                  <AnimatePresence>
+                    {showOverlay && activeTab === 'manual' && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className="mt-4"
+                      >
+                        {scanState === 'success' && (
+                          <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-xl">
+                            <CheckCircle size={20} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-green-700 dark:text-green-400">Successfully Checked In</p>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.participantName} — {scanResult?.rollNo || scanResult?.externalEmail || 'N/A'}</p>
+                            </div>
+                          </div>
+                        )}
+                        {scanState === 'already_marked' && (
+                          <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/40 rounded-xl">
+                            <AlertTriangle size={20} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400">Attendance Already Recorded</p>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.message || 'Attendance is already recorded.'}</p>
+                            </div>
+                          </div>
+                        )}
+                        {(scanState === 'not_found' || scanState === 'unauthorized') && (
+                          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl">
+                            <XCircle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-red-700 dark:text-red-400">
+                                {scanState === 'unauthorized' ? 'Access Denied' : 'Not Found'}
+                              </p>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
+                                {scanState === 'unauthorized' ? 'Lacking attendance clearance level.' : 'Invalid registration identifier.'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           </div>
 
@@ -351,19 +526,27 @@ const CheckIn = () => {
   );
 };
 
-function ScanOverlay({ scanState, scanResult, overlayBg }) {
+function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
+  // Check if dark mode is active to apply correct overlay background color
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const currentBg = isDark ? darkOverlayBg : overlayBg;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[4px]"
-      style={{ background: overlayBg }}
+      style={{ background: currentBg }}
     >
       {scanState === 'processing' && (
         <div className="flex flex-col items-center gap-[14px]">
-          <div className="w-10 h-10 border-[3px] border-[#E5E7EB] border-t-[#6366F1] rounded-full animate-spin"></div>
-          <p className="m-0 text-[13px] font-semibold text-[#374151]">Validating QR Code...</p>
+          <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
+          <p className="m-0 text-[13px] font-semibold text-neutral-800 dark:text-white">Validating registration status...</p>
         </div>
       )}
 
@@ -371,24 +554,24 @@ function ScanOverlay({ scanState, scanResult, overlayBg }) {
         <motion.div
           initial={{ scale: 0.92, y: 12 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 md:p-7 flex flex-col items-center gap-2 w-[260px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E5E7EB]"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
         >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-[#DCFCE7] mb-1">
-            <CheckCircle size={32} className="text-[#16A34A]" />
+          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-green-50 dark:bg-green-950/20 mb-1">
+            <CheckCircle size={28} className="text-green-600 dark:text-green-400" />
           </div>
-          <p className="m-0 text-[13px] font-bold uppercase tracking-wider text-[#15803D]">Checked In</p>
-          <p className="m-0 text-lg font-bold text-[#111827] text-center">{scanResult?.participantName || 'Unknown'}</p>
-          <div className="w-full bg-[#F9FAFB] rounded-xl p-[10px_14px] mt-1">
+          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-green-600">Checked In</p>
+          <p className="m-0 text-base font-bold text-neutral-800 dark:text-white text-center">{scanResult?.participantName || 'Unknown'}</p>
+          <div className="w-full bg-neutral-50 dark:bg-neutral-950 rounded-xl p-3 mt-1 border border-neutral-100 dark:border-neutral-850">
             <div className="flex justify-between items-center">
-              <span className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
                 {scanResult?.rollNo ? 'Roll No' : 'Email'}
               </span>
-              <span className="text-xs font-bold text-[#374151] font-mono">
+              <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 font-mono">
                 {scanResult?.rollNo || scanResult?.externalEmail || 'N/A'}
               </span>
             </div>
           </div>
-          <p className="m-0 text-[11px] font-medium text-[#9CA3AF] mt-1">Resuming in 3s...</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
         </motion.div>
       )}
 
@@ -396,16 +579,16 @@ function ScanOverlay({ scanState, scanResult, overlayBg }) {
         <motion.div
           initial={{ scale: 0.92, y: 12 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 md:p-7 flex flex-col items-center gap-2 w-[260px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E5E7EB]"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
         >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-[#FEF3C7] mb-1">
-            <AlertTriangle size={32} className="text-[#D97706]" />
+          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/20 mb-1">
+            <AlertTriangle size={28} className="text-yellow-600 dark:text-yellow-400" />
           </div>
-          <p className="m-0 text-[13px] font-bold uppercase tracking-wider text-[#B45309]">Already Marked</p>
-          <p className="m-0 text-[13px] font-medium text-[#78350F] text-center">
-            {scanResult?.message || 'Attendance already recorded for this participant.'}
+          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-yellow-600">Already Marked</p>
+          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
+            {scanResult?.message || 'Attendance record is already active.'}
           </p>
-          <p className="m-0 text-[11px] font-medium text-[#9CA3AF] mt-1">Resuming in 3s...</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
         </motion.div>
       )}
 
@@ -413,20 +596,20 @@ function ScanOverlay({ scanState, scanResult, overlayBg }) {
         <motion.div
           initial={{ scale: 0.92, y: 12 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 md:p-7 flex flex-col items-center gap-2 w-[260px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E5E7EB]"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
         >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-[#FEE2E2] mb-1">
-            <XCircle size={32} className="text-[#DC2626]" />
+          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-950/20 mb-1">
+            <XCircle size={28} className="text-red-600 dark:text-red-400" />
           </div>
-          <p className="m-0 text-[13px] font-bold uppercase tracking-wider text-[#B91C1C]">
-            {scanState === 'unauthorized' ? 'Unauthorized' : 'Not Found'}
+          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-red-600">
+            {scanState === 'unauthorized' ? 'Access Denied' : 'Not Found'}
           </p>
-          <p className="m-0 text-[13px] font-medium text-[#7F1D1D] text-center">
+          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
             {scanState === 'unauthorized'
-              ? 'You are not authorized to take attendance for this event.'
-              : 'QR code not found.'}
+              ? 'Lacking clearance permissions.'
+              : 'Registration database record not found.'}
           </p>
-          <p className="m-0 text-[11px] font-medium text-[#9CA3AF] mt-1">Resuming in 3s...</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
         </motion.div>
       )}
     </motion.div>
