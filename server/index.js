@@ -14,6 +14,7 @@ import certificateRoutes from "./routes/certificates.js";
 import participationRoutes from "./routes/participation.js";
 import lostFoundRoutes from "./routes/lostFound.js";
 import lostFoundAdminRoutes from "./routes/lostFoundAdmin.js";
+import teamRoutes from "./routes/teams.js";
 import prisma from "./lib/prisma.js";
 
 import { corsOptions } from "./utils/corsConfig.js";
@@ -71,6 +72,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/teams", teamRoutes);
 app.use("/api/club-members", clubMemberRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/notifications", notificationRoutes);

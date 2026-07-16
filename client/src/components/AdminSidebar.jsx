@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Package,
   Sparkles,
+  User,
 } from "lucide-react";
 
 /* ─── Sidebar Link ─────────────────────────────────────────────────────── */
@@ -179,9 +180,12 @@ const AdminSidebar = () => {
               }
               collapsed={collapsed}
             />
+          </>
+        )}
 
-            <SectionDivider />
-
+        {(role === "admin" || role === "lostFoundAdmin") && (
+          <>
+            {role === "admin" && <SectionDivider />}
             <AdminSidebarLink
               to="/admin/lost-found"
               icon={Package}
@@ -203,6 +207,22 @@ const AdminSidebar = () => {
             }
             collapsed={collapsed}
           />
+        )}
+
+        {(role === "admin" || role === "paymentAdmin") && (
+          <>
+            <SectionDivider />
+            <AdminSidebarLink
+              to="/admin-dashboard?tab=profile"
+              icon={User}
+              label="Profile Settings"
+              isActive={
+                location.pathname === "/admin-dashboard" &&
+                currentTab === "profile"
+              }
+              collapsed={collapsed}
+            />
+          </>
         )}
       </nav>
 

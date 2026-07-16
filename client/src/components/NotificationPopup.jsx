@@ -20,35 +20,28 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
     return () => clearInterval(interval);
   }, [duration, onClose]);
 
+  // Standardized modern color palette and subtle icons
   const getTheme = () => {
     switch (type) {
       case 'success':
         return {
-          border: 'border-emerald-500 dark:border-emerald-500/60',
-          accent: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20',
+          icon: <i className="ri-checkbox-circle-fill text-emerald-500 text-lg" />,
           progress: 'bg-emerald-500',
-          tag: 'SUCCESS'
         };
       case 'error':
         return {
-          border: 'border-rose-500 dark:border-rose-500/60',
-          accent: 'text-rose-500 bg-rose-50 dark:bg-rose-950/20',
+          icon: <i className="ri-error-warning-fill text-rose-500 text-lg" />,
           progress: 'bg-rose-500',
-          tag: 'ERROR'
         };
       case 'warning':
         return {
-          border: 'border-amber-500 dark:border-amber-500/60',
-          accent: 'text-amber-500 bg-amber-50 dark:bg-amber-950/20',
+          icon: <i className="ri-alert-fill text-amber-500 text-lg" />,
           progress: 'bg-amber-500',
-          tag: 'WARNING'
         };
       default:
         return {
-          border: 'border-orange-500 dark:border-orange-500/60',
-          accent: 'text-orange-500 bg-orange-50 dark:bg-orange-950/20',
-          progress: 'bg-orange-500',
-          tag: 'INFO'
+          icon: <i className="ri-information-fill text-blue-500 text-lg" />,
+          progress: 'bg-blue-500',
         };
     }
   };
@@ -56,33 +49,33 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
   const theme = getTheme();
 
   return (
-    <div className={`fixed top-20 right-6 z-[9999] max-w-sm w-full bg-white dark:bg-neutral-900 border-2 ${theme.border} text-black dark:text-white rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.05)] overflow-hidden transition-all duration-300 hover:scale-[1.02] animate-slide-in-right`}>
+    <div className="fixed top-6 right-6 z-[9999] max-w-sm w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg shadow-lg overflow-hidden transition-all duration-300 animate-slide-in-right">
       <div className="p-4 flex items-start gap-3">
-        {/* Status Tag */}
-        <div className={`px-2 py-0.5 rounded text-[9px] font-black code-font uppercase tracking-widest ${theme.accent}`}>
-          {theme.tag}
+        {/* Modern Icon instead of harsh text badge */}
+        <div className="flex-shrink-0 mt-0.5">
+          {theme.icon}
         </div>
         
-        {/* Message */}
-        <div className="flex-1 min-w-0 pr-2">
-          <p className="text-[12px] font-bold text-neutral-800 dark:text-neutral-200 leading-relaxed break-words">
+        {/* Clean, standard typography */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300 leading-normal break-words">
             {message}
           </p>
         </div>
 
-        {/* Close Button */}
+        {/* Subtle Close Button */}
         <button 
           onClick={onClose} 
-          className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer"
+          className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
           aria-label="Dismiss notification"
         >
           <i className="ri-close-line text-lg" />
         </button>
       </div>
 
-      {/* Progress Bar Loader */}
+      {/* Modern, sleek Progress Bar */}
       {duration && (
-        <div className="w-full h-[3px] bg-neutral-100 dark:bg-neutral-800">
+        <div className="w-full h-[2px] bg-neutral-100 dark:bg-neutral-800">
           <div 
             className={`h-full ${theme.progress} transition-all duration-300 ease-out`} 
             style={{ width: `${progress}%` }} 
@@ -91,13 +84,12 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
       )}
 
       <style>{`
-        .code-font { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
         @keyframes slide-in-right {
           from { transform: translateX(120%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
         }
         .animate-slide-in-right {
-          animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: slide-in-right 0.3s cubic-bezier(0.21, 1.02, 0.43, 1) forwards;
         }
       `}</style>
     </div>

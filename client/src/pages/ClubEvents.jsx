@@ -13,6 +13,8 @@ const ClubEvents = () => {
   const [createdEvents, setCreatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exportFilters, setExportFilters] = useState({ month: 'all', year: 'all' });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
   const [clubName, setClubName] = useState("");
   const [canEdit, setCanEdit] = useState(false);
   const [canScan, setCanScan] = useState(false);
@@ -76,6 +78,38 @@ const ClubEvents = () => {
         fetchClubEvents(clubId);
     } catch (err) {
         showNotification(err.response?.data?.message || 'Review failed', 'error');
+    }
+  };
+
+  const handleDelete = (eventId) => {
+    setEventToDelete(eventId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    try {
+      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
+      if (res.data.message && (res.data.message.includes('submitted') || res.data.message.includes('request'))) {
+        showNotification('Deletion request sent for faculty approval', 'success');
+        setCreatedEvents(createdEvents.map(e => {
+          if ((e.id || e._id) === eventToDelete) {
+            return { ...e, reviewStatus: 'DELETION_REQUESTED' };
+          }
+          return e;
+        }));
+      } else {
+        setCreatedEvents(createdEvents.filter(e => (e.id || e._id) !== eventToDelete));
+        showNotification('Event deleted successfully', 'success');
+      }
+      setDeleteModalOpen(false);
+      setEventToDelete(null);
+    } catch (err) {
+      console.error('Delete error:', err);
+      showNotification(err.response?.data?.message || 'Failed to delete event. Please try again.', 'error');
+      setDeleteModalOpen(false);
+      setEventToDelete(null);
     }
   };
 
@@ -257,7 +291,7 @@ const ClubEvents = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
-                        className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                        className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm animate-pulse-slow"
                       >
                         Approve
                       </button>
@@ -269,6 +303,21 @@ const ClubEvents = () => {
                         className="px-4 py-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
                       >
                         Reject
+                      </button>
+                    </div>
+                  ) : canReview && event.reviewStatus?.toUpperCase() === 'DELETION_REQUESTED' ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDelete(event.id || event._id)}
+                        className="px-4 py-1.5 bg-rose-650 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                      >
+                        Approve Deletion
+                      </button>
+                      <button
+                        onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
+                        className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                      >
+                        Restore Event
                       </button>
                     </div>
                   ) : (
@@ -298,20 +347,102 @@ const ClubEvents = () => {
                           </Link>
                       )}
                       {canEdit && (
+                        <>
                           <Link
                               to={`/events/edit/${event.id || event._id}`}
                               className="px-3 py-1.5 bg-neutral-50 text-neutral-700 border border-neutral-200 rounded-lg hover:bg-neutral-200 transition font-bold text-xs shadow-sm"
                           >
                             <i className="ri-edit-line text-sm font-medium" />
                           </Link>
+                          
+                          <button
+                            onClick={() => handleDelete(event.id || event._id)}
+                            className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition font-bold text-xs shadow-sm cursor-pointer border-0 outline-none"
+                            title="Delete Event"
+                          >
+                            <i className="ri-delete-bin-line text-sm"></i>
+                          </button>
+                        </>
                       )}
                     </>
                   )}
                 </div>
               </div>
+              {/* Context Block for special states */}
+              {(event.reviewStatus === 'REJECTED' || 
+                event.reviewStatus === 'DELETION_REQUESTED' ||
+                (canReview && event.reviewStatus === 'PENDING')) && (
+                  <div className="px-5 pb-5 border-t border-neutral-100 pt-4 bg-neutral-50/20">
+                      {event.reviewStatus === 'REJECTED' && (
+                          <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex gap-3 items-start">
+                              <i className="ri-error-warning-fill text-rose-600 text-xl animate-bounce-slow" />
+                              <div className="text-left">
+                                  <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-1">Rejection Reason</p>
+                                  <p className="text-sm text-rose-600 font-semibold">{event.reviewComment || 'No feedback provided. Please contact the faculty coordinator.'}</p>
+                              </div>
+                          </div>
+                      )}
+                      {event.reviewStatus === 'DELETION_REQUESTED' && (
+                          <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex gap-3 items-start">
+                              <i className="ri-delete-bin-fill text-rose-600 text-xl" />
+                              <div className="text-left">
+                                  <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-1">Deletion Pending Approval</p>
+                                  <p className="text-sm text-rose-600 font-semibold">
+                                      {canReview 
+                                        ? 'The club has requested to delete this event. Click Approve Deletion to execute, or Restore Event to reject deletion.'
+                                        : 'This event is pending deletion approval by the faculty coordinator.'}
+                                  </p>
+                              </div>
+                          </div>
+                      )}
+                      {canReview && event.reviewStatus === 'PENDING' && (
+                          <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3 items-start">
+                              <i className="ri-information-fill text-amber-600 text-xl" />
+                              <div className="text-left">
+                                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Review Required</p>
+                                  <p className="text-sm text-amber-600 font-semibold">This event is waiting for your approval before it becomes visible to students.</p>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+              )}
             </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── DELETE MODAL ── */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div className="bg-orange-600 px-6 py-4 border-b border-orange-700">
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <i className="ri-delete-bin-line" /> Confirm Deletion
+              </h3>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-neutral-600 leading-relaxed font-medium text-left">
+                {!canReview 
+                  ? 'Are you sure you want to request deletion of this event? This will submit a deletion request to the faculty coordinator for approval. All registrations will be lost if approved.' 
+                  : 'Are you sure you want to permanently delete this event? All registrations will be lost. This action cannot be undone.'}
+              </p>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => { setDeleteModalOpen(false); setEventToDelete(null); }}
+                className="flex-1 px-4 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer border-0 outline-none"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2.5 bg-rose-600 border border-rose-700 text-white font-semibold text-xs rounded-lg hover:bg-rose-700 transition-colors cursor-pointer border-0 outline-none"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

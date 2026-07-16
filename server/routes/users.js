@@ -60,8 +60,8 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied." });
   }
 
-  const studentAllowedFields = ["name", "branch", "year", "program"];
-  const adminAllowedFields = ["name"];
+  const studentAllowedFields = ["name", "branch", "year", "program", "isTwoStepEnabled"];
+  const adminAllowedFields = ["name", "isTwoStepEnabled"];
   const allowedFields = userType === "admin" ? adminAllowedFields : studentAllowedFields;
   const updates = Object.fromEntries(
     Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
@@ -111,6 +111,37 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     }
 
     res.json({ message: "Profile updated successfully", user: safeUser });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/users/search — search student by email or roll number
+router.get("/search", verifyToken, async (req, res) => {
+  const { query } = req.query;
+  if (!query || query.length < 2) {
+    return res.json([]);
+  }
+  try {
+    const students = await prisma.studentUser.findMany({
+      where: {
+        OR: [
+          { email: { startsWith: query, mode: 'insensitive' } },
+          { rollNo: { startsWith: query, mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        rollNo: true,
+        branch: true,
+        year: true,
+        program: true
+      },
+      take: 10
+    });
+    res.json(students);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -60,6 +60,8 @@ model StudentUser {
   lostFoundItems          LostFoundItem[]
   lostFoundReports        LostFoundReport[] @relation("ReportReporter")
   lostFoundReportsAgainst LostFoundReport[] @relation("ReportLiar")
+  ledTeams                Team[]            @relation("TeamLeader")
+  teamMemberships         TeamMember[]
 }
 
 model Club {
@@ -145,12 +147,16 @@ model Event {
   certificateTemplate  Json?
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @default(now()) @updatedAt
+  registrationType     String          @default("individual")
+  minTeamSize          Int             @default(1)
+  maxTeamSize          Int             @default(1)
   club                 Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
   createdBy            StudentUser     @relation("EventCreatedBy", fields: [createdById], references: [id])
   reviewedBy           AdminRole?      @relation("EventReviewedBy", fields: [reviewedById], references: [id])
   media                Media[]
   participations       Participation[]
   sponsors             Sponsor[]
+  teams                Team[]
 
   @@index([clubId, startTime])
   @@index([reviewStatus, startTime])
@@ -177,6 +183,8 @@ model Participation {
   updatedAt        DateTime            @default(now()) @updatedAt
   event            Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
   student          StudentUser?        @relation(fields: [studentId], references: [id])
+  teamId           String?             @db.VarChar(24)
+  team             Team?               @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@index([studentId, createdAt])
@@ -211,6 +219,9 @@ model Notification {
   senderAdminId      String?      @db.VarChar(24)
   recipientStudentId String?      @db.VarChar(24)
   lostFoundItemId    String?      @db.VarChar(24)
+  eventId            String?      @db.VarChar(24)
+  teamId             String?      @db.VarChar(24)
+  type               String?
   title              String
   message            String
   createdAt          DateTime     @default(now())
@@ -246,6 +257,7 @@ enum ParticipationStatus {
   ATTENDED
   WAITLISTED
   CANCELLED
+  INVITED
 }
 
 enum PaymentStatus {
@@ -264,6 +276,7 @@ enum ReviewStatus {
   PENDING
   PUBLISHED
   REJECTED
+  DELETION_REQUESTED
 }
 
 enum MediaType {
@@ -316,4 +329,33 @@ enum LostFoundType {
 enum LostFoundStatus {
   ACTIVE
   REUNITED
+}
+
+model Team {
+  id        String       @id @db.VarChar(24)
+  eventId   String       @db.VarChar(24)
+  teamName  String
+  leaderId  String       @db.VarChar(24)
+  status    String       @default("active")
+  createdAt DateTime     @default(now())
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  leader    StudentUser  @relation("TeamLeader", fields: [leaderId], references: [id], onDelete: Cascade)
+  members   TeamMember[]
+  participations Participation[]
+
+  @@index([eventId])
+  @@index([leaderId])
+}
+
+model TeamMember {
+  id       String      @id @db.VarChar(24)
+  teamId   String      @db.VarChar(24)
+  userId   String      @db.VarChar(24)
+  role     String      @default("member")
+  joinedAt DateTime    @default(now())
+  team     Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     StudentUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
 }

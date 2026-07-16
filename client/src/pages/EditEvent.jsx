@@ -31,6 +31,9 @@ const EditEvent = () => {
         winners: [], // ← added
         showWinner: false,
         provideCertificate: false,
+        registrationType: 'individual',
+        minTeamSize: 1,
+        maxTeamSize: 1,
     });
     const isEventCompleted = formData.endTime && new Date(formData.endTime) < new Date();
     const [sponsors, setSponsors] = useState([]);
@@ -90,6 +93,9 @@ const EditEvent = () => {
                         winners: event.winners || [], // ← added
                         showWinner: event.showWinner || false,
                         provideCertificate: event.provideCertificate || false,
+                        registrationType: event.registrationType || 'individual',
+                        minTeamSize: event.minTeamSize || 1,
+                        maxTeamSize: event.maxTeamSize || 1,
                     });
                     setIsFree(!event.entryFee || event.entryFee === 0);
                     setIsUnlimited(unlimited);
@@ -350,6 +356,19 @@ const EditEvent = () => {
             return;
         }
 
+        if (formData.registrationType === 'team' || formData.registrationType === 'both') {
+            const min = Number(formData.minTeamSize || 1);
+            const max = Number(formData.maxTeamSize || 1);
+            if (min < 1) {
+                showNotification('Minimum team size must be at least 1.', 'error');
+                return;
+            }
+            if (max < min) {
+                showNotification('Maximum team size cannot be less than the minimum team size.', 'error');
+                return;
+            }
+        }
+
         const payload = {
             ...formData,
             startTime: new Date(formData.startTime).toISOString(),
@@ -359,6 +378,9 @@ const EditEvent = () => {
             registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
             allowedBranches: allBranches ? [] : formData.allowedBranches,
+            registrationType: formData.registrationType || 'individual',
+            minTeamSize: (formData.registrationType === 'team' || formData.registrationType === 'both') ? Number(formData.minTeamSize || 1) : 1,
+            maxTeamSize: (formData.registrationType === 'team' || formData.registrationType === 'both') ? Number(formData.maxTeamSize || 1) : 1,
             winners: (formData.winners || []).map(({ error, ...rest }) => rest),
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
@@ -500,6 +522,32 @@ const EditEvent = () => {
                             value={formData.registrationDeadline} onChange={handleChange} />
                         <p className="text-xs text-neutral-500 mt-1">Optional: If left blank, registrations stay open until start time.</p>
                     </div>
+
+                    {/* Registration Type */}
+                    <div>
+                        <label className={labelCls}>Registration Type <span className="text-orange-600">*</span></label>
+                        <select name="registrationType" required className={inputCls} value={formData.registrationType} onChange={handleChange}>
+                            <option value="individual">Individual Registration</option>
+                            <option value="team">Team Registration</option>
+                            <option value="both">Both (Individual & Team)</option>
+                        </select>
+                    </div>
+
+                    {/* Team Size Configurations (conditional) */}
+                    {(formData.registrationType === 'team' || formData.registrationType === 'both') && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-neutral-50 border border-neutral-200 rounded-sm">
+                            <div>
+                                <label className={labelCls}>Minimum Team Size <span className="text-orange-600">*</span></label>
+                                <input type="number" name="minTeamSize" required min="1" className={inputCls}
+                                    value={formData.minTeamSize} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Maximum Team Size <span className="text-orange-600">*</span></label>
+                                <input type="number" name="maxTeamSize" required min="1" className={inputCls}
+                                    value={formData.maxTeamSize} onChange={handleChange} />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Seats & Fee Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">

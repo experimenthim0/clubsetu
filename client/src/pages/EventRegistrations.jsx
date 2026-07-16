@@ -12,6 +12,8 @@ const EventRegistrations = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('individual');
+    const [expandedTeams, setExpandedTeams] = useState({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,51 +54,186 @@ const EventRegistrations = () => {
         const branch = (reg.student?.branch || '').toLowerCase();
         const externalEmail = (reg.externalEmail || '').toLowerCase();
         const externalName = (reg.externalName || '').toLowerCase();
-        return name.includes(q) || rollNo.includes(q) || email.includes(q) || branch.includes(q) || externalEmail.includes(q) || externalName.includes(q);
+        // Also match team name and team leader name for team registrations
+        const teamName = (reg.team?.teamName || '').toLowerCase();
+        const leaderName = (reg.team?.leader?.name || '').toLowerCase();
+        return name.includes(q) || rollNo.includes(q) || email.includes(q) || branch.includes(q)
+            || externalEmail.includes(q) || externalName.includes(q)
+            || teamName.includes(q) || leaderName.includes(q);
     });
+
+    // Individual registrations: only entries with no teamId
+    const individualRegs = filteredRegistrations.filter(r => !r.teamId);
+
+    // Build teamMap from ALL registrations (not filtered) so member lists are always complete,
+    // then filter teams by the search query matching team name, leader name, or any member's details.
+    const allRegsArr = Array.isArray(registrations) ? registrations : [];
+    const fullTeamMap = {};
+    allRegsArr.forEach(r => {
+        if (r.teamId && r.team) {
+            if (!fullTeamMap[r.teamId]) {
+                fullTeamMap[r.teamId] = {
+                    id: r.teamId,
+                    teamName: r.team.teamName,
+                    leader: r.team.leader,
+                    createdAt: r.createdAt || r.timestamp,
+                    status: r.status,
+                    members: []
+                };
+            }
+            fullTeamMap[r.teamId].members.push(r);
+        }
+    });
+
+    // Filter teams: a team passes if the query matches team name, leader, or any member
+    const teamRegs = Object.values(fullTeamMap).filter(team => {
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        if ((team.teamName || '').toLowerCase().includes(q)) return true;
+        if ((team.leader?.name || '').toLowerCase().includes(q)) return true;
+        return team.members.some(m =>
+            (m.student?.name || m.externalName || '').toLowerCase().includes(q) ||
+            (m.student?.rollNo || '').toLowerCase().includes(q) ||
+            (m.student?.email || m.externalEmail || '').toLowerCase().includes(q) ||
+            (m.student?.branch || '').toLowerCase().includes(q)
+        );
+    });
+
+    const toggleTeam = (teamId) => {
+        setExpandedTeams(prev => ({ ...prev, [teamId]: !prev[teamId] }));
+    };
 
     // ── Export to Excel (CSV) ─────────────────────────────────────────────
     const handleExportExcel = () => {
-        const headers = [
-            'S.No', 'Name', 'Roll No', 'Email', 'Branch', 'Year', 'Program',
-            'External Name', 'External Email',
-            'Status', 'Registered At', 'Amount Paid',
-            'GitHub', 'LinkedIn', 'X (Twitter)', 'Portfolio',
-            ...customFields.map(cf => cf.label),
-        ];
+        const isTeamEvent = eventData?.registrationType === 'team' || eventData?.registrationType === 'both';
+        const allRegsForExport = Array.isArray(registrations) ? registrations : [];
 
-        const rows = (Array.isArray(registrations) ? registrations : []).map((reg, idx) => [
-            idx + 1,
-            reg.student?.name || reg.externalName || '',
-            reg.student?.rollNo || '',
-            reg.student?.email || reg.externalEmail || '',
-            reg.student?.branch || '',
-            reg.student?.year || '',
-            reg.student?.program || '',
-            reg.externalName || '',
-            reg.externalEmail || '',
-            reg.status || '',
-            reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
-            reg.amountPaid || 0,
-            reg.student?.githubProfile || '',
-            reg.student?.linkedinProfile || '',
-            reg.student?.xProfile || '',
-            reg.student?.portfolioUrl || '',
-            ...customFields.map(cf => getFormResponse(reg, cf.label) || ''),
-        ]);
+        const escapeCell = (cell) => {
+            const str = String(cell ?? '').replace(/"/g, '""');
+            return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+        };
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row =>
-                row.map(cell => {
-                    const str = String(cell).replace(/"/g, '""');
-                    return str.includes(',') || str.includes('"') || str.includes('\n')
-                        ? `"${str}"` : str;
-                }).join(',')
-            ),
-        ].join('\n');
-
+        let csvContent = '';
         const BOM = '\uFEFF';
+
+        if (isTeamEvent) {
+            const headers = [
+                'S.No',
+                'Registration Type',
+                'Team Name',
+                'Role in Team',
+                'Name',
+                'Roll No',
+                'Email',
+                'Branch',
+                'Year',
+                'Program',
+                'Status',
+                'Registered At',
+                'Amount Paid',
+                'GitHub',
+                'LinkedIn',
+                'X (Twitter)',
+                'Portfolio',
+                ...customFields.map(cf => cf.label),
+            ];
+
+            const rows = [];
+            let serialNo = 1;
+
+            // 1. Individual registrations
+            const indivRegs = allRegsForExport.filter(r => !r.teamId);
+            indivRegs.forEach((reg) => {
+                rows.push([
+                    serialNo++,
+                    'Individual',
+                    '',
+                    'N/A',
+                    reg.student?.name || reg.externalName || '',
+                    reg.student?.rollNo || '',
+                    reg.student?.email || reg.externalEmail || '',
+                    reg.student?.branch || '',
+                    reg.student?.year || '',
+                    reg.student?.program || '',
+                    reg.status || '',
+                    reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
+                    reg.amountPaid || 0,
+                    reg.student?.githubProfile || '',
+                    reg.student?.linkedinProfile || '',
+                    reg.student?.xProfile || '',
+                    reg.student?.portfolioUrl || '',
+                    ...customFields.map(cf => getFormResponse(reg, cf.label) || ''),
+                ]);
+            });
+
+            // 2. Team registrations
+            const allTeams = Object.values(fullTeamMap);
+            allTeams.forEach((team) => {
+                team.members.forEach((m) => {
+                    const isLeader = m.studentId === team.leader?.id;
+                    rows.push([
+                        serialNo++,
+                        'Team',
+                        team.teamName || '',
+                        isLeader ? 'Leader' : 'Member',
+                        m.student?.name || m.externalName || '',
+                        m.student?.rollNo || '',
+                        m.student?.email || m.externalEmail || '',
+                        m.student?.branch || '',
+                        m.student?.year || '',
+                        m.student?.program || '',
+                        team.status || '',
+                        team.createdAt ? new Date(team.createdAt).toLocaleString() : '',
+                        m.amountPaid || 0,
+                        m.student?.githubProfile || '',
+                        m.student?.linkedinProfile || '',
+                        m.student?.xProfile || '',
+                        m.student?.portfolioUrl || '',
+                        ...customFields.map(cf => getFormResponse(m, cf.label) || ''),
+                    ]);
+                });
+            });
+
+            csvContent = [
+                headers.map(escapeCell).join(','),
+                ...rows.map(row => row.map(escapeCell).join(',')),
+            ].join('\n');
+        } else {
+            // Pure individual event
+            const headers = [
+                'S.No', 'Name', 'Roll No', 'Email', 'Branch', 'Year', 'Program',
+                'External Name', 'External Email',
+                'Status', 'Registered At', 'Amount Paid',
+                'GitHub', 'LinkedIn', 'X (Twitter)', 'Portfolio',
+                ...customFields.map(cf => cf.label),
+            ];
+
+            const rows = allRegsForExport.map((reg, idx) => [
+                idx + 1,
+                reg.student?.name || reg.externalName || '',
+                reg.student?.rollNo || '',
+                reg.student?.email || reg.externalEmail || '',
+                reg.student?.branch || '',
+                reg.student?.year || '',
+                reg.student?.program || '',
+                reg.externalName || '',
+                reg.externalEmail || '',
+                reg.status || '',
+                reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
+                reg.amountPaid || 0,
+                reg.student?.githubProfile || '',
+                reg.student?.linkedinProfile || '',
+                reg.student?.xProfile || '',
+                reg.student?.portfolioUrl || '',
+                ...customFields.map(cf => getFormResponse(reg, cf.label) || ''),
+            ]);
+
+            csvContent = [
+                headers.map(escapeCell).join(','),
+                ...rows.map(row => row.map(escapeCell).join(',')),
+            ].join('\n');
+        }
+
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -157,7 +294,11 @@ const EventRegistrations = () => {
                 {/* Stats Cards */}
                 {eventData && (() => {
                     const eventHasStarted = eventData.startTime && new Date(eventData.startTime) < new Date();
-                    const registeredCount = registrations.length;
+                    const isTeamEvent = eventData?.registrationType === 'team' || eventData?.registrationType === 'both';
+                    // Count teams as single units; individual rows counted separately
+                    const indivCount = (Array.isArray(registrations) ? registrations : []).filter(r => !r.teamId).length;
+                    const teamCount = Object.keys(fullTeamMap).length;
+                    const registeredCount = isTeamEvent ? indivCount + teamCount : registrations.length;
                     const attendedCount = eventHasStarted
                         ? (Array.isArray(registrations) ? registrations : []).filter(r => r.status === 'ATTENDED').length
                         : 0;
@@ -173,7 +314,10 @@ const EventRegistrations = () => {
                                 </p>
                                 <p className="text-3xl font-black text-black dark:text-white">{registeredCount}</p>
                                 <p className="text-[11px] text-neutral-500 mt-2">
-                                    out of {eventData.totalSeats || 'unlimited'} seats
+                                    {isTeamEvent
+                                        ? `${teamCount} team${teamCount !== 1 ? 's' : ''} · ${indivCount} individual${indivCount !== 1 ? 's' : ''}`
+                                        : `out of ${eventData.totalSeats || 'unlimited'} seats`
+                                    }
                                 </p>
                             </div>
 
@@ -237,7 +381,7 @@ const EventRegistrations = () => {
                             <i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 text-base" />
                             <input
                                 type="text"
-                                placeholder="Search by name, roll no, email, or branch..."
+                                placeholder={activeTab === 'team' ? 'Search by team name, leader, member name, roll no…' : 'Search by name, roll no, email, or branch…'}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-11 pr-10 py-3 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400"
@@ -249,8 +393,37 @@ const EventRegistrations = () => {
                             )}
                         </div>
                         <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-2 font-medium">
-                            Showing {filteredRegistrations.length} of {registrations.length} registrations
+                            {activeTab === 'team'
+                                ? `Showing ${teamRegs.length} of ${Object.keys(fullTeamMap).length} teams`
+                                : `Showing ${individualRegs.length} of ${allRegsArr.filter(r => !r.teamId).length} individual registrations`
+                            }
                         </p>
+                    </div>
+                )}
+
+                {/* Tabs selection if event supports team registration */}
+                {(eventData?.registrationType === 'team' || eventData?.registrationType === 'both') && (
+                    <div className="flex border-b border-neutral-200 dark:border-neutral-850 mb-6">
+                        <button
+                            onClick={() => setActiveTab('individual')}
+                            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                                activeTab === 'individual'
+                                    ? 'border-orange-600 text-orange-600 font-extrabold'
+                                    : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300'
+                            } bg-transparent border-0 outline-none`}
+                        >
+                            Individual Registrations ({individualRegs.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('team')}
+                            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                                activeTab === 'team'
+                                    ? 'border-orange-600 text-orange-600 font-extrabold'
+                                    : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300'
+                            } bg-transparent border-0 outline-none`}
+                        >
+                            Team Registrations ({teamRegs.length})
+                        </button>
                     </div>
                 )}
 
@@ -258,6 +431,106 @@ const EventRegistrations = () => {
                 {registrations.length === 0 ? (
                     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-2xl text-center text-neutral-500">
                         No students registered yet.
+                    </div>
+                ) : activeTab === 'team' && (eventData?.registrationType === 'team' || eventData?.registrationType === 'both') ? (
+                    <div className="space-y-4">
+                        {teamRegs.map((team, idx) => {
+                            const isExpanded = !!expandedTeams[team.id];
+                            return (
+                                <div key={team.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
+                                    {/* Header */}
+                                    <div
+                                        onClick={() => toggleTeam(team.id)}
+                                        className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-850/40 transition-colors cursor-pointer"
+                                    >
+                                        <div className="text-left">
+                                            <h4 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+                                                Team: <span className="text-orange-600 font-extrabold">{team.teamName}</span>
+                                            </h4>
+                                            <p className="text-[11px] text-neutral-500 mt-1">
+                                                Leader: <span className="font-semibold">{team.leader?.name}</span> • {team.members.length} members
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <span className="text-[11px] text-neutral-400 font-mono">
+                                                Registered: {new Date(team.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                            <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg ${
+                                                team.status === 'CONFIRMED' || team.status === 'REGISTERED'
+                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-450'
+                                                    : 'bg-orange-50 text-orange-700 dark:bg-orange-950/25 dark:text-orange-450'
+                                            }`}>
+                                                {team.status}
+                                            </span>
+                                            <i className={`ri-arrow-${isExpanded ? 'up' : 'down'}-s-line text-xl text-neutral-400`} />
+                                        </div>
+                                    </div>
+
+                                    {/* Expandable Table */}
+                                    {isExpanded && (
+                                        <div className="border-t border-neutral-100 dark:border-neutral-800 overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-neutral-100 dark:divide-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/20">
+                                                <thead className="bg-neutral-50/80 dark:bg-neutral-950/80">
+                                                    <tr>
+                                                        <th className="px-5 py-3 text-left text-[10px] font-bold text-neutral-500 dark:text-neutral-405 uppercase tracking-wider">Role</th>
+                                                        <th className="px-5 py-3 text-left text-[10px] font-bold text-neutral-500 dark:text-neutral-405 uppercase tracking-wider">Name</th>
+                                                        <th className="px-5 py-3 text-left text-[10px] font-bold text-neutral-500 dark:text-neutral-405 uppercase tracking-wider">Roll No</th>
+                                                        <th className="px-5 py-3 text-left text-[10px] font-bold text-neutral-500 dark:text-neutral-405 uppercase tracking-wider">Acaedmic Info</th>
+                                                        <th className="px-5 py-3 text-left text-[10px] font-bold text-neutral-500 dark:text-neutral-405 uppercase tracking-wider">Status</th>
+                                                        {customFields.map((cf, i) => (
+                                                            <th key={`team-cf-${i}`} className="px-5 py-3 text-left text-[10px] font-bold text-orange-600 uppercase tracking-wider">
+                                                                {cf.label}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 text-xs">
+                                                    {team.members.map((m) => {
+                                                        const isLeader = m.studentId === team.leader?.id;
+                                                        return (
+                                                            <tr key={m.id} className="hover:bg-neutral-100/30 dark:hover:bg-neutral-850/20 transition-colors">
+                                                                <td className="px-5 py-3 font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider text-[10px] text-left">
+                                                                    {isLeader ? (
+                                                                        <span className="text-orange-600 font-extrabold bg-orange-50 dark:bg-orange-950/20 border border-orange-200/50 rounded px-1.5 py-0.5">Leader</span>
+                                                                    ) : (
+                                                                        <span className="text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">Member</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-5 py-3 text-left">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold text-neutral-800 dark:text-neutral-200">{m.student?.name}</span>
+                                                                        <span className="text-neutral-400 dark:text-neutral-500 text-[10px] font-mono mt-0.5">{m.student?.email}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-3 font-mono text-left">{m.student?.rollNo || '-'}</td>
+                                                                <td className="px-5 py-3 text-neutral-550 dark:text-neutral-400 text-left">
+                                                                    {m.student?.program} • {m.student?.branch} ({m.student?.year})
+                                                                </td>
+                                                                <td className="px-5 py-3 text-left">
+                                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-405 border-0">
+                                                                        {m.status}
+                                                                    </span>
+                                                                </td>
+                                                                {customFields.map((cf, i) => {
+                                                                    const val = getFormResponse(m, cf.label);
+                                                                    return (
+                                                                        <td key={`team-cf-val-${i}`} className="px-5 py-3 text-neutral-600 dark:text-neutral-350 text-left">
+                                                                            {cf.type === 'url' && val ? (
+                                                                                <a href={val} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-700 underline font-semibold">Link</a>
+                                                                            ) : val || '-'}
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
@@ -279,7 +552,7 @@ const EventRegistrations = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-neutral-900 divide-y divide-neutral-100 dark:divide-neutral-800">
-                                    {filteredRegistrations.map((reg, idx) => {
+                                    {individualRegs.map((reg, idx) => {
                                         const isInternal = !!reg.student;
                                         const studentName = reg.student?.name || reg.externalName || 'Unknown';
                                         const studentEmail = reg.student?.email || reg.externalEmail || '-';

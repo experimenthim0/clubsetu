@@ -23,7 +23,14 @@ const AdminLogin = () => {
         localStorage.setItem('role', res.data.admin.role);
         localStorage.setItem('token', res.data.token);
         showNotification('Welcome back, Admin!', 'success');
-        navigate('/admin-dashboard');
+        
+        if (res.data.admin.role === 'lostFoundAdmin') {
+          navigate('/admin/lost-found');
+        } else if (res.data.admin.role === 'facultyCoordinator') {
+          navigate('/');
+        } else {
+          navigate('/admin-dashboard');
+        }
       }
     } catch (err) {
       showNotification(err.response?.data?.message || 'Login failed', 'error');

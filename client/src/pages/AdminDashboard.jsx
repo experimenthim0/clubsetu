@@ -25,6 +25,17 @@ const AdminDashboard = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab');
 
+    // Profile Management States
+    const [profileName, setProfileName] = useState('');
+    const [profileEmail, setProfileEmail] = useState('');
+    const [profile2FA, setProfile2FA] = useState(false);
+    const [profilePasswordForm, setProfilePasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+
     // Sync tab param with activeTab state
     useEffect(() => {
         if (tabParam) {
@@ -48,6 +59,18 @@ const AdminDashboard = () => {
         
         const adminData = JSON.parse(adminDataString);
         setRole(adminData.role);
+        setProfileName(adminData.name || '');
+        setProfileEmail(adminData.email || '');
+        setProfile2FA(adminData.isTwoStepEnabled || false);
+
+        if (adminData.role === 'lostFoundAdmin') {
+            navigate('/admin/lost-found');
+            return;
+        }
+        if (adminData.role === 'facultyCoordinator') {
+            navigate('/');
+            return;
+        }
 
         const fetchData = async () => {
             try {
@@ -213,6 +236,63 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        setIsSavingProfile(true);
+        try {
+            const adminDataString = localStorage.getItem('admin');
+            const adminData = JSON.parse(adminDataString);
+            
+            const updateRes = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${adminData.role}/${adminData.id || adminData._id}`, {
+                name: profileName,
+                isTwoStepEnabled: profile2FA
+            });
+            
+            const updatedAdmin = {
+                ...adminData,
+                name: updateRes.data.user.name,
+                isTwoStepEnabled: updateRes.data.user.isTwoStepEnabled
+            };
+            localStorage.setItem('admin', JSON.stringify(updatedAdmin));
+            localStorage.setItem('user', JSON.stringify(updatedAdmin));
+            
+            showNotification('Profile updated successfully', 'success');
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to update profile', 'error');
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (profilePasswordForm.newPassword !== profilePasswordForm.confirmPassword) {
+            showNotification('New passwords do not match', 'error');
+            return;
+        }
+        if (profilePasswordForm.newPassword.length < 6) {
+            showNotification('Password must be at least 6 characters long', 'error');
+            return;
+        }
+        setIsSavingProfile(true);
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
+                currentPassword: profilePasswordForm.currentPassword,
+                newPassword: profilePasswordForm.newPassword
+            });
+            showNotification('Password changed successfully', 'success');
+            setProfilePasswordForm({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (err) {
+            showNotification(err.response?.data?.message || 'Failed to change password', 'error');
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
     /* ─── Tab Titles ───────────────────────────────────────────────────── */
     const tabTitles = {
         overview: { title: 'Overview', subtitle: 'All events at a glance' },
@@ -220,6 +300,7 @@ const AdminDashboard = () => {
         'club-heads': { title: 'Manage Clubs', subtitle: 'Create and edit registered clubs' },
         coordinators: { title: 'Coordinators', subtitle: 'Faculty coordinator accounts' },
         'event-data': { title: 'Event Data', subtitle: 'Filter, analyze & export' },
+        profile: { title: 'Profile Settings', subtitle: 'Update display name, password, and two-step verification' },
     };
 
     if (loading) return (
@@ -600,6 +681,126 @@ const AdminDashboard = () => {
                                 )}
                             </tbody>
                         </DataTable>
+                    </div>
+                )}
+
+                {/* ── PROFILE SETTINGS TAB ──────────────────────────────── */}
+                {activeTab === 'profile' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Profile Info Form */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <form onSubmit={handleUpdateProfile} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 p-6 md:p-8 rounded-2xl shadow-sm space-y-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Admin Details</h2>
+                                
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 tracking-wider mb-2">Email Address</label>
+                                    <input 
+                                        type="email" 
+                                        disabled 
+                                        value={profileEmail} 
+                                        className="w-full px-4 py-2.5 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-neutral-50 dark:bg-neutral-950 text-neutral-400 outline-none text-sm font-medium"
+                                    />
+                                    <p className="text-[10px] text-neutral-400 mt-1">Contact system administrator to change your email.</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 tracking-wider mb-2">Display Name</label>
+                                    <input 
+                                        type="text" 
+                                        required 
+                                        value={profileName} 
+                                        onChange={(e) => setProfileName(e.target.value)}
+                                        placeholder="Enter display name"
+                                        className="w-full px-4 py-2.5 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+
+                                {/* 2FA Toggle */}
+                                <div className="pt-6 border-t border-neutral-100 dark:border-zinc-850">
+                                    <label className="flex items-center justify-between p-4 bg-orange-50/30 dark:bg-orange-950/10 border border-orange-200 dark:border-orange-900/40 rounded-xl cursor-pointer group hover:border-orange-500 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <i className="ri-shield-check-line text-2xl text-orange-600" />
+                                            <div>
+                                                <p className="text-sm font-bold text-neutral-900 dark:text-neutral-200 tracking-tight">2-Step Verification</p>
+                                                <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Requires an email OTP code every time you login.</p>
+                                            </div>
+                                        </div>
+                                        <div className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={profile2FA}
+                                                onChange={(e) => setProfile2FA(e.target.checked)}
+                                                className="sr-only peer" 
+                                            />
+                                            <div className="w-11 h-6 bg-neutral-200 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isSavingProfile}
+                                        className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isSavingProfile ? 'Saving...' : 'Save Settings'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Change Password Form */}
+                        <div>
+                            <form onSubmit={handleChangePassword} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 p-6 md:p-8 rounded-2xl shadow-sm space-y-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Change Password</h2>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 tracking-wider mb-2">Current Password</label>
+                                    <input 
+                                        type="password" 
+                                        required 
+                                        value={profilePasswordForm.currentPassword}
+                                        onChange={(e) => setProfilePasswordForm({ ...profilePasswordForm, currentPassword: e.target.value })}
+                                        placeholder="Enter old password"
+                                        className="w-full px-4 py-2.5 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 tracking-wider mb-2">New Password</label>
+                                    <input 
+                                        type="password" 
+                                        required 
+                                        value={profilePasswordForm.newPassword}
+                                        onChange={(e) => setProfilePasswordForm({ ...profilePasswordForm, newPassword: e.target.value })}
+                                        placeholder="Min. 6 characters"
+                                        className="w-full px-4 py-2.5 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 tracking-wider mb-2">Confirm New Password</label>
+                                    <input 
+                                        type="password" 
+                                        required 
+                                        value={profilePasswordForm.confirmPassword}
+                                        onChange={(e) => setProfilePasswordForm({ ...profilePasswordForm, confirmPassword: e.target.value })}
+                                        placeholder="Confirm new password"
+                                        className="w-full px-4 py-2.5 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all text-sm font-medium"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isSavingProfile}
+                                        className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isSavingProfile ? 'Saving...' : 'Update Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 )}
 

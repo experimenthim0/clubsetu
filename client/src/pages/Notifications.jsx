@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { useNotification } from "../context/NotificationContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -24,7 +25,39 @@ const formatRelativeTime = (dateStr) => {
 const Notifications = () => {
   const { notifications, unreadCount, setUnreadCount, setNotifications } =
     useSocket() || {};
+  const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
+
+  const handleAcceptInvite = async (notifId) => {
+    if (actionLoading[notifId]) return;
+    setActionLoading(prev => ({ ...prev, [notifId]: 'accept' }));
+    try {
+      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/accept`);
+      showNotification(res.data.message || 'Invitation accepted successfully!', 'success');
+      const notifsRes = await axios.get(`${API_URL}/api/notifications`);
+      setNotifications(notifsRes.data);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to accept invitation', 'error');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [notifId]: null }));
+    }
+  };
+
+  const handleDeclineInvite = async (notifId) => {
+    if (actionLoading[notifId]) return;
+    setActionLoading(prev => ({ ...prev, [notifId]: 'decline' }));
+    try {
+      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/decline`);
+      showNotification(res.data.message || 'Invitation declined.', 'success');
+      const notifsRes = await axios.get(`${API_URL}/api/notifications`);
+      setNotifications(notifsRes.data);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to decline invitation', 'error');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [notifId]: null }));
+    }
+  };
 
   useEffect(() => {
     document.title = "Notifications - CampusNode";
@@ -159,7 +192,42 @@ const Notifications = () => {
                     </p>
 
                     {/* Actions */}
-                    {(notif.eventId || !isRead) && (
+                    {notif.type === "TEAM_INVITATION" && notif.title === "Team Invitation" ? (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          onClick={() => handleAcceptInvite(notif._id)}
+                          disabled={!!actionLoading[notif._id]}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-60 text-white text-[11px] font-bold transition-colors cursor-pointer border-0 outline-none shadow-sm"
+                        >
+                          {actionLoading[notif._id] === 'accept' ? (
+                            <>
+                              <i className="ri-loader-4-line animate-spin text-xs" /> Accepting...
+                            </>
+                          ) : (
+                            'Accept Invite'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeclineInvite(notif._id)}
+                          disabled={!!actionLoading[notif._id]}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:bg-rose-800 disabled:opacity-60 text-white text-[11px] font-bold transition-colors cursor-pointer border-0 outline-none shadow-sm"
+                        >
+                          {actionLoading[notif._id] === 'decline' ? (
+                            <>
+                              <i className="ri-loader-4-line animate-spin text-xs" /> Declining...
+                            </>
+                          ) : (
+                            'Decline'
+                          )}
+                        </button>
+                        <Link
+                          to={`/event/${notif.eventId}`}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors text-[11px] font-semibold"
+                        >
+                          View Event
+                        </Link>
+                      </div>
+                    ) : (notif.eventId || !isRead) && (
                       <div className="mt-4 flex flex-wrap gap-3">
                         {notif.eventId && (
                           <Link
@@ -172,7 +240,7 @@ const Notifications = () => {
                         {!isRead && (
                           <button
                             onClick={() => handleMarkAsRead(notif._id)}
-                            className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white hover:border-neutral-300 transition-colors text-[11px] font-semibold cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white hover:border-neutral-300 transition-colors text-[11px] font-semibold cursor-pointer border-0 outline-none"
                           >
                             Mark as read
                           </button>

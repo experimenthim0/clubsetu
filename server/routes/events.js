@@ -77,6 +77,9 @@ const eventSchema = z.object({
     allowedYears: z.array(z.string()).optional(),
     allowedBranches: z.array(z.string()).optional(),
     registrationDeadline: z.coerce.date().optional().nullable(),
+    registrationType: z.enum(['individual', 'team', 'both']).optional().default('individual'),
+    minTeamSize: z.coerce.number().int().min(1).optional().default(1),
+    maxTeamSize: z.coerce.number().int().min(1).optional().default(1),
     winners: z.array(z.any()).optional(),
     showWinner: z.boolean().optional(),
     provideCertificate: z.boolean().optional(),
@@ -337,6 +340,16 @@ router.get(
         include: {
           event: { include: eventInclude },
           student: true,
+          team: {
+            include: {
+              leader: { select: { id: true, name: true, email: true, rollNo: true } },
+              members: {
+                include: {
+                  user: { select: { id: true, name: true, email: true, rollNo: true } }
+                }
+              }
+            }
+          }
         },
         orderBy: { createdAt: "desc" },
       });
@@ -376,6 +389,9 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
       allowedYears,
       allowedBranches,
       registrationDeadline,
+      registrationType,
+      minTeamSize,
+      maxTeamSize,
       sponsors,
       media,
       showWinner,
@@ -432,6 +448,9 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
         allowedYears: allowedYears || [],
         allowedBranches: allowedBranches || [],
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+        registrationType: registrationType || "individual",
+        minTeamSize: minTeamSize !== undefined ? Number(minTeamSize) : 1,
+        maxTeamSize: maxTeamSize !== undefined ? Number(maxTeamSize) : 1,
         showWinner: showWinner || false,
         provideCertificate: provideCertificate || false,
         slug: await slugifyUnique(title, 'event', 'slug'),
@@ -717,6 +736,12 @@ router.get(
               program: true,
             },
           },
+          team: {
+            include: {
+              leader: { select: { id: true, name: true } },
+              members: { include: { user: { select: { id: true, name: true } } } }
+            }
+          }
         },
       });
 
@@ -735,6 +760,8 @@ router.get(
           createdAt: p.createdAt,
           timestamp: p.createdAt,
           student: p.student || null,
+          teamId: p.teamId,
+          team: p.team || null,
         })),
       });
     } catch (err) {
@@ -771,6 +798,9 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
       "allowedYears",
       "allowedBranches",
       "registrationDeadline",
+      "registrationType",
+      "minTeamSize",
+      "maxTeamSize",
       "winners",
       "showWinner",
       "provideCertificate",
@@ -794,6 +824,8 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
     }
     if (updates.entryFee !== undefined) updates.entryFee = Number(updates.entryFee || 0);
     if (updates.totalSeats !== undefined) updates.totalSeats = Number(updates.totalSeats || 0);
+    if (updates.minTeamSize !== undefined) updates.minTeamSize = Number(updates.minTeamSize || 1);
+    if (updates.maxTeamSize !== undefined) updates.maxTeamSize = Number(updates.maxTeamSize || 1);
 
     const updatedEvent = await prisma.$transaction(async (tx) => {
       if (sponsors !== undefined) {
@@ -825,24 +857,63 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
 
 // ── DELETE /events/:id — delete event ─────────────────────────────────────────
 
-router.delete("/:id", verifyToken, allowRoles("club", "admin"), async (req, res) => {
+router.delete("/:id", verifyToken, allowRoles("club", "admin", "facultyCoordinator"), async (req, res) => {
   try {
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (event.createdById !== req.user.userId && req.user.role !== "admin") {
+    // Club role: can only request deletion
+    if (req.user.role === "club") {
+      if (event.createdById !== req.user.userId) {
+        return res.status(403).json({ message: "Unauthorized to request deletion of this event." });
+      }
+
+      await prisma.event.update({
+        where: { id: req.params.id },
+        data: { reviewStatus: "DELETION_REQUESTED" }
+      });
+      return res.json({ message: "Deletion request submitted for faculty approval." });
+    }
+
+    // Admin / Faculty Coordinator role: can delete/approve deletion immediately
+    if (req.user.role !== "admin" && req.user.role !== "facultyCoordinator") {
       return res.status(403).json({ message: "Unauthorized to delete this event." });
+    }
+
+    if (req.user.role === "facultyCoordinator" && event.clubId !== req.user.clubId) {
+      return res.status(403).json({ message: "You can only delete events for your assigned club." });
     }
 
     await prisma.event.delete({ where: { id: req.params.id } });
     res.json({ message: "Event deleted successfully." });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(550).json({ message: err.message });
   }
 });
 
-// ── DELETE /events/:id/register — deregister from event ──────────────────────
+async function notifyMemberDeregistered(io, recipientId, title, message) {
+  try {
+    const notification = await prisma.notification.create({
+      data: {
+        id: createObjectId(),
+        recipientStudentId: recipientId,
+        title,
+        message,
+      },
+    });
+    if (io) {
+      io.to(recipientId).emit("new-notification", {
+        ...notification,
+        _id: notification.id,
+        sender: { name: "System" },
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send deregistration notification:", err);
+  }
+}
 
+// ── DELETE /events/:id/register — deregister from event ──────────────────────
 router.delete(
   "/:id/register",
   verifyToken,
@@ -878,9 +949,110 @@ router.delete(
 
       const participation = await prisma.participation.findFirst({
         where: { eventId, studentId: studentId },
+        include: { event: true }
       });
       if (!participation) return res.status(404).json({ message: "Registration not found." });
 
+      const event = participation.event;
+
+      // Check if it is a team registration
+      if (participation.teamId) {
+        const team = await prisma.team.findUnique({
+          where: { id: participation.teamId },
+          include: { leader: true }
+        });
+
+        if (team && team.leaderId === studentId) {
+          // The student deregistering is the team leader.
+          // Deregister the entire team!
+          const teamParticipations = await prisma.participation.findMany({
+            where: { teamId: participation.teamId },
+            include: { student: true }
+          });
+
+          await prisma.$transaction(async (tx) => {
+            for (const tp of teamParticipations) {
+              await tx.participation.delete({ where: { id: tp.id } });
+
+              if (tp.status === "REGISTERED") {
+                await tx.event.update({
+                  where: { id: eventId },
+                  data: { registeredCount: { decrement: 1 } },
+                });
+              } else {
+                const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
+                await tx.event.update({
+                  where: { id: eventId },
+                  data: {
+                    waitingListIds: (latestEvent?.waitingListIds || []).filter(
+                      (id) => id !== tp.id,
+                    ),
+                  },
+                });
+              }
+            }
+
+            // Delete team members and the team
+            await tx.teamMember.deleteMany({ where: { teamId: participation.teamId } });
+            await tx.team.delete({ where: { id: participation.teamId } });
+          });
+
+          // Send notifications to all team members (except the leader)
+          for (const tp of teamParticipations) {
+            if (tp.studentId && tp.studentId !== team.leaderId) {
+              await notifyMemberDeregistered(
+                req.io,
+                tp.studentId,
+                "Team Deregistered",
+                `The team leader ${team.leader?.name || 'leader'} has deregistered team "${team.teamName}" from "${event.title}". Your registration has been cancelled.`
+              );
+            }
+          }
+
+          return res.json({ message: "Team and all members deregistered successfully." });
+        } else if (team) {
+          // Teammate leaving individually
+          await prisma.$transaction(async (tx) => {
+            await tx.participation.delete({ where: { id: participation.id } });
+            await tx.teamMember.deleteMany({
+              where: {
+                teamId: participation.teamId,
+                userId: studentId
+              }
+            });
+
+            if (participation.status === "REGISTERED") {
+              await tx.event.update({
+                where: { id: eventId },
+                data: { registeredCount: { decrement: 1 } },
+              });
+            } else {
+              const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
+              await tx.event.update({
+                where: { id: eventId },
+                data: {
+                  waitingListIds: (latestEvent?.waitingListIds || []).filter(
+                    (id) => id !== participation.id,
+                  ),
+                },
+              });
+            }
+          });
+
+          // Notify the leader that a teammate left
+          const student = await prisma.studentUser.findUnique({ where: { id: studentId } });
+          await notifyMemberDeregistered(
+            req.io,
+            team.leaderId,
+            "Teammate Left Team",
+            `${student?.name || 'A teammate'} has left team "${team.teamName}" for event "${event.title}".`
+          );
+
+          return res.json({ message: "Deregistered successfully from the team." });
+        }
+      }
+
+      // Individual registration
       await prisma.$transaction(async (tx) => {
         await tx.participation.delete({ where: { id: participation.id } });
 
@@ -890,11 +1062,11 @@ router.delete(
             data: { registeredCount: { decrement: 1 } },
           });
         } else {
-          const event = await tx.event.findUnique({ where: { id: eventId } });
+          const latestEvent = await tx.event.findUnique({ where: { id: eventId } });
           await tx.event.update({
             where: { id: eventId },
             data: {
-              waitingListIds: (event?.waitingListIds || []).filter(
+              waitingListIds: (latestEvent?.waitingListIds || []).filter(
                 (id) => id !== participation.id,
               ),
             },
@@ -906,10 +1078,8 @@ router.delete(
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
-  },
+  }
 );
-
-// ── POST /events/:id/check-in — QR Attendance Scan ─────────────────────────
 
 router.post(
   "/:id/check-in",

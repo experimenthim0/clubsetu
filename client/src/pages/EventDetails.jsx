@@ -77,6 +77,39 @@ const EventDetails = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
 
+  // Team Registration States
+  const [teamModalOpen, setTeamModalOpen] = useState(false);
+  const [teamChoiceModalOpen, setTeamChoiceModalOpen] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [teammates, setTeammates] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${searchQuery}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        const filtered = res.data.filter(s => s.id !== currentUser?.id && !teammates.some(t => t.id === s.id));
+        setSearchResults(filtered);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, teammates]);
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -87,12 +120,30 @@ const EventDetails = () => {
           params: { skipIncrement: hasViewed === 'true' }
         });
         
-        setEvent(res.data);
-        if (res.data.entryFee > 0) loadRazorpay();
+        const eventData = res.data;
+        setEvent(eventData);
+        if (eventData.entryFee > 0) loadRazorpay();
         
         if (!hasViewed) {
           sessionStorage.setItem(viewedKey, 'true');
         }
+
+        // Check if the user is already registered for this event
+        const user = JSON.parse(localStorage.getItem('user'));
+        const role = localStorage.getItem('role');
+        if (user && (role === 'member' || role === 'student')) {
+          try {
+            const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user.id || user._id}`);
+            const eventId = eventData.id || eventData._id;
+            const isAlreadyReg = regRes.data.some(r => r.eventId && (r.eventId.id === eventId || r.eventId._id === eventId));
+            if (isAlreadyReg) {
+              setAlreadyRegistered(true);
+            }
+          } catch (regErr) {
+            console.error('Failed to check user registration status:', regErr);
+          }
+        }
+        
         setLoading(false);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load event');
@@ -126,20 +177,22 @@ const EventDetails = () => {
     }
   }, [event]);
 
-  const handleRegister = async () => {
+  const handleSelectRegisterAsTeam = () => {
+    setTeamChoiceModalOpen(false);
+    setTeamName('');
+    setTeammates([]);
+    setSearchQuery('');
+    setSearchResults([]);
+    setCustomFormResponses({});
+    setTeamModalOpen(true);
+  };
+
+  const handleIndividualRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
 
     // Authenticated path
     if (user && role === 'member') {
-      if (event.requiredFields && event.requiredFields.length > 0) {
-        const missing = event.requiredFields.filter(field => !user[field]);
-        if (missing.length > 0) {
-          setMissingFields(missing);
-          setMissingFieldsModalOpen(true);
-          return;
-        }
-      }
       if (event.customFields && event.customFields.length > 0) {
         setCustomFormResponses({});
         setCustomFormModalOpen(true);
@@ -217,10 +270,146 @@ const EventDetails = () => {
       } finally { setIsRegistering(false); }
       return;
     }
+  };
 
-    // Logged in but not as a student
-    showNotification('Please login as a student to register.', 'warning');
-    navigate('/login');
+  const handleRegister = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const role = localStorage.getItem('role');
+
+    // Unauthenticated path
+    if (!user) {
+      handleIndividualRegister();
+      return;
+    }
+
+    if (role !== 'member') {
+      showNotification('Please login as a student to register.', 'warning');
+      navigate('/login');
+      return;
+    }
+
+    if (event.requiredFields && event.requiredFields.length > 0) {
+      const missing = event.requiredFields.filter(field => !user[field]);
+      if (missing.length > 0) {
+        setMissingFields(missing);
+        setMissingFieldsModalOpen(true);
+        return;
+      }
+    }
+
+    if (event.registrationType === 'team') {
+      handleSelectRegisterAsTeam();
+      return;
+    }
+
+    if (event.registrationType === 'both') {
+      setTeamChoiceModalOpen(true);
+      return;
+    }
+
+    handleIndividualRegister();
+  };
+
+  const handleTeamSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+
+    if (!teamName.trim()) {
+      showNotification('Please enter a team name.', 'warning');
+      return;
+    }
+
+    const teamSize = teammates.length + 1;
+    const minSize = event.minTeamSize || 1;
+    const maxSize = event.maxTeamSize || 1;
+
+    if (teamSize < minSize || teamSize > maxSize) {
+      showNotification(`Team size must be between ${minSize} and ${maxSize} members. Current: ${teamSize}`, 'warning');
+      return;
+    }
+
+    // Validate required custom fields
+    if (event.customFields && event.customFields.length > 0) {
+      for (const field of event.customFields) {
+        if (field.required && !customFormResponses[field.label]?.trim()) {
+          showNotification(`Please fill out the required field: ${field.label}`, 'warning');
+          return;
+        }
+      }
+    }
+
+    // Paid path for Team
+    if (event.entryFee > 0) {
+      try {
+        await loadRazorpay();
+        const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, {
+          eventId: event.id || event._id,
+          studentId: user.id
+        });
+        const { orderId, amount, currency, keyId, eventTitle } = orderRes.data;
+        const options = {
+          key: keyId, amount: amount * 100, currency, name: 'CampusNode',
+          description: `Team Registration for ${eventTitle}`, order_id: orderId,
+          handler: async (response) => {
+            try {
+              const token = localStorage.getItem('token');
+              const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
+                eventId: event.id || event._id,
+                teamName: teamName,
+                members: teammates.map(t => t.id),
+                formResponses: customFormResponses || {},
+                orderId,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (verifyRes.data.success) {
+                showNotification(`Successfully registered team ${teamName}!`, 'success');
+                setTeamModalOpen(false);
+                setTimeout(() => navigate('/my-events'), 1500);
+              }
+            } catch (err) {
+              showNotification(err.response?.data?.message || 'Payment verification failed', 'error');
+            }
+          },
+          prefill: { name: user.name, email: user.email, contact: user.phone || '' },
+          theme: { color: '#EA580C' },
+          modal: { ondismiss: () => showNotification('Payment cancelled', 'info') }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        showNotification(err.response?.data?.message || 'Failed to initiate payment', 'error');
+      }
+      return;
+    }
+
+    // Free path for Team
+    setIsRegistering(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
+        eventId: event.id || event._id,
+        teamName: teamName,
+        members: teammates.map(t => t.id),
+        formResponses: customFormResponses || {},
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.status === 'WAITLISTED') {
+        showNotification('Your team has been added to the waitlist.', 'info');
+      } else {
+        showNotification(`Successfully registered team ${teamName}!`, 'success');
+      }
+      setTeamModalOpen(false);
+      setTimeout(() => navigate('/my-events'), 1500);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Team registration failed', 'error');
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const handleSaveAndRegister = async () => {
@@ -1122,6 +1311,196 @@ const EventDetails = () => {
             >
               Acknowledge & Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Team Registration Choice Modal ── */}
+      {teamChoiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-2xl max-w-sm w-full shadow-2xl p-6">
+            <h3 className="font-black text-black dark:text-white text-lg mb-2">Registration Mode</h3>
+            <p className="text-neutral-500 text-xs mb-6">Choose how you want to participate in this event.</p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setTeamChoiceModalOpen(false);
+                  handleIndividualRegister();
+                }}
+                className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+              >
+                Register as Individual
+              </button>
+              <button
+                onClick={handleSelectRegisterAsTeam}
+                className="w-full px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer"
+              >
+                Register as Team
+              </button>
+              <button
+                onClick={() => setTeamChoiceModalOpen(false)}
+                className="w-full px-4 py-2 mt-2 text-xs text-neutral-400 hover:text-black dark:hover:text-white transition-colors border-0 bg-transparent outline-none cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Team Registration Modal ── */}
+      {teamModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-xl max-w-lg w-full shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="bg-orange-600 px-6 py-4 rounded-t-xl border-b-2 border-black dark:border-neutral-700 shrink-0">
+              <h3 className="font-black text-white text-lg flex items-center gap-2">
+                <i className="ri-group-line" /> Create Team
+              </h3>
+              <p className="text-white/80 text-xs mt-1">Form a team to register for {event.title}</p>
+            </div>
+            
+            <form onSubmit={handleTeamSubmit} className="p-6 overflow-y-auto flex-1 space-y-5">
+              {/* Team Name */}
+              <div>
+                <label className="block text-sm font-bold text-black dark:text-white mb-1.5 font-sans">Team Name <span className="text-orange-600">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter a unique team name"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  className="w-full px-4 py-2.5 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-neutral-800 text-black dark:text-white"
+                />
+              </div>
+
+              {/* Members/Teammates selection */}
+              <div>
+                <label className="block text-sm font-bold text-black dark:text-white mb-1.5">
+                  Add Teammates <span className="text-xs text-neutral-400 font-medium">(Team size: {teammates.length + 1} / min {event.minTeamSize || 1}, max {event.maxTeamSize || 1})</span>
+                </label>
+                <div className="relative">
+                  <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by Email or Roll Number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-500 focus:outline-none bg-white dark:bg-neutral-800 text-black dark:text-white"
+                  />
+                  {searching && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <i className="ri-loader-4-line animate-spin text-orange-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Autocomplete dropdown */}
+                {searchResults.length > 0 && (
+                  <div className="absolute z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg w-[calc(100%-3rem)] max-w-md divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {searchResults.map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => {
+                          setTeammates([...teammates, s]);
+                          setSearchQuery('');
+                          setSearchResults([]);
+                        }}
+                        className="p-3 text-xs hover:bg-orange-50 dark:hover:bg-neutral-800 cursor-pointer flex justify-between items-center transition-colors"
+                      >
+                        <div className="text-left">
+                          <p className="font-bold text-neutral-800 dark:text-neutral-200">{s.name}</p>
+                          <p className="text-neutral-400 font-mono mt-0.5">{s.rollNo} • {s.email}</p>
+                        </div>
+                        <span className="text-orange-600 font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200/50 rounded">Add</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Roster list */}
+              <div className="bg-neutral-50 dark:bg-neutral-800/40 p-4 border border-neutral-200 dark:border-neutral-850 rounded-xl space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 text-left">Team Roster</p>
+                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                  {/* Leader */}
+                  <div className="py-2.5 flex justify-between items-center text-xs">
+                    <div className="text-left">
+                      <p className="font-bold text-neutral-800 dark:text-neutral-200">{JSON.parse(localStorage.getItem('user'))?.name} <span className="text-orange-600 font-extrabold">(You)</span></p>
+                      <p className="text-neutral-400 font-mono mt-0.5">{JSON.parse(localStorage.getItem('user'))?.rollNo}</p>
+                    </div>
+                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Leader</span>
+                  </div>
+                  {/* Members */}
+                  {teammates.map((member) => (
+                    <div key={member.id} className="py-2.5 flex justify-between items-center text-xs">
+                      <div className="text-left">
+                        <p className="font-bold text-neutral-800 dark:text-neutral-200">{member.name}</p>
+                        <p className="text-neutral-400 font-mono mt-0.5">{member.rollNo}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTeammates(teammates.filter(t => t.id !== member.id))}
+                        className="px-2.5 py-1 text-[10px] font-bold text-red-600 hover:text-red-700 bg-transparent border-0 outline-none cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  {teammates.length === 0 && (
+                    <div className="py-3 text-center text-xs text-neutral-400 font-medium">
+                      No teammates added yet. Search above to add.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional custom fields if any */}
+              {event.customFields && event.customFields.length > 0 && (
+                <div className="space-y-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1 text-left">Additional Information</p>
+                  {(event.customFields || []).map((field, idx) => (
+                    <div key={idx}>
+                      <label className="block text-sm font-bold text-black dark:text-white mb-1.5 text-left">
+                        {field.label}{' '}{field.required && <span className="text-orange-600">*</span>}
+                      </label>
+                      {field.type === 'text' && (
+                        <input type="text" placeholder={`Enter ${field.label.toLowerCase()}`} value={customFormResponses[field.label] || ''} onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })} className="w-full px-4 py-2.5 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-neutral-800 text-black dark:text-white" required={field.required} />
+                      )}
+                      {field.type === 'url' && (
+                        <input type="url" placeholder="https://..." value={customFormResponses[field.label] || ''} onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })} className="w-full px-4 py-2.5 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-neutral-800 text-black dark:text-white" required={field.required} />
+                      )}
+                      {field.type === 'textarea' && (
+                        <textarea rows="3" placeholder={`Enter ${field.label.toLowerCase()}`} value={customFormResponses[field.label] || ''} onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })} className="w-full px-4 py-2.5 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors resize-none bg-white dark:bg-neutral-800 text-black dark:text-white" required={field.required} />
+                      )}
+                      {field.type === 'select' && (
+                        <select value={customFormResponses[field.label] || ''} onChange={(e) => setCustomFormResponses({ ...customFormResponses, [field.label]: e.target.value })} className="w-full px-4 py-2.5 border-2 border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-neutral-800 text-black dark:text-white" required={field.required}>
+                          <option value="">Select an option</option>
+                          {(field.options || []).map((opt, optIdx) => <option key={optIdx} value={opt}>{opt}</option>)}
+                        </select>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => { setTeamModalOpen(false); setCustomFormResponses({}); }}
+                  className="flex-1 px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer border-0 outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRegistering}
+                  className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0 outline-none"
+                >
+                  {isRegistering ? 'Registering...' : (event.entryFee > 0 ? `Pay ₹${event.entryFee} & Create` : 'Create Team')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@ import { LinkedinIcon } from '@/components/ui/linkedin';
 import { MailIcon, Github, Linkedin, Twitter, ExternalLink } from 'lucide-react';
 import { AtSignIcon } from '@/components/ui/at-sign';
 import { EarthIcon } from '@/components/ui/earth';
+import { ZapIcon } from '@/components/ui/zap';
 // Ticker items
 const tickerItems = [
   'Workshops', 'Hackathons', 'Cultural Fests', 'Sports Meets',
@@ -569,8 +570,8 @@ const Home = () => {
           {/* ── "MY NODE" CONTROL PANEL ─────────────────────────────────────── */}
           <section className="relative pt-28 pb-12 bg-neutral-50 dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800/80 text-neutral-900 dark:text-white transition-colors duration-300 overflow-hidden">
             {/* Glow Effects */}
-            <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-orange-500/[0.05] dark:bg-orange-600/[0.08] rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-yellow-500/[0.03] dark:bg-yellow-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
+            {/* <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-orange-500/[0.05] dark:bg-orange-600/[0.08] rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-yellow-500/[0.03] dark:bg-yellow-500/[0.05] rounded-full blur-[100px] pointer-events-none" /> */}
             
             <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-neutral-200 dark:border-neutral-800">
@@ -1177,7 +1178,7 @@ const Home = () => {
           }
         }
       `}</style>
-      <section id="team" className="py-24 bg-neutral-50/50 dark:bg-neutral-950/20 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
+      <section id="team" className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
         {/* Glow accent */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-orange-500/[0.02] dark:bg-orange-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
 
@@ -1219,7 +1220,7 @@ const Home = () => {
           ) : (
             <ScrollReveal direction="up" delay={0.2}>
               <div
-                className="mx-auto text-center"
+                className="mx-auto text-center flex items-center justify-center flex-col"
                 style={{
                   maxWidth: '480px',
                   padding: '64px 32px',
@@ -1227,23 +1228,11 @@ const Home = () => {
                   borderColor: 'rgba(234,88,12,0.18)',
                   borderRadius: '20px',
                   background: 'rgba(234,88,12,0.02)',
+                   
                 }}
               >
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    background: 'rgba(234,88,12,0.08)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 20px',
-                  }}
-                  aria-hidden="true"
-                >
-                  <span style={{ fontSize: '22px' }}>⚡</span>
-                </div>
+               
+                  <ZapIcon style={{ fontSize: '22px' }} className='mb-4' />
                 <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
                   Team expansion in progress
                 </h3>

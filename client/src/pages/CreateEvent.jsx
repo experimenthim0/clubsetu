@@ -29,6 +29,9 @@ const CreateEvent = () => {
         allowedBranches: [],
         showWinner: false,
         provideCertificate: false,
+        registrationType: 'individual',
+        minTeamSize: 1,
+        maxTeamSize: 1,
     });
     const [sponsors, setSponsors] = useState([]);
     const [media, setMedia] = useState([]);
@@ -40,6 +43,7 @@ const CreateEvent = () => {
     const [allBranches, setAllBranches] = useState(true);
     const [error, setError] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -215,22 +219,42 @@ const CreateEvent = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
+        setError('');
         const start = new Date(formData.startTime);
         const end = new Date(formData.endTime);
 
         if (start >= end) {
             setError('End time must be after start time.');
+            setIsSubmitting(false);
             return;
         }
 
         if (formData.registrationDeadline && new Date(formData.registrationDeadline) > start) {
             setError('Registration deadline cannot be after event start time.');
+            setIsSubmitting(false);
             return;
         }
 
         if (!validateSponsorsAndMedia()) {
             setError('Please fix the sponsor and media errors before submitting.');
+            setIsSubmitting(false);
             return;
+        }
+
+        if (formData.registrationType === 'team' || formData.registrationType === 'both') {
+            const min = Number(formData.minTeamSize || 1);
+            const max = Number(formData.maxTeamSize || 1);
+            if (min < 1) {
+                setError('Minimum team size must be at least 1.');
+                setIsSubmitting(false);
+                return;
+            }
+            if (max < min) {
+                setError('Maximum team size cannot be less than the minimum team size.');
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         const payload = {
@@ -242,6 +266,9 @@ const CreateEvent = () => {
             registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
             allowedBranches: allBranches ? [] : formData.allowedBranches,
+            registrationType: formData.registrationType || 'individual',
+            minTeamSize: (formData.registrationType === 'team' || formData.registrationType === 'both') ? Number(formData.minTeamSize || 1) : 1,
+            maxTeamSize: (formData.registrationType === 'team' || formData.registrationType === 'both') ? Number(formData.maxTeamSize || 1) : 1,
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
         };
@@ -251,6 +278,7 @@ const CreateEvent = () => {
             navigate(`/event/${res.data.slug}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');
+            setIsSubmitting(false);
         }
     };
 
@@ -373,6 +401,32 @@ const CreateEvent = () => {
                             value={formData.registrationDeadline} onChange={handleChange} />
                         <p className="text-xs text-neutral-500 mt-1">Optional: If left blank, registrations stay open until start time.</p>
                     </div>
+
+                    {/* Registration Type */}
+                    <div>
+                        <label className={labelCls}>Registration Type <span className="text-orange-600">*</span></label>
+                        <select name="registrationType" required className={inputCls} value={formData.registrationType} onChange={handleChange}>
+                            <option value="individual">Individual Registration</option>
+                            <option value="team">Team Registration</option>
+                            <option value="both">Both (Individual & Team)</option>
+                        </select>
+                    </div>
+
+                    {/* Team Size Configurations (conditional) */}
+                    {(formData.registrationType === 'team' || formData.registrationType === 'both') && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-neutral-50 border border-neutral-200 rounded-sm">
+                            <div>
+                                <label className={labelCls}>Minimum Team Size <span className="text-orange-600">*</span></label>
+                                <input type="number" name="minTeamSize" required min="1" className={inputCls}
+                                    value={formData.minTeamSize} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Maximum Team Size <span className="text-orange-600">*</span></label>
+                                <input type="number" name="maxTeamSize" required min="1" className={inputCls}
+                                    value={formData.maxTeamSize} onChange={handleChange} />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Total Seats */}
                     <div>
@@ -815,8 +869,9 @@ const CreateEvent = () => {
                             Cancel
                         </button>
                         <button type="submit"
-                            className="flex-1 px-6 py-3 bg-black text-white font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer hover:bg-orange-600 transition-colors border-0 outline-none">
-                            Create Event
+                            disabled={isSubmitting}
+                            className={`flex-1 px-6 py-3 text-white font-bold text-sm uppercase tracking-widest rounded-full cursor-pointer transition-colors border-0 outline-none ${isSubmitting ? 'bg-neutral-400 cursor-not-allowed' : 'bg-black hover:bg-orange-600'}`}>
+                            {isSubmitting ? 'Creating...' : 'Create Event'}
                         </button>
                     </div>
                 </form>

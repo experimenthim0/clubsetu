@@ -10,6 +10,44 @@ const LostFoundAdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    const handlePasswordChange = (e) => {
+        setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+    };
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            toast.error("New passwords do not match!");
+            return;
+        }
+        if (passwordForm.newPassword.length < 6) {
+            toast.error("Password must be at least 6 characters long!");
+            return;
+        }
+        setIsChangingPassword(true);
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
+                currentPassword: passwordForm.currentPassword,
+                newPassword: passwordForm.newPassword
+            });
+            toast.success(res.data.message || "Password changed successfully!");
+            setShowPasswordModal(false);
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to change password.");
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
     const role = localStorage.getItem('role');
     const token = localStorage.getItem('token');
 
@@ -140,6 +178,9 @@ const LostFoundAdminDashboard = () => {
                         <button onClick={() => navigate('/lost-found')} className="px-5 py-2 bg-white/10  rounded-lg text-sm font-semibold transition-colors border border-gray-300  hover:bg-gray-300 cursor-pointer">
                             View Public Feed
                         </button>
+                        <button onClick={() => setShowPasswordModal(true)} className="px-5 py-2 bg-black text-white rounded-lg text-sm font-semibold hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <i className="ri-key-2-line"></i> Change Password
+                        </button>
                     </div>
                 </div>
             </div>
@@ -264,6 +305,88 @@ const LostFoundAdminDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Change Password Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-[#1a1a1a] w-full max-w-md rounded-2xl border border-neutral-200 dark:border-zinc-800 p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+                        <button 
+                            onClick={() => setShowPasswordModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                        >
+                            <i className="ri-close-line text-xl"></i>
+                        </button>
+                        
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                                <i className="ri-lock-password-line text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Change Password</h3>
+                                <p className="text-xs text-gray-400 dark:text-neutral-500">Update your dashboard credentials</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-neutral-500 mb-1.5">Current Password</label>
+                                <input 
+                                    type="password"
+                                    name="currentPassword"
+                                    required
+                                    value={passwordForm.currentPassword}
+                                    onChange={handlePasswordChange}
+                                    placeholder="Enter current password"
+                                    className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:border-orange-500 transition-colors text-black dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-neutral-500 mb-1.5">New Password</label>
+                                <input 
+                                    type="password"
+                                    name="newPassword"
+                                    required
+                                    value={passwordForm.newPassword}
+                                    onChange={handlePasswordChange}
+                                    placeholder="Enter new password (min. 6 chars)"
+                                    className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:border-orange-500 transition-colors text-black dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-neutral-500 mb-1.5">Confirm New Password</label>
+                                <input 
+                                    type="password"
+                                    name="confirmPassword"
+                                    required
+                                    value={passwordForm.confirmPassword}
+                                    onChange={handlePasswordChange}
+                                    placeholder="Confirm new password"
+                                    className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:border-orange-500 transition-colors text-black dark:text-white"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 justify-end pt-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPasswordModal(false)}
+                                    className="px-4 py-2 border border-neutral-200 dark:border-zinc-800 rounded-xl text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-300 transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={isChangingPassword}
+                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    {isChangingPassword ? "Saving..." : "Update Password"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

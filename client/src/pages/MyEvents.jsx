@@ -14,6 +14,12 @@ const MyEvents = () => {
   const [loading, setLoading] = useState(true);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [eventToDeregister, setEventToDeregister] = useState(null);
+  const [regToDeregister, setRegToDeregister] = useState(null);
+  const [updateTeamModalOpen, setUpdateTeamModalOpen] = useState(false);
+  const [teamToUpdate, setTeamToUpdate] = useState(null);
+  const [updateTeamSearchQuery, setUpdateTeamSearchQuery] = useState('');
+  const [updateTeamSearchResults, setUpdateTeamSearchResults] = useState([]);
+  const [updateTeamSearching, setUpdateTeamSearching] = useState(false);
   const [exportFilters, setExportFilters] = useState({ month: 'all', year: 'all' });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
@@ -242,8 +248,9 @@ const MyEvents = () => {
     }
   };
 
-  const handleDeregister = async (eventId) => {
-    setEventToDeregister(eventId);
+  const handleDeregister = async (reg) => {
+    setRegToDeregister(reg);
+    setEventToDeregister(reg.eventId?.id || reg.eventId?._id);
     setConfirmModalOpen(true);
   };
 
@@ -259,11 +266,58 @@ const MyEvents = () => {
       showNotification('Successfully deregistered from the event', 'success');
       setConfirmModalOpen(false);
       setEventToDeregister(null);
+      setRegToDeregister(null);
     } catch (err) {
       console.error('Deregister error:', err);
       showNotification(err.response?.data?.message || 'Failed to deregister. Please try again.', 'error');
       setConfirmModalOpen(false);
       setEventToDeregister(null);
+      setRegToDeregister(null);
+    }
+  };
+
+  useEffect(() => {
+    if (updateTeamSearchQuery.length < 2) {
+      setUpdateTeamSearchResults([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setUpdateTeamSearching(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${updateTeamSearchQuery}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const currentMembers = teamToUpdate?.team?.members || [];
+        const filtered = res.data.filter(
+          s => s.id !== teamToUpdate?.team?.leaderId && !currentMembers.some(m => m.userId === s.id)
+        );
+        setUpdateTeamSearchResults(filtered);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setUpdateTeamSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [updateTeamSearchQuery, teamToUpdate]);
+
+  const handleInviteTeammate = async (student) => {
+    if (!teamToUpdate?.team?.id) return;
+
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/teams/${teamToUpdate.team.id}/invite`,
+        { studentId: student.id }
+      );
+      showNotification(res.data.message || 'Invitation sent successfully!', 'success');
+      setUpdateTeamModalOpen(false);
+      setUpdateTeamSearchQuery('');
+      setUpdateTeamSearchResults([]);
+
+      fetchRegistrations(user.id || user._id);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to send invitation', 'error');
     }
   };
 
@@ -276,9 +330,19 @@ const MyEvents = () => {
     if (!eventToDelete) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
-      setCreatedEvents(createdEvents.filter(e => (e.id || e._id) !== eventToDelete));
-      showNotification('Event deleted successfully', 'success');
+      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
+      if (res.data.message && (res.data.message.includes('submitted') || res.data.message.includes('request'))) {
+        showNotification('Deletion request sent for faculty approval', 'success');
+        setCreatedEvents(createdEvents.map(e => {
+          if ((e.id || e._id) === eventToDelete) {
+            return { ...e, reviewStatus: 'DELETION_REQUESTED' };
+          }
+          return e;
+        }));
+      } else {
+        setCreatedEvents(createdEvents.filter(e => (e.id || e._id) !== eventToDelete));
+        showNotification('Event deleted successfully', 'success');
+      }
       setDeleteModalOpen(false);
       setEventToDelete(null);
     } catch (err) {
@@ -416,6 +480,37 @@ const MyEvents = () => {
                       </span>
                     </div>
 
+                    {/* Team Details (if team registration) */}
+                    {reg.team && (
+                      <div className="mt-2 p-3 bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/80 rounded-xl text-xs space-y-1 text-left">
+                        <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                          <div className="flex items-center gap-1.5 font-bold text-neutral-800 dark:text-neutral-200">
+                            <Users className="w-3.5 h-3.5 text-orange-605" />
+                            <span>Team: <span className="text-orange-605 dark:text-orange-500 font-extrabold">{reg.team.teamName}</span></span>
+                          </div>
+                          {!isPast && user?.id === reg.team.leaderId && (
+                            <button
+                              onClick={() => {
+                                setTeamToUpdate(reg);
+                                setUpdateTeamModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 text-[10px] font-bold text-orange-600 hover:text-white hover:bg-orange-600 border border-orange-200 hover:border-orange-600 rounded-lg transition-all cursor-pointer bg-transparent"
+                            >
+                              Update Team
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-neutral-500 dark:text-neutral-400">
+                          Leader: <span className="font-semibold text-neutral-700 dark:text-neutral-300">{reg.team.leader?.name}</span>
+                        </div>
+                        <div className="text-neutral-500 dark:text-neutral-400">
+                          Members: <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+                            {(reg.team.members || []).map(m => m.user?.name).filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Action Row */}
                     <div className="flex items-center gap-2 mt-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                       <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border-0 ${
@@ -450,7 +545,7 @@ const MyEvents = () => {
                             </span>
                           ) : (
                             <button
-                              onClick={() => handleDeregister(event.id || event._id)}
+                              onClick={() => handleDeregister(reg)}
                               className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 transition-colors cursor-pointer border-0 outline-none rounded-full whitespace-nowrap"
                             >
                               Deregister
@@ -624,7 +719,7 @@ const MyEvents = () => {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
-                            className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                            className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm animate-pulse-slow"
                           >
                             Approve
                           </button>
@@ -636,6 +731,22 @@ const MyEvents = () => {
                             className="px-4 py-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
                           >
                             Reject
+                          </button>
+                        </div>
+                      ) : (role?.toLowerCase() === 'facultycoordinator' || role?.toLowerCase() === 'admin' || user?.role === 'facultyCoordinator') && 
+                       event.reviewStatus?.toUpperCase() === 'DELETION_REQUESTED' ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDelete(event.id || event._id)}
+                            className="px-4 py-1.5 bg-rose-650 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                          >
+                            Approve Deletion
+                          </button>
+                          <button
+                            onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
+                            className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm"
+                          >
+                            Restore Event
                           </button>
                         </div>
                       ) : (
@@ -667,7 +778,7 @@ const MyEvents = () => {
                                 Design Certificate
                             </Link>
                           )}
-                          {(role === 'club' || user?.role === 'club' || role === 'admin') && (
+                          {(role === 'club' || user?.role === 'club' || role === 'admin' || role === 'facultyCoordinator' || user?.role === 'facultyCoordinator') && (
                             <>
                               <Link
                                 to={`/events/edit/${event.id || event._id}`}
@@ -675,7 +786,15 @@ const MyEvents = () => {
                               >
                                 <i className="ri-edit-line text-sm font-medium"></i>
                               </Link>
-                           </>
+                              
+                              <button
+                                onClick={() => handleDelete(event.id || event._id)}
+                                className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition font-bold text-xs shadow-sm cursor-pointer border-0 outline-none"
+                                title="Delete Event"
+                              >
+                                <i className="ri-delete-bin-line text-sm"></i>
+                              </button>
+                            </>
                           )}
                         </>
                       )}
@@ -683,21 +802,36 @@ const MyEvents = () => {
                   </div>  
 
                   {/* Context Block for special states */}
-                  {(event.reviewStatus === 'REJECTED' || (role === 'facultyCoordinator' && event.reviewStatus === 'PENDING')) && (
+                  {(event.reviewStatus === 'REJECTED' || 
+                    event.reviewStatus === 'DELETION_REQUESTED' ||
+                    (role === 'facultyCoordinator' && event.reviewStatus === 'PENDING')) && (
                       <div className="px-5 pb-5">
                           {event.reviewStatus === 'REJECTED' && (
                               <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex gap-3 items-start">
                                   <i className="ri-error-warning-fill text-rose-600 text-xl" />
-                                  <div>
+                                  <div className="text-left">
                                       <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-1">Rejection Reason</p>
                                       <p className="text-sm text-rose-600 font-semibold">{event.reviewComment || 'No feedback provided. Please contact the faculty coordinator.'}</p>
+                                  </div>
+                              </div>
+                          )}
+                          {event.reviewStatus === 'DELETION_REQUESTED' && (
+                              <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex gap-3 items-start">
+                                  <i className="ri-delete-bin-fill text-rose-600 text-xl" />
+                                  <div className="text-left">
+                                      <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-1">Deletion Pending Approval</p>
+                                      <p className="text-sm text-rose-600 font-semibold">
+                                          {role === 'facultyCoordinator' || role === 'admin' 
+                                            ? 'The club has requested to delete this event. Click Approve Deletion below to execute, or Restore Event to reject deletion.'
+                                            : 'This event is pending deletion approval by the faculty coordinator.'}
+                                      </p>
                                   </div>
                               </div>
                           )}
                           {role === 'facultyCoordinator' && event.reviewStatus === 'PENDING' && (
                               <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex gap-3 items-start">
                                   <i className="ri-information-fill text-amber-600 text-xl" />
-                                  <div>
+                                  <div className="text-left">
                                       <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Review Required</p>
                                       <p className="text-sm text-amber-600 font-semibold">This event is waiting for your approval before it becomes visible to students.</p>
                                   </div>
@@ -722,14 +856,34 @@ const MyEvents = () => {
                 <i className="ri-error-warning-line" /> Confirm Deregistration
               </h3>
             </div>
-            <div className="p-6">
-              <p className="text-sm text-neutral-600 leading-relaxed font-medium">
-                Are you sure you want to deregister from this event? This action cannot be undone.
-              </p>
+            <div className="p-6 text-left">
+              {regToDeregister?.team ? (
+                user?.id === regToDeregister.team.leaderId ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-rose-600 flex items-center gap-1.5">
+                      <i className="ri-alert-fill text-lg animate-pulse" /> WARNING: Team Leader Action Required
+                    </p>
+                    <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+                      You are the team leader of the team <strong className="text-neutral-900">"{regToDeregister.team.teamName}"</strong>.
+                    </p>
+                    <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+                      Deregistering will completely dissolve the team and deregister <strong className="text-rose-600">ALL team members</strong> from this event. This action cannot be undone.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+                    Are you sure you want to leave team <strong className="text-neutral-900">"{regToDeregister.team.teamName}"</strong> and deregister from this event? This action cannot be undone.
+                  </p>
+                )
+              ) : (
+                <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+                  Are you sure you want to deregister from this event? This action cannot be undone.
+                </p>
+              )}
             </div>
             <div className="px-6 pb-6 flex gap-3">
               <button
-                onClick={() => { setConfirmModalOpen(false); setEventToDeregister(null); }}
+                onClick={() => { setConfirmModalOpen(false); setEventToDeregister(null); setRegToDeregister(null); }}
                 className="flex-1 px-4 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-semibold text-xs rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 Cancel
@@ -755,8 +909,10 @@ const MyEvents = () => {
               </h3>
             </div>
             <div className="p-6">
-              <p className="text-sm text-neutral-600 leading-relaxed font-medium">
-                Are you sure you want to delete this event? All registrations will be lost. This action cannot be undone.
+              <p className="text-sm text-neutral-600 leading-relaxed font-medium text-left">
+                {role === 'club' 
+                  ? 'Are you sure you want to request deletion of this event? This will submit a deletion request to the faculty coordinator for approval. All registrations will be lost if approved.' 
+                  : 'Are you sure you want to permanently delete this event? All registrations will be lost. This action cannot be undone.'}
               </p>
             </div>
             <div className="px-6 pb-6 flex gap-3">
@@ -881,6 +1037,123 @@ const MyEvents = () => {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── UPDATE TEAM MODAL ── */}
+      {updateTeamModalOpen && teamToUpdate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-orange-600 px-6 py-4 border-b border-orange-700 flex justify-between items-center shrink-0">
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <i className="ri-group-line" /> Update Team
+              </h3>
+              <button 
+                onClick={() => { setUpdateTeamModalOpen(false); setTeamToUpdate(null); setUpdateTeamSearchQuery(''); }}
+                className="text-white hover:bg-black/25 w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer border-none outline-none bg-transparent"
+              >
+                <i className="ri-close-line text-xl" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-5 text-left text-neutral-800 dark:text-neutral-100">
+              <div>
+                <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider mb-1">Team Name</p>
+                <p className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">{teamToUpdate.team?.teamName}</p>
+              </div>
+
+              {/* Roster list */}
+              <div className="bg-neutral-50 dark:bg-neutral-800/40 p-4 border border-neutral-200 dark:border-neutral-800/80 rounded-xl space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Team Roster</p>
+                <div className="divide-y divide-neutral-150 dark:divide-neutral-800 text-xs">
+                  {/* Leader */}
+                  <div className="py-2.5 flex justify-between items-center">
+                    <div>
+                      <p className="font-bold text-neutral-800 dark:text-neutral-200">{teamToUpdate.team?.leader?.name} <span className="text-orange-600 font-bold">(Leader)</span></p>
+                      <p className="text-neutral-400 font-mono mt-0.5">{teamToUpdate.team?.leader?.rollNo || teamToUpdate.team?.leader?.email}</p>
+                    </div>
+                  </div>
+                  {/* Members */}
+                  {(teamToUpdate.team?.members || [])
+                    .filter(m => m.userId !== teamToUpdate.team?.leaderId)
+                    .map(m => (
+                      <div key={m.id} className="py-2.5 flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-neutral-800 dark:text-neutral-200">
+                            {m.user?.name || "Pending Invitation"}
+                          </p>
+                          <p className="text-neutral-400 font-mono mt-0.5">{m.user?.rollNo || m.user?.email || "Teammate"}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Add Teammate Selector */}
+              {(() => {
+                const currentCount = teamToUpdate.team?.members?.length || 1;
+                const maxLimit = teamToUpdate.eventId?.maxTeamSize || 1;
+                
+                if (currentCount >= maxLimit) {
+                  return (
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/30 p-4 rounded-xl text-xs text-amber-700 dark:text-amber-400 font-medium">
+                      <i className="ri-information-fill mr-1" />
+                      Your team has reached the maximum size of {maxLimit} members.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                      Invite Teammate <span className="text-[10px] text-neutral-400 font-medium">(Size: {currentCount} / max {maxLimit})</span>
+                    </label>
+                    <div className="relative">
+                      <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                      <input
+                        type="text"
+                        placeholder="Search by Email or Roll Number..."
+                        value={updateTeamSearchQuery}
+                        onChange={(e) => setUpdateTeamSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 border border-neutral-200 dark:border-neutral-700 rounded-lg text-xs focus:border-orange-500 focus:outline-none bg-white dark:bg-neutral-800 text-black dark:text-white"
+                      />
+                      {updateTeamSearching && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <i className="ri-loader-4-line animate-spin text-orange-600" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Autocomplete dropdown */}
+                    {updateTeamSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg w-[calc(100%-3rem)] max-w-sm divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {updateTeamSearchResults.map((s) => (
+                          <div
+                            key={s.id}
+                            onClick={() => handleInviteTeammate(s)}
+                            className="p-3 text-xs hover:bg-orange-50 dark:hover:bg-neutral-800 cursor-pointer flex justify-between items-center transition-colors"
+                          >
+                            <div className="text-left">
+                              <p className="font-bold text-neutral-800 dark:text-neutral-200">{s.name}</p>
+                              <p className="text-neutral-400 font-mono mt-0.5">{s.rollNo} • {s.email}</p>
+                            </div>
+                            <span className="text-orange-600 font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 bg-orange-50 dark:bg-orange-950/20 border border-orange-200/50 rounded cursor-pointer">Invite</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            <div className="px-6 pb-6 shrink-0">
+              <button
+                onClick={() => { setUpdateTeamModalOpen(false); setTeamToUpdate(null); setUpdateTeamSearchQuery(''); }}
+                className="w-full px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 font-semibold text-xs rounded-lg transition-colors cursor-pointer border-0 outline-none"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

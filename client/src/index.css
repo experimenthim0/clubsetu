@@ -67,10 +67,16 @@
 
 @font-face {
   font-family: 'myfont';
-  src: url('/fonts/mysans.ttf') format('truetype');
+  src: url('./assets/fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
+/* @font-face {
+  font-family: 'myfont';
+  src: url('/fonts/mysans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+} */
 
 @font-face {
   font-family: 'DancingScript';
