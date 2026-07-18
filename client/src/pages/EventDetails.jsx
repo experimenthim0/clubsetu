@@ -320,7 +320,7 @@ const EventDetails = () => {
     // Unauthenticated (external) path
     if (!user) {
       if (!externalEmail || !externalName) {
-        showNotification('Please enter your name and email to register.', 'warning');
+        showNotification('Please Login first to register for events', 'warning');
         return;
       }
       if (event.paymentMethod && event.paymentMethod !== 'FREE') {

@@ -115,7 +115,7 @@ router.post("/register/student", async (req, res) => {
       const verifyUrl = `${clientUrl}/verify-email/${verificationToken}`;
       const message = `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
-          <h1 style="color: #FF4400; text-align: center;">Welcome to <span style="color:#000;">Club</span>Setu!</h1>
+          <h1 style="color: #FF4400; text-align: center;">Welcome to <span style="color:#000;">Campus</span>Node!</h1>
           <p style="font-size: 16px; text-align: center;">
             Hi ${name},<br><br>
             Thank you for signing up. To complete your registration, please verify your email address.
@@ -236,7 +236,7 @@ router.post("/login/admin", async (req, res) => {
         email: admin.email,
         subject: "Admin Login Verification Code",
         message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
-          <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu — Admin</h1>
+          <h1 style="color:#FF4400;"><span style="color:#000">Campus</span>Node — Admin</h1>
           <h2>Your Verification Code</h2>
           <p>A login was requested for the <strong>${admin.role}</strong> account.</p>
           <div style="margin:30px 0">
@@ -479,7 +479,7 @@ router.post("/forgot-password", async (req, res) => {
 
     const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
     const message = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
-      <h1 style="color: #FF4400; text-align: center;"><span style="color:#000;">Club</span>Setu</h1>
+      <h1 style="color: #FF4400; text-align: center;"><span style="color:#000;">Campus</span>Node</h1>
       <h2 style="text-align: center;">Reset Your Password</h2>
       <p style="font-size: 16px; text-align: center;">
         We received a request to reset your CampusNode account password.
