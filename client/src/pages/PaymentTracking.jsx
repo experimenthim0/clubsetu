@@ -25,15 +25,13 @@ const PaymentTracking = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch club head's events using the associated clubId from the user object
         const targetClubId = storedUser.clubId || storedUser._id || storedUser.id;
         const eventsRes = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/events/club-manage/${targetClubId}`
         );
-        const paidEvents = eventsRes.data.filter(e => e.entryFee > 0);
+        const paidEvents = eventsRes.data.filter(e => (e.entryFee > 0) || (e.registrationFee > 0) || (e.paymentMethod && e.paymentMethod !== 'FREE'));
         setEvents(paidEvents);
 
-        // Fetch payment stats for each paid event
         const statsPromises = paidEvents.map(event =>
           axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${event.id || event._id}/stats`)
             .then(res => ({ eventId: event.id || event._id, ...res.data }))
@@ -56,109 +54,139 @@ const PaymentTracking = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-12 h-12 border-4 border-black border-t-orange-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+        <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-650 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!user || !(role === 'club-head' || role === 'club' || role === 'clubHead' || role === 'facultyCoordinator')) {
-    return <div className="text-center mt-10">Access restricted to club heads.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-2xl shadow-sm max-w-sm text-center">
+          <i className="ri-error-warning-line text-4xl text-rose-500 mb-3 block" />
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50">Access Restricted</h3>
+          <p className="text-xs text-neutral-500 mt-2 font-medium">This panel is only accessible to authorized club heads and coordinators.</p>
+        </div>
+      </div>
+    );
   }
 
   const totalRevenue = Object.values(paymentStats).reduce((sum, s) => sum + (s.totalCollected || 0), 0);
   const totalPaidRegistrations = Object.values(paymentStats).reduce((sum, s) => sum + (s.registrations?.length || 0), 0);
-  const payoutsCompleted = events.filter(e => e.payoutStatus === 'COMPLETED').length;
+  const payoutsCompleted = events.filter(e => e.paymentMethod !== 'MANUAL_TRANSACTION' && e.payoutStatus === 'COMPLETED').length;
+  const totalPayoutEvents = events.filter(e => e.paymentMethod !== 'MANUAL_TRANSACTION').length;
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-8 px-6 lg:px-12">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 py-10 px-6 lg:px-12 text-neutral-900 dark:text-neutral-100">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-2 text-orange-600">
-            
-            <span className="text-[14px] font-bold uppercase tracking-widest">{user.name}</span>
+        
+        {/* Title Section */}
+        <div className="mb-10 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 dark:bg-orange-950/20 border border-orange-200/50 dark:border-orange-900/30 rounded-full mb-3 text-orange-600 dark:text-orange-500">
+            <span className="font-semibold text-xs uppercase tracking-wider">{user.name}</span>
           </div>
-          <h1 className="text-3xl font-black text-black tracking-tight">
-            Payment <span className="text-orange-600">Tracking</span>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
+            Payment <span className="text-orange-600 dark:text-orange-500">Tracking</span>
           </h1>
-          <p className="text-sm text-neutral-500 mt-1">Track payments collected from students and payouts received from admin.</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 font-medium max-w-xl">
+            Track entry fees collected from participants, manage manual verification workflows, and monitor payouts.
+          </p>
         </div>
 
-        {/* Summary Cards */}
+        {/* Summary Dashboard Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Total Revenue Collected</p>
-            <p className="text-4xl font-black text-orange-600">₹{totalRevenue}</p>
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+            <div className="absolute right-4 top-4 opacity-10 dark:opacity-20">
+              <i className="ri-copper-coin-line text-4xl text-neutral-900 dark:text-white" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-1">Total Revenue Collected</p>
+            <p className="text-3xl font-bold text-orange-600 dark:text-orange-500">₹{totalRevenue}</p>
           </div>
-          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Paid Registrations</p>
-            <p className="text-4xl font-black text-black">{totalPaidRegistrations}</p>
+
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+            <div className="absolute right-4 top-4 opacity-10 dark:opacity-20">
+              <i className="ri-user-heart-line text-4xl text-neutral-900 dark:text-white" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-1">Paid Registrations</p>
+            <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{totalPaidRegistrations}</p>
           </div>
-          <div className="bg-white border-2 border-gray-300 rounded-sm p-6 ">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Payouts Received</p>
-            <p className="text-4xl font-black text-green-600">{payoutsCompleted} / {events.length}</p>
+
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+            <div className="absolute right-4 top-4 opacity-10 dark:opacity-20">
+              <i className="ri-bank-card-line text-4xl text-neutral-900 dark:text-white" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-1">Payouts Received</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-500">
+              {totalPayoutEvents > 0 ? `${payoutsCompleted} / ${totalPayoutEvents}` : 'N/A'}
+            </p>
           </div>
         </div>
 
         {events.length === 0 ? (
-          <div className="bg-white border-2 border-gray-300 rounded-sm p-12 text-center ">
-            <i className="ri-money-dollar-circle-line text-5xl text-neutral-300" />
-            <p className="text-lg font-bold text-neutral-400 mt-4">No paid events yet</p>
-            <p className="text-sm text-neutral-400 mt-1">Create an event with an entry fee to start tracking payments.</p>
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-16 text-center shadow-sm">
+            <i className="ri-money-dollar-circle-line text-5xl text-neutral-300 dark:text-neutral-700 mb-3 block animate-pulse" />
+            <p className="text-lg font-bold text-neutral-800 dark:text-neutral-200">No Paid Events Registered</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 font-medium max-w-md mx-auto">Create an event with a manual payment method or registration fee to start tracking finances here.</p>
           </div>
         ) : (
           <>
-            {/* Events Table */}
-            <div className="bg-white border-2 border-gray-300 rounded-sm  overflow-hidden mb-10">
+            {/* Events Grid Table */}
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm mb-10">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y-2 divide-black">
-                  <thead className="bg-neutral-100">
+                <table className="min-w-full divide-y divide-neutral-100 dark:divide-neutral-800">
+                  <thead className="bg-neutral-50 dark:bg-neutral-950/60">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Event</th>
-                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Entry Fee</th>
-                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Collected</th>
-                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Registrations</th>
-                      <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-black border-r-2 border-black">Payout Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-black">Details</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Event</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Entry Fee</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Collected</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Registrations</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Payout Status</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-neutral-550 dark:text-neutral-400">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y-2 divide-black">
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 bg-white dark:bg-neutral-900">
                     {events.map(event => {
                       const stats = paymentStats[event.id || event._id] || {};
+                      const isSelected = selectedEvent === (event.id || event._id);
                       return (
-                        <tr key={event.id || event._id} className="hover:bg-neutral-50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-bold border-r-2 border-black">
+                        <tr key={event.id || event._id} className={`hover:bg-neutral-50/50 dark:hover:bg-neutral-850/20 transition-colors ${isSelected ? 'bg-orange-50/5 dark:bg-orange-950/5' : ''}`}>
+                          <td className="px-6 py-4 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                             {event.title}
                           </td>
-                          <td className="px-6 py-4 text-sm font-bold border-r-2 border-black">
-                            ₹{event.entryFee}
+                          <td className="px-6 py-4 text-sm font-semibold text-neutral-600 dark:text-neutral-350">
+                            ₹{event.registrationFee || event.entryFee}
                           </td>
-                          <td className="px-6 py-4 text-lg font-black text-orange-600 border-r-2 border-black">
+                          <td className="px-6 py-4 text-base font-bold text-orange-650 dark:text-orange-500">
                             ₹{stats.totalCollected || 0}
                           </td>
-                          <td className="px-6 py-4 text-sm font-bold border-r-2 border-black">
+                          <td className="px-6 py-4 text-sm font-medium text-neutral-600 dark:text-neutral-300">
                             {stats.registrations?.length || 0} students
                           </td>
-                          <td className="px-6 py-4 border-r-2 border-black">
-                            {event.payoutStatus === 'COMPLETED' ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-green-600">
-                                <i className="ri-checkbox-circle-fill text-sm" />
+                          <td className="px-6 py-4">
+                            {event.paymentMethod === 'MANUAL_TRANSACTION' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-neutral-100 dark:bg-neutral-850 text-neutral-700 dark:text-neutral-300 text-[10px] font-bold uppercase tracking-wider rounded-full border border-neutral-200 dark:border-neutral-750">
+                                <i className="ri-wallet-3-line text-xs text-neutral-500 dark:text-neutral-400" />
+                                Direct to Bank
+                              </span>
+                            ) : event.payoutStatus === 'COMPLETED' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 text-[10px] font-bold uppercase tracking-wider rounded-full border border-emerald-200/50 dark:border-emerald-900/50">
+                                <i className="ri-checkbox-circle-fill text-xs" />
                                 Received
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-700 text-[10px] font-black uppercase tracking-widest rounded-sm border-2 border-yellow-500">
-                                <i className="ri-time-line text-sm" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-450 text-[10px] font-bold uppercase tracking-wider rounded-full border border-amber-250 dark:border-amber-900/50 animate-pulse-slow">
+                                <i className="ri-time-line text-xs" />
                                 Pending
                               </span>
                             )}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
-                              onClick={() => setSelectedEvent(selectedEvent === (event.id || event._id) ? null : (event.id || event._id))}
-                              className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 transition-colors border-2 border-black cursor-pointer"
+                              onClick={() => setSelectedEvent(isSelected ? null : (event.id || event._id))}
+                              className="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 text-xs font-semibold rounded-lg shadow-sm border-0 outline-none transition-colors cursor-pointer"
                             >
-                              {selectedEvent === (event.id || event._id) ? 'Hide' : 'View'}
+                              {isSelected ? 'Hide Details' : 'View Details'}
                             </button>
                           </td>
                         </tr>
@@ -169,54 +197,66 @@ const PaymentTracking = () => {
               </div>
             </div>
 
-            {/* Payment Detail Panel */}
-            {selectedEvent && paymentStats[selectedEvent]?.registrations?.length > 0 && (
-              <div className="bg-white border-2 border-black rounded-sm shadow-[4px_4px_0px_#000] overflow-hidden mb-10">
-                <div className="bg-black text-white p-5">
-                  <h3 className="font-black text-lg uppercase tracking-tight">
-                  Payment Details — {events.find(e => (e.id || e._id) === selectedEvent)?.title}
+            {/* Payment Details Sub-Panel */}
+            {selectedEvent && (
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm mb-10">
+                <div className="bg-neutral-50 dark:bg-neutral-950 px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
+                    Transaction Audit Ledger — {events.find(e => (e.id || e._id) === selectedEvent)?.title}
                   </h3>
+                  <span className="font-mono text-[10px] font-bold bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 px-2 py-0.5 rounded-full">
+                    {paymentStats[selectedEvent]?.registrations?.length || 0} entries
+                  </span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-neutral-200">
-                    <thead className="bg-neutral-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">Student</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">Payment ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">Amount</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-100">
-                      {paymentStats[selectedEvent].registrations.map((reg, idx) => (
-                        <tr key={idx} className="hover:bg-neutral-50">
-                          <td className="px-6 py-3 text-sm font-medium">{reg.studentName || 'N/A'}</td>
-                          <td className="px-6 py-3 text-xs font-mono text-neutral-500">{reg.paymentId || 'N/A'}</td>
-                          <td className="px-6 py-3 text-sm font-bold text-orange-600">₹{reg.amountPaid || 0}</td>
-                          <td className="px-6 py-3">
-                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm ${
-                              reg.paymentStatus === 'SUCCESS' 
-                                ? 'bg-green-50 text-green-700 border border-green-300' 
-                                : 'bg-red-50 text-red-600 border border-red-300'
-                            }`}>
-                              {reg.paymentStatus}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3 text-xs text-neutral-500">
-                            {reg.paymentTimestamp ? new Date(reg.paymentTimestamp).toLocaleString() : 'N/A'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
 
-            {selectedEvent && (!paymentStats[selectedEvent]?.registrations || paymentStats[selectedEvent].registrations.length === 0) && (
-              <div className="bg-white border-2 border-black rounded-sm p-8 text-center shadow-[4px_4px_0px_#000] mb-10">
-                <p className="text-neutral-400 font-bold">No payment records found for this event.</p>
+                {!paymentStats[selectedEvent]?.registrations || paymentStats[selectedEvent].registrations.length === 0 ? (
+                  <div className="p-12 text-center bg-white dark:bg-neutral-900">
+                    <p className="text-neutral-400 dark:text-neutral-500 font-bold text-sm">No transaction records logged for this event.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-neutral-100 dark:divide-neutral-800">
+                      <thead className="bg-neutral-50 dark:bg-neutral-950/20">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Student</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Payment ID / UTR</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Amount</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 bg-white dark:bg-neutral-900">
+                        {paymentStats[selectedEvent].registrations.map((reg, idx) => (
+                          <tr key={idx} className="hover:bg-neutral-50/40 dark:hover:bg-neutral-850/20 transition-colors">
+                            <td className="px-6 py-3.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                              {reg.studentName || 'N/A'}
+                            </td>
+                            <td className="px-6 py-3.5 text-xs font-mono text-neutral-500 dark:text-neutral-405 select-all font-bold">
+                              {reg.paymentId || 'N/A'}
+                            </td>
+                            <td className="px-6 py-3.5 text-sm font-bold text-orange-655 dark:text-orange-500">
+                              ₹{reg.amountPaid || 0}
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                reg.paymentStatus === 'SUCCESS' || reg.paymentStatus === 'APPROVED'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' 
+                                  : reg.paymentStatus === 'REJECTED'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                    : 'bg-amber-50 text-amber-700 border-amber-250 dark:bg-amber-950/20 dark:text-amber-450 dark:border-amber-900/50 animate-pulse'
+                              }`}>
+                                {reg.paymentStatus}
+                              </span>
+                            </td>
+                            <td className="px-6 py-3.5 text-xs text-neutral-450 dark:text-neutral-500 font-medium">
+                              {reg.paymentTimestamp ? new Date(reg.paymentTimestamp).toLocaleString() : 'N/A'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -164,7 +164,7 @@ const EventGuide = () => {
                 <FieldRow
                   name="Entry Fee"
                   type="Radio (Free / Paid)"
-                  desc="Toggle between free and paid events. For paid events, enter the amount in ₹. Payments are processed securely through Razorpay."
+                  desc="Toggle between free and paid events. For paid events, select the payment method (College Payment System or Manual Transaction Verification)."
                 />
               </div>
             </div>

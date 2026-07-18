@@ -282,7 +282,7 @@ const ClubEvents = () => {
                   </span>
                   <span className="flex items-center gap-1.5 font-medium text-neutral-700">
                     <Users className="w-4 h-4 shrink-0 text-neutral-400" />
-                    {event.registeredCount} / {event.totalSeats} registered
+                    {event.registeredCount} / {event.totalSeats || '∞'} registered
                   </span>
                 </div>
 

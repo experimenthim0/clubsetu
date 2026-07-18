@@ -15,6 +15,43 @@ const EventRegistrations = () => {
     const [activeTab, setActiveTab] = useState('individual');
     const [expandedTeams, setExpandedTeams] = useState({});
 
+    // Review Payment States
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [selectedReg, setSelectedReg] = useState(null);
+    const [reviewStatus, setReviewStatus] = useState(''); // 'APPROVED' | 'REJECTED' | 'NEED_MORE_DETAILS'
+    const [reviewComment, setReviewComment] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    const openReviewModal = (reg, status) => {
+        setSelectedReg(reg);
+        setReviewStatus(status);
+        setReviewComment('');
+        setReviewModalOpen(true);
+    };
+
+    const submitReview = async () => {
+        if (!selectedReg) return;
+        setSubmittingReview(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/payment/${selectedReg.id || selectedReg._id}/review`,
+                { status: reviewStatus, message: reviewComment },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(`Payment ${reviewStatus.toLowerCase()} successfully!`);
+            setReviewModalOpen(false);
+            // Refresh registrations list
+            const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`);
+            const data = regRes.data;
+            setRegistrations(data.participations || (Array.isArray(data) ? data : []));
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to update review status.');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -432,7 +469,7 @@ const EventRegistrations = () => {
                     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-2xl text-center text-neutral-500">
                         No students registered yet.
                     </div>
-                ) : activeTab === 'team' && (eventData?.registrationType === 'team' || eventData?.registrationType === 'both') ? (
+                                ) : activeTab === 'team' && (eventData?.registrationType === 'team' || eventData?.registrationType === 'both') ? (
                     <div className="space-y-4">
                         {teamRegs.map((team, idx) => {
                             const isExpanded = !!expandedTeams[team.id];
@@ -469,6 +506,67 @@ const EventRegistrations = () => {
                                     {/* Expandable Table */}
                                     {isExpanded && (
                                         <div className="border-t border-neutral-100 dark:border-neutral-800 overflow-x-auto">
+                                            {/* Render payment review section for the team here if paid event */}
+                                            {eventData?.paymentMethod && eventData?.paymentMethod !== 'FREE' && (() => {
+                                                const leaderPart = team.members.find(m => m.studentId === team.leader?.id) || team.members[0];
+                                                if (!leaderPart) return null;
+                                                return (
+                                                    <div className="p-4 bg-orange-50/20 dark:bg-neutral-900 border-b border-neutral-150 dark:border-neutral-850 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                        <div className="text-xs space-y-1 text-left">
+                                                            <p className="font-bold text-neutral-800 dark:text-neutral-200">
+                                                                Payment Status: <span className={`uppercase font-black ${
+                                                                    leaderPart.paymentStatus === 'APPROVED' ? 'text-emerald-600' :
+                                                                    leaderPart.paymentStatus === 'REJECTED' ? 'text-rose-600' : 'text-amber-600 animate-pulse'
+                                                                }`}>{leaderPart.paymentStatus}</span>
+                                                            </p>
+                                                            {leaderPart.transactionId && (
+                                                                <p className="text-neutral-500 dark:text-neutral-400">
+                                                                    UTR/Transaction ID: <span className="font-mono font-bold text-neutral-700 dark:text-neutral-300">{leaderPart.transactionId}</span>
+                                                                </p>
+                                                            )}
+                                                            {leaderPart.payerName && (
+                                                                <p className="text-neutral-500 dark:text-neutral-400 font-medium">
+                                                                    Payer Name: <span className="text-neutral-700 dark:text-neutral-300">{leaderPart.payerName}</span>
+                                                                </p>
+                                                            )}
+                                                            {leaderPart.paymentRemarks && (
+                                                                <p className="text-neutral-500 dark:text-neutral-400 italic">
+                                                                    Remarks: {leaderPart.paymentRemarks}
+                                                                </p>
+                                                            )}
+                                                            {leaderPart.paymentReviewMessage && (
+                                                                <p className="text-rose-600 dark:text-rose-450 font-bold">
+                                                                    Comment: {leaderPart.paymentReviewMessage}
+                                                                </p>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Actions */}
+                                                        {leaderPart.paymentStatus !== 'APPROVED' && (
+                                                            <div className="flex gap-2 shrink-0">
+                                                                <button
+                                                                    onClick={() => openReviewModal(leaderPart, 'APPROVED')}
+                                                                    className="px-3.5 py-1.5 bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-emerald-700 transition cursor-pointer border-0 outline-none"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openReviewModal(leaderPart, 'REJECTED')}
+                                                                    className="px-3.5 py-1.5 bg-rose-600 text-white font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-rose-700 transition cursor-pointer border-0 outline-none"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openReviewModal(leaderPart, 'NEED_MORE_DETAILS')}
+                                                                    className="px-3.5 py-1.5 bg-neutral-100 dark:bg-neutral-805 text-neutral-705 dark:text-neutral-305 border border-neutral-300 dark:border-neutral-700 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-neutral-200 transition cursor-pointer border-0 outline-none"
+                                                                >
+                                                                    Need Info
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                             <table className="min-w-full divide-y divide-neutral-100 dark:divide-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/20">
                                                 <thead className="bg-neutral-50/80 dark:bg-neutral-950/80">
                                                     <tr>
@@ -543,6 +641,12 @@ const EventRegistrations = () => {
                                         <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Roll No</th>
                                         <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Program / Academics</th>
                                         <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Status</th>
+                                        {eventData?.paymentMethod && eventData?.paymentMethod !== 'FREE' && (
+                                            <>
+                                                <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Payment Info</th>
+                                                <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Actions</th>
+                                            </>
+                                        )}
                                         <th className="px-5 py-3.5 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Registered At</th>
                                         {customFields.map((cf, i) => (
                                             <th key={`cf-${i}`} className="px-5 py-3.5 text-left text-xs font-semibold text-orange-600 uppercase tracking-wider">
@@ -594,6 +698,63 @@ const EventRegistrations = () => {
                                                         {reg.status}
                                                     </span>
                                                 </td>
+                                                {eventData?.paymentMethod && eventData?.paymentMethod !== 'FREE' && (
+                                                    <>
+                                                        <td className="px-5 py-4 text-left">
+                                                            <div className="flex flex-col gap-1 text-xs">
+                                                                <span className={`px-2 py-0.5 inline-flex text-[9px] font-bold uppercase tracking-wider rounded-md border w-fit ${
+                                                                    reg.paymentStatus === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' :
+                                                                    reg.paymentStatus === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-250 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50' :
+                                                                    'bg-amber-50 text-amber-700 border-amber-250 dark:bg-amber-950/20 dark:text-amber-450 dark:border-amber-900/50 animate-pulse-slow'
+                                                                }`}>
+                                                                    {reg.paymentStatus}
+                                                                </span>
+                                                                {reg.transactionId && (
+                                                                    <span className="font-mono text-[10px] text-neutral-600 dark:text-neutral-350">
+                                                                        UTR: <strong className="select-all">{reg.transactionId}</strong>
+                                                                    </span>
+                                                                )}
+                                                                {reg.payerName && (
+                                                                    <span className="text-[10px] text-neutral-500 dark:text-neutral-450">
+                                                                        Payer: {reg.payerName}
+                                                                    </span>
+                                                                )}
+                                                                {reg.paymentReviewMessage && (
+                                                                    <span className="text-[10px] text-rose-600 dark:text-rose-450 font-bold">
+                                                                        Msg: {reg.paymentReviewMessage}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-4 whitespace-nowrap text-left">
+                                                            {reg.paymentStatus !== 'APPROVED' ? (
+                                                                <div className="flex gap-1.5">
+                                                                    <button
+                                                                        onClick={() => openReviewModal(reg, 'APPROVED')}
+                                                                        className="px-2.5 py-1 bg-emerald-600 text-white font-bold text-[9px] uppercase tracking-wider rounded hover:bg-emerald-700 transition cursor-pointer border-0 outline-none"
+                                                                    >
+                                                                        Approve
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openReviewModal(reg, 'REJECTED')}
+                                                                        className="px-2.5 py-1 bg-rose-600 text-white font-bold text-[9px] uppercase tracking-wider rounded hover:bg-rose-700 transition cursor-pointer border-0 outline-none"
+                                                                    >
+                                                                        Reject
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openReviewModal(reg, 'NEED_MORE_DETAILS')}
+                                                                        className="px-2.5 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-350 dark:border-neutral-700 font-bold text-[9px] uppercase tracking-wider rounded hover:bg-neutral-200 transition cursor-pointer border-0 outline-none"
+                                                                        title="Need Info"
+                                                                    >
+                                                                        Info
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-neutral-400">-</span>
+                                                            )}
+                                                        </td>
+                                                    </>
+                                                )}
                                                 <td className="px-5 py-4 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400 font-mono">
                                                     {reg.timestamp ? new Date(reg.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                                                 </td>
@@ -614,6 +775,61 @@ const EventRegistrations = () => {
                                     })}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Payment Review Modal ── */}
+                {reviewModalOpen && selectedReg && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                        <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="bg-orange-600 px-6 py-4 border-b-2 border-black dark:border-neutral-700">
+                                <h3 className="font-black text-white text-lg flex items-center gap-2">
+                                    <i className="ri-shield-check-line" /> Review Registration Payment
+                                </h3>
+                                <p className="text-white/80 text-xs mt-1">Review student transaction reference details</p>
+                            </div>
+                            
+                            <div className="p-6 space-y-4 text-left">
+                                <div className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-250 dark:border-neutral-800 p-4 rounded-xl space-y-2 text-xs text-neutral-800 dark:text-neutral-100">
+                                    <p><span className="font-bold text-neutral-400">Student:</span> {selectedReg.student?.name || selectedReg.externalName}</p>
+                                    {selectedReg.student?.rollNo && <p><span className="font-bold text-neutral-400">Roll No:</span> {selectedReg.student.rollNo}</p>}
+                                    <p><span className="font-bold text-neutral-400">Registration Fee:</span> ₹{eventData?.registrationFee || eventData?.entryFee}</p>
+                                    <p><span className="font-bold text-neutral-400">UTR / Transaction ID:</span> <span className="font-mono font-bold select-all text-neutral-900 dark:text-neutral-100">{selectedReg.transactionId}</span></p>
+                                    <p><span className="font-bold text-neutral-400">Payer Name:</span> {selectedReg.payerName || 'N/A'}</p>
+                                    {selectedReg.paymentRemarks && <p><span className="font-bold text-neutral-400">Payer Remarks:</span> {selectedReg.paymentRemarks}</p>}
+                                    <p><span className="font-bold text-neutral-400">Action:</span> <span className={`font-black ${reviewStatus === 'APPROVED' ? 'text-emerald-600' : reviewStatus === 'REJECTED' ? 'text-rose-600' : 'text-amber-600'}`}>{reviewStatus}</span></p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-1.5">
+                                        Review Comment / Message (Optional for approval, highly recommended for rejection/need details)
+                                    </label>
+                                    <textarea
+                                        rows="3"
+                                        className="w-full px-3 py-2 border border-neutral-350 dark:border-neutral-700 rounded-lg text-sm bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-none focus:border-orange-600"
+                                        placeholder={reviewStatus === 'REJECTED' ? 'Please specify why the transaction was rejected (e.g. UTR mismatch/incorrect amount paid)...' : 'Add any review comments here...'}
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="px-6 pb-6 flex gap-3">
+                                <button
+                                    onClick={() => setReviewModalOpen(false)}
+                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-neutral-850 border border-neutral-300 dark:border-neutral-700 text-neutral-750 dark:text-neutral-350 font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-neutral-50 transition-colors cursor-pointer border-0 outline-none"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={submitReview}
+                                    disabled={submittingReview}
+                                    className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0 outline-none"
+                                >
+                                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

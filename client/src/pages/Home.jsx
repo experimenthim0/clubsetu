@@ -857,7 +857,7 @@ const Home = () => {
             <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
               {/* Headline */}
               <ScrollReveal delay={0.2}>
-                <h1 className="font-black text-[clamp(36px,5.5vw,76px)] leading-[1.1] tracking-[2px] text-black dark:text-white mb-0 text-center mx-auto max-w-5xl">
+                <h1 className="font-black text-[clamp(36px,5.5vw,76px)] leading-[1.1] tracking-[2px] text-white dark:text-white mb-0 text-center mx-auto max-w-5xl">
                   Discover Events. <span className="text-orange-600">Register in 1-Click.</span> Recover Lost Items.
                 </h1> 
               </ScrollReveal>
@@ -866,7 +866,7 @@ const Home = () => {
               <ScrollReveal delay={0.3}>
                 <div className="mt-10 flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
                   <div className="max-w-2xl">
-                    <p className="text-sm md:text-base font-light text-black dark:text-neutral-300 leading-relaxed">
+                    <p className="text-sm md:text-base font-light text-white dark:text-neutral-300 leading-relaxed">
                       The central student hub for NIT Jalandhar. Track club announcements, secure event tickets, and locate missing belongings—all without the WhatsApp clutter.
                     </p>
                   </div>

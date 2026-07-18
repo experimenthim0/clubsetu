@@ -1,19 +1,9 @@
 import express from "express";
-import crypto from "crypto";
-import Razorpay from "razorpay";
 import { verifyToken, allowRoles } from "../middleware/auth.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
 
 const router = express.Router();
-
-let razorpay = null;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
-}
 
 // helper to format/send notifications
 async function notifyTeamMember(io, recipientId, title, message, senderStudentId = null) {
@@ -71,7 +61,7 @@ router.post(
   verifyToken,
   allowRoles("member", "student", "club", "admin"),
   async (req, res) => {
-    const { eventId, teamName, members, formResponses, paymentId, orderId, signature } = req.body;
+    const { eventId, teamName, members, formResponses, transactionId, payerName, paymentRemarks } = req.body;
     const leaderId = req.user.userId;
 
     try {
@@ -151,27 +141,10 @@ router.post(
         });
       }
 
-      // Verify payment details if paid event
-      if (event.entryFee > 0) {
-        if (!paymentId || !orderId || !signature) {
-          return res.status(400).json({ message: "Payment details are required for paid events." });
-        }
-        if (!razorpay) {
-          return res.status(500).json({ message: "Payment gateway is not configured on the server." });
-        }
-
-        const generatedSignature = crypto
-          .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-          .update(`${orderId}|${paymentId}`)
-          .digest("hex");
-
-        if (generatedSignature !== signature) {
-          return res.status(400).json({ message: "Invalid payment signature." });
-        }
-
-        const payment = await razorpay.payments.fetch(paymentId);
-        if (payment.status !== "captured") {
-          return res.status(400).json({ message: "Payment not captured." });
+      // Validate payment details if paid event with manual transaction
+      if (event.entryFee > 0 || (event.registrationFee > 0 && event.paymentMethod === 'MANUAL_TRANSACTION')) {
+        if (!transactionId) {
+          return res.status(400).json({ message: "Transaction ID is required for paid events." });
         }
       }
 
@@ -212,7 +185,8 @@ router.post(
           },
         });
 
-        const isPaid = latestEvent.entryFee > 0;
+        const isPaid = latestEvent.entryFee > 0 || (latestEvent.registrationFee > 0 && latestEvent.paymentMethod !== 'FREE');
+        const paymentStatusValue = latestEvent.paymentMethod === 'MANUAL_TRANSACTION' ? 'PENDING' : (latestEvent.paymentMethod === 'COLLEGE_PAYMENT' ? 'PENDING' : 'SUCCESS');
         await tx.participation.create({
           data: {
             id: createObjectId(),
@@ -220,10 +194,11 @@ router.post(
             studentId: leaderId,
             teamId,
             status: leaderRegStatus,
-            paymentStatus: "SUCCESS",
-            amountPaid: isPaid ? latestEvent.entryFee : 0,
-            paymentId,
-            orderId,
+            paymentStatus: paymentStatusValue,
+            amountPaid: isPaid ? (latestEvent.registrationFee || latestEvent.entryFee) : 0,
+            transactionId: transactionId || null,
+            payerName: payerName || null,
+            paymentRemarks: paymentRemarks || null,
             paymentTimestamp: isPaid ? new Date() : null,
             qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
             formResponses: formResponses || {},

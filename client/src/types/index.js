@@ -22,6 +22,21 @@ export const MediaType = Object.freeze({
   SPONSOR_LOGO: 'SPONSOR_LOGO',
 });
 
+export const PaymentMethod = Object.freeze({
+  FREE: 'FREE',
+  COLLEGE_PAYMENT: 'COLLEGE_PAYMENT',
+  MANUAL_TRANSACTION: 'MANUAL_TRANSACTION',
+});
+
+export const PaymentStatus = Object.freeze({
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  NEED_MORE_DETAILS: 'NEED_MORE_DETAILS',
+});
+
 /**
  * @typedef {{ name: string, logoUrl: string, websiteUrl?: string }} Sponsor
  * @typedef {{ url: string, type: 'IMAGE'|'VIDEO'|'SPONSOR_LOGO' }} Media

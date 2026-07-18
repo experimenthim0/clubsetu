@@ -151,6 +151,16 @@ const AdminSidebar = () => {
               collapsed={collapsed}
             />
             <AdminSidebarLink
+              to="/admin-dashboard?tab=payments-overview"
+              icon={Wallet}
+              label="Payments Management"
+              isActive={
+                location.pathname === "/admin-dashboard" &&
+                currentTab === "payments-overview"
+              }
+              collapsed={collapsed}
+            />
+            <AdminSidebarLink
               to="/admin-dashboard?tab=club-heads"
               icon={Users}
               label="Manage Clubs"

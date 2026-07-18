@@ -20,7 +20,7 @@ const PaymentPolicy = () => {
                 <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">1. Payment Processing</h2>
-                        <p>All payments on CampusNode are processed securely through <strong>Razorpay</strong>, a PCI-DSS compliant payment gateway. CampusNode does not store your card details or sensitive financial information directly.</p>
+                        <p>All payments on CampusNode are made directly via UPI or the college payment system. Verification is managed manually by the organizing clubs. CampusNode does not store your sensitive financial details.</p>
                     </section>
 
                     <section>
@@ -66,7 +66,7 @@ const PaymentPolicy = () => {
 
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">6. Failed Transactions</h2>
-                        <p>If money is deducted but registration is not confirmed, the amount will be automatically refunded by Razorpay within 5–7 business days. If you do not receive the refund, contact us with your transaction details.</p>
+                        <p>If money is deducted but registration is not approved, please contact the organizing club head directly or raise a request with us at <a href="mailto:contact.nikhim@gmail.com" className="text-orange-600 font-bold hover:underline">contact.nikhim@gmail.com</a> with your transaction reference details.</p>
                     </section>
 
                     <section>

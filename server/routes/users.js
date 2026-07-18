@@ -23,9 +23,17 @@ router.get("/me", verifyToken, async (req, res) => {
 
     if (userType === "admin") {
       const clubInfo = (user.role === "facultyCoordinator" || user.role === "club")
-        ? await getAdminClubId(user.id)
+        ? await prisma.club.findFirst({ where: { facultyCoordinatorId: user.id } })
         : null;
       safeUser.clubId = clubInfo?.id ?? null;
+      if (clubInfo) {
+        safeUser.bankName = clubInfo.bankName;
+        safeUser.accountHolderName = clubInfo.accountHolderName;
+        safeUser.accountNumber = clubInfo.accountNumber;
+        safeUser.ifscCode = clubInfo.ifscCode;
+        safeUser.upiId = clubInfo.upiId;
+        safeUser.bankPhone = clubInfo.bankPhone;
+      }
       safeUser.memberships = clubInfo ? [{
         clubId: clubInfo.id,
         clubName: clubInfo.clubName,
@@ -43,6 +51,17 @@ router.get("/me", verifyToken, async (req, res) => {
     const { role, clubId, memberships } = await getStudentRoleAndClub(user.id);
     safeUser.clubId = clubId;
     safeUser.memberships = memberships;
+    if (role === "club" && clubId) {
+      const clubInfo = await prisma.club.findUnique({ where: { id: clubId } });
+      if (clubInfo) {
+        safeUser.bankName = clubInfo.bankName;
+        safeUser.accountHolderName = clubInfo.accountHolderName;
+        safeUser.accountNumber = clubInfo.accountNumber;
+        safeUser.ifscCode = clubInfo.ifscCode;
+        safeUser.upiId = clubInfo.upiId;
+        safeUser.bankPhone = clubInfo.bankPhone;
+      }
+    }
     return res.json({ user: safeUser, role, userType });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -60,14 +79,33 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Access denied." });
   }
 
-  const studentAllowedFields = ["name", "branch", "year", "program", "isTwoStepEnabled"];
+  const studentAllowedFields = [
+    "name", "branch", "year", "program", "isTwoStepEnabled",
+    "githubProfile", "linkedinProfile", "xProfile", "instagramProfile", "whatsappNumber", "portfolioUrl"
+  ];
   const adminAllowedFields = ["name", "isTwoStepEnabled"];
   const allowedFields = userType === "admin" ? adminAllowedFields : studentAllowedFields;
+  
   const updates = Object.fromEntries(
-    Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
+    Object.entries(req.body).filter(([key]) => allowedFields.includes(key) && req.body[key] !== undefined),
   );
 
-  if (Object.keys(updates).length === 0) {
+  const clubAllowedFields = [
+    "bankName",
+    "accountHolderName",
+    "accountNumber",
+    "ifscCode",
+    "upiId",
+    "bankPhone"
+  ];
+
+  const clubUpdates = (role === "club" || role === "facultyCoordinator")
+    ? Object.fromEntries(
+        Object.entries(req.body).filter(([key]) => clubAllowedFields.includes(key) && req.body[key] !== undefined),
+      )
+    : {};
+
+  if (Object.keys(updates).length === 0 && Object.keys(clubUpdates).length === 0) {
     return res.status(400).json({ message: "No allowed profile fields provided." });
   }
 
@@ -75,12 +113,23 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     let user;
 
     if (userType === "admin") {
-      user = await prisma.adminRole.update({ where: { id }, data: updates });
+      if (Object.keys(updates).length > 0) {
+        user = await prisma.adminRole.update({ where: { id }, data: updates });
+      } else {
+        user = await prisma.adminRole.findUnique({ where: { id } });
+      }
     } else if (userType === "external") {
       // External users no longer have a separate table — treat as studentUser or skip
       return res.status(400).json({ message: "External user profile updates are not supported." });
     } else {
       user = await prisma.studentUser.update({ where: { id }, data: updates });
+    }
+
+    if ((role === "facultyCoordinator" || role === "club") && req.user.clubId && Object.keys(clubUpdates).length > 0) {
+      await prisma.club.update({
+        where: { id: req.user.clubId },
+        data: clubUpdates
+      });
     }
 
     const safeUser = Object.fromEntries(
@@ -90,9 +139,17 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
     // Re-attach club associations and memberships
     if (userType === "admin") {
         const clubInfo = (user.role === "facultyCoordinator" || user.role === "club") 
-            ? await getAdminClubId(user.id) 
+            ? await prisma.club.findFirst({ where: { facultyCoordinatorId: user.id } }) 
             : null;
         safeUser.clubId = clubInfo?.id ?? null;
+        if (clubInfo) {
+            safeUser.bankName = clubInfo.bankName;
+            safeUser.accountHolderName = clubInfo.accountHolderName;
+            safeUser.accountNumber = clubInfo.accountNumber;
+            safeUser.ifscCode = clubInfo.ifscCode;
+            safeUser.upiId = clubInfo.upiId;
+            safeUser.bankPhone = clubInfo.bankPhone;
+        }
         safeUser.memberships = clubInfo ? [{ 
             clubId: clubInfo.id, 
             clubName: clubInfo.clubName, 
@@ -105,9 +162,20 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
             }
         }] : [];
     } else {
-        const { clubId, memberships } = await getStudentRoleAndClub(user.id);
-        safeUser.clubId = clubId;
+        const { role: studentRole, clubId: studentClubId, memberships } = await getStudentRoleAndClub(user.id);
+        safeUser.clubId = studentClubId;
         safeUser.memberships = memberships;
+        if (studentRole === "club" && studentClubId) {
+            const clubInfo = await prisma.club.findUnique({ where: { id: studentClubId } });
+            if (clubInfo) {
+                safeUser.bankName = clubInfo.bankName;
+                safeUser.accountHolderName = clubInfo.accountHolderName;
+                safeUser.accountNumber = clubInfo.accountNumber;
+                safeUser.ifscCode = clubInfo.ifscCode;
+                safeUser.upiId = clubInfo.upiId;
+                safeUser.bankPhone = clubInfo.bankPhone;
+            }
+        }
     }
 
     res.json({ message: "Profile updated successfully", user: safeUser });

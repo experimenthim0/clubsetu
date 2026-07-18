@@ -84,6 +84,12 @@ const eventSchema = z.object({
     showWinner: z.boolean().optional(),
     provideCertificate: z.boolean().optional(),
     certificateTemplate: z.any().optional(),
+    paymentMethod: z.enum(['FREE', 'COLLEGE_PAYMENT', 'MANUAL_TRANSACTION']).optional().default('FREE'),
+    registrationFee: z.coerce.number().optional().default(0),
+    paymentInstructions: z.string().optional().nullable(),
+    collegePaymentUrl: z.string().url().optional().nullable().or(z.literal("")),
+    upiId: z.string().optional().nullable(),
+    accountHolderName: z.string().optional().nullable(),
     sponsors: z.array(z.object({
       name: z.string().min(1),
       logoUrl: z.string().url(),
@@ -396,6 +402,12 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
       media,
       showWinner,
       provideCertificate,
+      paymentMethod,
+      registrationFee,
+      paymentInstructions,
+      collegePaymentUrl,
+      upiId,
+      accountHolderName,
     } = req.body;
 
     if (!req.user.clubId && req.user.role !== "admin") {
@@ -453,6 +465,12 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
         maxTeamSize: maxTeamSize !== undefined ? Number(maxTeamSize) : 1,
         showWinner: showWinner || false,
         provideCertificate: provideCertificate || false,
+        paymentMethod: paymentMethod || "FREE",
+        registrationFee: Number(registrationFee || 0),
+        paymentInstructions: paymentInstructions || null,
+        collegePaymentUrl: collegePaymentUrl || null,
+        upiId: upiId || null,
+        accountHolderName: accountHolderName || null,
         slug: await slugifyUnique(title, 'event', 'slug'),
         reviewStatus: "PENDING",
         sponsors: { createMany: { data: (sponsors || []).map(s => ({ id: createObjectId(), ...s })) } },
@@ -568,7 +586,7 @@ router.post(
   async (req, res) => {
     try {
       const eventId = req.params.id;
-      const { externalEmail, externalName } = req.body;
+      const { externalEmail, externalName, transactionId, payerName, paymentRemarks } = req.body;
       const isExternal = !!externalEmail;
       if (req.user.role === "external" && externalEmail !== req.user.email) {
         return res.status(403).json({ message: "External users can only register with their own email." });
@@ -646,6 +664,11 @@ router.post(
           externalName: null,
           qrCode,
           status,
+          transactionId: transactionId || null,
+          payerName: payerName || null,
+          paymentRemarks: paymentRemarks || null,
+          amountPaid: (event.paymentMethod === 'FREE') ? 0 : (event.registrationFee || event.entryFee || 0),
+          paymentStatus: (event.paymentMethod === 'MANUAL_TRANSACTION') ? 'PENDING' : (event.paymentMethod === 'COLLEGE_PAYMENT') ? 'PENDING' : 'SUCCESS',
         };
 
       const participation = await prisma.$transaction(async (tx) => {
@@ -762,6 +785,13 @@ router.get(
           student: p.student || null,
           teamId: p.teamId,
           team: p.team || null,
+          transactionId: p.transactionId || null,
+          payerName: p.payerName || null,
+          paymentRemarks: p.paymentRemarks || null,
+          paymentStatus: p.paymentStatus || 'SUCCESS',
+          paymentReviewedBy: p.paymentReviewedBy || null,
+          paymentReviewedAt: p.paymentReviewedAt || null,
+          paymentReviewMessage: p.paymentReviewMessage || null,
         })),
       });
     } catch (err) {

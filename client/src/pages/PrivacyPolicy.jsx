@@ -30,7 +30,7 @@ const PrivacyPolicy = () => {
                             <li><strong>Personal Information:</strong> Name, email address, roll number, branch, year, and program.</li>
                             <li><strong>Profile Information:</strong> GitHub profile, LinkedIn profile, X (Twitter) profile, and portfolio URL.</li>
                             <li><strong>Event Registration Data:</strong> Responses to custom registration forms created by event organizers.</li>
-                            <li><strong>Payment Information:</strong> Transaction IDs and payment status (actual payment processing is handled securely by Razorpay).</li>
+                            <li><strong>Payment Information:</strong> Transaction IDs and payment status (payments are verified via manual transaction references or direct portal checks).</li>
                         </ul>
                     </section>
 
@@ -38,7 +38,7 @@ const PrivacyPolicy = () => {
                         <h2 className="text-lg font-black text-black mb-3">3. How We Use Your Information</h2>
                         <ul className="list-disc pl-6 space-y-1.5">
                             <li>To facilitate event registration and management.</li>
-                            <li>To process payments for paid events via Razorpay.</li>
+                            <li>To verify payments for paid events.</li>
                             <li>To allow club heads to manage their events and view participant information.</li>
                             <li>To communicate important updates about events you've registered for.</li>
                             <li>To improve our platform and user experience.</li>
@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
                         <p className="mb-3">We share your information only in the following circumstances:</p>
                         <ul className="list-disc pl-6 space-y-1.5">
                             <li><strong>With Event Organizers:</strong> When you register for an event, the club head can view your registration details and form responses.</li>
-                            <li><strong>Payment Processors:</strong> Payment data is shared with Razorpay for transaction processing.</li>
+                            <li><strong>Payment Verification:</strong> Payment transaction references are shared with event organizers and club heads for verification.</li>
                             <li><strong>Legal Requirements:</strong> If required by law or to protect our rights.</li>
                         </ul>
                     </section>

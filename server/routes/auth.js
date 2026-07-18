@@ -677,7 +677,7 @@ router.post("/login", async (req, res) => {
       }
 
     const clubInfo = (admin.role === "facultyCoordinator" || admin.role === "club") 
-      ? await getAdminClubId(admin.id) 
+      ? await prisma.club.findFirst({ where: { facultyCoordinatorId: admin.id } }) 
       : null;
     const clubId = clubInfo?.id ?? null;
     const memberships = clubInfo ? [{ 
@@ -698,6 +698,14 @@ router.post("/login", async (req, res) => {
     
     const token = generateToken(admin, admin.role, "admin", clubId);
     const userObj = { ...sanitizeUser(admin), clubId, memberships };
+    if (clubInfo) {
+      userObj.bankName = clubInfo.bankName;
+      userObj.accountHolderName = clubInfo.accountHolderName;
+      userObj.accountNumber = clubInfo.accountNumber;
+      userObj.ifscCode = clubInfo.ifscCode;
+      userObj.upiId = clubInfo.upiId;
+      userObj.bankPhone = clubInfo.bankPhone;
+    }
     res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none", maxAge: 7 * 24 * 60 * 60 * 1000 });
     return res.json({ success: true, message: "Login successful", user: userObj, role: admin.role, token });
     }

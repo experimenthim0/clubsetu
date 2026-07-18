@@ -162,7 +162,7 @@ const Aboutfeatures = () => {
             <StudentCard
               icon={<i className="ri-secure-payment-line"></i>}
               title="Secure Pay"
-              desc="Razorpay integrated. Pay fees instantly, receive verified tickets automatically."
+              desc="Seamless payments. Pay fees directly via UPI or Portal, receive verified tickets upon verification."
             />
             <StudentCard
               icon={<i class="ri-dashboard-line"></i>}

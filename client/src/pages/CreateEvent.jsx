@@ -32,6 +32,12 @@ const CreateEvent = () => {
         registrationType: 'individual',
         minTeamSize: 1,
         maxTeamSize: 1,
+        paymentMethod: 'FREE',
+        registrationFee: 0,
+        paymentInstructions: '',
+        collegePaymentUrl: '',
+        upiId: '',
+        accountHolderName: '',
     });
     const [sponsors, setSponsors] = useState([]);
     const [media, setMedia] = useState([]);
@@ -257,11 +263,26 @@ const CreateEvent = () => {
             }
         }
 
+        if (formData.paymentMethod !== 'FREE') {
+            const fee = Number(formData.registrationFee || 0);
+            if (fee <= 0) {
+                setError('Registration fee must be greater than 0 for paid events.');
+                setIsSubmitting(false);
+                return;
+            }
+            if (formData.paymentMethod === 'MANUAL_TRANSACTION' && !formData.upiId) {
+                setError('UPI ID/Phone Number is required for Manual Transaction Verification.');
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
         const payload = {
             ...formData,
             startTime: new Date(formData.startTime).toISOString(),
             endTime: new Date(formData.endTime).toISOString(),
-            entryFee: Number(formData.entryFee || 0),
+            entryFee: formData.paymentMethod === 'FREE' ? 0 : Number(formData.registrationFee || 0), // maintain compatibility
+            registrationFee: formData.paymentMethod === 'FREE' ? 0 : Number(formData.registrationFee || 0),
             totalSeats: isUnlimited ? 0 : Number(formData.totalSeats),
             registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
             allowedYears: allYears ? [] : formData.allowedYears,
@@ -271,6 +292,11 @@ const CreateEvent = () => {
             maxTeamSize: (formData.registrationType === 'team' || formData.registrationType === 'both') ? Number(formData.maxTeamSize || 1) : 1,
             sponsors: sponsors.map(s => ({ name: s.name, logoUrl: s.logoUrl, websiteUrl: s.websiteUrl || undefined })),
             media: media.map(m => ({ url: m.url, type: m.type })),
+            paymentMethod: formData.paymentMethod,
+            paymentInstructions: formData.paymentMethod === 'FREE' ? null : formData.paymentInstructions,
+            collegePaymentUrl: formData.paymentMethod === 'COLLEGE_PAYMENT' ? formData.collegePaymentUrl : null,
+            upiId: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.upiId : null,
+            accountHolderName: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.accountHolderName : null,
         };
 
         try {
@@ -447,48 +473,124 @@ const CreateEvent = () => {
                         )}
                     </div>
 
-                    {/* Entry Fee */}
-                   <div>
-  <label className={labelCls}>Entry Fee</label>
-  <div className="flex items-center gap-6 mb-3">
-    <label className="inline-flex items-center cursor-pointer">
-      <input
-        type="radio"
-        className="w-4 h-4 accent-orange-600 cursor-pointer  border-neutral-300 rounded focus:ring-orange-600"
-        name="feeType"
-        checked={isFree}
-        onChange={() => {
-          setIsFree(true);
-          setFormData({ ...formData, entryFee: 0 });
-        }}
-      />
-      <span className="ml-2 text-sm font-medium text-neutral-700">Free</span>
-    </label>
-    <label className="inline-flex items-center cursor-not-allowed opacity-50">
-      <input
-        type="radio"
-        className="w-4 h-4 text-orange-600 border-neutral-300 focus:ring-orange-600"
-        name="feeType"
-        checked={!isFree}
-        disabled // 🔒 disables the Paid option
-        onChange={() => setIsFree(false)}
-      />
-      <span className="ml-2 text-sm font-medium text-neutral-700">Paid(Coming Soon)</span>
-    </label>
-  </div>
+                    {/* Payment Settings */}
+                    <div className="bg-neutral-50 border border-neutral-300 rounded-sm p-6 space-y-6">
+                        <div>
+                            <h3 className="text-lg font-bold text-black uppercase tracking-wider">Payment Settings</h3>
+                            <p className="text-xs text-neutral-600 mt-1">Choose how users pay for event registration.</p>
+                        </div>
 
-  {!isFree && (
-    <input
-      type="number"
-      name="entryFee"
-      min="1"
-      placeholder="Enter amount in ₹"
-      className={inputCls}
-      value={formData.entryFee}
-      onChange={handleChange}
-    />
-  )}
-</div>
+                        {/* Payment Method Option Selector */}
+                        <div>
+                            <label className={labelCls}>Payment Method <span className="text-orange-600">*</span></label>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label className={`flex flex-col p-4 border-2 rounded-sm cursor-pointer transition-all ${formData.paymentMethod === 'FREE' ? 'border-orange-600 bg-orange-50/30' : 'border-neutral-200 hover:border-neutral-400 bg-white'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="FREE"
+                                            checked={formData.paymentMethod === 'FREE'}
+                                            onChange={() => setFormData({ ...formData, paymentMethod: 'FREE', registrationFee: 0 })}
+                                            className="w-4 h-4 accent-orange-600"
+                                        />
+                                        <span className="text-sm font-bold text-black">Free</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-500 mt-2">No entry fee required to join the event.</span>
+                                </label>
+
+                                <label className={`flex flex-col p-4 border-2 rounded-sm cursor-pointer transition-all ${formData.paymentMethod === 'MANUAL_TRANSACTION' ? 'border-orange-600 bg-orange-50/30' : 'border-neutral-200 hover:border-neutral-400 bg-white'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="MANUAL_TRANSACTION"
+                                            checked={formData.paymentMethod === 'MANUAL_TRANSACTION'}
+                                            onChange={() => setFormData({ ...formData, paymentMethod: 'MANUAL_TRANSACTION' })}
+                                            className="w-4 h-4 accent-orange-600"
+                                        />
+                                        <span className="text-sm font-bold text-black">Manual Transaction</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-500 mt-2">Users scan your QR code/UPI ID and submit Transaction ID.</span>
+                                </label>
+
+                                <label className="flex flex-col p-4 border-2 border-dashed border-neutral-200 bg-neutral-100 opacity-50 cursor-not-allowed select-none">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="COLLEGE_PAYMENT"
+                                            checked={false}
+                                            disabled
+                                            className="w-4 h-4 accent-orange-600 cursor-not-allowed"
+                                        />
+                                        <span className="text-sm font-bold text-neutral-500">College Portal (Coming Soon)</span>
+                                    </div>
+                                    <span className="text-xs text-neutral-400 mt-2">Integration with college official fees collection portal.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Registration Fee Input (Conditional) */}
+                        {formData.paymentMethod !== 'FREE' && (
+                            <div>
+                                <label className={labelCls}>Registration Fee (₹) <span className="text-orange-600">*</span></label>
+                                <input
+                                    type="number"
+                                    name="registrationFee"
+                                    min="1"
+                                    required
+                                    className={inputCls}
+                                    placeholder="Enter amount in ₹"
+                                    value={formData.registrationFee}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        )}
+
+                        {/* Manual Transaction Verification Fields (Conditional) */}
+                        {formData.paymentMethod === 'MANUAL_TRANSACTION' && (
+                            <div className="space-y-4 border-t border-neutral-200 pt-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>UPI ID / Phone Number <span className="text-orange-600">*</span></label>
+                                        <input
+                                            type="text"
+                                            name="upiId"
+                                            required
+                                            className={inputCls}
+                                            placeholder="e.g. name@upi or 9876543210"
+                                            value={formData.upiId}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Account Holder Name</label>
+                                        <input
+                                            type="text"
+                                            name="accountHolderName"
+                                            className={inputCls}
+                                            placeholder="e.g. Club Secretary or Club Account Name"
+                                            value={formData.accountHolderName}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className={labelCls}>Custom Payment Instructions</label>
+                                    <textarea
+                                        name="paymentInstructions"
+                                        rows="3"
+                                        className={`${inputCls} resize-y`}
+                                        placeholder="Add custom instructions for the user (e.g. Please scan the QR code, pay via GPay/PhonePe/Paytm, and paste the 12-digit UTR/Transaction ID below.)"
+                                        value={formData.paymentInstructions}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
 
                     {/* Registration Restrictions Card */}

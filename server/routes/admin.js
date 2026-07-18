@@ -60,7 +60,7 @@ router.get(
               createdBy: { select: { id: true, name: true } },
             },
           }),
-          prisma.participation.findMany({ where: { paymentStatus: "SUCCESS" } }),
+          prisma.participation.findMany({ where: { paymentStatus: { in: ["SUCCESS", "APPROVED"] } } }),
           prisma.studentUser.count({
             where: {
               NOT: {
@@ -263,7 +263,7 @@ router.get("/event-data-export", verifyToken, allowRoles("admin"), async (req, r
     const participations = await prisma.participation.findMany({
       where: {
         eventId: { in: events.length ? events.map((e) => e.id) : ["__none__"] },
-        paymentStatus: "SUCCESS",
+        paymentStatus: { in: ["SUCCESS", "APPROVED"] },
       },
       select: { eventId: true, amountPaid: true },
     });
@@ -454,6 +454,65 @@ router.put("/clubs/:id", verifyToken, allowRoles("admin"), async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message || "Failed to update club" });
+  }
+});
+
+// ── GET /admin/manual-payments — get all manual payments for admin overview ───
+router.get("/manual-payments", verifyToken, allowRoles("admin", "paymentAdmin"), async (req, res) => {
+  try {
+    const participations = await prisma.participation.findMany({
+      where: {
+        event: {
+          paymentMethod: { not: "FREE" },
+        },
+      },
+      include: {
+        event: {
+          select: {
+            title: true,
+            club: { select: { clubName: true } },
+            registrationFee: true,
+            entryFee: true,
+          },
+        },
+        student: {
+          select: {
+            name: true,
+            email: true,
+            rollNo: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const summary = {
+      total: participations.length,
+      pending: participations.filter((p) => p.paymentStatus === "PENDING").length,
+      approved: participations.filter((p) => ["APPROVED", "SUCCESS"].includes(p.paymentStatus)).length,
+      rejected: participations.filter((p) => p.paymentStatus === "REJECTED").length,
+      needMoreDetails: participations.filter((p) => p.paymentStatus === "NEED_MORE_DETAILS").length,
+    };
+
+    res.json({
+      participations: participations.map((p) => ({
+        id: p.id,
+        eventName: p.event.title,
+        clubName: p.event.club?.clubName || "Unknown",
+        studentName: p.student?.name || p.externalName || "Unknown",
+        studentEmail: p.student?.email || p.externalEmail || "N/A",
+        studentRollNo: p.student?.rollNo || "N/A",
+        transactionId: p.transactionId || null,
+        payerName: p.payerName || null,
+        paymentRemarks: p.paymentRemarks || null,
+        paymentStatus: p.paymentStatus,
+        amountPaid: p.amountPaid || p.event.registrationFee || p.event.entryFee || 0,
+        createdAt: p.createdAt,
+      })),
+      summary,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch manual payments overview", error: err.message });
   }
 });
 

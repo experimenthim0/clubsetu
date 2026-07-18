@@ -95,7 +95,7 @@ const DataPrivacy = () => {
                     <section>
                         <h2 className="text-lg font-black text-black mb-3">5. Third-Party Services</h2>
                         <ul className="list-disc pl-6 space-y-1.5">
-                            <li><strong>Razorpay:</strong> Handles payment processing. Subject to <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-bold hover:underline">Razorpay's Privacy Policy</a>.</li>
+                            <li><strong>Manual Verification:</strong> Payment reference details are securely shared with and verified directly by the organizing clubs.</li>
                             <li>We do not sell or share your data with any other third-party services for marketing purposes.</li>
                         </ul>
                     </section>

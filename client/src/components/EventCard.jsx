@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { loadRazorpay } from '../utils/razorpay';
 import CalendarDropdown from './CalendarDropdown';
 import { getColorSync } from 'colorthief';
 import { useImageBlob } from '../hooks/useImageBlob';

@@ -218,7 +218,7 @@ const Contribute = () => {
           <div className="mt-6 p-4 rounded-xl bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-850 flex items-start gap-3">
             <i className="ri-information-line text-orange-600 text-lg shrink-0 mt-0.5" />
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              CampusNode is structured with a decoupled modular architecture. The backend manages Razorpay transactions, generates PDF dynamic tickets with QR codes, handles custom student forms, and sends real-time event updates via WebSockets.
+              CampusNode is structured with a decoupled modular architecture. The backend manages flexible payment verifications, generates PDF dynamic tickets with QR codes, handles custom student forms, and sends real-time event updates via WebSockets.
             </p>
           </div>
         </Reveal>

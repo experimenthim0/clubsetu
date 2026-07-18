@@ -26,6 +26,12 @@ const MyEvents = () => {
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [editPaymentModalOpen, setEditPaymentModalOpen] = useState(false);
+  const [editingReg, setEditingReg] = useState(null);
+  const [editTxId, setEditTxId] = useState('');
+  const [editPayerName, setEditPayerName] = useState('');
+  const [editRemarks, setEditRemarks] = useState('');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
 
  const handleDownloadTicket = async () => {
   if (!selectedTicket || !qrDataUrl) return;
@@ -321,6 +327,44 @@ const MyEvents = () => {
     }
   };
 
+  const openEditPaymentModal = (reg) => {
+    setEditingReg(reg);
+    setEditTxId(reg.transactionId || '');
+    setEditPayerName(reg.payerName || '');
+    setEditRemarks(reg.paymentRemarks || '');
+    setEditPaymentModalOpen(true);
+  };
+
+  const submitPaymentEdit = async (e) => {
+    e.preventDefault();
+    if (!editTxId.trim()) {
+      showNotification('Transaction ID / UTR is required', 'error');
+      return;
+    }
+    setSubmittingEdit(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/payment/${editingReg.id || editingReg._id}/update-details`, {
+        transactionId: editTxId,
+        payerName: editPayerName,
+        paymentRemarks: editRemarks
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showNotification(res.data.message || 'Payment details updated successfully!', 'success');
+      setEditPaymentModalOpen(false);
+      setEditingReg(null);
+      // Refresh registrations
+      if (user) {
+        fetchRegistrations(user.id || user._id);
+      }
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to update payment details', 'error');
+    } finally {
+      setSubmittingEdit(false);
+    }
+  };
+
   const handleDelete = (eventId) => {
     setEventToDelete(eventId);
     setDeleteModalOpen(true);
@@ -512,7 +556,7 @@ const MyEvents = () => {
                     )}
 
                     {/* Action Row */}
-                    <div className="flex items-center gap-2 mt-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2 mt-2 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex-wrap">
                       <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border-0 ${
                         reg.status === 'CONFIRMED' || reg.status === 'REGISTERED'
                           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-400'
@@ -520,8 +564,26 @@ const MyEvents = () => {
                       }`}>
                         ✓ {reg.status === 'CONFIRMED' || reg.status === 'REGISTERED' ? 'Registered' : reg.status}
                       </span>
+
+                      {event.paymentMethod && event.paymentMethod !== 'FREE' && (
+                        <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                          reg.paymentStatus === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' :
+                          reg.paymentStatus === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50' :
+                          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50 animate-pulse-slow'
+                        }`}>
+                          Payment: {reg.paymentStatus}
+                        </span>
+                      )}
                       
                       <div className="ml-auto flex gap-2">
+                        {(reg.paymentStatus === 'NEED_MORE_DETAILS' || reg.paymentStatus === 'REJECTED') && (
+                          <button
+                            onClick={() => openEditPaymentModal(reg)}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 dark:text-orange-350 transition-colors shadow-sm cursor-pointer border-0 outline-none whitespace-nowrap"
+                          >
+                            <i className="ri-edit-2-line mr-1" /> Edit Payment Info
+                          </button>
+                        )}
                         <button
                           onClick={async () => { 
                             setSelectedTicket(reg); 
@@ -537,9 +599,9 @@ const MyEvents = () => {
                         >
                           Show Ticket
                         </button>
-
+ 
                         {!isPast && (
-                          event.entryFee > 0 ? (
+                          (event.paymentMethod && event.paymentMethod !== 'FREE') ? (
                             <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-850 px-3 py-1.5 rounded-full cursor-not-allowed whitespace-nowrap">
                               <i className="ri-lock-2-line mr-1" /> Paid Entry
                             </span>
@@ -708,7 +770,7 @@ const MyEvents = () => {
                       </span>
                       <span className="flex items-center gap-1.5 font-medium text-neutral-700">
                         <Users className="w-4 h-4 shrink-0 text-neutral-400" />
-                        {event.registeredCount} / {event.totalSeats} registered
+                        {event.registeredCount} / {event.totalSeats || '∞'} registered
                       </span>
                     </div>
 
@@ -1155,6 +1217,89 @@ const MyEvents = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── EDIT PAYMENT DETAILS MODAL ── */}
+      {editPaymentModalOpen && editingReg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div className="bg-orange-600 px-6 py-4 border-b border-orange-700">
+              <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                <i className="ri-edit-box-line" /> Edit Payment Information
+              </h3>
+            </div>
+            
+            <form onSubmit={submitPaymentEdit}>
+              <div className="p-6 space-y-4 text-left">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1.5">
+                    UTR / Transaction ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editTxId}
+                    onChange={(e) => setEditTxId(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl focus:outline-none focus:border-orange-500 text-neutral-800 dark:text-neutral-200 font-mono"
+                    placeholder="Enter 12-digit UPI/UTR Transaction ID"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1.5">
+                    Payer Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editPayerName}
+                    onChange={(e) => setEditPayerName(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl focus:outline-none focus:border-orange-500 text-neutral-800 dark:text-neutral-200"
+                    placeholder="Name of account owner"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1.5">
+                    Payment Remarks
+                  </label>
+                  <textarea
+                    value={editRemarks}
+                    onChange={(e) => setEditRemarks(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl focus:outline-none focus:border-orange-500 text-neutral-800 dark:text-neutral-200 resize-none h-20"
+                    placeholder="Add remarks or notes..."
+                  />
+                </div>
+
+                {editingReg.paymentReviewMessage && (
+                  <div className="p-3.5 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                    <p className="text-xs font-bold text-rose-700 dark:text-rose-450 uppercase tracking-wider mb-1">
+                      Reviewer Message
+                    </p>
+                    <p className="text-xs text-rose-600 dark:text-rose-400 leading-relaxed font-medium">
+                      {editingReg.paymentReviewMessage}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="px-6 pb-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setEditPaymentModalOpen(false); setEditingReg(null); }}
+                  className="flex-1 px-4 py-2.5 bg-white dark:bg-neutral-850 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 font-semibold text-xs rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-850 transition-colors cursor-pointer border-0"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEdit}
+                  className="flex-1 px-4 py-2.5 bg-orange-600 border border-orange-700 text-white font-semibold text-xs rounded-lg hover:bg-orange-700 transition-colors cursor-pointer disabled:opacity-50 border-0"
+                >
+                  {submittingEdit ? 'Submitting...' : 'Update Details'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

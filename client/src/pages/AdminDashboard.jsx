@@ -20,6 +20,11 @@ const AdminDashboard = () => {
     const [editingClub, setEditingClub] = useState(null);
     const [isCoordModalOpen, setIsCoordModalOpen] = useState(false);
     const [editingCoord, setEditingCoord] = useState(null);
+
+    // Payments Management States
+    const [manualPayments, setManualPayments] = useState([]);
+    const [manualPaymentsSummary, setManualPaymentsSummary] = useState(null);
+    const [paymentsSearch, setPaymentsSearch] = useState('');
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -83,6 +88,8 @@ const AdminDashboard = () => {
                 const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
                 setCoordinators(coordsRes.data);
 
+                await fetchManualPayments();
+
                 fetchFilteredEventData();
                 setLoading(false);
             } catch (err) {
@@ -92,6 +99,16 @@ const AdminDashboard = () => {
         };
         fetchData();
     }, [navigate, showNotification]);
+
+    const fetchManualPayments = async () => {
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/manual-payments`);
+            setManualPayments(res.data.participations || []);
+            setManualPaymentsSummary(res.data.summary || null);
+        } catch (err) {
+            console.error('Failed to fetch manual payments overview:', err);
+        }
+    };
 
     const fetchFilteredEventData = async () => {
         try {
@@ -111,6 +128,7 @@ const AdminDashboard = () => {
         try {
             const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
             setStats(statsRes.data);
+            await fetchManualPayments();
         } catch (err) {
             console.error('Failed to refresh stats');
         }
@@ -297,6 +315,7 @@ const AdminDashboard = () => {
     const tabTitles = {
         overview: { title: 'Overview', subtitle: 'All events at a glance' },
         payouts: { title: 'Payouts', subtitle: 'Manage settlement & revenue' },
+        'payments-overview': { title: 'Payments Management', subtitle: 'Overview of manual transaction registrations and statuses' },
         'club-heads': { title: 'Manage Clubs', subtitle: 'Create and edit registered clubs' },
         coordinators: { title: 'Coordinators', subtitle: 'Faculty coordinator accounts' },
         'event-data': { title: 'Event Data', subtitle: 'Filter, analyze & export' },
@@ -501,6 +520,129 @@ const AdminDashboard = () => {
                             )}
                         </tbody>
                     </DataTable>
+                )}
+
+                {/* ── PAYMENTS MANAGEMENT TAB ─────────────────────────── */}
+                {activeTab === 'payments-overview' && (
+                    <div className="space-y-6">
+                        {/* Summary Stats */}
+                        {manualPaymentsSummary && (
+                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                <StatCard label="Total Payments" value={manualPaymentsSummary.total} />
+                                <div className="p-5 rounded-2xl border bg-white dark:bg-[#0a0a0a] border-neutral-200 dark:border-zinc-800 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">Pending Approvals</p>
+                                    <p className="text-2xl font-black mt-1 text-amber-500">{manualPaymentsSummary.pending}</p>
+                                </div>
+                                <div className="p-5 rounded-2xl border bg-white dark:bg-[#0a0a0a] border-neutral-200 dark:border-zinc-800 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">Approved</p>
+                                    <p className="text-2xl font-black mt-1 text-emerald-500">{manualPaymentsSummary.approved}</p>
+                                </div>
+                                <div className="p-5 rounded-2xl border bg-white dark:bg-[#0a0a0a] border-neutral-200 dark:border-zinc-800 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">Rejected</p>
+                                    <p className="text-2xl font-black mt-1 text-rose-500">{manualPaymentsSummary.rejected}</p>
+                                </div>
+                                <div className="p-5 rounded-2xl border bg-white dark:bg-[#0a0a0a] border-neutral-200 dark:border-zinc-800 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400 dark:text-neutral-500">Need Details</p>
+                                    <p className="text-2xl font-black mt-1 text-orange-500">{manualPaymentsSummary.needMoreDetails}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Search Input */}
+                        <div className="relative">
+                            <i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 text-base" />
+                            <input
+                                type="text"
+                                placeholder="Search by student, event, club, roll number or Transaction ID/UTR..."
+                                value={paymentsSearch}
+                                onChange={(e) => setPaymentsSearch(e.target.value)}
+                                className="w-full pl-11 pr-10 py-3 border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-[#0a0a0a] text-black dark:text-white text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400"
+                            />
+                            {paymentsSearch && (
+                                <button onClick={() => setPaymentsSearch('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer border-0 bg-transparent">
+                                    <i className="ri-close-line text-lg" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* List */}
+                        <DataTable>
+                            <thead>
+                                <tr className="border-b border-neutral-200 dark:border-zinc-800">
+                                    <Th>#</Th>
+                                    <Th>Event & Club</Th>
+                                    <Th>Participant Details</Th>
+                                    <Th>Payer & UTR Info</Th>
+                                    <Th>Amount</Th>
+                                    <Th>Status</Th>
+                                    <Th align="right">Date</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(() => {
+                                    const filtered = manualPayments.filter(p => {
+                                        if (!paymentsSearch) return true;
+                                        const q = paymentsSearch.toLowerCase();
+                                        return (
+                                            (p.studentName || '').toLowerCase().includes(q) ||
+                                            (p.studentRollNo || '').toLowerCase().includes(q) ||
+                                            (p.studentEmail || '').toLowerCase().includes(q) ||
+                                            (p.eventName || '').toLowerCase().includes(q) ||
+                                            (p.clubName || '').toLowerCase().includes(q) ||
+                                            (p.transactionId || '').toLowerCase().includes(q) ||
+                                            (p.payerName || '').toLowerCase().includes(q)
+                                        );
+                                    });
+
+                                    if (filtered.length === 0) {
+                                        return <tr><td colSpan="7" className="px-5 py-16 text-center text-neutral-400 text-sm">No transaction registrations found.</td></tr>;
+                                    }
+
+                                    return filtered.map((item, idx) => (
+                                        <tr key={item.id || idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
+                                            <Td className="text-neutral-300 dark:text-neutral-600">{idx + 1}</Td>
+                                            <Td>
+                                                <div className="flex flex-col text-left">
+                                                    <span className="font-semibold text-black dark:text-white">{item.eventName}</span>
+                                                    <span className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold">{item.clubName}</span>
+                                                </div>
+                                            </Td>
+                                            <Td>
+                                                <div className="flex flex-col text-left">
+                                                    <span className="font-bold text-neutral-800 dark:text-neutral-200">{item.studentName}</span>
+                                                    <span className="text-[10px] text-neutral-400 font-mono mt-0.5">{item.studentRollNo} • {item.studentEmail}</span>
+                                                </div>
+                                            </Td>
+                                            <Td>
+                                                <div className="flex flex-col text-left">
+                                                    {item.transactionId && (
+                                                        <span className="font-mono text-xs text-neutral-800 dark:text-neutral-100">
+                                                            UTR: <strong className="select-all">{item.transactionId}</strong>
+                                                        </span>
+                                                    )}
+                                                    {item.payerName && <span className="text-[10px] text-neutral-500 dark:text-neutral-405">Payer: {item.payerName}</span>}
+                                                    {item.paymentRemarks && <span className="text-[10px] text-neutral-455 dark:text-neutral-505 italic">"{item.paymentRemarks}"</span>}
+                                                </div>
+                                            </Td>
+                                            <Td className="font-mono font-bold">₹{item.amountPaid}</Td>
+                                            <Td>
+                                                <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border ${
+                                                    item.paymentStatus === 'APPROVED' || item.paymentStatus === 'SUCCESS' ? 'bg-emerald-50 text-emerald-700 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' :
+                                                    item.paymentStatus === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-250 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50' :
+                                                    'bg-amber-50 text-amber-700 border-amber-250 dark:bg-amber-950/20 dark:text-amber-450 dark:border-amber-900/50 animate-pulse-slow'
+                                                }`}>
+                                                    {item.paymentStatus}
+                                                </span>
+                                            </Td>
+                                            <Td align="right" className="text-[11px] text-neutral-400 dark:text-neutral-505 font-mono">
+                                                {new Date(item.createdAt).toLocaleDateString()}
+                                            </Td>
+                                        </tr>
+                                    ));
+                                })()}
+                            </tbody>
+                        </DataTable>
+                    </div>
                 )}
 
                 {/* ── MANAGE CLUBS TAB ─────────────────────────────────── */}
