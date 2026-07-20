@@ -22,6 +22,7 @@ const HomeFooter = () => {
     { label: 'Team', to: '/team' },
     { label: 'Privacy Policy', to: '/privacy' },
     { label: 'Terms of Service', to: '/terms' },
+    { label: 'Payment Policy', to: '/payment-policy' },
   ];
 
   return (

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
-import QRCode from 'qrcode';
 import CalendarDropdown from '../components/CalendarDropdown';
+import PaymentModal from '../components/PaymentModal';
 
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
 
@@ -90,11 +90,6 @@ const EventDetails = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentType, setPaymentType] = useState(null); // 'MANUAL_TRANSACTION' | 'COLLEGE_PAYMENT'
   const [paymentPayload, setPaymentPayload] = useState({});
-  const [manualTxId, setManualTxId] = useState('');
-  const [manualPayerName, setManualPayerName] = useState('');
-  const [manualRemarks, setManualRemarks] = useState('');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [collegePaymentStatusConfirmed, setCollegePaymentStatusConfirmed] = useState(false);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -185,20 +180,6 @@ const EventDetails = () => {
       setMetaTag("meta[name='twitter:image']", 'name', 'twitter:image', event.imageUrl || DEFAULT_IMAGE);
     }
   }, [event]);
-
-  useEffect(() => {
-    if (paymentModalOpen && paymentType === 'MANUAL_TRANSACTION' && event) {
-      const fee = event.registrationFee || event.entryFee || 0;
-      const upiLink = `upi://pay?pa=${event.upiId}&pn=${encodeURIComponent(event.accountHolderName || event.title)}&am=${fee}&cu=INR`;
-      QRCode.toDataURL(upiLink, { width: 256, margin: 2 })
-        .then(url => {
-          setQrCodeUrl(url);
-        })
-        .catch(err => {
-          console.error('Failed to generate QR code', err);
-        });
-    }
-  }, [paymentModalOpen, paymentType, event]);
 
   const submitRegistrationWithPayment = async (txId, pName, remarks) => {
     setIsRegistering(true);
@@ -860,24 +841,24 @@ const EventDetails = () => {
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500 mb-4">
                   Sponsors
                 </h3>
-                <div className="flex flex-wrap gap-5 items-center">
+                <div className="flex flex-wrap gap-5 items-center ">
                   {event.sponsors.map((sponsor, i) => (
                     <a
                       key={i}
                       href={sponsor.websiteUrl || '#'}
                       target={sponsor.websiteUrl ? "_blank" : "_self"}
                       rel="noopener noreferrer"
-                      className={`flex flex-col items-start gap-1.5 transition-opacity justify-center ${
+                      className={`flex flex-col items-center gap-1.5 transition-opacity justify-center ${
                         sponsor.websiteUrl ? 'cursor-pointer hover:opacity-100 opacity-80' : 'cursor-default opacity-80'
                       }`}
                     >
                       <img
                         src={sponsor.logoUrl}
                         alt={sponsor.name}
-                        className="h-7 w-auto object-contain"
+                        className="h-7 w-auto object-contain bg-white dark:bg-white "
                         onError={(e) => { e.target.src = 'https://via.placeholder.com/28?text=' + sponsor.name[0]; }}
                       />
-                      <span className="text-[11px] font-medium text-neutral-400 tracking-wide text-center">
+                      <span className="text-[11px] font-medium text-black dark:text-white tracking-wide text-center">
                         {sponsor.name}
                       </span>
                     </a>
@@ -1536,206 +1517,15 @@ const EventDetails = () => {
       )}
 
       {/* ── Dynamic/Manual Payment Modal ── */}
-      {paymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-xl max-w-lg w-full shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="bg-orange-600 px-6 py-4 border-b-2 border-black dark:border-neutral-700 shrink-0">
-              <h3 className="font-black text-white text-lg flex items-center gap-2">
-                <i className="ri-wallet-3-line" /> Registration Payment
-              </h3>
-              <p className="text-white/80 text-xs mt-1">Complete payment to submit your registration</p>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              {/* Payment Summary */}
-              <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-4 flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Amount to Pay</p>
-                  <p className="text-2xl font-black text-black dark:text-white">₹{event.registrationFee || event.entryFee}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Payment Mode</p>
-                  <p className="text-sm font-bold text-orange-600 uppercase tracking-wide">
-                    {paymentType === 'MANUAL_TRANSACTION' ? 'Manual UPI Transfer' : 'College Fee Portal'}
-                  </p>
-                </div>
-              </div>
-
-              {paymentType === 'MANUAL_TRANSACTION' && (
-                <div className="space-y-5">
-                  {/* QR Code and UPI Info */}
-                  <div className="flex flex-col sm:flex-row items-center gap-6 p-4 border-2 border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-950">
-                    {qrCodeUrl ? (
-                      <div className="flex flex-col items-center bg-white p-2 rounded-lg border border-neutral-200 shrink-0">
-                        <img src={qrCodeUrl} alt="UPI QR Code" className="w-40 h-40" />
-                        <span className="text-[9px] font-extrabold text-neutral-400 mt-1 uppercase tracking-widest">Scan with any UPI App</span>
-                      </div>
-                    ) : (
-                      <div className="w-40 h-40 bg-neutral-100 dark:bg-neutral-900 animate-pulse rounded-lg flex items-center justify-center shrink-0">
-                        <i className="ri-qr-code-line text-4xl text-neutral-400" />
-                      </div>
-                    )}
-
-                    <div className="space-y-3 w-full text-center sm:text-left">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">UPI ID / Phone Number</p>
-                        <p className="text-sm font-extrabold text-black dark:text-white select-all font-mono break-all">{event.upiId}</p>
-                      </div>
-                      {event.accountHolderName && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Account Holder Name</p>
-                          <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">{event.accountHolderName}</p>
-                        </div>
-                      )}
-                      {/* Pay Now Button (Direct App link on Mobile) */}
-                      <a 
-                        href={`upi://pay?pa=${event.upiId}&pn=${encodeURIComponent(event.accountHolderName || event.title)}&am=${event.registrationFee || event.entryFee}&cu=INR`} 
-                        className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:text-white transition-colors cursor-pointer border border-transparent shadow-sm"
-                      >
-                        <i className="ri-phone-fill" /> Pay Now (Mobile Link)
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Custom Instructions */}
-                  {event.paymentInstructions && (
-                    <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10 border border-orange-200 dark:border-orange-900/50 rounded-xl">
-                      <p className="text-[10px] font-black text-orange-800 dark:text-orange-400 uppercase tracking-widest mb-1">Instructions</p>
-                      <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{event.paymentInstructions}</p>
-                    </div>
-                  )}
-
-                  {/* Submission Form */}
-                  <div className="space-y-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Enter Payment Details</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 mb-1.5">Transaction ID / UTR <span className="text-orange-600">*</span></label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="12-digit UPI Ref/UTR No"
-                          value={manualTxId}
-                          onChange={(e) => setManualTxId(e.target.value)}
-                          className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-sm bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-none focus:border-orange-600"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 mb-1.5">Payer Name <span className="text-orange-600">*</span></label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Name of account holder"
-                          value={manualPayerName}
-                          onChange={(e) => setManualPayerName(e.target.value)}
-                          className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-sm bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-none focus:border-orange-600"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Remarks</label>
-                      <input
-                        type="text"
-                        placeholder="Any comments or notes"
-                        value={manualRemarks}
-                        onChange={(e) => setManualRemarks(e.target.value)}
-                        className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-sm bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-none focus:border-orange-600"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {paymentType === 'COLLEGE_PAYMENT' && (
-                <div className="space-y-5 text-center">
-                  <div className="p-6 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50 dark:bg-neutral-950 flex flex-col items-center gap-3">
-                    <i className="ri-bank-card-line text-4xl text-neutral-400" />
-                    <div>
-                      <p className="font-bold text-sm text-black dark:text-white">Pay via College Portal</p>
-                      <p className="text-xs text-neutral-500 mt-1">Please pay using the official college fees portal.</p>
-                    </div>
-                    {event.collegePaymentUrl && (
-                      <a 
-                        href={event.collegePaymentUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="mt-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-widest rounded-lg transition-colors cursor-pointer border-0 shadow-sm"
-                      >
-                        Open Portal <i className="ri-external-link-line" />
-                      </a>
-                    )}
-                  </div>
-
-                  {event.paymentInstructions && (
-                    <div className="p-4 bg-neutral-100 dark:bg-neutral-800 rounded-xl text-left">
-                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Instructions</p>
-                      <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{event.paymentInstructions}</p>
-                    </div>
-                  )}
-
-                  <label className="flex items-start gap-3 cursor-pointer text-left p-3 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
-                    <input 
-                      type="checkbox" 
-                      checked={collegePaymentStatusConfirmed} 
-                      onChange={(e) => setCollegePaymentStatusConfirmed(e.target.checked)} 
-                      className="mt-0.5 w-4 h-4 accent-orange-600" 
-                    />
-                    <div className="text-xs">
-                      <p className="font-bold text-neutral-800 dark:text-neutral-200">I have completed the payment</p>
-                      <p className="text-neutral-400 mt-0.5">Please check this after completing the transaction on the portal.</p>
-                    </div>
-                  </label>
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 pb-6 pt-3 flex gap-3 border-t border-neutral-100 dark:border-neutral-800 shrink-0">
-              <button 
-                onClick={() => {
-                  setPaymentModalOpen(false);
-                  setManualTxId('');
-                  setManualPayerName('');
-                  setManualRemarks('');
-                  setCollegePaymentStatusConfirmed(false);
-                }} 
-                className="flex-1 px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer border-0 outline-none"
-              >
-                Cancel
-              </button>
-              
-              {paymentType === 'MANUAL_TRANSACTION' ? (
-                <button 
-                  onClick={() => {
-                    if (!manualTxId.trim() || !manualPayerName.trim()) {
-                      showNotification('Please enter Transaction ID and Payer Name.', 'warning');
-                      return;
-                    }
-                    submitRegistrationWithPayment(manualTxId, manualPayerName, manualRemarks);
-                  }}
-                  disabled={isRegistering}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0 outline-none"
-                >
-                  {isRegistering ? 'Submitting...' : 'Submit Reference'}
-                </button>
-              ) : (
-                <button 
-                  onClick={() => {
-                    if (!collegePaymentStatusConfirmed) {
-                      showNotification('Please confirm you have paid.', 'warning');
-                      return;
-                    }
-                    submitRegistrationWithPayment('COLLEGE_PORTAL', 'COLLEGE_PAYMENT', 'Paid via official portal');
-                  }}
-                  disabled={isRegistering}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-0 outline-none"
-                >
-                  {isRegistering ? 'Submitting...' : 'Confirm Registration'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        paymentType={paymentType}
+        event={event}
+        onSubmit={submitRegistrationWithPayment}
+        isRegistering={isRegistering}
+        showNotification={showNotification}
+      />
     </div>
   );
 };

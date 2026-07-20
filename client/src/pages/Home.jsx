@@ -478,7 +478,7 @@ const Home = () => {
       const sorted = (res.data || []).sort((a, b) => {
         const timeA = new Date(a.eventId?.startTime || 0).getTime();
         const timeB = new Date(b.eventId?.startTime || 0).getTime();
-        return timeA - timeB;
+        return timeB - timeA;
       });
       setRegistrations(sorted);
     } catch (err) {
@@ -578,10 +578,9 @@ const Home = () => {
                 {/* User Greeting Widget */}
                 <div className="flex items-center gap-4">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-orange-500 animate-pulse">{dashboardTag}</span>
-                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-                    </div>
+                    {/* <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-orange-500 ">{dashboardTag}</span>
+                    </div> */}
                     <h1 className="text-3xl md:text-4xl font-black tracking-tight text-neutral-900 dark:text-white mt-1">
                       Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500 dark:from-orange-400 dark:to-amber-400">{greetingName}</span>
                     </h1>

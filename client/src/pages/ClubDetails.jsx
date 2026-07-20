@@ -86,7 +86,9 @@ const ClubDetails = () => {
     (e) => new Date(e.startTime) <= now && new Date(e.endTime) >= now
   );
   const upcomingEvents = events.filter((e) => new Date(e.startTime) > now);
-  const pastEvents = events.filter((e) => new Date(e.endTime) < now);
+  const pastEvents = events
+    .filter((e) => new Date(e.endTime) < now)
+    .sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
   const handleDeleteClub = async () => {
     if (!window.confirm(`Are you sure you want to delete "${club.clubName}"? This action cannot be undone.`)) return;
@@ -480,8 +482,8 @@ const ClubDetails = () => {
             </div>
           ) : (
             <div className="bg-white border border-dashed border-neutral-200 py-10 text-center rounded-xl">
-              <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
-                No images found. Lagta hai Clubhead ji add krna bhul gye.
+              <p className="text-xs  tracking-wider text-neutral-400 ">
+                Memories in the making. Photos from our past social change campaigns will appear here soon!
               </p>
             </div>
           )}
