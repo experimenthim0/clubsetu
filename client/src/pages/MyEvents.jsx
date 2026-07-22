@@ -618,7 +618,7 @@ const MyEvents = () => {
                     </div>
 
                     {/* Prominent Certificate Button for Past Events */}
-                    {isPast && reg.status === 'CONFIRMED' && event.provideCertificate && (
+                  {isPast && reg.status === 'ATTENDED' && event.provideCertificate && (
                       <div className="pt-2">
                         <a
                           href={`${import.meta.env.VITE_API_URL}/api/certificates/${event.id || event._id}/download`}
