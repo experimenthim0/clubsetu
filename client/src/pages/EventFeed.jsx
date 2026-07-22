@@ -44,7 +44,11 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   useEffect(() => {
     fetchEvents();
-    const interval = setInterval(fetchEvents, 60000);
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchEvents();
+      }
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 

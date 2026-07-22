@@ -15,6 +15,7 @@ import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
 import { LayoutDashboard } from "lucide-react";
 import SearchBar from "./SearchBar";
+import { ArrowRightIcon } from "./ui/arrow-right";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -467,10 +468,14 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/register/student"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-black dark:border-neutral-100 text-[11px] font-bold tracking-widest rounded-full hover:bg-orange-600 dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-black dark:border-neutral-100 text-[13px] font-bold tracking-widest rounded-full hover:bg-orange-600 dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
                 >
-                  <i className="ri-user-add-line text-sm" />
+                  <ArrowRightIcon size={18}>
+                  <p className="font-semibold">
+
                   Register
+                  </p>
+                    </ArrowRightIcon>
                 </Link>
               </>
             )}

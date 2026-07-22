@@ -5,6 +5,7 @@ import prisma from "../lib/prisma.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import { createObjectId } from "../utils/objectId.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
+import { generateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -21,12 +22,9 @@ router.post("/login", async (req, res) => {
 
     // 2FA check (matching auth.js behavior)
     if (admin.isTwoStepEnabled) {
-      // Logic for OTP would go here, but since seed has it false, we'll keep it simple or redirect
-      // For now, let's keep it consistent:
       return res.status(403).json({ success: false, message: "Please use the official login route for 2FA accounts." });
     }
 
-    const { generateToken } = await import("../middleware/auth.js");
     const club = admin.role === "facultyCoordinator" ? await prisma.club.findFirst({ where: { facultyCoordinatorId: admin.id } }) : null;
     const token = generateToken(admin, admin.role, "admin", club?.id);
 
@@ -43,7 +41,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 // ── GET /admin/dashboard-stats ────────────────────────────────────────────────
 
 router.get(
@@ -55,12 +52,22 @@ router.get(
       const [events, participations, totalStudents, totalClubs, totalEventsActive, totalEventsAll] =
         await Promise.all([
           prisma.event.findMany({
-            include: {
-              club: { select: { id: true, clubName: true } },
-              createdBy: { select: { id: true, name: true } },
+            select: {
+              id: true,
+              title: true,
+              entryFee: true,
+              registeredCount: true,
+              payoutStatus: true,
+              registrationDeadline: true,
+              startTime: true,
+              club: { select: { clubName: true } },
+              createdBy: { select: { id: true } },
             },
           }),
-          prisma.participation.findMany({ where: { paymentStatus: { in: ["SUCCESS", "APPROVED"] } } }),
+          prisma.participation.findMany({
+            where: { paymentStatus: { in: ["SUCCESS", "APPROVED"] } },
+            select: { eventId: true, amountPaid: true },
+          }),
           prisma.studentUser.count({
             where: {
               NOT: {

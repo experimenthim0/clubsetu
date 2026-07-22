@@ -206,6 +206,7 @@ model Participation {
 
   @@index([eventId])
   @@index([studentId, createdAt])
+  @@index([studentId, eventId])
   @@index([eventId, paymentStatus])
   @@index([eventId, status])
 }
@@ -250,6 +251,7 @@ model Notification {
   lostFoundItem      LostFoundItem? @relation(fields: [lostFoundItemId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+  @@index([recipientStudentId, createdAt])
 }
 
 enum AdminRoleType {

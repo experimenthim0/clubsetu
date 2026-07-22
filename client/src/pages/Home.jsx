@@ -500,15 +500,15 @@ const Home = () => {
   if (isMaintenance) {
     return <Maintainance />;
   }
-  const bgImages = ["hostels-day.jpeg","csh.jpeg", "mainbuilding.jpeg","hostels-night.jpeg","mainbld.jpeg"];
+  const bgImages = ["mainbuilding.jpeg"];
   const [bgIndex, setBgIndex] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % bgImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setBgIndex((prev) => (prev + 1) % bgImages.length);
+  //   }, 4000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
 

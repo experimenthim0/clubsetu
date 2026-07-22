@@ -551,18 +551,16 @@ router.get("/:id", async (req, res) => {
       }
     }
 
-    // Increment views count if not skipped
-    let updatedEvent = event;
+    // Fire-and-forget views count increment asynchronously to prevent blocking response
     if (req.query.skipIncrement !== 'true') {
-      updatedEvent = await prisma.event.update({
+      prisma.event.update({
         where: { id: event.id },
         data: { views: { increment: 1 } },
-        include: eventInclude,
-      });
+      }).catch((err) => console.error("Async view increment error:", err.message));
     }
 
     res.json({
-      ...serializeEvent(updatedEvent),
+      ...serializeEvent(event),
       attendedCount
     });
   } catch (err) {

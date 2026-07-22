@@ -307,4 +307,4 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     );
 };
 
-export default EventCard;
+export default React.memo(EventCard);
