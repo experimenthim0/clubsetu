@@ -26,7 +26,9 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, formData);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, formData,{
+    withCredentials: true,
+  });
       
       if (res.data.needs2FA) {
         setShowOTP(true);
@@ -60,7 +62,9 @@ const Login = () => {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-2fa`, {
         email: formData.email,
         otp
-      });
+      },{
+    withCredentials: true,
+  });
       
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('role', res.data.role);
