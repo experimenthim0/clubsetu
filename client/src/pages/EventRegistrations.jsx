@@ -33,11 +33,9 @@ const EventRegistrations = () => {
         if (!selectedReg) return;
         setSubmittingReview(true);
         try {
-            const token = localStorage.getItem('token');
             await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/payment/${selectedReg.id || selectedReg._id}/review`,
-                { status: reviewStatus, message: reviewComment },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { status: reviewStatus, message: reviewComment }
             );
             toast.success(`Payment ${reviewStatus.toLowerCase()} successfully!`);
             setReviewModalOpen(false);

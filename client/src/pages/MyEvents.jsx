@@ -33,6 +33,8 @@ const MyEvents = () => {
   const [editRemarks, setEditRemarks] = useState('');
   const [submittingEdit, setSubmittingEdit] = useState(false);
 
+  const [downloadingCert, setDownloadingCert] = useState(null);
+
  const handleDownloadTicket = async () => {
   if (!selectedTicket || !qrDataUrl) return;
 
@@ -160,7 +162,35 @@ const MyEvents = () => {
   qrImage.src = qrDataUrl;
 };
 
-
+  const handleDownloadCertificate = async (eventId) => {
+    try {
+      setDownloadingCert(eventId);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/certificates/${eventId}/download`, {
+        responseType: 'blob'
+      });
+      
+      const contentDisposition = res.headers['content-disposition'];
+      let filename = 'certificate.pdf';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Certificate download error:', err);
+      showNotification('Failed to download certificate.', 'error');
+    } finally {
+      setDownloadingCert(null);
+    }
+  };
 
   useEffect(() => {
     const storedUserData = localStorage.getItem('user');
@@ -290,10 +320,7 @@ const MyEvents = () => {
     const delayDebounce = setTimeout(async () => {
       setUpdateTeamSearching(true);
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${updateTeamSearchQuery}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${updateTeamSearchQuery}`);
         const currentMembers = teamToUpdate?.team?.members || [];
         const filtered = res.data.filter(
           s => s.id !== teamToUpdate?.team?.leaderId && !currentMembers.some(m => m.userId === s.id)
@@ -343,13 +370,10 @@ const MyEvents = () => {
     }
     setSubmittingEdit(true);
     try {
-      const token = localStorage.getItem('token');
       const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/payment/${editingReg.id || editingReg._id}/update-details`, {
         transactionId: editTxId,
         payerName: editPayerName,
         paymentRemarks: editRemarks
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       showNotification(res.data.message || 'Payment details updated successfully!', 'success');
       setEditPaymentModalOpen(false);
@@ -620,13 +644,14 @@ const MyEvents = () => {
                     {/* Prominent Certificate Button for Past Events */}
                   {isPast && reg.status === 'ATTENDED' && event.provideCertificate && (
                       <div className="pt-2">
-                        <a
-                          href={`${import.meta.env.VITE_API_URL}/api/certificates/${event.id || event._id}/download`}
-                          className="inline-flex items-center justify-center gap-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 w-full px-4 py-2 text-neutral-800 dark:text-neutral-250 transition border border-neutral-200 dark:border-neutral-700 rounded-full font-bold text-xs shadow-sm cursor-pointer"
+                        <button
+                          onClick={() => handleDownloadCertificate(event.id || event._id)}
+                          disabled={downloadingCert === (event.id || event._id)}
+                          className="inline-flex items-center justify-center gap-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 w-full px-4 py-2 text-neutral-800 dark:text-neutral-250 transition border border-neutral-200 dark:border-neutral-700 rounded-full font-bold text-xs shadow-sm cursor-pointer disabled:opacity-50"
                         >
                           <DownloadIcon size={16} />
-                          Download E-Certificate
-                        </a>
+                          {downloadingCert === (event.id || event._id) ? 'Downloading...' : 'Download E-Certificate'}
+                        </button>
                       </div>
                     )}
                   </div>

@@ -39,7 +39,6 @@ const Login = () => {
       // Store user, token, role
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('role', res.data.role);
-      localStorage.setItem('token', res.data.token);
       
       if (res.data.role === 'lostFoundAdmin') {
         navigate('/admin/lost-found');
@@ -68,7 +67,6 @@ const Login = () => {
       
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('role', res.data.role);
-      localStorage.setItem('token', res.data.token);
       
       if (res.data.role === 'lostFoundAdmin') {
         navigate('/admin/lost-found');

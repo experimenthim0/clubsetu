@@ -21,7 +21,6 @@ const AdminLogin = () => {
         localStorage.setItem('admin', JSON.stringify(res.data.admin));
         localStorage.setItem('user', JSON.stringify(res.data.admin)); // Set user for standard UI components
         localStorage.setItem('role', res.data.admin.role);
-        localStorage.setItem('token', res.data.token);
         showNotification('Welcome back, Admin!', 'success');
         
         if (res.data.admin.role === 'lostFoundAdmin') {

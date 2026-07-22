@@ -56,15 +56,9 @@ import { SocketProvider } from './context/SocketContext';
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
 
-// Global axios interceptor — attach JWT token to every request
+// Global axios interceptor — no longer adds Bearer token, just relies on cookies
 axios.interceptors.request.use(
   (config) => {
-    // We still keep the Authorization header fallback just in case,
-    // though the server now primarily reads from cookies.
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -83,7 +77,6 @@ axios.interceptors.response.use(
       }
 
       // Clear all auth data
-      localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('admin');
       localStorage.removeItem('role');

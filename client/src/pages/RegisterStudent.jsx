@@ -50,7 +50,6 @@ const RegisterStudent = () => {
       if (res.data.user) {
         localStorage.setItem('user', JSON.stringify(res.data.user));
         localStorage.setItem('role', res.data.role);
-        localStorage.setItem('token', res.data.token);
         navigate('/');
       } else {
         // Verification required - Redirect to Home with notification

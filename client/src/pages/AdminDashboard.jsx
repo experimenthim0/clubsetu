@@ -56,8 +56,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         const adminDataString = localStorage.getItem('admin');
-        const token = localStorage.getItem('token');
-        if (!adminDataString || !token) {
+        if (!adminDataString) {
             navigate('/admin-secret-login');
             return;
         }
@@ -162,7 +161,6 @@ const AdminDashboard = () => {
         localStorage.removeItem('admin');
         localStorage.removeItem('user');
         localStorage.removeItem('role');
-        localStorage.removeItem('token');
         navigate('/admin-secret-login');
     };
 

@@ -327,10 +327,7 @@ const EditEvent = () => {
     const handleRollNoLookup = async (index, rollNoVal) => {
         if (!rollNoVal || !rollNoVal.trim()) return;
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/lookup/${rollNoVal.trim()}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/lookup/${rollNoVal.trim()}`);
             const { name, branch } = res.data;
             const displayName = branch ? `${name}(${branch})` : name;
             

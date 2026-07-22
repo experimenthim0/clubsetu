@@ -49,10 +49,9 @@ const LostFoundAdminDashboard = () => {
     };
 
     const role = localStorage.getItem('role');
-    const token = localStorage.getItem('token');
 
     useEffect(() => {
-        if (!token || (role !== 'admin' && role !== 'lostFoundAdmin' && role !== 'facultyCoordinator')) {
+        if (role !== 'admin' && role !== 'lostFoundAdmin' && role !== 'facultyCoordinator') {
             navigate('/login');
             return;
         }

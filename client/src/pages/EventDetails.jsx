@@ -99,10 +99,7 @@ const EventDetails = () => {
     const delayDebounce = setTimeout(async () => {
       setSearching(true);
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${searchQuery}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${searchQuery}`);
         const currentUser = JSON.parse(localStorage.getItem('user'));
         const filtered = res.data.filter(s => s.id !== currentUser?.id && !teammates.some(t => t.id === s.id));
         setSearchResults(filtered);
@@ -185,7 +182,6 @@ const EventDetails = () => {
     setIsRegistering(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const token = localStorage.getItem('token');
       
       if (paymentPayload.isTeam) {
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
@@ -196,8 +192,6 @@ const EventDetails = () => {
           transactionId: txId,
           payerName: pName,
           paymentRemarks: remarks
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
         });
         
         if (res.data.status === 'WAITLISTED') {
@@ -221,10 +215,7 @@ const EventDetails = () => {
         
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, 
-          registerBody,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : {}
-          }
+          registerBody
         );
         
         if (res.data.status === 'WAITLISTED') {
@@ -422,14 +413,11 @@ const EventDetails = () => {
     // Free path for Team
     setIsRegistering(true);
     try {
-      const token = localStorage.getItem('token');
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
         eventId: event.id || event._id,
         teamName: teamName,
         members: teammates.map(t => t.id),
         formResponses: customFormResponses || {},
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.status === 'WAITLISTED') {
         showNotification('Your team has been added to the waitlist.', 'info');
