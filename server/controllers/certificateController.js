@@ -43,7 +43,7 @@ export const downloadCertificate = async (req, res) => {
       where: {
         eventId,
         studentId,
-        paymentStatus: "SUCCESS",
+        paymentStatus: { in: ["SUCCESS", "APPROVED"] },
       },
       include: {
         student: { select: { id: true, name: true } },

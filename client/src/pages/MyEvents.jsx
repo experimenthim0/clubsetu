@@ -186,7 +186,17 @@ const MyEvents = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Certificate download error:', err);
-      showNotification('Failed to download certificate.', 'error');
+      let message = 'Failed to download certificate.';
+      if (err.response?.data) {
+        try {
+          const raw = err.response.data instanceof Blob ? await err.response.data.text() : JSON.stringify(err.response.data);
+          const parsed = JSON.parse(raw);
+          if (parsed.message) message = parsed.message;
+        } catch (e) {
+          // Fallback to default message
+        }
+      }
+      showNotification(message, 'error');
     } finally {
       setDownloadingCert(null);
     }

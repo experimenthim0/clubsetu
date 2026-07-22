@@ -12,6 +12,14 @@ import { createObjectId } from "../utils/objectId.js";
 const router = express.Router();
 const ALLOWED_PROGRAMS = ["BTECH", "MTECH", "OTHER"];
 
+const isProduction = process.env.NODE_ENV === "production";
+const getCookieOptions = (maxAge = 7 * 24 * 60 * 60 * 1000) => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge,
+});
+
 // ─── Helper: derive student role & clubId from ClubMembership ────────────────
 
 export async function getStudentRoleAndClub(studentId) {
@@ -152,12 +160,7 @@ router.post("/register/student", async (req, res) => {
     const token = generateToken(newUser, role, "student", clubId);
     const userObj = { ...sanitizeUser(newUser), clubId };
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     res.status(201).json({ success: true, message: "Registered successfully", user: userObj, role, token });
   } catch (err) {
@@ -194,12 +197,7 @@ router.post("/login/student", async (req, res) => {
     const token = generateToken(student, role, "student", clubId);
     const userObj = { ...sanitizeUser(student), clubId };
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     return res.json({ success: true, message: "Login successful", user: userObj, role, userType: "student", token });
   } catch (err) {
@@ -254,12 +252,7 @@ router.post("/login/admin", async (req, res) => {
     const token = generateToken(admin, admin.role, "admin", clubId);
     const userObj = { ...sanitizeUser(admin), clubId };
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     return res.json({ success: true, message: "Admin login successful", user: userObj, role: admin.role, userType: "admin", token });
   } catch (err) {
@@ -341,12 +334,7 @@ router.post("/login/external", async (req, res) => {
     const token = generateToken(externalUser, "external", "external", null);
     const userObj = sanitizeUser(externalUser);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions(24 * 60 * 60 * 1000));
 
     return res.json({ success: true, message: "Login successful", user: userObj, role: "external", userType: "external", token });
   } catch (err) {
@@ -376,12 +364,7 @@ router.post("/verify-2fa", async (req, res) => {
       const token = generateToken(student, role, "student", clubId);
       const userObj = { ...sanitizeUser(student), clubId };
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      res.cookie("token", token, getCookieOptions());
 
       return res.json({ success: true, message: "Verification successful", user: userObj, role, token });
     }
@@ -402,12 +385,7 @@ router.post("/verify-2fa", async (req, res) => {
       const token = generateToken(admin, admin.role, "admin", clubId);
       const userObj = { ...sanitizeUser(admin), clubId };
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      res.cookie("token", token, getCookieOptions());
 
       return res.json({ success: true, message: "Verification successful", user: userObj, role: admin.role, token });
     }
@@ -611,8 +589,8 @@ router.post("/change-password", verifyToken, async (req, res) => {
 router.post("/logout", (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     expires: new Date(0),
   });
   res.json({ success: true, message: "Logged out successfully" });
@@ -652,7 +630,7 @@ router.post("/login", async (req, res) => {
 
       const token = generateToken(student, role, "student", clubId);
       const userObj = { ...sanitizeUser(student), clubId, memberships };
-      res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none", maxAge: 7 * 24 * 60 * 60 * 1000 });
+      res.cookie("token", token, getCookieOptions());
       return res.json({ success: true, message: "Login successful", user: userObj, role, token });
     }
 
@@ -706,7 +684,7 @@ router.post("/login", async (req, res) => {
       userObj.upiId = clubInfo.upiId;
       userObj.bankPhone = clubInfo.bankPhone;
     }
-    res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none", maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie("token", token, getCookieOptions());
     return res.json({ success: true, message: "Login successful", user: userObj, role: admin.role, token });
     }
 

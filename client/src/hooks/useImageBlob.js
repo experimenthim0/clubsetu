@@ -73,12 +73,8 @@ export const useImageBlob = (imageUrl) => {
 
     fetchImage();
 
-    // Cleanup: Revoke object URL to prevent memory leaks
     return () => {
       active = false;
-      if (localUrl) {
-        URL.revokeObjectURL(localUrl);
-      }
     };
   }, [imageUrl]);
 
