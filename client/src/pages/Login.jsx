@@ -91,9 +91,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">
-            Campus<span className="text-orange-600">Node</span>
-          </h1>
+         <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none logofont">
+              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+            </span>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Sign in to your account
           </p>

@@ -839,7 +839,7 @@ const Home = () => {
       ) : (
         <>
           {/* ── HERO ─────────────────────────────────────────────────────────── */}
-          <section className="relative flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
+          <section className="relative flex flex-col justify-center pt-22 pb-8 lg:pt-36 lg:pb-12 overflow-hidden">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0 pointer-events-none">
               {bgImages.map((img, idx) => (
@@ -856,18 +856,22 @@ const Home = () => {
             <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 w-full">
               {/* Headline */}
               <ScrollReveal delay={0.2}>
-                <h1 className="font-black text-[clamp(36px,5.5vw,76px)] leading-[1.1] tracking-[2px] text-white dark:text-white mb-0 text-center mx-auto max-w-5xl">
-                  Discover Events. <span className="text-orange-600">Register in 1-Click.</span> Recover Lost Items.
-                </h1> 
+                <h1 className="font-black text-[clamp(36px,5.5vw,72px)] leading-[1.08] tracking-tight text-white dark:text-white text-center mx-auto max-w-5xl">
+  Everything at <span className="text-orange-500">NIT Jalandhar.</span>
+  <br />
+  One Platform.
+</h1>
               </ScrollReveal>
 
               {/* Sub + CTAs */}
               <ScrollReveal delay={0.3}>
                 <div className="mt-10 flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
                   <div className="max-w-2xl">
-                    <p className="text-sm md:text-base font-light text-white dark:text-neutral-300 leading-relaxed">
-                      The central student hub for NIT Jalandhar. Track club announcements, secure event tickets, and locate missing belongings—all without the WhatsApp clutter.
-                    </p>
+                    <p className="text-base md:text-lg font-normal text-white/90 dark:text-neutral-300 leading-relaxed max-w-3xl mx-auto">
+  Discover campus events, explore student clubs, receive official announcements,
+  and access secure student services—all from one verified platform built for
+  the NIT Jalandhar community.
+</p>
                   </div>
                   <div className="flex gap-3 flex-wrap justify-center">
                     <Link
@@ -888,9 +892,30 @@ const Home = () => {
                       to="/login"
                       className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
                     >
-                      <i className="ri-login-box-line text-lg mr-2" /> Login / Signup
+                    <ArrowRightIcon size={18}>
+                      Join CampusNode
+                    </ArrowRightIcon>
                     </Link>
                   </div>
+
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-800 dark:text-white/80  ">
+
+  <div className="flex items-center gap-2">
+    <i className="ri-shield-check-line text-orange-500" />
+    Verified Student Access
+  </div>
+
+  <div className="flex items-center gap-2">
+    <i className="ri-community-line text-orange-500" />
+    Official Club Community
+  </div>
+
+  <div className="flex items-center gap-2">
+    <i className="ri-lock-line text-orange-500" />
+    Secure Campus Services
+  </div>
+
+</div>
                 </div>
               </ScrollReveal>
             </div>
@@ -917,7 +942,7 @@ const Home = () => {
             <div className="flex justify-center mt-12">
               <BtnSecondary to="/events">
                 <ArrowRightIcon size={20}>
-                  Explore All Events 
+                  Browse Events 
                 </ArrowRightIcon>
               </BtnSecondary>
             </div>
@@ -961,7 +986,7 @@ const Home = () => {
                   Club<br /><span className="text-orange-600 text-6xl">Hall of Fame</span>
                 </h2>
                 <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed mb-8">
-                  Recognition for the most active student organizations at NITJ. Activity is measured by the total number of events successfully hosted and registered through CampusNode.
+                  Recognition for the most active student organizations at NITJ. Rankings are updated automatically based on successfully completed events organized through CampusNode.
                 </p>
               </ScrollReveal>
             </div>

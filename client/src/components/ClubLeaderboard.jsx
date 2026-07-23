@@ -26,36 +26,69 @@ const ClubLeaderboard = () => {
     fetchData();
   }, []);
 
-  const leaderboard = useMemo(() => {
-    const stats = events.reduce((acc, event) => {
-      const clubId = event.club?._id || (typeof event.club === 'string' ? event.club : null) || 
-                     event.createdBy?._id || (typeof event.createdBy === 'string' ? event.createdBy : null);
-      
-      if (clubId) {
-        acc[clubId] = (acc[clubId] || 0) + 1;
-      }
-      return acc;
-    }, {});
+ const leaderboard = useMemo(() => {
+  // Calculate statistics for each club
+  const stats = events.reduce((acc, event) => {
+    const clubId =
+      event.club?._id ||
+      (typeof event.club === "string" ? event.club : null) ||
+      event.createdBy?._id ||
+      (typeof event.createdBy === "string" ? event.createdBy : null);
 
-    return clubs.map(club => {
-      // Find last 2 events for this club
-      const clubEvents = events.filter(e => {
-        const cid = e.club?._id || e.club || e.createdBy?._id || e.createdBy;
-        return cid === club._id;
-      })
-      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-      .slice(0, 2);
+    if (!clubId) return acc;
+
+    if (!acc[clubId]) {
+      acc[clubId] = {
+        eventCount: 0,
+        participantCount: 0,
+      };
+    }
+
+    // Count events
+    acc[clubId].eventCount++;
+
+    // Count participants
+    const participants =
+     event.registeredCount || 0;
+
+    acc[clubId].participantCount += participants;
+
+    return acc;
+  }, {});
+
+  return clubs
+    .map((club) => {
+      // Find last 2 events
+      const clubEvents = events
+        .filter((e) => {
+          const cid =
+            e.club?._id ||
+            e.club ||
+            e.createdBy?._id ||
+            e.createdBy;
+
+          return cid === club._id;
+        })
+        .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+        .slice(0, 2);
 
       return {
         ...club,
-        eventCount: stats[club._id] || 0,
-        recentEvents: clubEvents
+        eventCount: stats[club._id]?.eventCount || 0,
+        participantCount: stats[club._id]?.participantCount || 0,
+
+        // Ranking Score
+        score:
+          (stats[club._id]?.eventCount || 0) +
+          (stats[club._id]?.participantCount || 0),
+
+        recentEvents: clubEvents,
       };
     })
-    .filter(club => club.eventCount > 0)
-    .sort((a, b) => b.eventCount - a.eventCount)
+    .filter((club) => club.eventCount > 0)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 5);
-  }, [clubs, events]);
+}, [clubs, events]);
 
   if (loading) {
     return (
@@ -78,8 +111,8 @@ const ClubLeaderboard = () => {
         <div className="flex items-center justify-between mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-8 h-1 bg-orange-600 rounded-full"></span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Performance</span>
+             
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-orange-600">Live Ranking</span>
             </div>
             <h2 className="text-3xl font-black text-black tracking-wide">Club Leaderboard</h2>
           </div>
@@ -138,9 +171,22 @@ const ClubLeaderboard = () => {
 
                   {/* Counter */}
                   <div className="text-right pr-2">
-                    <div className="text-2xl font-black text-black leading-none tabular-nums tracking-tighter">{club.eventCount}</div>
-                    <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-1">Total Events</div>
-                  </div>
+  <div className="text-2xl font-black text-black leading-none tabular-nums tracking-tighter">
+    {club.score}
+  </div>
+
+  <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
+    Leaderboard Score
+  </div>
+
+  <div className="mt-2 text-[11px] text-neutral-500 font-semibold">
+     Events: {club.eventCount}
+  </div>
+
+  <div className="text-[11px] text-neutral-500 font-semibold">
+     Participants:  {club.participantCount} 
+  </div>
+</div>
                 </div>
 
                 {/* Quick View - Reveals on Hover */}

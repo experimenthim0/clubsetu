@@ -19,7 +19,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const [isColorLoaded, setIsColorLoaded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const imgRef = useRef(null);
+   
 
+     const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
+      const displayLogo = event.club?.clubLogo || fallbackLogo;
+     
+    
     const handleImageLoad = () => {
         const imageEl = imgRef.current;
         if (!imageEl) return;
@@ -155,8 +160,28 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             </div>
 
             {/* Body */}
-            <div className="p-4 flex flex-auto flex-col">
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-2 line-clamp-1">{title}</h3>
+            <div className="px-4 pt-2 flex flex-auto flex-col">
+                 {(event.club?.clubName || event.createdBy?.clubName) && (
+                            <div className="flex items-center min-w-0">
+                                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 border border-neutral-300 dark:border-neutral-700">
+                                <img
+                                    src={displayLogo}
+                                    alt={event.createdBy.clubName}
+                                    crossOrigin={isBlobLoaded && event.createdBy.clubLogo ? "anonymous" : undefined}
+                                    onLoad={handleImageLoad}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = fallbackLogo;
+                                    }}
+                                />
+                            </div>
+                                <span className="truncate  text-orange-600  text-[12px] font-semibold">
+                                    {event.club?.clubName || event.createdBy?.clubName}
+                                </span>
+                            </div>
+                        )}
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-2 line-clamp-2">{title}</h3>
 
                 {/* Info row */}
                 {isEnded && showWinner ? (
@@ -239,14 +264,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </div>
 
                         {/* Host Information */}
-                        {(event.club?.clubName || event.createdBy?.clubName) && (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                                <i className="ri-shield-user-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
-                                <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
-                                    {event.club?.clubName || event.createdBy?.clubName}
-                                </span>
-                            </div>
-                        )}
+                       
 
                         {/* Seats / Capacity */}
                         <div className="flex items-center gap-1.5 col-span-2 min-w-0">
@@ -277,12 +295,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             to={`/event/${slug || _id}`}
                             className="flex-1 block text-center py-2 bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 rounded-full text-xs font-bold uppercase tracking-wider cursor-pointer shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-950/80 transition-colors"
                         >
-                            View Details
+                            View Event
                         </Link>
                     ) : (
                          <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer shadow-sm ${
+                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold  tracking-wider border transition-all cursor-pointer shadow-sm ${
                                 (isEnded || isLive)
                                     ? 'bg-neutral-800 dark:bg-neutral-900 text-white border-neutral-800 dark:border-neutral-800 hover:bg-orange-600 hover:border-orange-600 dark:hover:bg-orange-600 dark:hover:border-orange-600'
                                     : isFull
@@ -290,7 +308,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                         : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
                             }`}
                         >
-                            {(isEnded || isLive) ? 'View Details' : isFull ? 'Join Waitlist' : 'Register Now'}
+                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Join Waitlist' : 'Register Now'}
                         </Link>
                     )}
                     

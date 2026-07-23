@@ -64,9 +64,9 @@ const AdminSidebar = () => {
   const role = localStorage.getItem("role");
 
   // Read admin info
-  let admin = null;
+  let user = null;
   try {
-    const stored = localStorage.getItem("admin");
+    const stored = localStorage.getItem("user");
     if (stored && stored !== "undefined") admin = JSON.parse(stored);
   } catch (err) {
     console.error("Error parsing admin from local storage", err);
@@ -85,7 +85,7 @@ const AdminSidebar = () => {
     localStorage.setItem("adminSidebarCollapsed", String(collapsed));
   }, [collapsed]);
 
-  const adminName = admin?.name || "Admin";
+  const adminName = user?.name || "Admin";
 
   return (
     <aside

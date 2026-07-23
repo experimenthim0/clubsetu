@@ -363,7 +363,7 @@ return (
 
     {/* If No Active/Upcoming Events or No Filter Matches */}
     {(hasNoActiveEvents || totalFiltered === 0) && (
-      <div className="text-center py-10 px-4 border-2 border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50 mb-18">
+      <div className="text-center py-10 px-4 border-2 border-neutral-200 rounded-2xl bg-neutral-50/50 mb-18">
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-5 ">
             <img className='w-full h-full object-cover rounded-full' src="cat.png" alt="" />
         </div>

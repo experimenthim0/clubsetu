@@ -14,23 +14,23 @@ import DashboardFooter from "./DashboardFooter";
  */
 const AdminLayout = () => {
   // ── Read admin from localStorage ────
-  let admin = null;
-  try {
-    const storedAdmin = localStorage.getItem("admin");
-    if (storedAdmin && storedAdmin !== "undefined") {
-      admin = JSON.parse(storedAdmin);
+  let user = null;
+
+try {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser && storedUser !== "undefined") {
+        user = JSON.parse(storedUser);
     }
-  } catch (err) {
-    console.error("Error parsing admin from local storage", err);
-    localStorage.removeItem("admin");
-  }
+} catch (err) {
+    localStorage.removeItem("user");
+}
 
-  const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
 
-  // ── Auth gate for admin routes ─────────────────────────
-  if (!admin || !token) {
+if (!user || (role !== "admin" && role !== "paymentAdmin" && role !== "lostFoundAdmin")) {
     return <Navigate to="/admin-secret-login" replace />;
-  }
+}
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a]">
