@@ -125,6 +125,54 @@ const eventInclude = {
   media: true,
 };
 
+// The feed does not need the large sponsor/media/custom payment payloads used
+// by the event detail and management screens. Keeping this selection narrow
+// reduces database work, response size, and JSON serialization time.
+const publicEventSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  venue: true,
+  startTime: true,
+  endTime: true,
+  totalSeats: true,
+  entryFee: true,
+  allowedPrograms: true,
+  allowedYears: true,
+  allowedBranches: true,
+  imageUrl: true,
+  registeredCount: true,
+  views: true,
+  waitingListIds: true,
+  requiredFields: true,
+  createdById: true,
+  clubId: true,
+  registrationDeadline: true,
+  reviewStatus: true,
+  winners: true,
+  showWinner: true,
+  provideCertificate: true,
+  registrationType: true,
+  minTeamSize: true,
+  maxTeamSize: true,
+  paymentMethod: true,
+  registrationFee: true,
+  createdAt: true,
+  updatedAt: true,
+  createdBy: {
+    select: { id: true, name: true },
+  },
+  club: {
+    select: {
+      id: true,
+      clubName: true,
+      clubLogo: true,
+      slug: true,
+      category: true,
+    },
+  },
+};
 // Decode token without middleware — for optional auth on event detail endpoint
 const getDecodedToken = (req) => {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
@@ -146,18 +194,23 @@ const getEventByIdOrSlug = async (id) =>
 
 router.get("/", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
+    const requestedPage = Number.parseInt(req.query.page, 10)
+    const requestedLimit = Number.parseInt(req.query.limit, 10)
+    const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 50)
+      : 50
     const skip = (page - 1) * limit;
 
     const events = await prisma.event.findMany({
       where: { reviewStatus: "PUBLISHED" },
-      include: eventInclude,
+      select: publicEventSelect,
       orderBy: { startTime: "asc" },
       skip,
       take: limit,
     });
 
+    res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
     res.json(events.map(serializeEvent));
   } catch (err) {
     res.status(500).json({ message: err.message });
