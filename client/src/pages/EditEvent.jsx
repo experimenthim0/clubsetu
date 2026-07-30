@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { useNotification } from '../context/NotificationContext';
 import { EVENT_VENUES } from '../constants/eventVenues';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
@@ -468,8 +470,7 @@ const EditEvent = () => {
                     {/* Description */}
                     <div>
                         <label className={labelCls}>Description</label>
-                        <textarea name="description" rows="4" className={`${inputCls} resize-y`}
-                            value={formData.description} onChange={handleChange} placeholder="Describe your event..." />
+                        <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="bg-white" />
                     </div>
 
                     {/* Venue */}

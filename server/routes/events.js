@@ -119,7 +119,7 @@ const eventInclude = {
     select: { id: true, name: true },
   },
   club: {
-    select: { id: true, clubName: true, clubLogo: true, slug: true, category: true },
+    select: { id: true, clubName: true, clubLogo: true, slug: true, category: true, socialLinks: true },
   },
   sponsors: true,
   media: true,

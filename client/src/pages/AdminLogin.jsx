@@ -18,6 +18,9 @@ const AdminLogin = () => {
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, { email, password });
       if (res.data.success) {
+        if (res.data.token) {
+          localStorage.setItem('token', res.data.token);
+        }
         localStorage.setItem('admin', JSON.stringify(res.data.admin));
         localStorage.setItem('user', JSON.stringify(res.data.admin)); // Set user for standard UI components
         localStorage.setItem('role', res.data.admin.role);

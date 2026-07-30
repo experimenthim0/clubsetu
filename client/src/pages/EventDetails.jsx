@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import DOMPurify from 'dompurify';
+import 'react-quill-new/dist/quill.snow.css';
 import { useNotification } from '../context/NotificationContext';
 import CalendarDropdown from '../components/CalendarDropdown';
 import PaymentModal from '../components/PaymentModal';
+import { InstagramIcon } from "@/components/ui/instagram";
+import { LinkedinIcon } from "@/components/ui/linkedin";
+import { TwitterIcon } from "@/components/ui/twitter";
+import { GithubIcon } from "@/components/ui/github";
+import { MessageCircleIcon } from "@/components/ui/message-circle";
+import { EarthIcon } from "@/components/ui/earth";
 
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
 
@@ -794,9 +802,10 @@ const EventDetails = () => {
                 <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500 mb-3">
                   About this Event
                 </h2>
-                <div className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                  {description}
-                </div>
+                <div 
+                  className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-relaxed event-description ql-editor px-0 whitespace-pre-wrap" 
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description, { ADD_ATTR: ['target'] }) }}
+                />
               </div>
             )}
 
@@ -946,7 +955,7 @@ const EventDetails = () => {
               {/* ── Date & Time Module ── */}
               <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 mb-3 flex items-center gap-1.5">
-                  <i className="ri-calendar-event-line text-orange-500 text-xs" /> DATE & TIME
+                  <i className="ri-calendar-event-line text-orange-500 text-xs font-medium" /> DATE & TIME
                 </p>
                 <div className="space-y-2.5">
                   <div>
@@ -1073,8 +1082,8 @@ const EventDetails = () => {
               </div>
 
               {/* ── Organizer ── */}
-              <div className="px-6 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                <div className="flex items-center gap-3">
+              <div className="px-1 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                <div className=" px-3 flex items-center gap-3">
                   {clubSlugOrId ? (
                     <Link
                       to={`/club/${clubSlugOrId}`}
@@ -1105,7 +1114,47 @@ const EventDetails = () => {
                     )}
                   </div>
                 </div>
-              </div>
+              {/* ── Club Social Media / Contact Links ── */}
+              {event?.club?.socialLinks && event.club.socialLinks.length > 0 && (
+                <div className="px-6 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2.5">
+                    Connect with {displayName}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {event.club.socialLinks.map((link, i) => {
+                      const platform = link.platform?.toLowerCase() || "website";
+                      const iconProps = { className: "w-4 h-4" };
+
+                      const getIcon = () => {
+                        if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
+                        if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28} />;
+                        if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28} />;
+                        if (platform.includes("github")) return <GithubIcon {...iconProps} size={28} />;
+                        if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28} />;
+                        if (platform.includes("website")) return <EarthIcon {...iconProps} size={28} />;
+                        return <i className="ri-links-line text-sm" />;
+                      };
+
+                      const href = platform === "whatsapp" 
+                        ? `https://wa.me/${link.url.replace(/\s+/g, "")}` 
+                        : link.url;
+
+                      return (
+                        <a
+                          key={link._id || link.id || i}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-9 h-9 rounded-xl  flex items-center justify-center text-neutral-700 dark:text-neutral-300  hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
+                          title={link.platform}
+                        >
+                          {getIcon()}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* ── Social Sharing Row ── */}
               <div className="px-6 pb-5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
@@ -1514,6 +1563,7 @@ const EventDetails = () => {
         isRegistering={isRegistering}
         showNotification={showNotification}
       />
+    </div>
     </div>
   );
 };

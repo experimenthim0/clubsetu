@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { EVENT_VENUES } from '../constants/eventVenues';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
 import { MediaType } from '../types/index';
@@ -346,8 +348,7 @@ const CreateEvent = () => {
                     {/* Description */}
                     <div>
                         <label className={labelCls}>Description</label>
-                        <textarea name="description" rows="4" className={`${inputCls} resize-y`}
-                            value={formData.description} onChange={handleChange} placeholder="Describe your event..." />
+                        <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="bg-white" />
                     </div>
 
                     {/* Event Poster Upload */}

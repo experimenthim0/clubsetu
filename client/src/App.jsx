@@ -49,16 +49,24 @@ const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
 const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const BusTracker = lazy(() => import('./pages/BusTracker'));
+const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
+const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
+import { EventTimerProvider } from './context/EventTimerContext';
 
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
 
-// Global axios interceptor — no longer adds Bearer token, just relies on cookies
+// Global axios interceptor — attach Bearer token if present in localStorage, alongside httpOnly cookies
 axios.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -80,6 +88,7 @@ axios.interceptors.response.use(
       localStorage.removeItem('user');
       localStorage.removeItem('admin');
       localStorage.removeItem('role');
+      localStorage.removeItem('token');
       // Clear cookie client-side
       document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
@@ -118,10 +127,15 @@ function App() {
                 <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} />
               </Route>
 
+              {/* Standalone Full-Screen Stage Display (No Site Navbar/Footer) */}
+              <Route path="/event-timer/live" element={<EventTimerProvider><EventTimerLive /></EventTimerProvider>} />
+
               {/* ── Public Layout — standard navbar/footer ── */}
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/clubs" element={<ClubsPage />} />
+                <Route path="/event-timer" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} />
+                <Route path="/event-timer/builder" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} />
                 <Route path="/club/:slug" element={<ClubDetails />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -160,6 +174,7 @@ function App() {
                 <Route path="/about-features" element={<Aboutfeatures />} />
                 <Route path="/lost-found" element={<LostAndFound />} />
                 <Route path="/lost-found/guide" element={<LostFoundGuide />} />
+                <Route path="/bus-tracker" element={<BusTracker />} />
                 <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} />
 
                 <Route path="*" element={<NotFound />} />
