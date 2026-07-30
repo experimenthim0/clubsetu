@@ -46,16 +46,16 @@ const CertificateDesigner = lazy(() => import('./pages/CertificateDesigner'));
 const LostAndFound = lazy(() => import('./pages/LostAndFound'));
 const LostFoundAdminDashboard = lazy(() => import('./pages/LostFoundAdminDashboard'));
 const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
-const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
+// const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const BusTracker = lazy(() => import('./pages/BusTracker'));
-const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
-const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
+// const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
+// const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
-import { EventTimerProvider } from './context/EventTimerContext';
+// import { EventTimerProvider } from './context/EventTimerContext';
 
 // Global axios config - enable cookies
 axios.defaults.withCredentials = true;
@@ -128,14 +128,14 @@ function App() {
               </Route>
 
               {/* Standalone Full-Screen Stage Display (No Site Navbar/Footer) */}
-              <Route path="/event-timer/live" element={<EventTimerProvider><EventTimerLive /></EventTimerProvider>} />
+              {/* <Route path="/event-timer/live" element={<EventTimerProvider><EventTimerLive /></EventTimerProvider>} /> */}
 
               {/* ── Public Layout — standard navbar/footer ── */}
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/clubs" element={<ClubsPage />} />
-                <Route path="/event-timer" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} />
-                <Route path="/event-timer/builder" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} />
+                {/* <Route path="/event-timer" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} /> */}
+                {/* <Route path="/event-timer/builder" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} /> */}
                 <Route path="/club/:slug" element={<ClubDetails />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -175,7 +175,7 @@ function App() {
                 <Route path="/lost-found" element={<LostAndFound />} />
                 <Route path="/lost-found/guide" element={<LostFoundGuide />} />
                 <Route path="/bus-tracker" element={<BusTracker />} />
-                <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} />
+                {/* <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} /> */}
 
                 <Route path="*" element={<NotFound />} />
               </Route>
