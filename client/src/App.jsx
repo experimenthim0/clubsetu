@@ -49,7 +49,7 @@ const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
 // const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Notifications = lazy(() => import('./pages/Notifications'));
-const BusTracker = lazy(() => import('./pages/BusTracker'));
+// const BusTracker = lazy(() => import('./pages/BusTracker'));
 // const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
 // const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
 
@@ -174,7 +174,7 @@ function App() {
                 <Route path="/about-features" element={<Aboutfeatures />} />
                 <Route path="/lost-found" element={<LostAndFound />} />
                 <Route path="/lost-found/guide" element={<LostFoundGuide />} />
-                <Route path="/bus-tracker" element={<BusTracker />} />
+                {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
                 {/* <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} /> */}
 
                 <Route path="*" element={<NotFound />} />
