@@ -26,6 +26,7 @@ const EditClub = lazy(() => import('./pages/EditClub'));
 const ClubMembers = lazy(() => import('./pages/ClubMembers'));
 const ClubEvents = lazy(() => import('./pages/ClubEvents'));
 const Maintainance = lazy(() => import('./pages/Maintainance'));
+const Maintenance = Maintainance;
 const Home = lazy(() => import('./pages/Home'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -76,6 +77,11 @@ axios.interceptors.request.use(
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 503 && error.response?.data?.code === 'MAINTENANCE_OVERLOAD') {
+      window.location.href = '/maintenance';
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401) {
       const path = window.location.pathname;
       
@@ -160,6 +166,7 @@ function App() {
                 <Route path="/event/:id/check-in" element={<CheckIn />} />
                 <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
                 <Route path="/admin-secret-login" element={<AdminLogin />} />
+                <Route path="/maintenance" element={<Maintenance />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsAndConditions />} />
                 <Route path="/payment-policy" element={<PaymentPolicy />} />

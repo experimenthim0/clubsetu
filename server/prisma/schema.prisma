@@ -104,6 +104,8 @@ model ClubSocialLink {
   platform String
   url      String
   club     Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
 }
 
 model ClubMembership {
@@ -220,6 +222,9 @@ model Sponsor {
   eventId    String? @db.VarChar(24)
   club       Club?   @relation(fields: [clubId], references: [id])
   event      Event?  @relation(fields: [eventId], references: [id])
+
+  @@index([clubId])
+  @@index([eventId])
 }
 
 model Media {
@@ -229,7 +234,10 @@ model Media {
   clubId  String?   @db.VarChar(24)
   eventId String?   @db.VarChar(24)
   club    Club?     @relation(fields: [clubId], references: [id])
-  event   Event?    @relation(fields: [eventId], references: [id])
+  event      Event?  @relation(fields: [eventId], references: [id])
+
+  @@index([clubId])
+  @@index([eventId])
 }
 
 model Notification {
@@ -252,6 +260,8 @@ model Notification {
 
   @@index([createdAt])
   @@index([recipientStudentId, createdAt])
+  @@index([eventId, createdAt])
+  @@index([teamId, createdAt])
 }
 
 enum AdminRoleType {
@@ -342,6 +352,10 @@ model LostFoundReport {
   liar       StudentUser   @relation("ReportLiar", fields: [liarId], references: [id])
   reason     String?
   createdAt  DateTime      @default(now())
+
+  @@index([itemId, createdAt])
+  @@index([reporterId])
+  @@index([liarId])
 }
 
 enum LostFoundType {

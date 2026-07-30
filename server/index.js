@@ -23,6 +23,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server } from "socket.io";
+import { apiCompression, getPerformanceStats, overloadProtection, publicReadCache, requestMetrics } from "./middleware/performance.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -54,17 +55,26 @@ io.on("connection", (socket) => {
 
 app.use(helmet());
 app.use(cors(corsOptions));
+app.use(requestMetrics);
+app.use(overloadProtection);
+app.use(publicReadCache);
+app.use(apiCompression);
 
 // Rate limiter for auth route
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 app.use("/api/auth/login", authLimiter);
 
-app.use(express.json());
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: process.env.JSON_BODY_LIMIT || "1mb" }));
 app.use(cookieParser());
 
 console.log("Using PostgreSQL via Prisma");
 app.get("/", (req, res) => {
   res.send("CampusNode API Running");
+});
+
+app.get("/health", (req, res) => {
+  res.json({ ok: true, ...getPerformanceStats(), uptimeSeconds: Math.round(process.uptime()) });
 });
 
 app.use("/api/events", eventRoutes);
