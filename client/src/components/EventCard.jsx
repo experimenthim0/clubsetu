@@ -139,7 +139,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 />
 
                 {/* Status Badge */}
-                <div className="absolute top-3 left-3">
+                <div className="absolute top-1 left-1.5">
                     {isLive && (
                         <span className="inline-flex items-center gap-1.5 bg-orange-600 text-white text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md animate-pulse">
                             <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />

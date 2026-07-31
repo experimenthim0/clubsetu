@@ -9,6 +9,7 @@ import { z } from "zod";
 import { validate, objectIdSchema } from "../middleware/validate.js";
 import multer from "multer";
 import { uploadImage } from "../utils/cloudinary.js";
+import { getPublicResponse, setPublicResponse } from "../utils/publicResponseCache.js";
 
 const router = express.Router();
 
@@ -201,6 +202,14 @@ router.get("/", async (req, res) => {
       ? Math.min(Math.max(requestedLimit, 1), 50)
       : 50
     const skip = (page - 1) * limit;
+    const cacheKey = "events:public:" + page + ":" + limit;
+    const cachedEvents = getPublicResponse(cacheKey);
+
+    if (cachedEvents) {
+      res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+      res.set("X-Public-Cache", "HIT");
+      return res.json(cachedEvents);
+    }
 
     const events = await prisma.event.findMany({
       where: { reviewStatus: "PUBLISHED" },
@@ -210,13 +219,15 @@ router.get("/", async (req, res) => {
       take: limit,
     });
 
+    const response = events.map(serializeEvent);
+    setPublicResponse(cacheKey, response);
     res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
-    res.json(events.map(serializeEvent));
+    res.set("X-Public-Cache", "MISS");
+    res.json(response);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 // ── GET /events/club/:clubId — public club events ─────────────────────────────
 
 const clubIdParamSchema = z.object({
@@ -232,7 +243,6 @@ router.get("/club/:clubId", validate(clubIdParamSchema), async (req, res) => {
       include: eventInclude,
       orderBy: { startTime: "asc" },
     });
-
     res.json(events.map(serializeEvent));
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -369,8 +379,7 @@ router.get(
         include: eventInclude,
         orderBy: { startTime: "asc" },
       });
-
-      res.json(events.map(serializeEvent));
+    res.json(events.map(serializeEvent));
     } catch (err) {
       res.status(500).json({ message: err.message });
     }

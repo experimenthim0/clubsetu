@@ -1,83 +1,208 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const TermsAndConditions = () => {
+    const navigate = useNavigate();
+
     return (
-        <div className="max-w-4xl mx-auto px-4 py-16">
-            <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-black uppercase tracking-widest mb-8">
-                <i className="ri-arrow-left-line" /> Back to Home
-            </Link>
-
-            <div className="bg-white border-2 border-black rounded-sm shadow-[6px_6px_0px_#0D0D0D] p-8 md:p-12">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-black rounded-sm flex items-center justify-center">
-                        <i className="ri-file-text-line text-white text-xl" />
-                    </div>
-                    <h1 className="text-3xl font-black text-black tracking-tight">Terms & Conditions</h1>
+        <div className="min-h-screen bg-neutral-50 dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-100 py-12 px-4 transition-colors duration-300">
+            <div className="max-w-4xl mx-auto">
+                {/* Top Navigation */}
+                <div className="mb-8 flex items-center justify-between">
+                    <button 
+                        onClick={() => navigate(-1)}
+                        className="inline-flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+                    >
+                        <i className="ri-arrow-left-line text-sm" /> Back
+                    </button>
+                    <span className="text-[11px] font-mono font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                        Last updated: July 2026 · v2.0
+                    </span>
                 </div>
-                <p className="text-xs text-neutral-400 font-bold uppercase tracking-widest mb-8">Last updated: February 2026</p>
 
-                <div className="space-y-8 text-sm text-neutral-700 leading-relaxed">
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">1. Acceptance of Terms</h2>
-                        <p>By accessing and using CampusNode, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the platform.</p>
+                {/* Hero / Title Section */}
+                <div className="mb-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-900/40 text-orange-600 dark:text-orange-400 text-xs font-semibold uppercase tracking-wider mb-4">
+                        <i className="ri-file-text-line text-sm" /> Terms of Service
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
+                        Terms <span className="text-orange-600">&amp;</span> Conditions
+                    </h1>
+                    <p className="text-neutral-600 dark:text-neutral-400 mt-3 text-sm md:text-base leading-relaxed max-w-2xl">
+                        Please review the rules and agreements governing your use of Campus<span className="text-orange-600 font-semibold">Node</span>, event registrations, and community interactions across NIT Jalandhar.
+                    </p>
+                </div>
+
+                {/* Highlight Summary Card */}
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 mb-8 shadow-sm">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange-600/10 dark:bg-orange-500/15 text-orange-600 flex items-center justify-center text-2xl shrink-0">
+                            <i className="ri-scales-3-line" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">
+                                Agreement &amp; Code of Conduct
+                            </h2>
+                            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                By creating an account or accessing events on CampusNode, you agree to comply with institutional policies, maintain honest event registrations, and treat fellow campus members with respect.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sections List */}
+                <div className="space-y-6">
+
+                    {/* Section 1: Acceptance */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">1</span>
+                            Acceptance of Terms
+                        </h2>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                            By accessing, browsing, or registering for events via CampusNode, you acknowledge that you have read, understood, and agreed to be bound by these Terms and Conditions. If you do not accept these terms, you should discontinue using the platform immediately.
+                        </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">2. User Accounts</h2>
-                        <ul className="list-disc pl-6 space-y-1.5">
-                            <li>You must provide accurate and complete information during registration.</li>
-                            <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
-                            <li>You must not share your account with others or create multiple accounts.</li>
-                            <li>CampusNode reserves the right to suspend or terminate accounts that violate these terms.</li>
+                    {/* Section 2: User Accounts */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">2</span>
+                            User Accounts &amp; Student Credentials
+                        </h2>
+                        <ul className="space-y-2.5 text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-checkbox-circle-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Authentic Information:</strong> You must register using valid NITJ credentials (official email, roll number, department details).</span>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-checkbox-circle-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Account Security:</strong> You are responsible for keeping your account password secure. Sharing credentials or creating duplicate proxy accounts is prohibited.</span>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-checkbox-circle-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Account Suspension:</strong> CampusNode reserves the right to restrict or terminate accounts violating institutional rules or community standards.</span>
+                            </li>
                         </ul>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">3. Event Registration</h2>
-                        <ul className="list-disc pl-6 space-y-1.5">
-                            <li>Registering for an event is a commitment to attend. Please deregister in advance if you cannot attend.</li>
-                            <li>Event organizers may set eligibility criteria (program, year) that must be met for registration.</li>
-                            <li>Registration is on a first-come, first-served basis, subject to seat availability.</li>
-                            <li>Waitlisted registrations are automatically promoted when seats become available.</li>
+                    {/* Section 3: Event Registration */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">3</span>
+                            Event Registration &amp; Participation
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3">
+                            <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60">
+                                <h3 className="font-semibold text-xs text-neutral-800 dark:text-neutral-200 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i className="ri-ticket-line text-orange-600" /> Attendance Commitment
+                                </h3>
+                                <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                    Registering for limited-seat workshops or contests is a commitment to attend. If you cannot make it, deregister promptly to free seats for waitlisted peers.
+                                </p>
+                            </div>
+                            <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60">
+                                <h3 className="font-semibold text-xs text-neutral-800 dark:text-neutral-200 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i className="ri-filter-3-line text-orange-600" /> Eligibility Criteria
+                                </h3>
+                                <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                    Events may specify year or program requirements (e.g. BTech/MTech). Attempting to bypass eligibility filters will result in registration cancellation.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Section 4: Club Heads & Organizers */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">4</span>
+                            Club Heads &amp; Event Organizers
+                        </h2>
+                        <ul className="space-y-2.5 text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-shield-check-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Content Accuracy:</strong> Club heads are solely responsible for ensuring event schedules, descriptions, venue details, and entry fees are accurate.</span>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-shield-check-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Data Handling:</strong> Participant information must be used strictly for event execution and never disclosed to unauthorized parties.</span>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <i className="ri-shield-check-line text-orange-600 mt-0.5 shrink-0" />
+                                <span><strong>Campus Guidelines:</strong> All published events must adhere strictly to NIT Jalandhar institutional rules and code of conduct.</span>
+                            </li>
                         </ul>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">4. Club Heads & Event Organizers</h2>
-                        <ul className="list-disc pl-6 space-y-1.5">
-                            <li>Club heads are responsible for the accuracy of event information they publish.</li>
-                            <li>Club heads must not misuse participant data collected during registration.</li>
-                            <li>Events must comply with institutional guidelines and policies.</li>
-                            <li>CampusNode reserves the right to remove events that violate community guidelines.</li>
-                        </ul>
+                    {/* Section 5: Prohibited Activities */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">5</span>
+                            Prohibited Activities
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
+                            <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 flex items-center gap-2.5">
+                                <i className="ri-forbid-2-line text-red-500 text-base shrink-0" />
+                                <span>Creating fake events or spam content</span>
+                            </div>
+                            <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 flex items-center gap-2.5">
+                                <i className="ri-forbid-2-line text-red-500 text-base shrink-0" />
+                                <span>Manipulating registration counts or payment references</span>
+                            </div>
+                            <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 flex items-center gap-2.5">
+                                <i className="ri-forbid-2-line text-red-500 text-base shrink-0" />
+                                <span>Harassing organizers or fellow participants</span>
+                            </div>
+                            <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 flex items-center gap-2.5">
+                                <i className="ri-forbid-2-line text-red-500 text-base shrink-0" />
+                                <span>Unauthorized commercial advertising or solicitation</span>
+                            </div>
+                        </div>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">5. Prohibited Activities</h2>
-                        <ul className="list-disc pl-6 space-y-1.5">
-                            <li>Creating fake events or spam content.</li>
-                            <li>Attempting to manipulate registration counts or payment systems.</li>
-                            <li>Harassing other users or event organizers.</li>
-                            <li>Using the platform for unauthorized commercial purposes.</li>
-                            <li>Attempting to access other users' accounts or data.</li>
-                        </ul>
+                    {/* Section 6: Limitation of Liability */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">6</span>
+                            Limitation of Liability
+                        </h2>
+                        <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                            CampusNode is provided on an "as is" and "as available" basis. While we strive to maintain uninterrupted uptime, we are not liable for unannounced event cancellations, venue schedule shifts, or third-party network interruptions.
+                        </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">6. Limitation of Liability</h2>
-                        <p>Club <span className='text-orange-600'>Setu</span> is provided "as is" without warranties of any kind. We are not liable for any damages resulting from your use of the platform, including but not limited to event cancellations, payment disputes, or data loss.</p>
+                    {/* Section 7: Updates */}
+                    <section className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2.5">
+                            <span className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold flex items-center justify-center">7</span>
+                            Modifications to Terms
+                        </h2>
+                        <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                            We reserve the right to modify or update these terms periodically. Continued platform usage following published revisions constitutes acceptance of the modified Terms &amp; Conditions.
+                        </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">7. Changes to Terms</h2>
-                        <p>We may update these terms from time to time. Continued use of the platform after changes constitutes acceptance of the updated terms.</p>
+                    {/* Section 8: Contact */}
+                    <section className="bg-neutral-900 dark:bg-neutral-950 text-white rounded-2xl p-6 md:p-8 shadow-md">
+                        <h2 className="text-base font-bold mb-2 flex items-center gap-2">
+                            <i className="ri-mail-line text-orange-500 text-lg" /> Terms &amp; Policy Inquiries
+                        </h2>
+                        <p className="text-xs md:text-sm text-neutral-400 leading-relaxed mb-4">
+                            For questions regarding our terms of service, governance, or institutional inquiries:
+                        </p>
+                        <a 
+                            href="mailto:contact.nikhim@gmail.com" 
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm hover:-translate-y-0.5"
+                        >
+                            <i className="ri-send-plane-line" /> Email CampusNode Team
+                        </a>
                     </section>
 
-                    <section>
-                        <h2 className="text-lg font-black text-black mb-3">8. Contact</h2>
-                        <p>For questions regarding these terms, contact us at <a href="mailto:contact.nikhim@gmail.com" className="text-orange-600 font-bold hover:underline">contact.nikhim@gmail.com</a>.</p>
-                    </section>
+                </div>
+
+                {/* Footer Disclaimer */}
+                <div className="mt-10 text-center text-xs text-neutral-400 dark:text-neutral-600">
+                    <p>CampusNode · NIT Jalandhar Student Portal</p>
                 </div>
             </div>
         </div>

@@ -4,36 +4,58 @@ import { slugifyUnique } from "../utils/slugifyUnique.js";
 import prisma from "../lib/prisma.js";
 import { serializeEvent } from "../utils/postgresEventSerializer.js";
 import crypto from "crypto";
+import { getPublicResponse, setPublicResponse } from "../utils/publicResponseCache.js";
 
 const router = express.Router();
+
+const publicClubSelect = {
+  id: true,
+  clubName: true,
+  slug: true,
+  description: true,
+  category: true,
+  clubLogo: true,
+  facultyName: true,
+  studentCoordinators: true,
+  facultyCoordinator: { select: { id: true, name: true, email: true } },
+  socialLinks: true,
+};
+
 
 // ── GET /clubs — all clubs with faculty coordinator ───────────────────────────
 
 router.get("/", async (req, res) => {
   try {
+    const cacheKey = "clubs:public";
+    const cachedClubs = getPublicResponse(cacheKey);
+
+    if (cachedClubs) {
+      res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+      res.set("X-Public-Cache", "HIT");
+      return res.json(cachedClubs);
+    }
+
     const clubs = await prisma.club.findMany({
-      include: {
-        facultyCoordinator: { select: { id: true, name: true, email: true } },
-        socialLinks: true,
-      },
+      select: publicClubSelect,
       orderBy: { clubName: "asc" },
     });
 
-    res.json(
-      clubs.map((club) => ({
-        ...club,
-        _id: club.id,
-        // Normalise to array for API compatibility
-        facultyCoordinators: club.facultyCoordinator
-          ? [{ ...club.facultyCoordinator, _id: club.facultyCoordinator.id }]
-          : [],
-      })),
-    );
+    const response = clubs.map((club) => ({
+      ...club,
+      _id: club.id,
+      facultyCoordinators: club.facultyCoordinator
+        ? [{ ...club.facultyCoordinator, _id: club.facultyCoordinator.id }]
+        : [],
+    }));
+
+    setPublicResponse(cacheKey, response);
+    res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+    res.set("X-Public-Cache", "MISS");
+    res.json(response);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 // ── GET /clubs/:id — single club with published events ────────────────────────
 
 router.get("/:id", async (req, res) => {

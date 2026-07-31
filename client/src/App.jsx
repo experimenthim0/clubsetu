@@ -153,8 +153,8 @@ function App() {
                 <Route path="/events" element={<EventFeed />} />
                 <Route path="/event/:slug" element={<EventDetails />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<RegisterLanding />} />
-                <Route path="/register/student" element={<RegisterStudent />} />
+               
+                <Route path="/register" element={<RegisterStudent />} />
                 <Route path="/create" element={<CreateEvent />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/my-events" element={<MyEvents />} />

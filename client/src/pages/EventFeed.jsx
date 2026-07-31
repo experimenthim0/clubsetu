@@ -5,6 +5,7 @@ import { useNotification } from '../context/NotificationContext';
 import { Link } from 'react-router-dom';
 import EventCardSkeleton from '../components/skeletons/EventCardSkeleton';
 import { Skeleton } from '../components/ui/Skeleton';
+import { getPublicJson } from '../lib/publicDataCache';
 
 const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive = false }) => {
   const { showNotification } = useNotification();
@@ -28,8 +29,8 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events`);
-      setEvents(Array.isArray(res.data) ? res.data : []);
+      const eventData = await getPublicJson(import.meta.env.VITE_API_URL + '/api/events');
+       setEvents(Array.isArray(eventData) ? eventData : []);
       const role = localStorage.getItem('role');
       if (user && role === 'member') {
           const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user.id || user._id}`);

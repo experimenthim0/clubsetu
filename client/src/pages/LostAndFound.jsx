@@ -227,20 +227,86 @@ const LostAndFound = () => {
   const totalLost    = items.filter(i => i.type === 'LOST').length;
   const totalReunited = items.filter(i => i.status === 'REUNITED').length;
 
-  // ── Login gate ────────────────────────────────────────────
+  // ── Login gate for unauthenticated users ────────────────────
   if (!user) {
+    const mockPreviewItems = [
+      { id: 1, type: 'LOST', title: 'Boat Airdopes 141 Case', location: 'CS Department, Lab 3', date: 'Today' },
+      { id: 2, type: 'FOUND', title: 'NITJ Student ID Card', location: 'Main Canteen Area', date: 'Yesterday' },
+      { id: 3, type: 'LOST', title: 'Casio Scientific Calculator fx-991EX', location: 'LT-102 Lecture Hall', date: '2 days ago' },
+      { id: 4, type: 'FOUND', title: 'Hostel 7 Room Keys with Blue Lanyard', location: 'Near Sports Complex', date: '3 days ago' },
+      { id: 5, type: 'LOST', title: 'Black HP Laptop Charger (65W)', location: 'Central Library, 2nd Floor', date: '4 days ago' },
+      { id: 6, type: 'FOUND', title: 'Stainless Steel Water Bottle (Milton)', location: 'Mega Boy\'s Hostel Campus', date: '5 days ago' },
+    ];
+
     return (
-      <div className="myfont min-h-screen bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#1A1917] dark:text-[#F5F4F0] flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl p-10 max-w-sm w-full text-center shadow-[0_1px_3px_rgba(0,0,0,0.06),_0_4px_16px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3),_0_4px_16px_rgba(0,0,0,0.25)]">
-          <div className="w-16 h-16 rounded-2xl bg-[#FFF0E8] dark:bg-[#E8500A]/12 text-[#E8500A] text-2xl flex items-center justify-center mx-auto mb-5 border border-[#E8500A]/15">
-            <i className="ri-lock-2-line" />
-          </div>
-          <h2 className="font-myfont text-2xl font-normal text-[#1A1917] dark:text-[#F5F4F0] mb-2.5">Access Restricted</h2>
-          <p className="text-sm text-[#6B6963] dark:text-[#9E9990] mb-7 leading-relaxed">You must be logged in to access the CampusNode Lost &amp; Found community.</p>
-          <button className="w-full p-[13px] bg-[#1A1917] dark:bg-[#F5F4F0] text-white dark:text-[#161614] border-none rounded-xl text-sm font-bold cursor-pointer transition-all hover:opacity-88 active:translate-y-0 hover:-translate-y-0.5 mt-2 font-myfont" onClick={() => navigate('/login')}>
-            Go to Login
-          </button>
+      <div className="myfont min-h-screen bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#1A1917] dark:text-[#F5F4F0] relative overflow-hidden flex flex-col justify-between">
+        
+        {/* ── Background Preview Feed (Visible, softly blurred) ────────────────── */}
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-60 dark:opacity-45 blur-[3px] scale-[1.01] transition-all">
+          <header className="bg-white/80 dark:bg-[#161614]/80 border-b border-[#E5E4E0] dark:border-[#2A2A27] py-10 px-6 text-center">
+            <h1 className="font-myfont text-5xl font-normal text-[#1A1917] dark:text-[#F5F4F0]">
+              Lost <em className="italic text-[#E8500A]">&amp;</em> Found
+            </h1>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {mockPreviewItems.map((item) => (
+              <div key={item.id} className="bg-white dark:bg-[#161614] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-2xl p-5 flex flex-col gap-3 shadow-md">
+                <div className="aspect-video bg-[#FAFAF9] dark:bg-[#0D0D0C] rounded-xl flex items-center justify-center text-[#A8A49D] border border-[#E5E4E0]/60 dark:border-[#2A2A27]/60">
+                  <i className="ri-image-line text-2xl opacity-40" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-semibold uppercase tracking-wider ${item.type === 'LOST' ? 'bg-[#FFFBEB] dark:bg-[#2A1A08] text-[#92400E] dark:text-[#FCD34D] border border-[#FDE68A] dark:border-[#78350F]' : 'bg-[#ECFDF5] dark:bg-[#052E1A] text-[#065F46] dark:text-[#6EE7B7] border border-[#A7F3D0] dark:border-[#065F46]'}`}>
+                    ● {item.type}
+                  </span>
+                  <span className="text-xs text-[#A8A49D] dark:text-[#5C5A55] font-mono">{item.date}</span>
+                </div>
+                <h3 className="font-bold text-sm text-[#1A1917] dark:text-[#F5F4F0]">{item.title}</h3>
+                <p className="text-xs text-[#6B6963] dark:text-[#9E9990]">{item.location}</p>
+              </div>
+            ))}
+          </main>
         </div>
+
+        {/* Soft Ambient Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAF9]/40 via-[#FAFAF9]/75 to-[#FAFAF9]/95 dark:from-[#0D0D0C]/40 dark:via-[#0D0D0C]/75 dark:to-[#0D0D0C]/95 pointer-events-none" />
+
+        {/* ── Center Content / Minimal Student Card ────────────── */}
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6 my-auto">
+          <div className="bg-white/85 dark:bg-[#161614]/85 backdrop-blur-md border border-[#E5E4E0] dark:border-[#2A2A27] rounded-3xl p-8 sm:p-10 max-w-md w-full text-center shadow-[0_12px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-all">
+            
+            {/* Minimal Headline */}
+            <h2 className="font-myfont text-3xl sm:text-4xl font-normal text-[#1A1917] dark:text-[#F5F4F0] mb-3 leading-tight">
+              Lost <em className="italic text-[#E8500A]">&amp;</em> Found
+            </h2>
+
+            {/* Student Friendly Body */}
+            <p className="text-sm text-[#6B6963] dark:text-[#9E9990] mb-8 leading-relaxed">
+              Log in or create an account with your NITJ credentials to report lost items, browse campus posts, and connect with fellow students.
+            </p>
+
+            {/* Dual Call-To-Action (CTA) */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Primary CTA: Log In */}
+              <button
+                onClick={() => navigate('/login')}
+                className="flex-1 py-3 px-6 bg-[#E8500A] text-white hover:bg-[#C23F06] rounded-xl text-sm font-bold cursor-pointer transition-all shadow-[0_2px_10px_rgba(232,80,10,0.25)] hover:shadow-[0_4px_18px_rgba(232,80,10,0.35)] active:translate-y-0 hover:-translate-y-0.5 font-myfont"
+              >
+                Log In
+              </button>
+
+              {/* Secondary CTA: Register / Sign Up */}
+              <button
+                onClick={() => navigate('/register')}
+                className="flex-1 py-3 px-6 bg-[#FAFAF9] dark:bg-[#0D0D0C] text-[#1A1917] dark:text-[#F5F4F0] border border-[#E5E4E0] dark:border-[#2A2A27] hover:border-[#E8500A] dark:hover:border-[#E8500A] hover:bg-white dark:hover:bg-[#161614] rounded-xl text-sm font-bold cursor-pointer transition-all active:translate-y-0 hover:-translate-y-0.5 font-myfont"
+              >
+                Register / Sign Up
+              </button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     );
   }

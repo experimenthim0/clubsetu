@@ -4,6 +4,7 @@ import ScrollReveal from "../components/ScrollReveal";
 import ClubCard from "../components/ClubCard";
 import ClubCardSkeleton from "../components/skeletons/ClubCardSkeleton";
 import { useTheme } from "../context/ThemeContext";
+import { getPublicJson } from "../lib/publicDataCache";
 
 const ClubsPage = ({ isHome = false }) => {
   const { isDark } = useTheme();
@@ -19,10 +20,8 @@ const ClubsPage = ({ isHome = false }) => {
   useEffect(() => {
     const fetchClubs = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/clubs`,
-        );
-        setClubs(Array.isArray(res.data) ? res.data : []);
+        const clubData = await getPublicJson(import.meta.env.VITE_API_URL + '/api/clubs');
+        setClubs(Array.isArray(clubData) ? clubData : []);
       } catch (err) {
         console.error("Error fetching clubs:", err);
       } finally {
@@ -99,7 +98,7 @@ const ClubsPage = ({ isHome = false }) => {
           ))}
       </div>
 
-      <div
+      {/* <div
         className="overflow-hidden py-3 mt-14 select-none"
         style={{ whiteSpace: 'nowrap' }}
       >
@@ -138,7 +137,7 @@ const ClubsPage = ({ isHome = false }) => {
             opacity: 1;
           }
         `}</style>
-      </div>
+      </div> */}
     </div>
   );
 };
