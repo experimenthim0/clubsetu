@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package } from "lucide-react";
+import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package,Monitor } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import { CalendarDaysIcon } from "./ui/calendar-days";
@@ -35,7 +35,11 @@ const BottomNav = () => {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef(null);
-  const { isDark, toggleTheme } = useTheme();
+ const {
+  theme,
+  setTheme,
+  isDark,
+} = useTheme();
 
   // Parse user from local storage
   let user = null;
@@ -220,29 +224,29 @@ const BottomNav = () => {
                     : "Student"}
                 </p>
               </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-2 text-neutral-400 hover:text-black rounded-full hover:bg-neutral-100 transition-colors">
+              <button onClick={() => setDrawerOpen(false)} className="p-2 text-neutral-500 hover:text-black rounded-full hover:bg-neutral-100 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="overflow-y-auto px-2 py-2 flex-1">
-              <Link to="/profile" className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+            <div className="overflow-y-auto px-2 py-1 flex-1">
+              <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                   <User size={18} />
                 </div>
                 My Profile
               </Link>
 
               {role === "member" && (
-                <Link to="/my-events" className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
-                   <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <Link to="/my-events" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
+                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                      <CalendarDaysIcon size={18} />
                    </div>
                    My Events
                 </Link>
               )}
               {role === "lostFoundAdmin" && (
-                <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
                      <LostFoundIcon size={18} />
                    </div>
@@ -272,18 +276,18 @@ const BottomNav = () => {
 
               {((user.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (
                 <div className="mt-2 pt-2 border-t border-neutral-100">
-                  <p className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                  <p className="px-4 py-2 text-[12px] font-bold tracking-widest text-neutral-500 dark:text-neutral-400">
                     Management
                   </p>
 
                   {user.memberships?.map((m) => (
-                    <div key={m.clubId} className="mb-4 last:mb-0">
-                      <p className="px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/50 mb-2">
+                    <div key={m.clubId} className="mb-2 last:mb-0">
+                      <p className="px-4 py-1.5 text-[11px] font-bold tracking-widest text-orange-600  mb-2">
                         {m.clubName}
                       </p>
 
                       {(m.role === "CLUB_HEAD" || m.role === "COORDINATOR" || m.role === "facultyCoordinator" || m.canEditEvents || m.canCheckRegistration || m.canTakeAttendance || m.permissions?.canEditEvents || m.permissions?.canCheckRegistration || m.permissions?.canTakeAttendance) && (
-                        <Link to={`/club-events/${m.clubId}`} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                        <Link to={`/club-events/${m.clubId}`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                           <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
                             <CalendarCogIcon size={18} />
                           </div>
@@ -292,7 +296,7 @@ const BottomNav = () => {
                       )}
 
                       {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
-                        <Link to={`/club/${m.clubId}/team`} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                        <Link to={`/club/${m.clubId}/team`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                           <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
                             <User size={18} />
                           </div>
@@ -302,19 +306,19 @@ const BottomNav = () => {
 
                       {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
                         <>
-                          <Link to="/payments" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                          <Link to="/payments" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                             <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
                               <IndianRupeeIcon size={18} />
                             </div>
                             Payments
                           </Link>
-                          <Link to="/send-notification" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                          <Link to="/send-notification" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                             <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                               <ConciergeBellIcon size={18} />
                             </div>
                             Notifications
                           </Link>
-                          <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
+                          <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
                             <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
                               <LayoutGridIcon size={18} />
                             </div>
@@ -357,22 +361,52 @@ const BottomNav = () => {
 
             <div className="px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
               {/* Dark mode toggle */}
-              <button
-                onClick={() => {
-                  document.documentElement.classList.add('dark-transition');
-                  toggleTheme();
-                  setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
-                }}
-                className="w-full flex items-center justify-between py-3 px-4 mb-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 transition-colors"
-              >
-                <span className="flex items-center gap-2 text-sm font-semibold text-black">
-                  {isDark ? <Sun size={18} /> : <Moon size={18} />}
-                  {isDark ? 'Light Mode' : 'Dark Mode'}
-                </span>
-                <div className={`w-10 h-6 rounded-full relative transition-colors duration-200 ${isDark ? 'bg-orange-600' : 'bg-neutral-300'}`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isDark ? 'translate-x-5' : 'translate-x-1'}`} />
-                </div>
-              </button>
+             <div className="rounded-2xl mb-2">
+  
+
+  <div className="grid grid-cols-3 gap-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 p-1">
+
+    {/* Light */}
+    <button
+      onClick={() => setTheme("light")}
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+        theme === "light"
+          ? "bg-orange-500 text-white shadow"
+          : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+      }`}
+    >
+      <Sun size={20} strokeWidth={2.2} />
+      <span className="text-xs font-medium">Light</span>
+    </button>
+
+    {/* Dark */}
+    <button
+      onClick={() => setTheme("dark")}
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+        theme === "dark"
+          ? "bg-orange-500 text-white shadow"
+          : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+      }`}
+    >
+      <Moon size={20} strokeWidth={2.2} />
+      <span className="text-xs font-medium">Dark</span>
+    </button>
+
+    {/* Auto */}
+    <button
+      onClick={() => setTheme("system")}
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+        theme === "system"
+          ? "bg-orange-500 text-white shadow"
+          : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+      }`}
+    >
+      <Monitor size={20} strokeWidth={2.2} />
+      <span className="text-xs font-medium">Auto</span>
+    </button>
+
+  </div>
+</div>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors"
