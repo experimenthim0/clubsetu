@@ -148,10 +148,10 @@ const AppLayout = () => {
       {layoutContent}
 
       {/* WhatsApp Tooltip Popup */}
-      {showTooltip && (
+      {/* {showTooltip && (
         <div className="fixed bottom-40 right-6 md:bottom-22 md:right-6 z-50 max-w-[260px] bg-white dark:bg-neutral-900 text-black dark:text-white p-4.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border border-neutral-100 dark:border-neutral-800 animate-[bounce_1.5s_infinite] transition-all duration-300">
           <div className="relative">
-            {/* Close Button */}
+            {/* Close Button 
             <button
               onClick={() => setShowTooltip(false)}
               className="absolute -top-3 -right-3 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -165,12 +165,12 @@ const AppLayout = () => {
 <p className="text-[12px] font-medium leading-relaxed text-neutral-800 dark:text-neutral-200 pr-2 mt-1">
   Get instant campus updates on WhatsApp.
 </p>
-            {/* Tooltip Arrow */}
+           
             <div className="absolute -bottom-[26px] right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white dark:border-t-neutral-900" />
             <div className="absolute -bottom-[27px] right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-neutral-100 dark:border-t-neutral-800 -z-10" />
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Floating WhatsApp Channel Button */}
       {/* <a

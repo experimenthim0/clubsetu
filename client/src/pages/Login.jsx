@@ -232,7 +232,7 @@ const Login = () => {
           {/* Register Link */}
           <div className="mt-6 flex justify-center">
             <Link
-              to="/register/student"
+              to="/register"
               className="w-full text-center py-3 rounded-xl border border-neutral-200 dark:border-neutral-800 text-black dark:text-white font-semibold text-sm hover:border-orange-500 dark:hover:border-orange-500 hover:text-orange-600 dark:hover:text-orange-500 transition-all"
             >
               Register as Student

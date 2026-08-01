@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getPublicJson } from "../lib/publicDataCache";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -42,12 +43,12 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
       const fetchData = async () => {
         setLoading(true);
         try {
-          const [clubsRes, eventsRes] = await Promise.all([
-            axios.get(`${API_URL}/api/clubs`),
-            axios.get(`${API_URL}/api/events`),
+          const [clubsData, eventsData] = await Promise.all([
+            getPublicJson(API_URL + '/api/clubs'),
+            getPublicJson(API_URL + '/api/events'),
           ]);
-          setClubs(clubsRes.data || []);
-          setEvents(eventsRes.data || []);
+          setClubs(clubsData || []);
+          setEvents(eventsData || []);
           setHasFetched(true);
         } catch (err) {
           console.error("Search data fetch error:", err);

@@ -889,7 +889,7 @@ const Home = () => {
                     </Link>
 
                     <Link
-                      to="/login"
+                      to="/register"
                       className="text-white bg-[#0f1419] hover:bg-transparent hover:text-[#0a0a0a] hover:border-[#0a0a0a] dark:bg-[#f5f5f5] dark:text-[#0a0a0a] dark:hover:bg-transparent dark:hover:text-[#f5f5f5] dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
                     >
                     <ArrowRightIcon size={18}>
