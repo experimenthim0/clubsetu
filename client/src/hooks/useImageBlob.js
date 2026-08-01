@@ -38,8 +38,12 @@ export const useImageBlob = (imageUrl) => {
     let active = true;
 
     const fetchImage = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       try {
-        const response = await fetch(imageUrl, { mode: 'cors' });
+        const response = await fetch(imageUrl, { mode: 'cors', signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!response.ok) throw new Error('Direct fetch failed');
         const blob = await response.blob();
         
@@ -49,24 +53,11 @@ export const useImageBlob = (imageUrl) => {
           setDisplayUrl(localUrl);
           setIsBlobLoaded(true);
         }
-      } catch (directError) {
-        try {
-          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
-          const response = await fetch(proxyUrl, { mode: 'cors' });
-          if (!response.ok) throw new Error('Proxy fetch failed');
-          const blob = await response.blob();
-
-          if (active) {
-            const localUrl = URL.createObjectURL(blob);
-            blobCache.set(imageUrl, localUrl);
-            setDisplayUrl(localUrl);
-            setIsBlobLoaded(true);
-          }
-        } catch (error) {
-          if (active) {
-            setDisplayUrl(imageUrl);
-            setIsBlobLoaded(false);
-          }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (active) {
+          setDisplayUrl(imageUrl);
+          setIsBlobLoaded(false);
         }
       }
     };

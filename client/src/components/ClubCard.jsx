@@ -18,10 +18,23 @@ const ClubCard = ({ club }) => {
   const [isHovered, setIsHovered] = useState(false);
   const imgRef = useRef(null);
 
-  // Use fallback logo if no club logo is provided
+  // Use fallback logo instantly, preload real clubLogo in background
   const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
-  const displayLogo = club.clubLogo || fallbackLogo;
-  const { displayUrl, isBlobLoaded } = useImageBlob(displayLogo);
+  const [logoSrc, setLogoSrc] = useState(fallbackLogo);
+
+  useEffect(() => {
+    if (!club?.clubLogo) {
+      setLogoSrc(fallbackLogo);
+      return;
+    }
+    setLogoSrc(fallbackLogo);
+    const img = new Image();
+    img.src = club.clubLogo;
+    img.onload = () => setLogoSrc(club.clubLogo);
+    img.onerror = () => setLogoSrc(fallbackLogo);
+  }, [club?.clubLogo, fallbackLogo]);
+
+  const { displayUrl, isBlobLoaded } = useImageBlob(logoSrc);
 
   const handleImageLoad = () => {
     const imageEl = imgRef.current;

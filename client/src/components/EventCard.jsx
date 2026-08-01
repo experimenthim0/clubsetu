@@ -21,8 +21,21 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const imgRef = useRef(null);
    
 
-     const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
-      const displayLogo = event.club?.clubLogo || fallbackLogo;
+    const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
+    const rawClubLogo = event.club?.clubLogo || event.createdBy?.clubLogo;
+    const [clubLogoSrc, setClubLogoSrc] = useState(fallbackLogo);
+
+    useEffect(() => {
+        if (!rawClubLogo) {
+            setClubLogoSrc(fallbackLogo);
+            return;
+        }
+        setClubLogoSrc(fallbackLogo);
+        const img = new Image();
+        img.src = rawClubLogo;
+        img.onload = () => setClubLogoSrc(rawClubLogo);
+        img.onerror = () => setClubLogoSrc(fallbackLogo);
+    }, [rawClubLogo, fallbackLogo]);
      
     
     const handleImageLoad = () => {
@@ -165,10 +178,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             <div className="flex items-center min-w-0">
                                  <div className="w-6 h-6 rounded-full overflow-hidden mr-2 border border-neutral-300 dark:border-neutral-700">
                                 <img
-                                    src={displayLogo}
-                                    alt={event.createdBy.clubName}
-                                    crossOrigin={isBlobLoaded && event.createdBy.clubLogo ? "anonymous" : undefined}
-                                    onLoad={handleImageLoad}
+                                    src={clubLogoSrc}
+                                    alt={event.club?.clubName || event.createdBy?.clubName || 'Club Logo'}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                         e.target.onerror = null;

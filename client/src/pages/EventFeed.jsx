@@ -222,6 +222,9 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
 
   const totalFiltered = liveEvents.length + upcomingEvents.length + endedEvents.length;
 
+  const isFilterActive = filterStatus !== 'ALL' || filterClub !== 'ALL' || filterMonth !== 'ALL' || filterYear !== 'ALL' || searchQuery.trim() !== '';
+  const showEmptyBanner = events.length === 0 || totalFiltered === 0 || (!isFilterActive && hasNoActiveEvents);
+
   const statusButtons = [
     { key: 'ALL', label: 'All', icon: 'ri-layout-grid-line' },
     { key: 'LIVE', label: 'Live', icon: 'ri-live-line' },
@@ -339,7 +342,7 @@ return (
     </div>
 
     {/* Active filter summary */}
-    {(filterStatus !== 'ALL' || filterClub !== 'ALL' || filterMonth !== 'ALL' || filterYear !== 'ALL' || searchQuery !== '') && (
+    {isFilterActive && (
       <div className="mt-2.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between">
         <span className="text-[11px] text-neutral-500 uppercase tracking-wider font-bold">
           {totalFiltered} event{totalFiltered !== 1 ? 's' : ''} found
@@ -363,7 +366,7 @@ return (
 )}
 
     {/* If No Active/Upcoming Events or No Filter Matches */}
-    {(hasNoActiveEvents || totalFiltered === 0) && (
+    {showEmptyBanner && (
       <div className="text-center py-10 px-4 border-2 border-neutral-200 rounded-2xl bg-neutral-50/50 mb-18">
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-5 ">
             <img className='w-full h-full object-cover rounded-full' src="cat.png" alt="" />
@@ -371,17 +374,19 @@ return (
         <h3 className="text-xl font-black text-neutral-800 mb-2">
           {events.length === 0 
             ? 'No Events Found' 
-            : (hasNoActiveEvents ? 'No Active or Upcoming Events' : 'No Matching Events')}
+            : totalFiltered === 0
+              ? 'No Matching Events'
+              : 'No Active or Upcoming Events'}
         </h3>
         <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-8 leading-relaxed">
           {events.length === 0 
             ? 'Please check back later for new events.' 
-            : (hasNoActiveEvents 
-               ? "There aren't any active events happening right now. Don't worry! You can still browse our past events below." 
-               : "Try adjusting your filters or search query to find what you're looking for.")}
+            : totalFiltered === 0
+              ? "Try adjusting your filters or search query to find what you're looking for."
+              : "There aren't any active events happening right now. Don't worry! You can still browse our past events below."}
         </p>
         
-        {!(events.length === 0 || hasNoActiveEvents) && (
+        {isFilterActive && totalFiltered === 0 && (
            <button
            onClick={() => {
              setFilterStatus('ALL');

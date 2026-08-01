@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ArrowUpRightIcon } from './ui/arrow-up-right';
+import { getPublicJson } from '../lib/publicDataCache';
 
 const ClubLeaderboard = () => {
   const [clubs, setClubs] = useState([]);
@@ -11,11 +12,12 @@ const ClubLeaderboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [clubsRes, eventsRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/api/clubs`),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/events`)
+        const [clubsData, eventsData] = await Promise.all([
+          getPublicJson(import.meta.env.VITE_API_URL + '/api/clubs'),
+          getPublicJson(import.meta.env.VITE_API_URL + '/api/events')
         ]);
-        setClubs(Array.isArray(clubsRes.data) ? clubsRes.data : []);
+        setClubs(Array.isArray(clubsData) ? clubsData : []);
+        setEvents(Array.isArray(eventsData) ? eventsData : []);
         setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);

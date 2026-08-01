@@ -173,7 +173,7 @@ const AppLayout = () => {
       )}
 
       {/* Floating WhatsApp Channel Button */}
-      <a
+      {/* <a
         href="https://whatsapp.com/channel/0029VbAhXba7z4kgTBY3nS0Z"
         target="_blank"
         rel="noopener noreferrer"
@@ -184,7 +184,7 @@ const AppLayout = () => {
         <span className="absolute right-16 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-neutral-900 dark:bg-neutral-800 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md pointer-events-none border border-neutral-800/20 translate-x-2 group-hover:translate-x-0">
           Join WhatsApp Channel
         </span>
-      </a>
+      </a> */}
     </>
   );
 };

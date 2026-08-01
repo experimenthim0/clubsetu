@@ -6,6 +6,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { useNotification } from '../context/NotificationContext';
 import CalendarDropdown from '../components/CalendarDropdown';
 import PaymentModal from '../components/PaymentModal';
+import { getPublicJson } from '../lib/publicDataCache';
 import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
 import { TwitterIcon } from "@/components/ui/twitter";
@@ -126,16 +127,16 @@ const EventDetails = () => {
         const viewedKey = `viewed_event_${slug}`;
         const hasViewed = sessionStorage.getItem(viewedKey);
         
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`, {
-          params: { skipIncrement: hasViewed === 'true' }
-        });
-        
-        const eventData = res.data;
-        setEvent(eventData);
-        
-        if (!hasViewed) {
+        let eventData;
+        if (hasViewed === 'true') {
+          eventData = await getPublicJson(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
+        } else {
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
+          eventData = res.data;
           sessionStorage.setItem(viewedKey, 'true');
         }
+        
+        setEvent(eventData);
 
         // Check if the user is already registered for this event
         const user = JSON.parse(localStorage.getItem('user'));
@@ -338,6 +339,7 @@ const EventDetails = () => {
   };
 
   const handleRegister = async () => {
+    if (isEnded || isLive || isDeadlinePassed) return;
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
 
@@ -585,16 +587,19 @@ const EventDetails = () => {
   const displayName = event.club?.clubName || event.createdBy?.clubName || '—';
 
   const btnConfig = isEnded
-    ? { label: showWinners ? 'View Results' : 'Event Ended', cls: 'bg-neutral-800 text-white border-black hover:bg-orange-600 hover:border-orange-600 cursor-pointer', disabled: false }
+    ? { label: showWinners ? 'View Results' : 'Event Ended', cls: showWinners ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-white border-neutral-300 dark:border-white hover:bg-neutral-300 dark:hover:bg-neutral-700 cursor-pointer' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700 opacity-80 cursor-not-allowed', disabled: !showWinners }
     : isLive
     ? { label: 'Event is Live', cls: 'bg-orange-600 text-white border-orange-600 cursor-not-allowed', disabled: true }
     : isDeadlinePassed
-    ? { label: 'Deadline Passed', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed border-neutral-200 dark:border-neutral-700', disabled: true }
+    ? { label: 'DeadlinePassed', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed border-neutral-200 dark:border-neutral-700', disabled: true }
     : alreadyRegistered
     ? { label: 'Already Registered', cls: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 cursor-not-allowed border-neutral-200 dark:border-neutral-700', disabled: true }
     : isFull
     ? { label: 'Join Waitlist', cls: 'bg-yellow-400 text-black border-black hover:bg-yellow-300 cursor-pointer', disabled: false }
     : { label: entryFee > 0 ? `Pay ₹${entryFee} & Register` : 'Get Tickets', cls: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white hover:bg-orange-600 hover:border-orange-600 hover:text-white cursor-pointer', disabled: false };
+
+  const isUpcoming = !isEnded && !isLive && !isDeadlinePassed ;
+  const showMobileCTA = isUpcoming && !alreadyRegistered;
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -1195,32 +1200,27 @@ const EventDetails = () => {
         </div>
       </div>
 
-      {/* ── Mobile Fixed Bottom CTA ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-neutral-900 border-t-2 border-neutral-200 dark:border-neutral-800 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <p className={`text-[18px] font-black leading-none ${entryFee > 0 ? 'text-black dark:text-white' : 'text-green-600'}`}>
-              {entryFee > 0 ? `₹${entryFee}` : 'Free'}
-            </p>
-            <p className="text-[11px] text-neutral-400 truncate">{title}</p>
-          </div>
+      {/* ── Mobile Floating Bottom CTA (Upcoming & Not Registered Only) ── */}
+      {showMobileCTA && (
+        <div className="lg:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 left-0 right-0 z-40 flex justify-center pointer-events-none px-4">
           <button
-            onClick={!btnConfig.disabled && !isRegistering
-              ? (isEnded
-                ? () => document.getElementById('winners-section')?.scrollIntoView({ behavior: 'smooth' })
-                : handleRegister)
-              : undefined}
+            onClick={!btnConfig.disabled && !isRegistering ? handleRegister : undefined}
             disabled={btnConfig.disabled || isRegistering}
-            className={`px-6 py-3 text-[12px] font-black uppercase tracking-[0.12em] border-2 rounded-full transition-all flex items-center gap-2 shrink-0 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`pointer-events-auto px-5 py-2 text-[13px] font-black  tracking-[0.12em] border-2 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all flex items-center justify-center gap-2 ${btnConfig.cls} ${(btnConfig.disabled || isRegistering) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isRegistering ? (
-              <><i className="ri-loader-4-line animate-spin text-sm" /> …</>
-            ) : btnConfig.label}
+              <><i className="ri-loader-4-line animate-spin text-sm" /> Processing…</>
+            ) : (
+              <>
+                
+                {btnConfig.label}
+              </>
+            )}
           </button>
         </div>
-      </div>
+      )}
       {/* Spacer for mobile CTA */}
-      <div className="lg:hidden h-20" />
+      {showMobileCTA && <div className="lg:hidden h-24 md:h-16" />}
 
       {/* ── Missing Fields Modal ── */}
       {missingFieldsModalOpen && (

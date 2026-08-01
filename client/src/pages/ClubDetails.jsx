@@ -7,29 +7,62 @@ import { TwitterIcon } from "@/components/ui/twitter";
 import { GithubIcon } from "@/components/ui/github";
 import { MessageCircleIcon } from "@/components/ui/message-circle";
 import { EarthIcon } from "@/components/ui/earth";
+import EventCard from "../components/EventCard";
+import { useTheme } from '../context/ThemeContext';
+import { getPublicJson } from "../lib/publicDataCache";
 
 import { ClubMemberRole } from "../types/index.js";
 
 const ClubDetails = () => {
   const { slug } = useParams();
+   const { isDark } = useTheme();
   const [club, setClub] = useState(null);
   const [events, setEvents] = useState([]);
+  const [registeredEvents, setRegisteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
   const [isHead, setIsHead] = useState(false);
+  const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
+  const [heroLogoSrc, setHeroLogoSrc] = useState(fallbackLogo);
+
+  useEffect(() => {
+    if (!club?.clubLogo) {
+      setHeroLogoSrc(fallbackLogo);
+      return;
+    }
+    setHeroLogoSrc(fallbackLogo);
+    const img = new Image();
+    img.src = club.clubLogo;
+    img.onload = () => setHeroLogoSrc(club.clubLogo);
+    img.onerror = () => setHeroLogoSrc(fallbackLogo);
+  }, [club?.clubLogo, fallbackLogo]);
 
   useEffect(() => {
     const fetchClubDetails = async () => {
       try {
-        const res = await axios.get(
+        const clubData = await getPublicJson(
           `${import.meta.env.VITE_API_URL}/api/clubs/${slug}`
         );
-        setClub(res.data.club);
-        setEvents(res.data.events);
+        setClub(clubData.club);
+        setEvents(clubData.events);
 
         const storedUser = JSON.parse(localStorage.getItem("user"));
+        const role = localStorage.getItem("role");
         setUser(storedUser);
+
+        if (storedUser && (role === "member" || role === "student")) {
+          try {
+            const regRes = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/events/user/${storedUser.id || storedUser._id}`
+            );
+            setRegisteredEvents(
+              regRes.data.filter((r) => r.eventId).map((r) => r.eventId.id || r.eventId._id)
+            );
+          } catch (regErr) {
+            console.error("Error fetching user registrations:", regErr);
+          }
+        }
 
         // Fetch membership to derive RBAC flags
         if (storedUser && res.data.club) {
@@ -101,80 +134,11 @@ const ClubDetails = () => {
     }
   };
 
-  const getBadgeClass = (type) => {
-    if (type === "live")
-      return "bg-orange-50 text-orange-600 border-orange-200";
-    if (type === "upcoming")
-      return "bg-amber-50 text-amber-700 border-amber-200";
-    return "bg-neutral-50 text-neutral-600 border-neutral-200";
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Invalid Date";
-    const day = date.getDate();
-    const month = date.toLocaleString("default", { month: "short" });
-    const year = date.getFullYear();
-    const time = date.toLocaleString("default", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    return `${time}, ${day} ${month} ${year}`;
-  };
-
-  const EventCard = ({ event, type }) => {
-    const badgeLabel =
-      type === "live" ? "Live" : type === "upcoming" ? "Upcoming" : "Past";
-    const actionLabel = type === "upcoming" ? "Register Now →" : type === "past" ? "View Recap →" : "View Details →";
-
-    return (
-      <Link
-        to={`/event/${event.slug || event._id}`}
-        className={`group flex flex-col bg-white border rounded-xl p-5 gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-md
-          ${type === "live" ? "border-orange-500 ring-1 ring-orange-500" : "border-neutral-200 hover:border-neutral-300"}
-          ${type === "past" ? "opacity-75" : ""}
-        `}
-      >
-        {/* Top row: badge + date */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 border rounded-md flex-shrink-0 ${getBadgeClass(type)}`}
-          >
-            {badgeLabel}
-          </span>
-          <span className="text-xs font-semibold text-neutral-450 uppercase">
-            {formatDate(event.startTime)}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3 className="font-bold text-neutral-900 text-[1.05rem] leading-snug group-hover:text-orange-600 transition-colors duration-150">
-          {event.title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed flex-1">
-          {event.description}
-        </p>
-
-        {/* Footer: venue + action */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100 mt-auto flex-wrap">
-          {event.venue ? (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-neutral-500 min-w-0">
-              <i className="ri-map-pin-line text-orange-600 text-sm flex-shrink-0" />
-              <span className="truncate">{event.venue}</span>
-            </span>
-          ) : (
-            <span />
-          )}
-          <span className="text-xs font-bold text-orange-600 flex-shrink-0">
-            {actionLabel}
-          </span>
-        </div>
-      </Link>
-    );
-  };
+  const getFullEvent = (e) => ({
+    ...e,
+    club: e.club || { clubName: club.clubName, clubLogo: club.clubLogo },
+    status: e.status || (new Date(e.startTime) <= now && new Date(e.endTime) >= now ? 'LIVE' : new Date(e.startTime) > now ? 'UPCOMING' : 'ENDED')
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -184,17 +148,15 @@ const ClubDetails = () => {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-8 relative z-10">
           {/* Logo */}
           <div className="w-28 h-28 bg-white border border-gray-200 rounded-full flex-shrink-0 overflow-hidden">
-            {club.clubLogo ? (
-              <img
-                src={club.clubLogo}
-                alt={club.clubName}
-                className="w-full h-full object-contain rounded-full"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-black font-bold text-4xl rounded-full">
-                {club.clubName.charAt(0)}
-              </div>
-            )}
+            <img
+              src={heroLogoSrc}
+              alt={club.clubName}
+              className="w-full h-full object-contain rounded-full"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = fallbackLogo;
+              }}
+            />
           </div>
 
           {/* Name + desc */}
@@ -256,7 +218,7 @@ const ClubDetails = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Faculty Coordinator */}
           <div className="bg-white text-black border border-neutral-200 p-4 sm:p-5 rounded-xl min-w-0 shadow-sm">
-            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
+            <p className="text-[12px] font-semibold tracking-wider text-neutral-400 mb-1">
               Faculty Coord.
             </p>
             <p className="font-semibold text-sm sm:text-base text-neutral-800 break-words leading-snug">
@@ -266,7 +228,7 @@ const ClubDetails = () => {
 
           {/* Student Lead */}
           <div className="bg-white text-black border border-neutral-200 p-4 sm:p-4 rounded-xl min-w-0 shadow-sm">
-            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
+            <p className="text-[12px] font-semibold tracking-wider text-neutral-400 mb-1 ">
               Student Lead
             </p>
             <p className="font-semibold text-sm sm:text-base text-neutral-800 break-words leading-snug">
@@ -279,7 +241,7 @@ const ClubDetails = () => {
           {/* Socials — spans 2 cols on mobile, 1 col on sm+ */}
           
           <div className="col-span-2 sm:col-span-1 bg-white border border-neutral-200 p-2 sm:p-4 rounded-xl shadow-sm">
-            <p className="text-[10px] font-bold tracking-wider text-neutral-400 mb-1 uppercase">
+            <p className="text-[12px] font-semibold tracking-wider text-neutral-400 mb-1 ">
               Connect with us
             </p>
             {/* <div className="flex flex-wrap gap-2">
@@ -408,9 +370,13 @@ const ClubDetails = () => {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
               </span>
             </div>
-            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {liveEvents.map((e) => (
-                <EventCard key={e._id} event={e} type="live" />
+                <EventCard
+                  key={e._id || e.id}
+                  event={getFullEvent(e)}
+                  isRegistered={registeredEvents.includes(e._id || e.id)}
+                />
               ))}
             </div>
           </section>
@@ -422,12 +388,16 @@ const ClubDetails = () => {
             <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
               Upcoming
             </h2>
-            <div className="h-[1px] flex-1 bg-neutral-250 bg-neutral-200" />
+            <div className="h-[1px] flex-1 bg-neutral-200" />
           </div>
           {upcomingEvents.length > 0 ? (
-            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEvents.map((e) => (
-                <EventCard key={e._id} event={e} type="upcoming" />
+                <EventCard
+                  key={e._id || e.id}
+                  event={getFullEvent(e)}
+                  isRegistered={registeredEvents.includes(e._id || e.id)}
+                />
               ))}
             </div>
           ) : (
@@ -448,9 +418,13 @@ const ClubDetails = () => {
               </h2>
               <div className="h-[1px] flex-1 bg-neutral-200" />
             </div>
-            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pastEvents.map((e) => (
-                <EventCard key={e._id} event={e} type="past" />
+                <EventCard
+                  key={e._id || e.id}
+                  event={getFullEvent(e)}
+                  isRegistered={registeredEvents.includes(e._id || e.id)}
+                />
               ))}
             </div>
           </section>
