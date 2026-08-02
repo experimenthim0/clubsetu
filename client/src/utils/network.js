@@ -84,7 +84,7 @@ export function setupAxiosNetworkInterceptor(axiosInstance) {
  * Offline Page & Asset Cache Management
  * Uses Cache Storage API to cache pages for offline viewing.
  */
-const CACHE_NAME = 'campusnode-offline-cache-v1';
+const CACHE_NAME = 'campusnode-offline-v1';
 const CRITICAL_ROUTES = [
   '/',
   '/events',
