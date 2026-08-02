@@ -247,7 +247,7 @@ const BottomNav = () => {
               )}
               {role === "lostFoundAdmin" && (
                 <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                   <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                   <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-black">
                      <LostFoundIcon size={18} />
                    </div>
                    Moderation Panel
@@ -307,19 +307,19 @@ const BottomNav = () => {
                       {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
                         <>
                           <Link to="/payments" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
                               <IndianRupeeIcon size={18} />
                             </div>
                             Payments
                           </Link>
                           <Link to="/send-notification" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
                               <ConciergeBellIcon size={18} />
                             </div>
                             Notifications
                           </Link>
                           <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
                               <LayoutGridIcon size={18} />
                             </div>
                             Club Page
