@@ -5,6 +5,11 @@ import { createObjectId } from "../utils/objectId.js";
 
 const router = express.Router();
 
+// Defense-in-depth: all notification routes require authentication.
+// Individual handlers still declare their own verifyToken + allowRoles for
+// explicit per-route role checks, but this catches any future routes.
+router.use(verifyToken);
+
 // Include for sender — club head (StudentUser) with their club name
 const senderInclude = {
   senderStudent: {

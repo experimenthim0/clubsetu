@@ -4,6 +4,7 @@ import prisma from "../lib/prisma.js";
 import { verifyToken } from "../middleware/auth.js";
 import { generateSignature, uploadImage, deleteImage } from "../utils/cloudinary.js";
 import { createObjectId } from "../utils/objectId.js";
+import { sanitizeFields } from "../utils/sanitizeInput.js";
 
 const router = express.Router();
 const upload = multer({
@@ -48,6 +49,7 @@ const checkBlocked = async (req, res, next) => {
 // POST /api/lost-found - Create a new item
 router.post("/", verifyToken, checkBlocked, async (req, res) => {
   try {
+    sanitizeFields(req.body, ["title", "description", "whatsapp"]);
     const { title, description, type, image_url, image_public_id, whatsapp } = req.body;
     const student = req.fullUser;
 
@@ -222,6 +224,7 @@ router.patch("/:id/reunite", verifyToken, async (req, res) => {
 // POST /api/lost-found/:id/report - Report fraud
 router.post("/:id/report", verifyToken, async (req, res) => {
   try {
+    sanitizeFields(req.body, ["reason"]);
     const { reason } = req.body;
     if (!reason || !reason.trim()) {
       return res.status(400).json({ message: "Please provide a reason for reporting." });

@@ -501,22 +501,22 @@ const LostAndFound = () => {
               {
                 icon: 'ri-edit-line',
                 title: 'Daily Post Limit',
-                body: 'To prevent spam, each user may post a maximum of <strong>2 items per day</strong> across all categories.'
+                body: () => <>To prevent spam, each user may post a maximum of <strong>2 items per day</strong> across all categories.</>
               },
               {
                 icon: 'ri-flag-line',
                 title: 'Post Report Limits',
-                body: '<strong>3+ reports</strong> on a post flags it as fraud (poster suspended <strong>7 days</strong>). Two false reports suspends you for <strong>2 days</strong>.'
+                body: () => <><strong>3+ reports</strong> on a post flags it as fraud (poster suspended <strong>7 days</strong>). Two false reports suspends you for <strong>2 days</strong>.</>
               },
               {
                 icon: 'ri-error-warning-line',
                 title: 'Strict Suspensions',
-                body: 'Falsely claiming items results in <strong>permanent suspension</strong>. For appeals, email <strong>clubsetu@nikhim.me</strong>.'
+                body: () => <>Falsely claiming items results in <strong>permanent suspension</strong>. For appeals, email <strong>clubsetu@nikhim.me</strong>.</>
               },
               {
                 icon: 'ri-time-line',
                 title: 'Reunited Visibility',
-                body: 'Reunited posts stay visible in the browse feed for <strong>24 hours</strong> with reduced opacity before auto-hiding.'
+                body: () => <>Reunited posts stay visible in the browse feed for <strong>24 hours</strong> with reduced opacity before auto-hiding.</>
               },
             ].map((rule) => (
               <div className="p-5 bg-[#FAFAF9] dark:bg-[#0D0D0C] border border-[#E5E4E0] dark:border-[#2A2A27] rounded-xl hover:border-[#A8A49D] dark:hover:border-[#5C5A55] hover:shadow-sm transition-all duration-150" key={rule.title}>
@@ -524,7 +524,7 @@ const LostAndFound = () => {
                   <i className={rule.icon} />
                 </div>
                 <h4 className="text-xs font-bold text-[#1A1917] dark:text-[#F5F4F0] mb-2">{rule.title}</h4>
-                <p className="text-xs leading-relaxed text-[#6B6963] dark:text-[#9E9990]" dangerouslySetInnerHTML={{ __html: rule.body }} />
+                <p className="text-xs leading-relaxed text-[#6B6963] dark:text-[#9E9990]">{rule.body()}</p>
               </div>
             ))}
           </div>

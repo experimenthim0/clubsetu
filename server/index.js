@@ -16,6 +16,9 @@ import lostFoundRoutes from "./routes/lostFound.js";
 import lostFoundAdminRoutes from "./routes/lostFoundAdmin.js";
 import teamRoutes from "./routes/teams.js";
 import prisma from "./lib/prisma.js";
+import compression from "compression";
+
+
 
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -39,6 +42,7 @@ app.use((req, res, next) => {
   req.io = io;
   next();
 });
+app.use(compression());
 
 // Socket connection handler
 io.on("connection", (socket) => {
@@ -63,6 +67,39 @@ app.use(apiCompression);
 // Rate limiter for auth route
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 app.use("/api/auth/login", authLimiter);
+
+// Rate limiter: student & external registration — prevent mass bot registration
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { message: "Too many registration attempts. Please try again later." },
+});
+app.use("/api/auth/register/student", registerLimiter);
+app.use("/api/auth/register/external", registerLimiter);
+
+// Rate limiter: forgot-password — prevent email bombing
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3,
+  message: { message: "Too many password reset requests. Please try again later." },
+});
+app.use("/api/auth/forgot-password", forgotPasswordLimiter);
+
+// Rate limiter: 2FA verification — prevent OTP brute-force
+const twoFaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { message: "Too many verification attempts. Please try again later." },
+});
+app.use("/api/auth/verify-2fa", twoFaLimiter);
+
+// Rate limiter: notification creation — prevent notification spam
+const notificationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { message: "Too many notifications sent. Please slow down." },
+});
+app.use("/api/notifications", notificationLimiter);
 
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "1mb" }));
 app.use(express.urlencoded({ extended: false, limit: process.env.JSON_BODY_LIMIT || "1mb" }));
@@ -91,7 +128,7 @@ app.use("/api/participation", participationRoutes);
 app.use("/api/lost-found", lostFoundRoutes);
 app.use("/api/admin/lost-found", lostFoundAdminRoutes);
 
-// Auto-cleanup for reunited items (runs every 6 hours)
+// Auto-cleanup for reunited items (runs every 8 hours)
 const cleanupReunitedItems = async () => {
   try {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
@@ -113,8 +150,8 @@ const cleanupReunitedItems = async () => {
 
 // Run on startup
 cleanupReunitedItems();
-// Then run every 6 hours
-setInterval(cleanupReunitedItems, 6 * 60 * 60 * 1000);
+// Then run every 8 hours
+setInterval(cleanupReunitedItems, 8 * 60 * 60 * 1000);
 
 // Global Error Handler should be the last middleware
 app.use(errorHandler);

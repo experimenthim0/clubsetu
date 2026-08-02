@@ -22,9 +22,9 @@ export const corsOptions = {
     
     // Check wildcards for previews and testing domains
     const isPreview = origin && (
-      /\.vercel\.app$/.test(origin) || 
+       
       /\.nikhim\.me$/.test(origin) ||
-      /\.outray\.app$/.test(origin) ||
+    
       origin.startsWith("http://192.168.") // typical local network IPs
     );
     
