@@ -26,7 +26,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server } from "socket.io";
-import { apiCompression, getPerformanceStats, overloadProtection, publicReadCache, requestMetrics } from "./middleware/performance.js";
+import { apiCompression, etagSupport, getPerformanceStats, overloadProtection, publicReadCache, requestMetrics } from "./middleware/performance.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -62,6 +62,7 @@ app.use(cors(corsOptions));
 app.use(requestMetrics);
 app.use(overloadProtection);
 app.use(publicReadCache);
+app.use(etagSupport);
 app.use(apiCompression);
 
 // Rate limiter for auth route

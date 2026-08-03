@@ -1,5 +1,5 @@
 import zlib from "node:zlib";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 
 const DEFAULT_MAX_IN_FLIGHT = 250;
 let inFlightRequests = 0;
@@ -60,17 +60,171 @@ export const requestMetrics = (req, res, next) => {
   next();
 };
 
-export const publicReadCache = (req, res, next) => {
-  const isPublicRead = req.method === "GET" &&
-    req.path.startsWith("/api/") &&
-    !req.headers.authorization &&
-    !req.headers.cookie &&
-    !req.path.includes("/download") &&
-    !req.path.includes("/export");
+// ─── Route-Aware Cache-Control Headers ──────────────────────────────────────
+//
+// Instead of a blanket max-age=15 for all public GETs, each route gets
+// a Cache-Control header matched to its data freshness requirements.
+//
+// | Route Pattern             | Cache-Control                                    |
+// |---------------------------|--------------------------------------------------|
+// | GET /api/events (list)    | public, max-age=300, stale-while-revalidate=600  |
+// | GET /api/events/:slug     | public, max-age=300, stale-while-revalidate=900  |
+// | GET /api/clubs (list)     | public, max-age=3600, stale-while-revalidate=21600|
+// | GET /api/clubs/:id        | public, max-age=3600, stale-while-revalidate=21600|
+// | GET /api/notifications    | private, max-age=30, must-revalidate             |
+// | GET /api/admin/*          | private, no-cache, no-store                      |
+// | POST/PUT/DELETE /api/*    | no-cache, no-store                               |
+// | Registration/check-in     | no-cache, no-store, must-revalidate              |
 
-  if (isPublicRead) {
-    res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=30");
+/**
+ * Route-specific cache rules. Order matters — first match wins.
+ * @type {Array<{test: (method: string, path: string) => boolean, header: string}>}
+ */
+const CACHE_RULES = [
+  // ── Never cache: mutations ────────────────────────────────────────────
+  {
+    test: (method) => method !== "GET",
+    header: "no-cache, no-store",
+  },
+  // ── Never cache: registration, check-in, QR verification ─────────────
+  {
+    test: (_, path) =>
+      path.includes("/register") ||
+      path.includes("/check-in") ||
+      path.includes("/verify"),
+    header: "no-cache, no-store, must-revalidate",
+  },
+  // ── Never cache: auth routes ──────────────────────────────────────────
+  {
+    test: (_, path) => path.startsWith("/api/auth/"),
+    header: "no-cache, no-store",
+  },
+  // ── Never cache: payment routes ───────────────────────────────────────
+  {
+    test: (_, path) => path.startsWith("/api/payment/"),
+    header: "no-cache, no-store",
+  },
+  // ── Admin dashboard: private, no-cache ────────────────────────────────
+  {
+    test: (_, path) => path.startsWith("/api/admin/"),
+    header: "private, no-cache, no-store",
+  },
+  // ── Notifications: private, very short cache ──────────────────────────
+  {
+    test: (_, path) => path.startsWith("/api/notifications"),
+    header: "private, max-age=30, must-revalidate",
+  },
+  // ── User-specific data (requires auth headers) ────────────────────────
+  {
+    test: (_, path, req) =>
+      path.startsWith("/api/users/") ||
+      path.startsWith("/api/events/user/") ||
+      path.startsWith("/api/teams/") ||
+      req.headers.authorization ||
+      req.headers.cookie,
+    header: "private, max-age=60, must-revalidate",
+  },
+  // ── Events list: public, 5min + 10min SWR ────────────────────────────
+  {
+    test: (method, path) =>
+      method === "GET" && /^\/api\/events\/?$/.test(path),
+    header: "public, max-age=300, stale-while-revalidate=600",
+  },
+  // ── Event detail: public, 5min + 15min SWR ───────────────────────────
+  {
+    test: (method, path) =>
+      method === "GET" && /^\/api\/events\/[^/]+\/?$/.test(path),
+    header: "public, max-age=300, stale-while-revalidate=900",
+  },
+  // ── Clubs list: public, 1hr + 6hr SWR ────────────────────────────────
+  {
+    test: (method, path) =>
+      method === "GET" && /^\/api\/clubs\/?$/.test(path),
+    header: "public, max-age=3600, stale-while-revalidate=21600",
+  },
+  // ── Club detail: public, 1hr + 6hr SWR ───────────────────────────────
+  {
+    test: (method, path) =>
+      method === "GET" && /^\/api\/clubs\/[^/]+\/?$/.test(path),
+    header: "public, max-age=3600, stale-while-revalidate=21600",
+  },
+  // ── Default: moderate public cache ────────────────────────────────────
+  {
+    test: (method, path) =>
+      method === "GET" &&
+      path.startsWith("/api/") &&
+      !path.includes("/download") &&
+      !path.includes("/export"),
+    header: "public, max-age=60, stale-while-revalidate=120",
+  },
+];
+
+export const publicReadCache = (req, res, next) => {
+  if (!req.path.startsWith("/api/")) return next();
+
+  for (const rule of CACHE_RULES) {
+    if (rule.test(req.method, req.path, req)) {
+      res.setHeader("Cache-Control", rule.header);
+      break;
+    }
   }
+
+  next();
+};
+
+// ─── ETag Support Middleware ────────────────────────────────────────────────
+//
+// Generates weak ETags from response body hashes for public GET API routes.
+// Checks incoming If-None-Match headers and returns 304 Not Modified
+// if the content hasn't changed — zero body transfer, lower bandwidth.
+//
+// Only applies to:
+//   - GET requests on /api/* routes
+//   - NOT admin, auth, mutation, download, or export routes
+//   - NOT requests with authorization (private data has unique per-user content)
+
+export const etagSupport = (req, res, next) => {
+  // Only apply to public GET API routes
+  if (
+    req.method !== "GET" ||
+    !req.path.startsWith("/api/") ||
+    req.path.startsWith("/api/auth/") ||
+    req.path.startsWith("/api/admin/") ||
+    req.path.startsWith("/api/payment/") ||
+    req.path.includes("/download") ||
+    req.path.includes("/export") ||
+    req.path.includes("/register") ||
+    req.path.includes("/check-in") ||
+    req.headers.authorization ||
+    req.headers.cookie
+  ) {
+    return next();
+  }
+
+  // Intercept res.json() to compute ETag before sending
+  const originalJson = res.json.bind(res);
+
+  res.json = (body) => {
+    try {
+      const bodyStr = JSON.stringify(body);
+      const hash = createHash("md5").update(bodyStr).digest("hex").slice(0, 16);
+      const etag = `W/"${hash}"`;
+
+      res.setHeader("ETag", etag);
+      res.setHeader("Last-Modified", new Date().toUTCString());
+
+      // Check if client sent If-None-Match and it matches
+      const clientEtag = req.headers["if-none-match"];
+      if (clientEtag && clientEtag === etag) {
+        return res.status(304).end();
+      }
+    } catch {
+      // If ETag computation fails, just send normally
+    }
+
+    return originalJson(body);
+  };
+
   next();
 };
 
