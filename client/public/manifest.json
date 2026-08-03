@@ -4,19 +4,19 @@
   "description": "Discover, manage, and host college events and clubs effortlessly.",
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/pwa--512x512.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/pwa-512x512.png",
+      "src": "/pwa--512x512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/pwa-maskable-512x512.png",
+      "src": "/pwa--512x512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"

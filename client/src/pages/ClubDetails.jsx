@@ -287,7 +287,7 @@ const ClubDetails = () => {
                 );
               })}
             </div> */}
-            <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+            <div className="flex flex-wrap gap-1.5 min-h-[32px] sm:mb-0 mb-2">
               {club.socialLinks.map((link, i) => {
                 const platform = link.platform?.toLowerCase() || "website";
                 const iconProps = { className: "w-4 h-4" };
