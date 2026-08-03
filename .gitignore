@@ -23,3 +23,10 @@ _tests_/
 
 POSTGRESQL_MIGRATION_PLAN.md
 docs
+map/
+timer/
+EventTimerContext.jsx
+EventTimerBuilder.jsx
+EventTimerLive.jsx
+BustTracker.jsx
+load/
