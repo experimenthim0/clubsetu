@@ -7,6 +7,8 @@ import { useNotification } from '../context/NotificationContext';
 import CalendarDropdown from '../components/CalendarDropdown';
 import PaymentModal from '../components/PaymentModal';
 import { getPublicJson } from '../lib/publicDataCache';
+import { cachedFetch, getEventTTL } from '../lib/cacheManager';
+import { prefetchClubDetail } from '../lib/prefetchManager';
 import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
 import { TwitterIcon } from "@/components/ui/twitter";
@@ -124,19 +126,24 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const viewedKey = `viewed_event_${slug}`;
-        const hasViewed = sessionStorage.getItem(viewedKey);
+        const url = `${import.meta.env.VITE_API_URL}/api/events/${slug}`;
         
-        let eventData;
-        if (hasViewed === 'true') {
-          eventData = await getPublicJson(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
-        } else {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${slug}`);
-          eventData = res.data;
-          sessionStorage.setItem(viewedKey, 'true');
+        // Initial fetch with default 10min TTL or cached data
+        let eventData = await getPublicJson(url);
+        
+        // Adjust cache TTL dynamically based on event status (LIVE: 30s, UPCOMING: 10m, ENDED: 24h)
+        const eventStatusTTL = getEventTTL(eventData?.status);
+        if (eventStatusTTL) {
+          // Trigger a status-adjusted cachedFetch in case status changed
+          eventData = await cachedFetch(url, { ttlMs: eventStatusTTL, eventStatus: eventData?.status });
         }
         
         setEvent(eventData);
+
+        // Idle prefetch associated club details if present
+        if (eventData?.club?.slug || eventData?.club?.id) {
+          prefetchClubDetail(eventData.club.slug || eventData.club.id);
+        }
 
         // Check if the user is already registered for this event
         const user = JSON.parse(localStorage.getItem('user'));

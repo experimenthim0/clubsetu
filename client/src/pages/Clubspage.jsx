@@ -5,6 +5,7 @@ import ClubCard from "../components/ClubCard";
 import ClubCardSkeleton from "../components/skeletons/ClubCardSkeleton";
 import { useTheme } from "../context/ThemeContext";
 import { getPublicJson } from "../lib/publicDataCache";
+import { registerUpdateCallback, unregisterUpdateCallback } from "../lib/cacheManager";
 
 const ClubsPage = ({ isHome = false }) => {
   const { isDark } = useTheme();
@@ -17,10 +18,12 @@ const ClubsPage = ({ isHome = false }) => {
     }
   }, [isHome]);
 
+  const clubsUrl = import.meta.env.VITE_API_URL + '/api/clubs';
+
   useEffect(() => {
     const fetchClubs = async () => {
       try {
-        const clubData = await getPublicJson(import.meta.env.VITE_API_URL + '/api/clubs');
+        const clubData = await getPublicJson(clubsUrl);
         setClubs(Array.isArray(clubData) ? clubData : []);
       } catch (err) {
         console.error("Error fetching clubs:", err);
@@ -29,6 +32,15 @@ const ClubsPage = ({ isHome = false }) => {
       }
     };
     fetchClubs();
+
+    const handleUpdate = (newData) => {
+      if (Array.isArray(newData)) setClubs(newData);
+    };
+    registerUpdateCallback(clubsUrl, handleUpdate);
+
+    return () => {
+      unregisterUpdateCallback(clubsUrl, handleUpdate);
+    };
   }, []);
 
   const clubsToShow = isHome ? clubs.slice(0, 6) : clubs;

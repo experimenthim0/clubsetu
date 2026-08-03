@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import NoInternet from '../pages/NoInternet';
 import { cacheCurrentPage, cacheOfflinePages } from '../utils/network';
+import { refreshExpired } from '../lib/cacheManager';
 
 /**
  * NetworkGuard.jsx
@@ -55,14 +56,18 @@ const NetworkGuard = ({ children }) => {
   useEffect(() => {
     if (isOnline && wasOfflineRef.current) {
       wasOfflineRef.current = false;
+      
+      // Trigger background refresh of expired API caches on reconnect
+      refreshExpired().catch(console.warn);
+
       const targetPath = preservedLocationRef.current || '/';
 
       // Navigate back to preserved target route if different
-      if (targetPath && targetPath !== fullPath) {
+      if (location.pathname === '/no-internet' || location.pathname !== targetPath.split('?')[0]) {
         navigate(targetPath, { replace: true });
       }
     }
-  }, [isOnline, fullPath, navigate]);
+  }, [isOnline, navigate, location.pathname]);
 
   const handleManualRetrySuccess = () => {
     wasOfflineRef.current = false;

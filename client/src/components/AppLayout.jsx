@@ -57,6 +57,8 @@ const isSidebarRoute = (pathname) => {
  *
  * Auth redirect: unauthenticated users on sidebar routes are sent to /login.
  */
+import InstallPwaBanner from "./InstallPwaBanner";
+
 const AppLayout = () => {
   const location = useLocation();
   const isDashboardRoute = isSidebarRoute(location.pathname);
@@ -185,6 +187,7 @@ const AppLayout = () => {
           Join WhatsApp Channel
         </span>
       </a> */}
+      <InstallPwaBanner />
     </>
   );
 };

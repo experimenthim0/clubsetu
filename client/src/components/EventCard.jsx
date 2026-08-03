@@ -4,6 +4,7 @@ import CalendarDropdown from './CalendarDropdown';
 import { getColorSync } from 'colorthief';
 import { useImageBlob } from '../hooks/useImageBlob';
 import { useTheme } from '../context/ThemeContext';
+import { prefetchEventDetail } from '../lib/prefetchManager';
 
 const EventCard = ({ event, onRegister, isRegistered }) => {
     const { title, description, venue, startTime, totalSeats, registeredCount, status, _id, entryFee, registrationDeadline, slug, showWinner } = event;
@@ -36,6 +37,13 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
         img.onload = () => setClubLogoSrc(rawClubLogo);
         img.onerror = () => setClubLogoSrc(fallbackLogo);
     }, [rawClubLogo, fallbackLogo]);
+
+    // Idle prefetch event details on mount/visibility
+    useEffect(() => {
+        if (slug || _id) {
+            prefetchEventDetail(slug || _id);
+        }
+    }, [slug, _id]);
      
     
     const handleImageLoad = () => {

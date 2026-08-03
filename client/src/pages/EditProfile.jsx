@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { invalidateCache } from '../lib/cacheManager';
 
 const EditProfile = () => {
     const { showNotification } = useNotification();
@@ -83,6 +84,10 @@ const EditProfile = () => {
 
             const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user.id}`, updateData);
             localStorage.setItem('user', JSON.stringify(res.data.user)); // Update local storage
+            
+            // Invalidate user profile caches locally & broadcast to other tabs
+            await invalidateCache(['/api/users/*', '/api/auth/me']);
+            
             showNotification('Profile updated successfully', 'success');
             navigate('/profile');
         } catch (err) {

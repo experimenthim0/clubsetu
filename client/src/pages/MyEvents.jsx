@@ -5,6 +5,7 @@ import { Clock, MapPin, Users, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DownloadIcon } from '@/components/ui/download';
 import QRCode from 'qrcode';
+import { invalidateCache } from '../lib/cacheManager';
 const MyEvents = () => {
   const { showNotification } = useNotification();
   const [user, setUser] = useState(null);
@@ -280,13 +281,13 @@ const MyEvents = () => {
     try {
         await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/review`, { status, comment });
         showNotification(`Event ${status === 'PUBLISHED' ? 'Approved' : 'Rejected'} successfully`, 'success');
+        
+        await invalidateCache(['/api/events', '/api/admin/*']);
+
         // Refresh list
         if (role === 'facultyCoordinator') {
             fetchFacultyEvents(user.clubId);
         } else if (role === 'admin') {
-            // If admin, we don't have a single clubId usually, but in this context 
-            // they might be viewing the whole list or a specific club list.
-            // For now, reload whatever list was active.
             window.location.reload(); 
         }
     } catch (err) {
@@ -307,6 +308,8 @@ const MyEvents = () => {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDeregister}/register`, {
         data: { studentId: user.id }
       });
+
+      await invalidateCache(['/api/events', `/api/events/${eventToDeregister}`]);
 
       setRegistrations(registrations.filter(r => (r.eventId?.id || r.eventId?._id) !== eventToDeregister));
       showNotification('Successfully deregistered from the event', 'success');

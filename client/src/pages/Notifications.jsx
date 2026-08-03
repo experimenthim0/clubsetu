@@ -3,6 +3,7 @@ import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext";
+import { requestNotificationPermission } from "../utils/pushNotifications";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -127,20 +128,32 @@ const Notifications = () => {
               </p>
             </div>
 
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                disabled={loading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
-              >
-                {loading ? (
-                  <i className="ri-loader-4-line animate-spin text-sm" />
-                ) : (
-                  <i className="ri-check-double-line text-sm" />
-                )}
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
+                <button
+                  onClick={() => requestNotificationPermission()}
+                  className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
+                >
+                  <i className="ri-notification-badge-line text-sm" />
+                  Enable Push
+                </button>
+              )}
+
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+                >
+                  {loading ? (
+                    <i className="ri-loader-4-line animate-spin text-sm" />
+                  ) : (
+                    <i className="ri-check-double-line text-sm" />
+                  )}
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="mt-6 h-px bg-neutral-200 dark:bg-neutral-800 w-full" />

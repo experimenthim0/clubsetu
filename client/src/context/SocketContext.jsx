@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
+import { setAppIconBadge, sendLocalPushNotification, requestNotificationPermission } from "../utils/pushNotifications";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -15,6 +16,11 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Sync app icon badge whenever unreadCount updates
+  useEffect(() => {
+    setAppIconBadge(unreadCount);
+  }, [unreadCount]);
+
   useEffect(() => {
     // Only connect if user is logged in
     const userRole = localStorage.getItem("role");
@@ -25,6 +31,9 @@ export const SocketProvider = ({ children }) => {
     if (userString && userString !== "undefined") {
       const user = JSON.parse(userString);
       
+      // Request push notification permission silently if not prompted yet
+      requestNotificationPermission();
+
       const newSocket = io(API_URL.replace("/api", ""));
 
       setSocket(newSocket);
@@ -37,7 +46,17 @@ export const SocketProvider = ({ children }) => {
 
       newSocket.on("new-notification", (notification) => {
         setNotifications((prev) => [notification, ...prev]);
-        setUnreadCount((prev) => prev + 1);
+        setUnreadCount((prev) => {
+          const updatedCount = prev + 1;
+          setAppIconBadge(updatedCount);
+          return updatedCount;
+        });
+
+        // Trigger native PWA Push Notification banner
+        sendLocalPushNotification(notification.title || "CampusNode", {
+          body: notification.message || notification.content || "New campus update available",
+          data: { url: notification.link || "/notifications" },
+        });
       });
 
       if (["member", "club", "facultyCoordinator", "admin", "student"].includes(userRole)) {
@@ -46,6 +65,7 @@ export const SocketProvider = ({ children }) => {
             setNotifications(res.data);
             const unread = res.data.filter(n => !(n.readBy || []).includes(user._id || user.id)).length;
             setUnreadCount(unread);
+            setAppIconBadge(unread);
           })
           .catch(err => console.error("Could not fetch notifications", err));
       }

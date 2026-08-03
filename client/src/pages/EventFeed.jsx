@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import EventCard from '../components/EventCard';
 import { useNotification } from '../context/NotificationContext';
@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import EventCardSkeleton from '../components/skeletons/EventCardSkeleton';
 import { Skeleton } from '../components/ui/Skeleton';
 import { getPublicJson } from '../lib/publicDataCache';
+import { registerUpdateCallback, unregisterUpdateCallback } from '../lib/cacheManager';
 
 const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive = false }) => {
   const { showNotification } = useNotification();
@@ -27,9 +28,12 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+  const eventsUrl = import.meta.env.VITE_API_URL + '/api/events';
+
   const fetchEvents = async () => {
     try {
-      const eventData = await getPublicJson(import.meta.env.VITE_API_URL + '/api/events');
+      // Uses cacheManager: 10-minute TTL, SWR pattern, IndexedDB persistence
+      const eventData = await getPublicJson(eventsUrl);
        setEvents(Array.isArray(eventData) ? eventData : []);
       const role = localStorage.getItem('role');
       if (user && role === 'member') {
@@ -43,14 +47,28 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
     }
   };
 
+  // SWR: auto-update UI when background revalidation finds new data
+  const handleBackgroundUpdate = useCallback((newData) => {
+    if (newData && Array.isArray(newData)) {
+      setEvents(newData);
+    }
+  }, []);
+
   useEffect(() => {
     fetchEvents();
+
+    // Register for background SWR updates (e.g., cache invalidated from another tab)
+    registerUpdateCallback(eventsUrl, handleBackgroundUpdate);
+
     const interval = setInterval(() => {
       if (!document.hidden) {
         fetchEvents();
       }
     }, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      unregisterUpdateCallback(eventsUrl, handleBackgroundUpdate);
+    };
   }, []);
 
   // Extract unique club names for the filter dropdown

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { cachedFetch } from '../lib/cacheManager';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -17,9 +18,9 @@ const Profile = () => {
       setRole(storedRole);
 
       if (storedRole === 'club' && storedUser.clubId) {
-        axios.get(`${import.meta.env.VITE_API_URL}/api/clubs/${storedUser.clubId}`)
-          .then(res => {
-            const club = res.data.club;
+        cachedFetch(`${import.meta.env.VITE_API_URL}/api/clubs/${storedUser.clubId}`, { ttlMs: 30 * 60 * 1000 })
+          .then(resData => {
+            const club = resData?.club || resData;
             if (club && (club.description || club.clubLogo || club.category)) {
               setIsClubAdded(true);
             }

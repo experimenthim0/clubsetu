@@ -1,29 +1,44 @@
-import axios from "axios";
+/**
+ * publicDataCache.js — Backward-Compatible Bridge to cacheManager
+ *
+ * This file preserves the existing `getPublicJson(url, ttlMs)` API surface
+ * so that all current consumers (SearchBar, ClubLeaderboard, EventFeed,
+ * EventDetails, Clubspage, ClubDetails) continue working without import changes.
+ *
+ * Under the hood, it delegates to the new cacheManager.js which provides:
+ * - IndexedDB persistence (survives page refreshes)
+ * - Per-resource TTL (auto-detected from URL pattern)
+ * - ETag / conditional requests (304 = zero bandwidth)
+ * - Stale-while-revalidate (instant data + background refresh)
+ * - Multi-tab BroadcastChannel sync
+ * - LRU eviction at 100 MB
+ *
+ * Old behavior (replaced):
+ *   const cache = new Map();  // Lost on every page refresh
+ *   const DEFAULT_TTL_MS = 30_000;  // Flat 30s for everything
+ */
 
-const cache = new Map();
-const DEFAULT_TTL_MS = 30_000;
+import { cachedFetch, invalidateCache, invalidateExact, forceRefresh } from './cacheManager.js';
 
-export const getPublicJson = (url, ttlMs = DEFAULT_TTL_MS) => {
-  const current = cache.get(url);
-  const now = Date.now();
-
-  if (current?.data !== undefined && current.expiresAt > now) {
-    return Promise.resolve(current.data);
+/**
+ * Fetch JSON data with intelligent caching.
+ *
+ * Drop-in replacement for the old getPublicJson. The ttlMs parameter
+ * is still accepted for backward compatibility but the cacheManager
+ * will auto-detect the correct TTL from the URL pattern. If a custom
+ * ttlMs is provided, it overrides the auto-detected value.
+ *
+ * @param {string} url — Full API URL
+ * @param {number} [ttlMs] — Optional TTL override in milliseconds
+ * @returns {Promise<any>} — Parsed JSON response
+ */
+export const getPublicJson = (url, ttlMs) => {
+  const options = {};
+  if (ttlMs !== undefined) {
+    options.ttlMs = ttlMs;
   }
-
-  if (current?.promise) return current.promise;
-
-  const promise = axios.get(url)
-    .then((response) => {
-      const data = response.data;
-      cache.set(url, { data, expiresAt: Date.now() + ttlMs });
-      return data;
-    })
-    .catch((error) => {
-      cache.delete(url);
-      throw error;
-    });
-
-  cache.set(url, { promise, expiresAt: 0 });
-  return promise;
+  return cachedFetch(url, options);
 };
+
+// Re-export cache management utilities for pages that need CRUD invalidation
+export { invalidateCache, invalidateExact, forceRefresh };

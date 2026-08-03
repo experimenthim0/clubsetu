@@ -24,6 +24,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Content-hashed filenames ensure cache-busting on every deploy.
+        // When code changes, the hash changes, and browsers fetch the new file.
+        // Old cached files become orphaned and are cleaned by SW version upgrade.
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-motion': ['framer-motion', 'motion'],

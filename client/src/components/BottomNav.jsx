@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package,Monitor } from "lucide-react";
+import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package, Monitor, Download, Smartphone } from "lucide-react";
+import { usePwaInstall } from "../hooks/usePwaInstall";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import { CalendarDaysIcon } from "./ui/calendar-days";
@@ -35,6 +36,7 @@ const BottomNav = () => {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef(null);
+  const { isInstallable, installApp } = usePwaInstall();
  const {
   theme,
   setTheme,
@@ -360,6 +362,15 @@ const BottomNav = () => {
             </div>
 
             <div className="px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
+              {isInstallable && (
+                <button
+                  onClick={installApp}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 mb-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm rounded-xl transition-all shadow-sm active:scale-98"
+                >
+                  <Smartphone size={18} />
+                  Install CampusNode App
+                </button>
+              )}
               {/* Dark mode toggle */}
              <div className="rounded-2xl mb-2">
   

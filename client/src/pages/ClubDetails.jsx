@@ -10,6 +10,7 @@ import { EarthIcon } from "@/components/ui/earth";
 import EventCard from "../components/EventCard";
 import { useTheme } from '../context/ThemeContext';
 import { getPublicJson } from "../lib/publicDataCache";
+import { registerUpdateCallback, unregisterUpdateCallback } from "../lib/cacheManager";
 
 import { ClubMemberRole } from "../types/index.js";
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Bus } from 'lucide-react';
 import {InstagramIcon} from './ui/instagram';
 import { LinkedinIcon } from './ui/linkedin';
 import {TwitterIcon} from './ui/twitter';
@@ -11,6 +12,8 @@ const HomeFooter = () => {
   const quickLinks = [
     { label: 'Events', to: '/events' },
     { label: 'Clubs', to: '/clubs' },
+    // { label: 'Event Timer', to: '/event-timer' },
+    // { label: 'Bus Tracker', to: '/bus-tracker'},
     { label: 'Event Guide', to: '/event-guide' },
     { label: 'L&F Guide', to: '/lost-found/guide' },
     { label: 'FAQ', to: '/faq' },
@@ -79,8 +82,9 @@ const HomeFooter = () => {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium dark:hover:text-orange-500"
+                    className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium dark:hover:text-orange-500 inline-flex items-center gap-1.5"
                   >
+                    {link.showIcon && <Bus className="w-4 h-4 text-orange-600 dark:text-orange-500 shrink-0" />}
                     {link.label}
                   </Link>
                 </li>

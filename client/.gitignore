@@ -23,3 +23,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+EventTimerBuilder.jsx
+EventTimerLive.jsx
+timer/
