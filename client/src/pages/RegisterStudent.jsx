@@ -3,10 +3,10 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
+import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/academicYear';
 import { Eye, EyeOff } from 'lucide-react';
 
 const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
-const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 
 const RegisterStudent = () => {
   const navigate = useNavigate();
@@ -20,15 +20,28 @@ const RegisterStudent = () => {
     email: '',
     password: ''
   });
+  const [graduationYear, setGraduationYear] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isOtherProgram = formData.program === 'OTHER';
+  const gradYearOptions = getGraduationYearOptions();
+
+  const handleGraduationYearChange = (e) => {
+    const selectedGradYear = e.target.value;
+    setGraduationYear(selectedGradYear);
+    const calculatedYear = calculateYearFromGraduation(selectedGradYear);
+    setFormData((prev) => ({
+      ...prev,
+      year: calculatedYear
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'program' && value === 'OTHER') {
+      setGraduationYear('');
       setFormData({
         ...formData,
         program: value,
@@ -135,14 +148,23 @@ const RegisterStudent = () => {
               </div>
             </div>
 
-            {/* Year */}
+            {/* Graduation Year */}
             <div>
-              <label htmlFor="year" className={labelCls}>Year</label>
-              <select id="year" name="year" required={!isOtherProgram} className={inputCls}
-                value={formData.year} onChange={handleChange}>
-                <option value="">Select Year</option>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              <label htmlFor="graduationYear" className={labelCls}>Graduation Year</label>
+              <select id="graduationYear" name="graduationYear" required={!isOtherProgram} className={inputCls}
+                value={graduationYear} onChange={handleGraduationYearChange}>
+                <option value="">Select Graduation Year</option>
+                {gradYearOptions.map(option => (
+                  <option key={option.gradYear} value={option.gradYear}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
+              {formData.year && (
+                <p className="mt-1 text-xs text-orange-600 dark:text-orange-400 font-medium">
+                  Calculated Academic Year: <span className="font-semibold">{formData.year}</span>
+                </p>
+              )}
             </div>
 
             {/* Email */}

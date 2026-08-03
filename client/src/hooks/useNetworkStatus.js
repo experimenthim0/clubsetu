@@ -36,9 +36,6 @@ export function useNetworkStatus() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Initial verify on mount
-    checkStatus();
-
     // Native browser window listeners
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -51,7 +48,7 @@ export function useNetworkStatus() {
       window.removeEventListener('offline', handleOffline);
       networkEmitter.removeEventListener('network-status-change', handleCustomEvent);
     };
-  }, [handleOnline, handleOffline, handleCustomEvent, checkStatus]);
+  }, [handleOnline, handleOffline, handleCustomEvent]);
 
   return { isOnline, checkStatus };
 }

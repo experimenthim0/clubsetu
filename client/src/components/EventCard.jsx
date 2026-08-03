@@ -20,7 +20,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const [isColorLoaded, setIsColorLoaded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const imgRef = useRef(null);
-   
+
 
     const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
     const rawClubLogo = event.club?.clubLogo || event.createdBy?.clubLogo;
@@ -44,8 +44,8 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
             prefetchEventDetail(slug || _id);
         }
     }, [slug, _id]);
-     
-    
+
+
     const handleImageLoad = () => {
         const imageEl = imgRef.current;
         if (!imageEl) return;
@@ -87,12 +87,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const getDeadlineText = () => {
         const dl = new Date(registrationDeadline || startTime);
         const ev = new Date(startTime);
-        
+
         const timeOptions = { hour: '2-digit', minute: '2-digit' };
         const dateOptions = { month: 'short', day: 'numeric' };
-        
+
         const isSameDay = dl.toDateString() === ev.toDateString();
-        
+
         if (isSameDay) {
             return `Reg. by ${dl.toLocaleTimeString('en-US', timeOptions)}`;
         } else {
@@ -107,7 +107,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     const isFull = !isUnlimited && registeredCount >= totalSeats;
     const seatsText = isUnlimited
         ? ` `
-        : `${totalSeats-registeredCount} left`;
+        : `${totalSeats - registeredCount} left`;
 
     // Construct premium card styles dynamically
     const customStyles = (isHovered && rgb)
@@ -119,11 +119,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 ? `0 20px 40px -15px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.25)`
                 : `0 20px 40px -15px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.15)`,
             borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.3)`,
-          }
+        }
         : {
             backgroundColor: isDark ? 'rgb(13, 13, 13)' : 'rgb(255, 255, 255)',
             borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgb(229, 231, 235)', // border-gray-200
-          };
+        };
 
     const navigate = useNavigate();
 
@@ -136,7 +136,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
     };
 
     return (
-        <div 
+        <div
             style={customStyles}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -182,24 +182,24 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
 
             {/* Body */}
             <div className="px-4 pt-2 flex flex-auto flex-col">
-                 {(event.club?.clubName || event.createdBy?.clubName) && (
-                            <div className="flex items-center min-w-0">
-                                 <div className="w-6 h-6 rounded-full overflow-hidden mr-2 border border-neutral-300 dark:border-neutral-700">
-                                <img
-                                    src={clubLogoSrc}
-                                    alt={event.club?.clubName || event.createdBy?.clubName || 'Club Logo'}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = fallbackLogo;
-                                    }}
-                                />
-                            </div>
-                                <span className="truncate  text-orange-600  text-[12px] font-semibold">
-                                    {event.club?.clubName || event.createdBy?.clubName}
-                                </span>
-                            </div>
-                        )}
+                {(event.club?.clubName || event.createdBy?.clubName) && (
+                    <div className="flex items-center min-w-0">
+                        <div className="w-6 h-6 rounded-full overflow-hidden mr-2 border border-neutral-300 dark:border-neutral-700">
+                            <img
+                                src={clubLogoSrc}
+                                alt={event.club?.clubName || event.createdBy?.clubName || 'Club Logo'}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = fallbackLogo;
+                                }}
+                            />
+                        </div>
+                        <span className="truncate  text-orange-600  text-[12px] font-semibold">
+                            {event.club?.clubName || event.createdBy?.clubName}
+                        </span>
+                    </div>
+                )}
                 <h3 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-2 line-clamp-2">{title}</h3>
 
                 {/* Info row */}
@@ -225,11 +225,10 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                 {event.winners.map((winner, index) => (
                                     <div key={index} className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/40 p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm">
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                                winner.rank === 1 ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60' :
-                                                winner.rank === 2 ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700' :
-                                                'bg-orange-100 dark:bg-orange-950/40 text-orange-855 dark:text-orange-400 border border-orange-200 dark:border-orange-900/60'
-                                            }`}>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${winner.rank === 1 ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60' :
+                                                    winner.rank === 2 ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700' :
+                                                        'bg-orange-100 dark:bg-orange-950/40 text-orange-855 dark:text-orange-400 border border-orange-200 dark:border-orange-900/60'
+                                                }`}>
                                                 #{winner.rank}
                                             </span>
                                             <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">{winner.name}</span>
@@ -265,7 +264,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         )}
                     </div>
                 ) : (
-                    
+
                     /* SHOW DETAILS WHILE ACTIVE OR IF showWinner IS FALSE */
                     <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-neutral-600 dark:text-neutral-400">
                         {/* Temporal Info: Date & Deadline merged (Spans 2 columns) */}
@@ -283,7 +282,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </div>
 
                         {/* Host Information */}
-                       
+
 
                         {/* Seats / Capacity */}
                         <div className="flex items-center gap-1.5 col-span-2 min-w-0">
@@ -301,11 +300,11 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                 <div className="flex items-center gap-2 border-t border-neutral-100 dark:border-neutral-800/80 pt-3">
                     {/* Entry fee badge */}
                     {entryFee !== 0 && (
-                      <span
-                        className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg border shrink-0 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/60"
-                      >
-                        <i className="ri-money-rupee-circle-line" /> ₹{entryFee}
-                      </span>
+                        <span
+                            className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-lg border shrink-0 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-900/60"
+                        >
+                            <i className="ri-money-rupee-circle-line" /> ₹{entryFee}
+                        </span>
                     )}
 
                     {/* Action button */}
@@ -317,26 +316,25 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             View Event
                         </Link>
                     ) : (
-                         <Link
+                        <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold  tracking-wider border transition-all cursor-pointer shadow-sm ${
-                                (isEnded || isLive)
+                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold  tracking-wider border transition-all cursor-pointer shadow-sm ${(isEnded || isLive)
                                     ? 'bg-neutral-800 dark:bg-neutral-900 text-white border-neutral-800 dark:border-neutral-800 hover:bg-orange-600 hover:border-orange-600 dark:hover:bg-orange-600 dark:hover:border-orange-600'
                                     : isFull
                                         ? 'bg-amber-400 text-neutral-900 border-amber-400 hover:bg-amber-350'
                                         : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
-                            }`}
+                                }`}
                         >
                             {(isEnded || isLive) ? 'View Event' : isFull ? 'Join Waitlist' : 'Register Now'}
                         </Link>
                     )}
-                    
+
                     {/* Add to Calendar button for upcoming events */}
                     {isUpcoming && (
-                      <CalendarDropdown
-                        event={event}
-                        btnClassName="p-2 border rounded-lg shadow-sm hover:bg-neutral-150 dark:hover:bg-neutral-900 transition-colors duration-200 shrink-0 flex items-center justify-center border-neutral-200 dark:border-neutral-800/80 h-9 w-9 text-neutral-600 dark:text-neutral-450 cursor-pointer"
-                      />
+                        <CalendarDropdown
+                            event={event}
+                            btnClassName="p-2 border rounded-lg shadow-sm hover:bg-neutral-150 dark:hover:bg-neutral-900 transition-colors duration-200 shrink-0 flex items-center justify-center border-neutral-200 dark:border-neutral-800/80 h-9 w-9 text-neutral-600 dark:text-neutral-450 cursor-pointer"
+                        />
                     )}
                 </div>
             </div>

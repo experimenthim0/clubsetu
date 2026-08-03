@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { invalidateCache } from '../lib/cacheManager';
 
+import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/academicYear';
+
 const EditProfile = () => {
     const { showNotification } = useNotification();
     const navigate = useNavigate();
@@ -13,8 +15,11 @@ const EditProfile = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
+    const [graduationYear, setGraduationYear] = useState('');
+    const gradYearOptions = getGraduationYearOptions();
     const [formData, setFormData] = useState({
         name: '',
+        year: '',
         githubProfile: '',
         linkedinProfile: '',
         xProfile: '',
@@ -37,6 +42,7 @@ const EditProfile = () => {
             setRole(storedRole);
             setFormData({
                 name: storedUser.name || '',
+                year: storedUser.year || '',
                 githubProfile: storedUser.githubProfile || '',
                 linkedinProfile: storedUser.linkedinProfile || '',
                 xProfile: storedUser.xProfile || '',
@@ -137,6 +143,32 @@ const EditProfile = () => {
                             className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
+
+                    {(role === 'member' || role === 'student') && (
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Graduation Year</label>
+                            <select 
+                                value={graduationYear} 
+                                onChange={(e) => {
+                                    const selectedGrad = e.target.value;
+                                    setGraduationYear(selectedGrad);
+                                    const calculatedYear = calculateYearFromGraduation(selectedGrad);
+                                    setFormData(prev => ({ ...prev, year: calculatedYear }));
+                                }}
+                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 bg-white"
+                            >
+                                <option value="">Select Graduation Year</option>
+                                {gradYearOptions.map(opt => (
+                                    <option key={opt.gradYear} value={opt.gradYear}>{opt.label}</option>
+                                ))}
+                            </select>
+                            {formData.year && (
+                                <p className="mt-1 text-xs text-orange-600 font-medium">
+                                    Current Academic Year: <span className="font-semibold">{formData.year}</span>
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">GitHub URL</label>

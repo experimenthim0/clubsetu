@@ -16,7 +16,7 @@ import { ClubMemberRole } from "../types/index.js";
 
 const ClubDetails = () => {
   const { slug } = useParams();
-   const { isDark } = useTheme();
+  const { isDark } = useTheme();
   const [club, setClub] = useState(null);
   const [events, setEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
@@ -240,7 +240,7 @@ const ClubDetails = () => {
           </div>
 
           {/* Socials — spans 2 cols on mobile, 1 col on sm+ */}
-          
+
           <div className="col-span-2 sm:col-span-1 bg-white border border-neutral-200 p-2 sm:p-4 rounded-xl shadow-sm">
             <p className="text-[12px] font-semibold tracking-wider text-neutral-400 mb-1 ">
               Connect with us
@@ -287,35 +287,35 @@ const ClubDetails = () => {
                 );
               })}
             </div> */}
-             <div className="flex flex-wrap gap-1.5 min-h-[32px]">
-                {club.socialLinks.map((link, i) => {
-                  const platform = link.platform?.toLowerCase() || "website";
-                  const iconProps = { className: "w-4 h-4" };
+            <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+              {club.socialLinks.map((link, i) => {
+                const platform = link.platform?.toLowerCase() || "website";
+                const iconProps = { className: "w-4 h-4" };
 
-                  const getIcon = () => {
-                    if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28}/>;
-                    if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28}/>;
-                    if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28}/>;
-                    if (platform.includes("github")) return <GithubIcon {...iconProps} size={28}/>;
-                    if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28}/>;
-                    if (platform.includes("website")) return <EarthIcon {...iconProps} size={28}/>;
-                    return <i className="ri-links-line text-sm" />;
-                  };
+                const getIcon = () => {
+                  if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
+                  if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28} />;
+                  if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28} />;
+                  if (platform.includes("github")) return <GithubIcon {...iconProps} size={28} />;
+                  if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28} />;
+                  if (platform.includes("website")) return <EarthIcon {...iconProps} size={28} />;
+                  return <i className="ri-links-line text-sm" />;
+                };
 
-                  return (
-                    <a
-                      key={link._id || i}
-                      href={platform === "whatsapp" ? `https://wa.me/${link.url.replace(/\s+/g, "")}` : link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-lg  flex items-center justify-center text-neutral-600 dark:text-neutral-300 transition-all duration-300"
-                      title={link.platform}
-                    >
-                      {getIcon()}
-                    </a>
-                  );
-                })}
-              </div>
+                return (
+                  <a
+                    key={link._id || i}
+                    href={platform === "whatsapp" ? `https://wa.me/${link.url.replace(/\s+/g, "")}` : link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-lg  flex items-center justify-center text-neutral-600 dark:text-neutral-300 transition-all duration-300"
+                    title={link.platform}
+                  >
+                    {getIcon()}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -336,11 +336,10 @@ const ClubDetails = () => {
           ].map(({ num, label, accent }) => (
             <div
               key={label}
-              className={`border p-4 rounded-xl shadow-sm transition-all duration-300 ${
-                accent
+              className={`border p-4 rounded-xl shadow-sm transition-all duration-300 ${accent
                   ? "bg-white border-orange-500 ring-1 ring-orange-500"
                   : "bg-white border-neutral-200"
-              }`}
+                }`}
             >
               <div
                 className="text-3xl font-bold leading-none text-orange-600"
@@ -348,9 +347,8 @@ const ClubDetails = () => {
                 {num}
               </div>
               <div
-                className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${
-                  accent ? "text-orange-600" : "text-neutral-400"
-                }`}
+                className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 ${accent ? "text-orange-600" : "text-neutral-400"
+                  }`}
               >
                 {label}
               </div>

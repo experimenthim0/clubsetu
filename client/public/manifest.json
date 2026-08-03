@@ -1,6 +1,6 @@
 {
   "short_name": "CampusNode",
-  "name": "CampusNode - Event Management",
+  "name": "CampusNode",
   "description": "Discover, manage, and host college events and clubs effortlessly.",
   "icons": [
     {
@@ -25,8 +25,9 @@
   "id": "/",
   "start_url": "/",
   "background_color": "#0a0a0a",
-  "theme_color": "#ea580c",
-  "display": "standalone",
+  "theme_color": "#0a0a0a",
+  "display": "minimal-ui",
+  "display_override": ["minimal-ui", "standalone"],
   "orientation": "portrait-primary",
   "categories": ["education", "events", "productivity"]
 }

@@ -135,7 +135,7 @@ const AppLayout = () => {
       <BottomNav />
     </div>
   ) : (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a] pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col  dark:bg-[#0a0a0a] pb-10 md:pb-0">
       <Navbar />
       <div className="flex-1">
         <Outlet />

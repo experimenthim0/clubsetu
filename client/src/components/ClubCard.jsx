@@ -70,24 +70,24 @@ const ClubCard = ({ club }) => {
   // Construct premium card styles dynamically
   const cardStyle = (isHovered && rgb)
     ? {
-        borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)`,
-        boxShadow: `0 20px 40px -15px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.15), 0 0 20px 2px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.05)`,
-      }
+      borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)`,
+      boxShadow: `0 20px 40px -15px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.15), 0 0 20px 2px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.05)`,
+    }
     : {};
 
   // Interactive dynamic styles for buttons/badges on hover
   const glowOverlayStyle = (isHovered && rgb)
     ? {
-        background: `radial-gradient(circle at top right, rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.09) 0%, transparent 60%)`,
-      }
+      background: `radial-gradient(circle at top right, rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.09) 0%, transparent 60%)`,
+    }
     : {};
 
   const buttonStyle = (isHovered && rgb)
     ? {
-        color: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
-        borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`,
-        backgroundColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.05)`,
-      }
+      color: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`,
+      borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`,
+      backgroundColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.05)`,
+    }
     : {};
 
   // Formatted coordinators
@@ -107,14 +107,14 @@ const ClubCard = ({ club }) => {
       className="relative bg-white dark:bg-[#0d0d0d] border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1.5 flex flex-col h-full group shadow-sm hover:shadow-xl"
     >
       {/* Top right ambient color gradient overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none transition-all duration-500 ease-out" 
-        style={glowOverlayStyle} 
+      <div
+        className="absolute inset-0 pointer-events-none transition-all duration-500 ease-out"
+        style={glowOverlayStyle}
       />
 
       {/* Main Content Area */}
       <div className="p-6 flex flex-col flex-grow relative z-10">
-        
+
         {/* Upper section: Logo, Title, Category */}
         <div className="flex items-start gap-4">
           {/* Logo container: custom shadow and smooth borders */}
@@ -132,7 +132,7 @@ const ClubCard = ({ club }) => {
               }}
             />
           </div>
-          
+
           <div className="space-y-1">
             <span className="inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded">
               {club.category || "Student Club"}
@@ -158,19 +158,19 @@ const ClubCard = ({ club }) => {
             <span className="text-[11px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-0.5">
               Faculty Lead
             </span>
-            <p 
+            <p
               className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate"
               title={facultyName}
             >
               {facultyName}
             </p>
           </div>
-          
+
           <div className="min-w-0">
             <span className="text-[11px] font-black uppercase tracking-widest text-neutral-400 dark:text-neutral-500 block mb-0.5">
               Student Lead
             </span>
-            <p 
+            <p
               className="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate"
               title={studentName}
             >
@@ -181,7 +181,7 @@ const ClubCard = ({ club }) => {
 
         {/* Push socials & footer to bottom */}
         <div className="mt-auto pt-6 space-y-4">
-          
+
           {/* Social connections row */}
           {club.socialLinks && club.socialLinks.length > 0 && (
             <div>
@@ -194,12 +194,12 @@ const ClubCard = ({ club }) => {
                   const iconProps = { className: "w-4 h-4" };
 
                   const getIcon = () => {
-                    if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28}/>;
-                    if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28}/>;
-                    if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28}/>;
-                    if (platform.includes("github")) return <GithubIcon {...iconProps} size={28}/>;
-                    if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28}/>;
-                    if (platform.includes("website")) return <EarthIcon {...iconProps} size={28}/>;
+                    if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
+                    if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28} />;
+                    if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28} />;
+                    if (platform.includes("github")) return <GithubIcon {...iconProps} size={28} />;
+                    if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28} />;
+                    if (platform.includes("website")) return <EarthIcon {...iconProps} size={28} />;
                     return <i className="ri-links-line text-sm" />;
                   };
 

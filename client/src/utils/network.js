@@ -23,7 +23,7 @@ export async function checkNetworkStatus() {
     return true;
   }
 
-  // Quick check
+  // Quick check via browser's native status
   if (!navigator.onLine) {
     networkEmitter.notify(false);
     return false;
@@ -34,7 +34,7 @@ export async function checkNetworkStatus() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    // Fetch favicon or API health check with cache busting
+    // Fetch favicon or static asset with cache busting
     const response = await fetch(`/favicon.ico?_=${Date.now()}`, {
       method: 'HEAD',
       cache: 'no-store',
@@ -46,17 +46,17 @@ export async function checkNetworkStatus() {
     networkEmitter.notify(isConnected);
     return isConnected;
   } catch (error) {
-    // If request failed due to network error, report offline
-    const isOffline = error.name === 'AbortError' || !navigator.onLine;
-    const status = !isOffline;
-    networkEmitter.notify(status);
-    return status;
+    // If browser is offline or ping aborted/failed completely
+    const isOffline = !navigator.onLine || error.name === 'AbortError';
+    const isConnected = !isOffline;
+    networkEmitter.notify(isConnected);
+    return isConnected;
   }
 }
 
 /**
- * Configure Axios Interceptor to catch ERR_NETWORK or Network Error
- * and trigger the NoInternet UI immediately.
+ * Configure Axios Interceptor to catch network errors safely.
+ * Only triggers the NoInternet UI when browser is truly offline or confirmed by network check.
  * @param {import('axios').AxiosInstance} axiosInstance 
  */
 export function setupAxiosNetworkInterceptor(axiosInstance) {
@@ -64,15 +64,19 @@ export function setupAxiosNetworkInterceptor(axiosInstance) {
 
   axiosInstance.interceptors.response.use(
     (response) => response,
-    (error) => {
-      const isNetworkError =
-        error.code === 'ERR_NETWORK' ||
-        error.message === 'Network Error' ||
-        (!error.response && error.code !== 'ECONNABORTED' && !navigator.onLine);
-
-      if (isNetworkError) {
-        console.warn('[NetworkGuard] Axios caught network error:', error.message);
+    async (error) => {
+      // If native browser reports offline, trigger offline UI
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.warn('[NetworkGuard] Axios detected offline status via navigator.onLine');
         networkEmitter.notify(false);
+      } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        // If navigator.onLine is true, check active ping before declaring offline state
+        // to prevent API server downtime/errors from crashing the app into No Internet UI.
+        const activeOnline = await checkNetworkStatus();
+        if (!activeOnline) {
+          console.warn('[NetworkGuard] Active check confirmed offline status');
+          networkEmitter.notify(false);
+        }
       }
 
       return Promise.reject(error);

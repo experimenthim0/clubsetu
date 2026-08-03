@@ -2,6 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { cachedFetch } from '../lib/cacheManager';
+import { useTheme } from '../context/ThemeContext';
+
+const ClubLogoImage = ({ clubLogo, clubName }) => {
+  const { isDark } = useTheme();
+  const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
+  const [logoSrc, setLogoSrc] = useState(() => clubLogo || fallbackLogo);
+
+  useEffect(() => {
+    if (clubLogo) {
+      setLogoSrc(clubLogo);
+    } else {
+      setLogoSrc(fallbackLogo);
+    }
+  }, [clubLogo, fallbackLogo]);
+
+  return (
+    <img
+      src={logoSrc}
+      alt={clubName || 'Club Logo'}
+      className="w-full h-full object-cover"
+      onError={() => {
+        if (logoSrc !== fallbackLogo) {
+          setLogoSrc(fallbackLogo);
+        }
+      }}
+    />
+  );
+};
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -9,6 +37,24 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [isClubAdded, setIsClubAdded] = useState(false);
   const [winnings, setWinnings] = useState([]);
+  const [clubsMap, setClubsMap] = useState({});
+
+  useEffect(() => {
+    cachedFetch(`${import.meta.env.VITE_API_URL}/api/clubs`, { ttlMs: 15 * 60 * 1000 })
+      .then(resData => {
+        const clubsList = Array.isArray(resData) ? resData : (resData?.clubs || []);
+        const map = {};
+        clubsList.forEach(c => {
+          if (c.clubLogo) {
+            if (c.id || c._id) map[c.id || c._id] = c.clubLogo;
+            if (c.slug) map[c.slug] = c.clubLogo;
+            if (c.clubName) map[c.clubName.toLowerCase()] = c.clubLogo;
+          }
+        });
+        setClubsMap(map);
+      })
+      .catch(err => console.debug("Could not fetch clubs map in Profile:", err));
+  }, []);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -16,6 +62,19 @@ const Profile = () => {
     if (storedUser) {
       setUser(storedUser);
       setRole(storedRole);
+
+      // Fetch fresh profile from /api/users/me to ensure updated memberships, clubLogo, and role
+      axios.get(`${import.meta.env.VITE_API_URL}/api/users/me`)
+        .then(res => {
+          if (res.data?.user) {
+            setUser(res.data.user);
+            if (res.data.role) setRole(res.data.role);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+          }
+        })
+        .catch(err => {
+          console.debug("Could not refresh user profile in Profile.jsx:", err?.message);
+        });
 
       if (storedRole === 'club' && storedUser.clubId) {
         cachedFetch(`${import.meta.env.VITE_API_URL}/api/clubs/${storedUser.clubId}`, { ttlMs: 30 * 60 * 1000 })
@@ -77,12 +136,12 @@ const Profile = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-neutral-700">
         <div>
-          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Name</p>
+          <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Name</p>
           <p className="font-semibold text-lg text-neutral-800">{user.name}</p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Email</p>
+          <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Email</p>
           <p className="font-semibold text-lg text-neutral-800 break-all">
             {user.email}
           </p>
@@ -91,11 +150,11 @@ const Profile = () => {
         {(role === 'member' || role === 'student') && (
           <>
             <div>
-              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</p>
+              <p className="text-xs font-semibold text-neutral-400  tracking-wider mb-1">Roll No</p>
               <p className="font-semibold text-neutral-800">{user.rollNo}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Branch / Year</p>
+              <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Branch / Year</p>
               <p className="font-semibold text-neutral-800">
                 {user.branch} - {user.year}
               </p>
@@ -111,7 +170,7 @@ const Profile = () => {
    
       <div className="mt-8 pt-6 border-t border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div>
-                <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Social Profiles</h3>
+                <h3 className="text-xs font-bold text-neutral-500  mb-3">Social Profiles</h3>
                 <div className="flex flex-wrap gap-2.5">
                     {user.githubProfile && (
                         <a href={user.githubProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-sm">
@@ -156,51 +215,132 @@ const Profile = () => {
       </div>
     </div>
 
-    {/* Achievements / Trophy Room */}
-    {(role === 'member' || role === 'student') && winnings.length > 0 && (
-      <div className="mb-12 p-6 md:p-8 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900/40 rounded-xl shadow-sm">
-        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider mb-6 flex items-center gap-2 text-amber-800 dark:text-amber-400">
-          <i className="ri-trophy-line text-amber-600 text-xl" /> Achievements & Winnings
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {winnings.map((w, index) => (
-            <div key={index} className="flex items-center gap-4 bg-white dark:bg-neutral-900 p-4 border border-amber-100 dark:border-amber-900/20 rounded-xl shadow-xs">
-              <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center shrink-0">
-                <i className="ri-award-fill text-amber-600 text-lg" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider leading-none mb-1">
-                  {w.rank === 1 ? '🥇 1st Place / Winner' : w.rank === 2 ? '🥈 2nd Place / Runner Up' : w.rank === 3 ? '🥉 3rd Place' : `#${w.rank} Position`}
-                </p>
-                <Link to={`/event/${w.eventSlug}`} className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 hover:text-orange-600 dark:hover:text-orange-500 hover:underline truncate block">
-                  {w.eventTitle}
-                </Link>
-                {w.clubName && (
-                  <p className="text-[10px] text-neutral-400 font-medium">by {w.clubName}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
     {(role === 'member' || role === 'student') && (
-      <div className="mt-8">
+      <div className="mb-12">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-350 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-100 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
         >
-          <i className="ri-calendar-event-line text-sm" /> View My Events
+          <i className="ri-calendar-event-line text-sm font-light" /> View My Events
         </Link>
       </div>
     )}
+
+    {/* Enrolled Clubs Section */}
+    {(role === 'member' || role === 'student') && (
+      <div className="mb-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900 tracking-wider mb-6 flex items-center gap-2">
+          Enrolled Clubs & Societies
+        </h2>
+        {user?.memberships && user.memberships.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+  {user.memberships.map((m, index) => {
+    const roleDisplay =
+      m.role === "CLUB_HEAD"
+        ? "Club Head"
+        : m.role === "COORDINATOR"
+        ? "Coordinator"
+        : "Member";
+
+    const resolvedLogo =
+      m.clubLogo ||
+      m.club?.clubLogo ||
+      clubsMap[m.clubId] ||
+      clubsMap[m.slug] ||
+      (m.clubName && clubsMap[m.clubName.toLowerCase()]);
+
+    return (
+      <Link
+        key={index}
+        to={`/club/${m.slug || m.clubId}`}
+        className="group bg-white  rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:border-black hover:shadow-sm"
+      >
+        {/* Club Logo */}
+        <div className="w-14 h-14 rounded-full border border-neutral-200 overflow-hidden flex items-center justify-center bg-white mb-4">
+          <ClubLogoImage
+            clubLogo={resolvedLogo}
+            clubName={m.clubName}
+          />
+        </div>
+
+        {/* Club Name */}
+        <h3 className="font-semibold text-black text-sm leading-snug line-clamp-2 group-hover:underline">
+          {m.clubName || "Club Details"}
+        </h3>
+
+        {/* Role */}
+        <span className="mt-3 px-3 py-1 text-[10px]  border border-neutral-500 rounded-full text-black bg-white">
+          {roleDisplay}
+        </span>
+
+        {/* Arrow */}
+        {/* <div className="mt-5 text-neutral-400 group-hover:text-black transition-colors">
+          <i className="ri-arrow-right-line text-lg" />
+        </div> */}
+      </Link>
+    );
+  })}
+</div>
+        ) : (
+          <div className="bg-neutral-50 p-6 border border-neutral-200 rounded-xl text-center">
+            <i className="ri-building-4-line text-3xl text-neutral-400/60 mb-2 inline-block" />
+            <p className="text-sm font-semibold text-neutral-700">Not enrolled in any clubs yet</p>
+            <p className="text-xs text-neutral-500 mt-1 mb-4">Discover campus clubs, join events, and get involved!</p>
+            <Link 
+              to="/clubs" 
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg transition-all shadow-xs"
+            >
+              <i className="ri-compass-3-line text-sm" /> Explore Clubs
+            </Link>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* Achievements / Trophy Room */}
+    {(role === 'member' || role === 'student') && (
+      <div className="mb-12 p-6 md:p-8 bg-white border  rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900  mb-6 flex items-center gap-2 ">
+          Achievements & Winnings
+        </h2>
+        {winnings.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {winnings.map((w, index) => (
+              <div key={index} className="flex items-center gap-4 bg-white p-4  rounded-xl shadow-xs">
+                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                  <i className="ri-award-fill text-amber-600 text-lg" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-amber-800 uppercase tracking-wider leading-none mb-1">
+                    {w.rank === 1 ? '🥇 1st Place / Winner' : w.rank === 2 ? '🥈 2nd Place / Runner Up' : w.rank === 3 ? '🥉 3rd Place' : `#${w.rank} Position`}
+                  </p>
+                  <Link to={`/event/${w.eventSlug}`} className="text-sm font-semibold text-neutral-800 hover:text-orange-600 hover:underline truncate block">
+                    {w.eventTitle}
+                  </Link>
+                  {w.clubName && (
+                    <p className="text-[10px] text-neutral-400 font-medium">by {w.clubName}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white p-6 rounded-xl text-center">
+            <i className="ri-trophy-line text-3xl text-amber-400/60 mb-2 inline-block" />
+            <p className="text-sm font-semibold text-neutral-700">No achievements recorded yet</p>
+            <p className="text-xs text-neutral-500 mt-1">Participate and win in campus events to earn trophies and appear on the leaderboard!</p>
+          </div>
+        )}
+      </div>
+    )}
+
+    
 
     {(role === 'club') && (
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-350 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-200 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
         >
           <i className="ri-calendar-event-line text-sm" /> My Events
         </Link>

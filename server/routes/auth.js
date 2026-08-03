@@ -26,7 +26,7 @@ export async function getStudentRoleAndClub(studentId) {
   const memberships = await prisma.clubMembership.findMany({
     where: { studentId },
     include: {
-      club: { select: { clubName: true } }
+      club: { select: { id: true, clubName: true, slug: true, clubLogo: true } }
     }
   });
 
@@ -38,7 +38,9 @@ export async function getStudentRoleAndClub(studentId) {
     clubId: managementMembership?.clubId ?? (memberships.length > 0 ? memberships[0].clubId : null),
     memberships: memberships.map(m => ({
       clubId: m.clubId,
-      clubName: m.club.clubName,
+      clubName: m.club?.clubName,
+      slug: m.club?.slug,
+      clubLogo: m.club?.clubLogo,
       role: m.role,
       canTakeAttendance: m.canTakeAttendance,
       canEditEvents: m.canEditEvents,

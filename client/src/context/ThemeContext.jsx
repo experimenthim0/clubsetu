@@ -34,6 +34,12 @@ export const ThemeProvider = ({ children }) => {
 
     localStorage.setItem("theme", theme);
 
+    // Dynamically update theme-color meta tag for PWA top bar / status bar
+    const metaThemeColor = document.querySelector("meta[name='theme-color']");
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", isDark ? "#0a0a0a" : "#ffffff");
+    }
+
     const faviconSrc = isDark
       ? "/darkthemelogo.png"
       : "/lightthemelogo2.png";
