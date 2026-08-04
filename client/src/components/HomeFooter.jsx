@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bus } from 'lucide-react';
 import {InstagramIcon} from './ui/instagram';
 import { LinkedinIcon } from './ui/linkedin';
 import {TwitterIcon} from './ui/twitter';
 import ScrollReveal from './ScrollReveal';
+import ContactModal from './ContactModal';
+
 const HomeFooter = () => {
   const currentYear = new Date().getFullYear();
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   
   const quickLinks = [
@@ -21,7 +24,7 @@ const HomeFooter = () => {
 
   const otherLinks = [
     // { label: 'NITJ Website', href: 'https://nitj.ac.in' },
-    { label: 'Contact', href: 'mailto:clubsetu@nikhim.me' },
+    { label: 'Contact', onClick: () => setIsContactOpen(true) },
     { label: 'Team', to: '/team' },
     { label: 'Privacy Policy', to: '/privacy' },
     { label: 'Terms of Service', to: '/terms' },
@@ -42,34 +45,21 @@ const HomeFooter = () => {
                 Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
               </span>
             </div>
-            {/* <p className="text-[14px] text-neutral-400 leading-relaxed mb-4">
-             CampusNode is a platform built for NIT Jalandhar that connects students with campus clubs and events, making it easy to discover activities and manage participation in one place. </p> */}
             <div className=''>
-         {/* <div className="flex items-center gap-3">
-                {[
-                  { icon: <LinkedinIcon/>, href: 'https://github.com/experimenthim0' },
-                  { icon: <InstagramIcon/>, href: 'https://instagram.com/nikhim.me' },
-                  { icon: <TwitterIcon/>, href: 'https://x.com/Nikhil0148' },
-                ].map((social) => (
-                  <a
-                    key={social.href}
-                    href={social.href}
-                    className="w-9 h-9 rounded-sm flex items-center justify-center text-black dark:text-white transition-colors hover:text-orange-600"
-                  >
-                    {/* <i className={`${social.icon} text-base`} /> 
-                    {social.icon}
-                  </a>
-                ))}
-              </div> */}
              <p className="text-[13px] text-neutral-500 dark:text-neutral-400 mt-4">
-              Have any questions or suggestion? Reach out to us at{' '}
+              Have any questions or suggestion?{' '}
+              <button 
+                onClick={() => setIsContactOpen(true)} 
+                className="text-orange-500 hover:underline font-medium cursor-pointer"
+              >
+                Send us a suggestion
+              </button>
+              {' '}or email at{' '}
               <a href="mailto:clubsetu@nikhim.me" className="text-orange-500 hover:underline font-medium">
                 clubsetu@nikhim.me
               </a>
             </p>
         </div>
-            
-             
           </div>
 
           {/* Quick Links */}
@@ -108,6 +98,13 @@ const HomeFooter = () => {
                     >
                       {link.label}
                     </Link>
+                  ) : link.onClick ? (
+                    <button
+                      onClick={link.onClick}
+                      className="text-[14px] text-neutral-800 dark:text-neutral-400 hover:text-orange-600 transition-colors font-medium cursor-pointer dark:hover:text-orange-600 border-none bg-transparent p-0 text-left"
+                    >
+                      {link.label}
+                    </button>
                   ) : (
                     <a
                       href={link.href}
@@ -123,8 +120,11 @@ const HomeFooter = () => {
       </div>
       </div>
 
-      {/* Bottom bar */}
-     
+      {/* Custom Contact & Suggestion Modal */}
+      <ContactModal 
+        isOpen={isContactOpen} 
+        onClose={() => setIsContactOpen(false)} 
+      />
     </footer>
   );
 };

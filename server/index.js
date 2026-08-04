@@ -19,7 +19,6 @@ import prisma from "./lib/prisma.js";
 import compression from "compression";
 
 
-
 import { corsOptions } from "./utils/corsConfig.js";
 import errorHandler from "./middleware/errorHandler.js";
 import helmet from "helmet";
@@ -71,7 +70,7 @@ app.use("/api/auth/login", authLimiter);
 
 // Rate limiter: student & external registration — prevent mass bot registration
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 5,
   message: { message: "Too many registration attempts. Please try again later." },
 });
@@ -80,7 +79,7 @@ app.use("/api/auth/register/external", registerLimiter);
 
 // Rate limiter: forgot-password — prevent email bombing
 const forgotPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 3,
   message: { message: "Too many password reset requests. Please try again later." },
 });
@@ -88,7 +87,7 @@ app.use("/api/auth/forgot-password", forgotPasswordLimiter);
 
 // Rate limiter: 2FA verification — prevent OTP brute-force
 const twoFaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: { message: "Too many verification attempts. Please try again later." },
 });
@@ -96,7 +95,7 @@ app.use("/api/auth/verify-2fa", twoFaLimiter);
 
 // Rate limiter: notification creation — prevent notification spam
 const notificationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000, 
   max: 10,
   message: { message: "Too many notifications sent. Please slow down." },
 });
@@ -151,7 +150,7 @@ const cleanupReunitedItems = async () => {
 
 // Run on startup
 cleanupReunitedItems();
-// Then run every 8 hours
+
 setInterval(cleanupReunitedItems, 8 * 60 * 60 * 1000);
 
 // Global Error Handler should be the last middleware

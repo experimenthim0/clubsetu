@@ -108,7 +108,7 @@ const LostFoundGuide = () => {
                             key={idx} 
                             className={`${isDark ? 'bg-neutral-900/50 border-neutral-800' : 'bg-white border-gray-200'} border rounded-xl p-6 md:p-8 shadow-sm`}
                         >
-                            <h3 className="text-base font-bold text-gray-900 dark:text-neutral-100 tracking-tight border-b border-gray-100 dark:border-neutral-800 pb-3 mb-5 uppercase">
+                            <h3 className="text-base font-bold text-gray-900 dark:text-neutral-100 tracking-wide border-b border-gray-100 dark:border-neutral-800 pb-3 mb-5 uppercase">
                                 Section {idx + 1}: {section.title}
                             </h3>
                             <ul className="space-y-4">
