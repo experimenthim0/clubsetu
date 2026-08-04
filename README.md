@@ -1,6 +1,6 @@
 # 🎓 ClubSetu (CampusNode) — Campus Event Management Platform 🚀
 
-A full-stack, enterprise-ready campus event management ecosystem designed to streamline event discovery, registration, automated payments, attendance tracking, and certificate issuance for educational institutions, student clubs, and administrators.
+A full-stack, enterprise-ready campus event management ecosystem designed to streamline event discovery, registration, attendance tracking, team management, lost & found board, and certificate issuance for educational institutions, student clubs, and administrators.
 
 ---
 
@@ -16,7 +16,6 @@ A full-stack, enterprise-ready campus event management ecosystem designed to str
 - [Getting Started \& Installation](#-getting-started--installation)
   - [Prerequisites](#prerequisites)
   - [Local Development Setup](#local-development-setup)
-  - [Docker Setup](#docker-setup)
 - [Environment Variables](#-environment-variables)
 - [Database Schema](#-database-schema)
 - [API Endpoints Summary](#-api-endpoints-summary)
@@ -29,11 +28,13 @@ A full-stack, enterprise-ready campus event management ecosystem designed to str
 
 ## 🧐 Overview
 
-Campus event management often suffers from fragmented communication across messaging groups, manual payment verifications via screenshots, lost Google Form responses, and lack of administrative oversight. 
+Campus event management often suffers from fragmented communication across messaging groups, lost Google Form responses, lack of attendance verification, and absent administrative oversight. 
 
 **ClubSetu / CampusNode** provides a unified platform:
 - **Centralized Event Portal**: All technical, cultural, sports, and workshop events in one place.
-- **Automated Workflow**: Real-time Razorpay payment verification, instant seat allocation, QR-code based ticket check-in, and auto-generated PDF certificates.
+- **Automated Workflow**: Instant seat allocation, QR-code based ticket check-in, real-time registration tracking, and auto-generated PDF certificates.
+- **Team & Participation Portal**: Team formation for hackathons/competitions, participation tracking, and member management.
+- **Campus Lost & Found Board**: Centralized reporting and claiming workflow for lost and found items.
 - **Multi-Role Governance**: Role-Based Access Control (RBAC) supporting Students, Club Leads, Faculty Coordinators, and System Admins.
 
 ---
@@ -43,22 +44,24 @@ Campus event management often suffers from fragmented communication across messa
 ### 👨‍🎓 For Students
 - **Event Discovery & Filtering**: Search and filter upcoming/live events by category, status, or organizing club.
 - **Dynamic Registrations**: Custom dynamic forms tailored per event (custom questions, file uploads, T-shirt sizes, team details).
-- **Instant Online Payments**: Direct payment gateway integration via Razorpay for paid entry fees.
-- **Personalized Student Dashboard**: View registered events, track payment statuses, download entry tickets/QR passes.
+- **Team Formation & Management**: Create or join teams for team-based competitions and hackathons.
+- **Personalized Student Dashboard**: View registered events, track registration statuses, download entry tickets/QR passes.
 - **Automated Certificate Generation**: Generate and download verified PDF certificates upon event completion.
-- **Lost & Found Board**: Campus-wide lost & found board with item listing and claim workflows.
+- **Lost & Found Board**: Campus-wide lost & found board with item listing, image uploads, and claim workflows.
 
 ### 🧑‍💼 For Club Heads & Coordinators
-- **Event Builder**: Create draft events with customizable venues, schedules, pricing, seat caps, and dynamic input fields.
-- **Real-Time Analytics**: View live registration counts, revenue totals, check-in numbers, and payout status.
+- **Event Builder**: Create draft events with customizable venues, schedules, seat caps, and dynamic input fields.
+- **Real-Time Analytics**: View live registration counts, check-in numbers, and participant details.
 - **Attendance & Check-in**: Scan QR codes or manually verify student check-ins at event entry.
-- **Data Export**: Export attendee lists and financial summaries in CSV/Excel formats.
+- **Data Export**: Export attendee lists and event summaries in CSV/Excel formats.
 - **Certificate Template Builder**: Configure custom background images, layout parameters, and placeholder tags for auto-issuing certificates.
+- **Club Member Management**: Assign roles and coordinate team responsibilities within the club.
 
 ### 🏫 For Faculty & Administration
 - **Approval Workflow**: Review pending event proposals submitted by clubs before publishing to students.
-- **Financial & Audit Dashboard**: Monitor campus-wide transaction logs, registration volumes, and complete club payouts.
+- **Administrative Dashboard**: Monitor campus-wide event logs, registration volumes, and club activities.
 - **Club Lifecycle Management**: Provision new clubs, assign faculty leads, and update institutional credentials.
+- **Lost & Found Moderation**: Admin oversight for lost & found listings and auto-cleanup rules for reunited items.
 
 ---
 
@@ -75,7 +78,7 @@ Campus event management often suffers from fragmented communication across messa
 - **Database & ORM**: PostgreSQL 16 + Prisma ORM 7
 - **Real-Time Engine**: Socket.io for live updates and notifications
 - **Authentication**: JWT (JSON Web Tokens), bcryptjs password hashing, 2FA OTP support
-- **Storage & Media**: Cloudinary API for logo, gallery, and certificate template uploads
+- **Storage & Media**: Cloudinary API for logo, gallery, lost & found, and certificate template uploads
 - **PDF & Communication**: PDFKit for certificate rendering, Nodemailer & Resend for transactional email triggers
 - **Security & Performance**: Helmet headers, express-rate-limit, CORS policy, Gzip compression
 
@@ -92,13 +95,13 @@ Campus event management often suffers from fragmented communication across messa
 ┌──────────────────────────────▼──────────────────────────────┐
 │                    Express.js API Server                    │
 │   (Auth Middleware, RBAC, Rate Limiter, Route Handlers)     │
-└──────┬───────────────────────┬──────────────────────┬───────┘
-       │                       │                      │
-       ▼                       ▼                      ▼
-┌──────────────┐       ┌──────────────┐       ┌───────────────┐
-│ PostgreSQL   │       │  Razorpay    │       │  Cloudinary   │
-│ (via Prisma) │       │ (Payments)   │       │(Media Storage)│
-└──────────────┘       └──────────────┘       └───────────────┘
+└──────┬──────────────────────────────────────────────┬───────┘
+       │                                              │
+       ▼                                              ▼
+┌──────────────┐                              ┌───────────────┐
+│ PostgreSQL   │                              │  Cloudinary   │
+│ (via Prisma) │                              │(Media Storage)│
+└──────────────┘                              └───────────────┘
 ```
 
 ---
@@ -111,7 +114,7 @@ clubsetu/
 │   ├── src/
 │   │   ├── components/         # Reusable UI components (Navbar, Footer, Modals, etc.)
 │   │   ├── context/            # Global Auth & App State Contexts
-│   │   ├── pages/              # Route pages (Home, Events, Dashboard, Admin, etc.)
+│   │   ├── pages/              # Route pages (Home, Events, Dashboard, Admin, Lost&Found, etc.)
 │   │   ├── utils/              # Axios helpers, date formatters, validators
 │   │   ├── App.jsx             # Main router configuration
 │   │   └── main.jsx            # Application entry point
@@ -122,7 +125,7 @@ clubsetu/
 ├── server/                     # Backend Node.js / Express API Server
 │   ├── prisma/                 # Prisma schema definitions & migrations
 │   │   └── schema.prisma
-│   ├── routes/                 # Express API routes (auth, events, admin, payments, etc.)
+│   ├── routes/                 # Express API routes (auth, events, admin, teams, lost-found, etc.)
 │   ├── controllers/            # Request handlers & business logic
 │   ├── middleware/             # Auth checks, RBAC verification, rate limiters, multer
 │   ├── scripts/                # Database seeding & administrative scripts
@@ -130,7 +133,6 @@ clubsetu/
 │   ├── index.js                # Express app & Socket.io server entry point
 │   └── package.json
 │
-├── docker-compose.yml          # Multi-container Docker configuration (App + Postgres)
 ├── API_ENDPOINTS.md            # Detailed API documentation
 ├── BACKEND_SCHEMA.md           # Database model specifications
 └── README.md                   # Project documentation
@@ -144,7 +146,7 @@ clubsetu/
 Make sure you have the following installed on your machine:
 - **Node.js**: `v18.x` or higher
 - **npm** or **yarn**
-- **PostgreSQL**: `v14.x` or higher (or Docker)
+- **PostgreSQL**: `v14.x` or higher
 
 ---
 
@@ -185,20 +187,6 @@ npm run dev
 
 ---
 
-### 🐳 Docker Setup
-
-You can launch both the PostgreSQL database and backend server using Docker Compose:
-
-```bash
-# Start PostgreSQL database & backend container
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f
-```
-
----
-
 ## ⚙️ Environment Variables
 
 ### Backend (`server/.env`)
@@ -212,10 +200,6 @@ DATABASE_URL="postgresql://postgres:password@localhost:5432/campusnode"
 # Authentication Secrets
 JWT_SECRET="your_jwt_secret_key"
 JWT_EXPIRE="7d"
-
-# Razorpay Integration
-RAZORPAY_KEY_ID="your_razorpay_key_id"
-RAZORPAY_KEY_SECRET="your_razorpay_key_secret"
 
 # Cloudinary Storage
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
@@ -233,7 +217,6 @@ RESEND_API_KEY="re_123456789"
 ### Frontend (`client/.env`)
 ```env
 VITE_API_BASE_URL="http://localhost:5000/api"
-VITE_RAZORPAY_KEY_ID="your_razorpay_key_id"
 ```
 
 ---
@@ -241,10 +224,12 @@ VITE_RAZORPAY_KEY_ID="your_razorpay_key_id"
 ## 🗄️ Database Schema Overview
 
 The database architecture consists of core models managed via Prisma:
-- **User**: Students, Club Leads, Faculty Coordinators, Admin, Payment Leads. Supports 2FA & email verification.
-- **Club**: Club profiles, social links, faculty/student leads, bank account details for payouts.
-- **Event**: Titles, schedule, capacity, fee, dynamic registration field rules, review status (`DRAFT`, `PENDING`, `PUBLISHED`, `REJECTED`).
-- **Registration**: Student-to-Event mapping, custom field answers, Razorpay payment verification ID, attendance check-in status.
+- **User**: Students, Club Leads, Faculty Coordinators, Admin. Supports 2FA & email verification.
+- **Club**: Club profiles, social links, faculty/student leads.
+- **Event**: Titles, schedule, capacity, fee/free toggle, dynamic registration field rules, review status (`DRAFT`, `PENDING`, `PUBLISHED`, `REJECTED`).
+- **Registration**: Student-to-Event mapping, custom field answers, attendance check-in status.
+- **Team**: Team details, members, invites for hackathons and team events.
+- **LostFoundItem**: Item listings, category, location, claim status, and image URLs.
 - **Notification**: Targeted broadcast messages with read receipts.
 - **CertificateTemplate**: Coordinates, font sizes, background image layout specs per event.
 
@@ -259,8 +244,9 @@ For more details, see [BACKEND_SCHEMA.md](file:///c:/Users/yadav/Desktop/club-ev
 | **Auth** | `/api/auth` | Login, Register, 2FA, Password Reset | `POST` |
 | **Events** | `/api/events` | Browse, Create, Review, Register, Export | `GET`, `POST`, `PUT`, `DELETE` |
 | **Clubs** | `/api/clubs` | Club Listings, Details, Updates | `GET`, `PUT` |
-| **Payments** | `/api/payment` | Razorpay Order Creation & Verification | `POST`, `GET` |
-| **Admin** | `/api/admin` | Dashboard Stats, Payouts, Global Export | `GET`, `POST` |
+| **Teams** | `/api/teams` | Team creation, invitation, and member management | `GET`, `POST`, `PUT`, `DELETE` |
+| **Lost & Found** | `/api/lost-found` | Report items, claim workflow, reunited status | `GET`, `POST`, `PUT`, `DELETE` |
+| **Admin** | `/api/admin` | Dashboard Stats, Club Provisioning, Global Export | `GET`, `POST` |
 | **Certificates** | `/api/certificates` | Upload Templates & Generate PDF Certificates | `GET`, `POST` |
 | **Notifications** | `/api/notifications` | User & Event Scoped Alerts | `GET`, `POST`, `PUT` |
 
@@ -272,7 +258,7 @@ For complete payload details and request formats, refer to [API_ENDPOINTS.md](fi
 - **Stateless RBAC**: Token-based authentication using JWT with granular role verification.
 - **Data Integrity**: Input validation using Zod schemas on API payloads.
 - **Rate Limiting & Headers**: Protection against brute-force attacks via `express-rate-limit` and secure headers with `helmet`.
-- **Payment Verification**: Server-side cryptographic signature verification for all Razorpay transactions.
+- **Media Security**: Controlled file upload limits and Cloudinary storage integration.
 
 ---
 
