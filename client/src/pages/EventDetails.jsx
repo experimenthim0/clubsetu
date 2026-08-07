@@ -584,9 +584,9 @@ const EventDetails = () => {
   const winners = (event.winners || []).filter(w => w.name);
   const showWinners = isEnded && event.showWinner && winners.length > 0;
   const medalConfig = {
-    1: { bg: 'bg-yellow-400', border: 'border-yellow-500', icon: 'ri-medal-line', label: '1st' },
-    2: { bg: 'bg-neutral-300', border: 'border-neutral-400', icon: 'ri-medal-line', label: '2nd' },
-    3: { bg: 'bg-orange-400', border: 'border-orange-500', icon: 'ri-medal-line', label: '3rd' },
+    1: { badgeBg: 'bg-yellow-400 text-black', icon: 'ri-trophy-fill', label: '1st' },
+    2: { badgeBg: 'bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white', icon: 'ri-medal-fill', label: '2nd' },
+    3: { badgeBg: 'bg-amber-600 text-white', icon: 'ri-award-fill', label: '3rd' },
   };
 
   const clubCategory = event.club?.category || null;
@@ -627,54 +627,133 @@ const EventDetails = () => {
       : [{ icon: 'ri-graduation-cap-line', label: 'Open To', value: 'All Programs' }]),
   ];
 
-  // ── Auto-generated FAQ ──────────────────────────────────────────────────
-  // ── Auto-generated FAQ ──────────────────────────────────────────────────
+  // ── Auto-generated FAQ with bold dynamic event information ──────────────────
   const faqItems = [
     {
       question: 'When and where is the event scheduled?',
-      answer: `The event starts on ${new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} and ends on ${new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}. It will be held at ${venue}.`,
+      answer: (
+        <span>
+          The event starts on{' '}
+          <strong className="font-bold text-black dark:text-white">
+            {new Date(startTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at {new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+          </strong>{' '}
+          and ends on{' '}
+          <strong className="font-bold text-black dark:text-white">
+            {new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at {new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+          </strong>
+          . It will be held at{' '}
+          <strong className="font-bold text-black dark:text-white">
+            {venue}
+          </strong>.
+        </span>
+      ),
     },
     {
       question: 'What are the registration details, deadline, and entry fees?',
-      answer: `${
-        registrationDeadline
-          ? `Registration closes on ${new Date(registrationDeadline).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at ${new Date(registrationDeadline).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}.`
-          : 'There is no separate registration deadline — registrations remain open until the event starts.'
-      } ${
-        (event.registrationFee > 0 || entryFee > 0)
-          ? `The entry fee is ₹${event.registrationFee || entryFee} (non-refundable), payable securely via the event's designated payment method.`
-          : 'This event is completely free to attend!'
-      } ${
-        user
-          ? (event.customFields && event.customFields.length > 0
-            ? 'Click the "Get Tickets" button to complete the required custom fields and submit your registration.'
-            : 'Simply click the "Get Tickets" button to register instantly.')
-          : 'Please log in with your student account first to submit your registration.'
-      }`,
+      answer: (
+        <span>
+          {registrationDeadline ? (
+            <>
+              Registration closes on{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {new Date(registrationDeadline).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' })} at {new Date(registrationDeadline).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+              </strong>.{' '}
+            </>
+          ) : (
+            <>There is no separate registration deadline — registrations remain open until the event starts. </>
+          )}
+          {(event.registrationFee > 0 || entryFee > 0) ? (
+            <>
+              The entry fee is{' '}
+              <strong className="font-bold text-black dark:text-white">
+                ₹{event.registrationFee || entryFee}
+              </strong>{' '}
+              (non-refundable), payable securely via the event's designated payment method.{' '}
+            </>
+          ) : (
+            <>
+              This event is{' '}
+              <strong className="font-bold text-black dark:text-white">
+                Completely Free
+              </strong>{' '}
+              to attend!{' '}
+            </>
+          )}
+          {user ? (
+            event.customFields && event.customFields.length > 0 ? (
+              'Click the "Get Tickets" button to complete the required custom fields and submit your registration.'
+            ) : (
+              'Simply click the "Get Tickets" button to register instantly.'
+            )
+          ) : (
+            'Please log in with your student account first to submit your registration.'
+          )}
+        </span>
+      ),
     },
     {
       question: 'What is the seat capacity, program eligibility, and are certificates provided?',
-      answer: `${
-        isUnlimited
-          ? 'This event has unlimited seat capacity.'
-          : isFull
-            ? `All ${totalSeats} seats are filled. However, you can register to join the waitlist and secure a spot if any attendee cancels.`
-            : `There are ${totalSeats - registeredCount} spots remaining out of ${totalSeats} total seats.`
-      } ${
-        event.allowedPrograms && event.allowedPrograms.length > 0
-          ? `Eligibility is open to the following programs: ${event.allowedPrograms.join(', ')}.`
-          : 'All academic programs are welcome to register.'
-      } ${
-        event.provideCertificate
-          ? 'Digital certificates will be issued to participants after the event closes, downloadable directly from your profile.'
-          : 'No certificates will be provided for this event.'
-      }`,
+      answer: (
+        <span>
+          {isUnlimited ? (
+            <>
+              This event has{' '}
+              <strong className="font-bold text-black dark:text-white">
+                Unlimited Seats
+              </strong>.{' '}
+            </>
+          ) : isFull ? (
+            <>
+              All{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {totalSeats} seats
+              </strong>{' '}
+              are filled. However, you can register to join the waitlist.{' '}
+            </>
+          ) : (
+            <>
+              There are{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {totalSeats - registeredCount} spots remaining
+              </strong>{' '}
+              out of {totalSeats} total seats.{' '}
+            </>
+          )}
+          {event.allowedPrograms && event.allowedPrograms.length > 0 ? (
+            <>
+              Eligibility is open to:{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {event.allowedPrograms.join(', ')}
+              </strong>.{' '}
+            </>
+          ) : (
+            <>All academic programs are welcome to register. </>
+          )}
+          {event.provideCertificate ? (
+            <>
+              <strong className="font-bold text-black dark:text-white">
+                Digital certificates
+              </strong>{' '}
+              will be issued to participants after the event closes.
+            </>
+          ) : (
+            <>No certificates will be provided for this event.</>
+          )}
+        </span>
+      ),
     },
     {
       question: 'Who is organizing this event and can I cancel my ticket?',
-      answer: `This event is organized by ${displayName}.${
-        clubSlugOrId ? ' You can click the organizer name in the sidebar to visit their club page.' : ''
-      } If you need to cancel your registration, you can do so in the "My Events" section on CampusNode before the event begins.`,
+      answer: (
+        <span>
+          This event is organized by{' '}
+          <strong className="font-bold text-black dark:text-white">
+            {displayName}
+          </strong>.
+          {clubSlugOrId ? ' You can click the organizer name in the sidebar to visit their club page.' : ''}{' '}
+          If you need to cancel your registration, you can do so in the "My Events" section on CampusNode before the event begins.
+        </span>
+      ),
     }
   ];
 
@@ -921,19 +1000,68 @@ const EventDetails = () => {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Event Results</p>
-                    <p className="text-[15px] font-black text-black dark:text-white">Winners</p>
+                    <p className="text-[15px] font-black text-black dark:text-white">
+                      {event.registrationType === 'team' ? 'Winning Teams' : 'Winners'}
+                    </p>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {[...winners].sort((a, b) => a.rank - b.rank).map((winner, i) => {
                     const medal = medalConfig[winner.rank];
+                    const memberList = winner.members || winner.teamMembers || winner.students || [];
+                    const isTeamWinner = event.registrationType === 'team' || (memberList && memberList.length > 0);
+
                     return (
-                      <div key={i} className={`flex items-center gap-4 px-4 py-3 border rounded-lg ${medal ? medal.bg : 'bg-neutral-50 dark:bg-neutral-900'} border-neutral-200 dark:border-neutral-700`}>
-                        <div className={`w-8 h-8 shrink-0 rounded-md border-2 ${medal ? medal.border : 'border-neutral-300 bg-white'} flex items-center justify-center`}>
-                          {medal ? <i className={`${medal.icon} text-black text-sm`} /> : <span className="text-xs font-black text-neutral-500">#{winner.rank}</span>}
+                      <div
+                        key={i}
+                        className="flex items-center gap-3.5 p-3.5 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl transition-all shadow-2xs hover:border-neutral-300 dark:hover:border-neutral-700"
+                      >
+                        {/* Medal Rank Badge */}
+                        <div
+                          className={`w-9 h-9 shrink-0 rounded-lg ${
+                            medal ? medal.badgeBg : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'
+                          } flex items-center justify-center font-black text-sm`}
+                        >
+                          {medal ? (
+                            <i className={`${medal.icon} text-base`} />
+                          ) : (
+                            <span>#{winner.rank}</span>
+                          )}
                         </div>
-                        <p className="text-[14px] font-black text-black dark:text-white flex-1 truncate">{winner.name}</p>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-black/50 dark:text-white/50">{medal ? medal.label : `#${winner.rank}`}</span>
+
+                        {/* Winner / Team Name & Members */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-bold text-black dark:text-white truncate">
+                              {winner.name}
+                            </p>
+                            {isTeamWinner && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-200/50 dark:border-orange-800/40 px-2 py-0.5 rounded-full">
+                                <i className="ri-team-line text-[10px]" /> Team
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Render Team Members if present */}
+                          {memberList && memberList.length > 0 && (() => {
+                            const namesArr = Array.isArray(memberList)
+                              ? memberList.map(m => (typeof m === 'string' ? m : m?.name)).filter(Boolean)
+                              : [typeof memberList === 'string' ? memberList : memberList?.name].filter(Boolean);
+                            const uniqueNames = Array.from(new Set(namesArr));
+                            if (uniqueNames.length === 0) return null;
+                            return (
+                              <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                                <span className="font-semibold text-neutral-700 dark:text-neutral-300">Members:</span>{' '}
+                                {uniqueNames.join(', ')}
+                              </p>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Rank Label */}
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-md shrink-0">
+                          {medal ? `${medal.label} Place` : `#${winner.rank}`}
+                        </span>
                       </div>
                     );
                   })}

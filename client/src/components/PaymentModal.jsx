@@ -266,16 +266,16 @@ const PaymentModal = ({
           {/* COLLEGE PAYMENT PORTAL FLOW */}
           {paymentType === 'COLLEGE_PAYMENT' && (
             <div className="space-y-5">
-              <div className="p-6 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50/50 dark:bg-neutral-900/50 flex flex-col items-center text-center gap-3">
+              <div className="p-5 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50/50 dark:bg-neutral-900/50 flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xl">
                   <i className="ri-bank-card-line" />
                 </div>
                 <div>
                   <h4 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
-                    College Fee Portal
+                    Official College Payment Portal
                   </h4>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-xs leading-relaxed">
-                    Redirect to the official portal to make your payment securely.
+                    Click below to open the official fee portal in a new tab. Your registration state here will not be lost.
                   </p>
                 </div>
 
@@ -284,40 +284,73 @@ const PaymentModal = ({
                     href={event.collegePaymentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium text-xs rounded-xl shadow-sm transition-colors"
+                    className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
                   >
-                    Open Portal <i className="ri-external-link-line" />
+                    <i className="ri-external-link-line" /> Pay on College Portal
                   </a>
                 )}
               </div>
 
               {event?.paymentInstructions && (
-                <div className="p-3.5 bg-neutral-100/70 dark:bg-neutral-800/50 rounded-xl text-xs space-y-1">
-                  <p className="font-semibold text-neutral-700 dark:text-neutral-300">
-                    Instructions
+                <div className="p-3.5 bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/30 rounded-xl text-xs space-y-1">
+                  <p className="font-semibold text-orange-800 dark:text-orange-400 flex items-center gap-1.5">
+                    <i className="ri-information-line" /> Instructions
                   </p>
-                  <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
                     {event.paymentInstructions}
                   </p>
                 </div>
               )}
 
-              <label className="flex items-start gap-3 p-3.5 border border-neutral-200 dark:border-neutral-800 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={collegePaymentStatusConfirmed}
-                  onChange={(e) => setCollegePaymentStatusConfirmed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded text-orange-600 focus:ring-orange-500 dark:border-neutral-700 dark:bg-neutral-800"
-                />
-                <div className="text-xs">
-                  <p className="font-semibold text-neutral-800 dark:text-neutral-200">
-                    I have completed payment on the portal
-                  </p>
-                  <p className="text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    Confirm to complete your event registration.
-                  </p>
+              {/* Form Input Section (Receipt Number / Transaction ID) */}
+              <div className="space-y-4 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  Verification Details
+                </p>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                      Receipt Number / Transaction ID <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Receipt No. or Transaction Ref"
+                      value={manualTxId}
+                      onChange={(e) => setManualTxId(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                      Payer Name <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Name on payment receipt"
+                      value={manualPayerName}
+                      onChange={(e) => setManualPayerName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                      Remarks <span className="text-neutral-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Additional receipt details"
+                      value={manualRemarks}
+                      onChange={(e) => setManualRemarks(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                    />
+                  </div>
                 </div>
-              </label>
+              </div>
             </div>
           )}
 
@@ -343,39 +376,21 @@ const PaymentModal = ({
             Cancel
           </button>
 
-          {paymentType === 'MANUAL_TRANSACTION' ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (!manualTxId.trim() || !manualPayerName.trim()) {
-                  showNotification('Please fill in required payment details.', 'warning');
-                  return;
-                }
-                onSubmit(manualTxId, manualPayerName, manualRemarks);
-              }}
-              disabled={isRegistering}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isRegistering && <i className="ri-loader-4-line animate-spin text-sm" />}
-              {isRegistering ? 'Submitting...' : 'Submit Reference'}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                if (!collegePaymentStatusConfirmed) {
-                  showNotification('Please confirm your payment first.', 'warning');
-                  return;
-                }
-                onSubmit('COLLEGE_PORTAL', 'COLLEGE_PAYMENT', 'Paid via official portal');
-              }}
-              disabled={isRegistering}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isRegistering && <i className="ri-loader-4-line animate-spin text-sm" />}
-              {isRegistering ? 'Submitting...' : 'Confirm Registration'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!manualTxId.trim() || !manualPayerName.trim()) {
+                showNotification('Please fill in Receipt Number / Transaction ID and Payer Name.', 'warning');
+                return;
+              }
+              onSubmit(manualTxId, manualPayerName, manualRemarks);
+            }}
+            disabled={isRegistering}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isRegistering && <i className="ri-loader-4-line animate-spin text-sm" />}
+            {isRegistering ? 'Submitting...' : 'Submit Reference'}
+          </button>
         </div>
 
       </div>

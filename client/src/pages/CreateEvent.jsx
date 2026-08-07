@@ -237,6 +237,9 @@ const CreateEvent = () => {
             if (formData.paymentMethod === 'MANUAL_TRANSACTION' && !formData.upiId?.trim()) {
                 return 'UPI ID / Phone Number is required for Manual Transaction Verification.';
             }
+            if (formData.paymentMethod === 'COLLEGE_PAYMENT' && (!formData.collegePaymentUrl?.trim() || !URL_PATTERN.test(formData.collegePaymentUrl.trim()))) {
+                return 'Valid College Payment Portal URL (https://...) is required.';
+            }
         }
         for (let i = 0; i < formData.customFields.length; i++) {
             if (!formData.customFields[i].label?.trim()) {
@@ -406,7 +409,7 @@ const CreateEvent = () => {
     };
 
     const inputCls =
-        'w-full px-4 py-3 border-2 border-neutral-200 rounded-sm focus:border-orange-600 focus:outline-none transition-colors';
+        'w-full px-4 py-3 border-2 border-neutral-200 rounded-lg focus:border-orange-600 focus:outline-none transition-colors';
     const labelCls =
         'block text-sm font-bold text-black mb-2';
 
@@ -429,7 +432,7 @@ const CreateEvent = () => {
                 {/* Stepper Component */}
                 <EventFormStepper currentStep={currentStep} onStepClick={handleStepClick} />
 
-                <form onSubmit={handleSubmit} className="bg-white border border-neutral-300 rounded-sm p-6 md:p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="bg-white border border-neutral-300 rounded-lg p-6 md:p-8 space-y-6">
                     {error && (
                         <div className="flex items-center gap-2 bg-red-50 border-2 border-red-400 text-red-700 text-[13px] font-bold px-4 py-3 rounded-sm animate-step-fadeIn">
                             <i className="ri-error-warning-line text-lg flex-shrink-0" />
@@ -729,19 +732,19 @@ const CreateEvent = () => {
                                             <span className="text-xs text-neutral-500 mt-2">Users scan your QR code/UPI ID and submit Transaction ID.</span>
                                         </label>
 
-                                        <label className="flex flex-col p-4 border-2 border-dashed border-neutral-200 bg-neutral-100 opacity-50 cursor-not-allowed select-none">
+                                        <label className={`flex flex-col p-4 border-2 rounded-sm cursor-pointer transition-all ${formData.paymentMethod === 'COLLEGE_PAYMENT' ? 'border-orange-600 bg-orange-50/30' : 'border-neutral-200 hover:border-neutral-400 bg-white'}`}>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="radio"
                                                     name="paymentMethod"
                                                     value="COLLEGE_PAYMENT"
-                                                    checked={false}
-                                                    disabled
-                                                    className="w-4 h-4 accent-orange-600 cursor-not-allowed"
+                                                    checked={formData.paymentMethod === 'COLLEGE_PAYMENT'}
+                                                    onChange={() => setFormData({ ...formData, paymentMethod: 'COLLEGE_PAYMENT' })}
+                                                    className="w-4 h-4 accent-orange-600 cursor-pointer"
                                                 />
-                                                <span className="text-sm font-bold text-neutral-500">College Portal (Coming Soon)</span>
+                                                <span className="text-sm font-bold text-black">College Portal</span>
                                             </div>
-                                            <span className="text-xs text-neutral-400 mt-2">Integration with college official fees collection portal.</span>
+                                            <span className="text-xs text-neutral-500 mt-2">Direct users to official college payment portal URL.</span>
                                         </label>
                                     </div>
                                 </div>
@@ -797,6 +800,34 @@ const CreateEvent = () => {
                                                 rows="3"
                                                 className={`${inputCls} resize-y`}
                                                 placeholder="Add custom instructions for the user (e.g. Please scan the QR code, pay via GPay/PhonePe/Paytm, and paste the 12-digit UTR/Transaction ID below.)"
+                                                value={formData.paymentInstructions}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* College Payment Portal Fields (Conditional) */}
+                                {formData.paymentMethod === 'COLLEGE_PAYMENT' && (
+                                    <div className="space-y-4 border-t border-neutral-200 pt-4">
+                                        <div>
+                                            <label className={labelCls}>College Payment Portal URL <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="url"
+                                                name="collegePaymentUrl"
+                                                className={inputCls}
+                                                placeholder="https://payments.college.ac.in/event-fee"
+                                                value={formData.collegePaymentUrl}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Custom Payment Instructions <span className="text-neutral-400 font-normal">(optional)</span></label>
+                                            <textarea
+                                                name="paymentInstructions"
+                                                rows="3"
+                                                className={`${inputCls} resize-y`}
+                                                placeholder="Add custom instructions for payment on the college portal."
                                                 value={formData.paymentInstructions}
                                                 onChange={handleChange}
                                             />

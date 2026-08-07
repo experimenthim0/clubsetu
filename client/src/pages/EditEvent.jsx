@@ -369,6 +369,9 @@ const EditEvent = () => {
             if (formData.paymentMethod === 'MANUAL_TRANSACTION' && !formData.upiId?.trim()) {
                 return 'UPI ID / Phone Number is required for Manual Transaction Verification.';
             }
+            if (formData.paymentMethod === 'COLLEGE_PAYMENT' && (!formData.collegePaymentUrl?.trim() || !URL_PATTERN.test(formData.collegePaymentUrl.trim()))) {
+                return 'Valid College Payment Portal URL (https://...) is required.';
+            }
         }
         for (let i = 0; i < formData.customFields.length; i++) {
             if (!formData.customFields[i].label?.trim()) {
@@ -439,7 +442,7 @@ const EditEvent = () => {
     const addWinner = () => {
         setFormData(prev => ({
             ...prev,
-            winners: [...prev.winners, { rank: prev.winners.length + 1, name: '', rollNo: '', error: null }]
+            winners: [...prev.winners, { rank: prev.winners.length + 1, name: '', rollNo: '', members: [], leaderName: '', error: null }]
         }));
     };
 
@@ -458,22 +461,65 @@ const EditEvent = () => {
         });
     };
 
-    const handleRollNoLookup = async (index, rollNoVal) => {
-        if (!rollNoVal || !rollNoVal.trim()) return;
+    const handleWinnerLookup = async (index, queryVal) => {
+        if (!queryVal || !queryVal.trim()) return;
+        const isTeamEvent = formData.registrationType === 'team' || formData.registrationType === 'both';
+        const token = localStorage.getItem('token');
+
+        if (isTeamEvent) {
+            try {
+                const res = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/api/teams/event/${id}/lookup-leader?query=${encodeURIComponent(queryVal.trim())}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const { teamName, members, leaderName } = res.data;
+
+                setFormData(prev => {
+                    const updated = [...prev.winners];
+                    updated[index] = {
+                        ...updated[index],
+                        name: teamName,
+                        members: members || [],
+                        leaderName: leaderName || '',
+                        error: null
+                    };
+                    return { ...prev, winners: updated };
+                });
+                return;
+            } catch (err) {
+                // Fallback to student roll number lookup below
+            }
+        }
+
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/lookup/${rollNoVal.trim()}`);
+            const res = await axios.get(
+                `${import.meta.env.VITE_API_URL}/api/users/lookup/${encodeURIComponent(queryVal.trim())}`,
+                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            );
             const { name, branch } = res.data;
             const displayName = branch ? `${name}(${branch})` : name;
-            
+
             setFormData(prev => {
                 const updated = [...prev.winners];
-                updated[index] = { ...updated[index], name: displayName, error: null };
+                updated[index] = {
+                    ...updated[index],
+                    name: displayName,
+                    members: [],
+                    leaderName: '',
+                    error: null
+                };
                 return { ...prev, winners: updated };
             });
         } catch (err) {
             setFormData(prev => {
                 const updated = [...prev.winners];
-                updated[index] = { ...updated[index], name: '', error: 'Student not found.' };
+                updated[index] = {
+                    ...updated[index],
+                    name: '',
+                    members: [],
+                    leaderName: '',
+                    error: isTeamEvent ? 'No registered team or student found.' : 'Student not found.'
+                };
                 return { ...prev, winners: updated };
             });
         }
@@ -539,7 +585,7 @@ const EditEvent = () => {
     }
 
     const inputCls =
-        'w-full px-4 py-2 border-2 border-neutral-200 rounded-sm focus:border-orange-600 focus:outline-none transition-colors';
+        'w-full px-4 py-2 border-2 border-neutral-200 rounded-lg focus:border-orange-600 focus:outline-none transition-colors';
     const labelCls =
         'block text-sm font-bold tracking-wide text-black mb-2';
 
@@ -548,13 +594,13 @@ const EditEvent = () => {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
-                    <button
+                    {/* <button
                         type="button"
                         onClick={() => navigate('/profile')}
                         className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-neutral-400 hover:text-black transition-colors mb-4 cursor-pointer"
                     >
                         <i className="ri-arrow-left-line text-lg" /> Back to Profile
-                    </button>
+                    </button> */}
                     <h1 className="text-3xl md:text-5xl font-black text-black tracking-wide">Edit Event</h1>
                     <p className="text-neutral-500 mt-2 font-medium">Refine your event details and registration requirements step-by-step.</p>
                 </div>
@@ -562,7 +608,7 @@ const EditEvent = () => {
                 {/* Stepper Component */}
                 <EventFormStepper currentStep={currentStep} onStepClick={handleStepClick} />
 
-                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-300 rounded-sm p-6 md:p-10 space-y-8">
+                <form onSubmit={handleSubmit} className="bg-white border-2 border-gray-300 rounded-lg p-6 md:p-10 space-y-8">
                     
                     {/* STEP 1: Basic Details */}
                     {currentStep === 1 && (
@@ -857,19 +903,19 @@ const EditEvent = () => {
                                             <span className="text-xs text-neutral-500 mt-2">Users scan your QR code/UPI ID and submit Transaction ID.</span>
                                         </label>
 
-                                        <label className="flex flex-col p-4 border-2 border-dashed border-neutral-200 bg-neutral-100 opacity-50 cursor-not-allowed select-none">
+                                        <label className={`flex flex-col p-4 border-2 rounded-sm cursor-pointer transition-all ${formData.paymentMethod === 'COLLEGE_PAYMENT' ? 'border-orange-600 bg-orange-50/30' : 'border-neutral-200 hover:border-neutral-400 bg-white'}`}>
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="radio"
                                                     name="paymentMethod"
                                                     value="COLLEGE_PAYMENT"
-                                                    checked={false}
-                                                    disabled
-                                                    className="w-4 h-4 accent-orange-600 cursor-not-allowed"
+                                                    checked={formData.paymentMethod === 'COLLEGE_PAYMENT'}
+                                                    onChange={() => setFormData({ ...formData, paymentMethod: 'COLLEGE_PAYMENT' })}
+                                                    className="w-4 h-4 accent-orange-600 cursor-pointer"
                                                 />
-                                                <span className="text-sm font-bold text-neutral-500">College Portal (Coming Soon)</span>
+                                                <span className="text-sm font-bold text-black">College Portal</span>
                                             </div>
-                                            <span className="text-xs text-neutral-400 mt-2">Integration with college official fees collection portal.</span>
+                                            <span className="text-xs text-neutral-500 mt-2">Direct users to official college payment portal URL.</span>
                                         </label>
                                     </div>
                                 </div>
@@ -925,6 +971,34 @@ const EditEvent = () => {
                                                 rows="3"
                                                 className={`${inputCls} resize-y`}
                                                 placeholder="Add custom instructions for the user (e.g. Please scan the QR code, pay via GPay/PhonePe/Paytm, and paste the 12-digit UTR/Transaction ID below.)"
+                                                value={formData.paymentInstructions}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* College Payment Portal Fields (Conditional) */}
+                                {formData.paymentMethod === 'COLLEGE_PAYMENT' && (
+                                    <div className="space-y-4 border-t border-neutral-200 pt-4">
+                                        <div>
+                                            <label className={labelCls}>College Payment Portal URL <span className="text-orange-600">*</span></label>
+                                            <input
+                                                type="url"
+                                                name="collegePaymentUrl"
+                                                className={inputCls}
+                                                placeholder="https://payments.college.ac.in/event-fee"
+                                                value={formData.collegePaymentUrl}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Custom Payment Instructions <span className="text-neutral-400 font-normal">(optional)</span></label>
+                                            <textarea
+                                                name="paymentInstructions"
+                                                rows="3"
+                                                className={`${inputCls} resize-y`}
+                                                placeholder="Add custom instructions for payment on the college portal."
                                                 value={formData.paymentInstructions}
                                                 onChange={handleChange}
                                             />
@@ -1236,58 +1310,82 @@ const EditEvent = () => {
                                         </div>
                                         
                                         <div className="space-y-3">
-                                            {formData.winners.map((winner, index) => (
-                                                <div key={index} className="bg-neutral-50 p-4 border border-neutral-200 rounded-lg relative">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeWinner(index)}
-                                                        className="absolute top-3 right-3 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors sm:static sm:p-3 cursor-pointer"
-                                                    >
-                                                        <i className="ri-delete-bin-line text-lg" />
-                                                    </button>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_1fr] gap-3 pr-10 sm:pr-0 items-end">
-                                                        <div>
-                                                            <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
-                                                            <input
-                                                                type="number"
-                                                                value={winner.rank}
-                                                                onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
-                                                                className={inputCls}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-bold uppercase mb-1 block">Roll Number</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Enter roll number"
-                                                                value={winner.rollNo || ''}
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    updateWinner(index, 'rollNo', val);
-                                                                    if (val.trim().length >= 4) {
-                                                                        handleRollNoLookup(index, val);
-                                                                    }
-                                                                }}
-                                                                onBlur={(e) => handleRollNoLookup(index, e.target.value)}
-                                                                className={inputCls}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-bold uppercase mb-1 block">Winner Name</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Identified Name"
-                                                                value={winner.name}
-                                                                className={`${inputCls} bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed`}
-                                                                readOnly
-                                                            />
-                                                            {winner.error && (
-                                                                <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
-                                                            )}
+                                            {formData.winners.map((winner, index) => {
+                                                const isTeamEvent = formData.registrationType === 'team' || formData.registrationType === 'both';
+
+                                                return (
+                                                    <div key={index} className="bg-neutral-50 dark:bg-neutral-800/40 p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg relative">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeWinner(index)}
+                                                            className="absolute top-3 right-3 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors sm:static sm:p-3 cursor-pointer"
+                                                            title="Remove winner"
+                                                        >
+                                                            <i className="ri-delete-bin-line text-lg" />
+                                                        </button>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-[70px_1fr_1fr] gap-3 pr-10 sm:pr-0 items-start">
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={winner.rank}
+                                                                    onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
+                                                                    className={inputCls}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase mb-1 block">
+                                                                    {isTeamEvent ? 'Leader Name / Roll No' : 'Roll Number'}
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={isTeamEvent ? "Enter Leader Name or Roll No" : "Enter roll number"}
+                                                                    value={winner.rollNo || ''}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        updateWinner(index, 'rollNo', val);
+                                                                        if (val.trim().length >= 3) {
+                                                                            handleWinnerLookup(index, val);
+                                                                        }
+                                                                    }}
+                                                                    onBlur={(e) => handleWinnerLookup(index, e.target.value)}
+                                                                    className={inputCls}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] font-bold uppercase mb-1 block">
+                                                                    {isTeamEvent ? 'Team Name' : 'Winner Name'}
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder={isTeamEvent ? "Identified Team Name" : "Identified Name"}
+                                                                    value={winner.name || ''}
+                                                                    onChange={(e) => updateWinner(index, 'name', e.target.value)}
+                                                                    className={inputCls}
+                                                                />
+                                                                {winner.members && winner.members.length > 0 && (() => {
+                                                                    const raw = Array.isArray(winner.members)
+                                                                        ? winner.members.map(m => (typeof m === 'string' ? m : m?.name)).filter(Boolean)
+                                                                        : [typeof winner.members === 'string' ? winner.members : winner.members?.name].filter(Boolean);
+                                                                    const uniqueM = Array.from(new Set(raw));
+                                                                    if (uniqueM.length === 0) return null;
+                                                                    return (
+                                                                        <div className="mt-2 p-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded text-xs">
+                                                                            <span className="font-bold text-black dark:text-white">Members: </span>
+                                                                            <span className="text-neutral-600 dark:text-neutral-400">
+                                                                                {uniqueM.join(', ')}
+                                                                            </span>
+                                                                        </div>
+                                                                    );
+                                                                })()}
+                                                                {winner.error && (
+                                                                    <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                             {formData.winners.length === 0 && (
                                                 <p className="text-sm text-neutral-400 italic text-center py-4">No winners declared yet.</p>
                                             )}

@@ -89,7 +89,9 @@ const Profile = () => {
           });
       }
 
-      if (storedRole === 'member' || storedRole === 'student') {
+      // Fetch events/winnings for student user
+      const isStudentUser = Boolean(storedUser?.rollNo || storedUser?.branch || storedRole === 'member' || storedRole === 'student' || storedRole !== 'club');
+      if (isStudentUser) {
         axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${storedUser.id || storedUser._id}`)
           .then(res => {
             const participations = res.data || [];
@@ -125,162 +127,206 @@ const Profile = () => {
   if (!user) return <div className="text-center mt-10">Please login to view profile.</div>;
   if (loading) return <div className="text-center mt-10">Loading profile...</div>;
 
- return (
-  <div className="max-w-5xl mx-auto px-6 py-12">
+  // Determine whether this is a Student Profile vs an Official Club Account
+  const isStudentAccount = Boolean(user?.rollNo || user?.branch || user?.year || role === 'student' || role === 'member' || localStorage.getItem('role') === 'member' || localStorage.getItem('role') === 'student');
+  const isClubAccount = !isStudentAccount && role === 'club';
 
-    {/* Profile Card */}
-    <div className="bg-white border border-neutral-200 rounded-xl p-6 md:p-8 mb-12 shadow-sm">
-      <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 mb-8">
-        Profile
-      </h1>
+  // Compute header role tag display
+  let displayRoleTag = 'Student';
+  if (isClubAccount) {
+    displayRoleTag = 'Club Account';
+  } else if (user?.memberships && user.memberships.length > 0) {
+    const hasHead = user.memberships.some(m => m.role === 'CLUB_HEAD');
+    const hasCoord = user.memberships.some(m => m.role === 'COORDINATOR');
+    if (hasHead) displayRoleTag = 'Student • Club Head';
+    else if (hasCoord) displayRoleTag = 'Student • Coordinator';
+    else displayRoleTag = 'Student • Member';
+  }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-neutral-700">
-        <div>
-          <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Name</p>
-          <p className="font-semibold text-lg text-neutral-800">{user.name}</p>
+  // Initials for fallback avatar
+  const profileInitials = (user?.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-12">
+
+      {/* Profile Card */}
+      <div className="bg-white border border-neutral-200 rounded-xl p-6 md:p-8 mb-12 shadow-sm">
+        {/* 1. Unified Profile Header */}
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 pb-8 border-b border-neutral-100">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left flex-1">
+            {/* Avatar */}
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-[3px] border-neutral-200 flex items-center justify-center shrink-0 bg-gradient-to-br from-orange-500 to-amber-500 shadow-xs">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl md:text-4xl font-bold text-white select-none">{profileInitials}</span>
+              )}
+            </div>
+
+            {/* Identity details & Header Action Buttons */}
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900 tracking-tight">
+                  {user.name}
+                </h1>
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider border border-orange-200 text-orange-600 bg-orange-50 rounded-full">
+                  {displayRoleTag}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-neutral-500 mt-1 break-all">{user.email}</p>
+
+              {/* Action Grouping: Action buttons directly adjacent to header details */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4">
+                <Link 
+                  to="/profile/edit" 
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-full transition-all font-semibold text-xs shadow-xs cursor-pointer border-0"
+                >
+                  <i className="ri-edit-line text-sm" /> Edit Profile
+                </Link>
+                {isStudentAccount && (
+                  <Link 
+                    to="/my-events" 
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 hover:text-orange-600 rounded-full transition-colors font-semibold text-xs shadow-xs cursor-pointer border-0"
+                  >
+                    <i className="ri-calendar-event-line text-sm" /> View My Events
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Email</p>
-          <p className="font-semibold text-lg text-neutral-800 break-all">
-            {user.email}
-          </p>
-        </div>
-
-        {(role === 'member' || role === 'student') && (
-          <>
-            <div>
-              <p className="text-xs font-semibold text-neutral-400  tracking-wider mb-1">Roll No</p>
-              <p className="font-semibold text-neutral-800">{user.rollNo}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-neutral-400 tracking-wider mb-1">Branch / Year</p>
-              <p className="font-semibold text-neutral-800">
-                {user.branch} - {user.year}
-              </p>
-            </div>
-          </>
-        )}
-      </div>
-
-
-{(!['member', 'student'].includes(role)) && !user.isTwoStepEnabled && (
-  <p className='text-neutral-600 mt-6 text-sm font-medium'> <i className="ri-error-warning-line mr-1 text-orange-500" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-semibold text-orange-655 text-orange-600 hover:underline">Enable it</Link></p>
-)}
-   
-      <div className="mt-8 pt-6 border-t border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div>
-                <h3 className="text-xs font-bold text-neutral-500  mb-3">Social Profiles</h3>
-                <div className="flex flex-wrap gap-2.5">
-                    {user.githubProfile && (
-                        <a href={user.githubProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-sm">
-                            <i className="ri-github-fill text-lg text-neutral-800" /> GitHub
-                        </a>
-                    )}
-                    {user.linkedinProfile && (
-                        <a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-blue-700 hover:bg-neutral-50 hover:border-blue-500/50 transition-colors shadow-sm">
-                            <i className="ri-linkedin-box-fill text-lg" /> LinkedIn
-                        </a>
-                    )}
-                    {user.xProfile && (
-                        <a href={user.xProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-900 hover:bg-neutral-50 hover:border-neutral-800/50 transition-colors shadow-sm">
-                            <i className="ri-twitter-x-fill text-lg" /> X
-                        </a>
-                    )}
-                    {user.instagramProfile && (
-                        <a href={user.instagramProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-pink-600 hover:bg-neutral-50 hover:border-pink-500/50 transition-colors shadow-sm">
-                            <i className="ri-instagram-line text-lg" /> Instagram
-                        </a>
-                    )}
-                    {user.whatsappNumber && (
-                        <a href={`https://wa.me/${user.whatsappNumber.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-green-600 hover:bg-neutral-50 hover:border-green-500/50 transition-colors shadow-sm">
-                            <i className="ri-whatsapp-line text-lg" /> WhatsApp
-                        </a>
-                    )}
-                    {user.portfolioUrl && (
-                        <a href={user.portfolioUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-orange-600 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-sm">
-                            <i className="ri-global-line text-lg" /> Portfolio
-                        </a>
-                    )}
-                    {!user.githubProfile && !user.linkedinProfile && !user.xProfile && !user.instagramProfile && !user.whatsappNumber && !user.portfolioUrl && (
-                        <p className="text-xs text-neutral-400 italic font-medium">No social profiles added.</p>
-                    )}
+        {/* 2. Structured Form & Field Data Layout */}
+        {isStudentAccount && (
+          <div className="pt-8">
+            <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-4">Academic & Account Attributes</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {user.rollNo && (
+                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                  <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</p>
+                  <p className="text-sm font-bold text-neutral-900 font-mono">{user.rollNo}</p>
                 </div>
+              )}
+              {user.branch && (
+                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                  <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Branch</p>
+                  <p className="text-sm font-bold text-neutral-900">{user.branch}</p>
+                </div>
+              )}
+              {user.year && (
+                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                  <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Academic Year</p>
+                  <p className="text-sm font-bold text-neutral-900">{user.year}</p>
+                </div>
+              )}
             </div>
-            <div className="flex md:justify-end">
-                <a href="/profile/edit" className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition font-semibold text-xs shadow-sm cursor-pointer border-0">
-                    <i className="ri-edit-line text-sm" /> Edit Profile
-                </a>
-            </div>
-      </div>
-    </div>
+          </div>
+        )}
 
-    {(role === 'member' || role === 'student') && (
-      <div className="mb-12">
-        <Link 
-          to="/my-events" 
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-100 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-full hover:bg-neutral-100 hover:text-orange-600 transition-colors shadow-sm cursor-pointer border-0"
-        >
-          <i className="ri-calendar-event-line text-sm font-light" /> View My Events
-        </Link>
+        {isClubAccount && !user.isTwoStepEnabled && (
+          <p className='text-neutral-600 mt-6 text-sm font-medium'>
+            <i className="ri-error-warning-line mr-1 text-orange-500" /> Two Factor Authentication is disabled <Link to="/profile/edit" className="font-semibold text-orange-600 hover:underline">Enable it</Link>
+          </p>
+        )}
+
+        {/* Social Profiles */}
+        <div className="mt-8 pt-6 border-t border-neutral-100">
+          <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3">Social Profiles</h3>
+          <div className="flex flex-wrap gap-2.5">
+            {user.githubProfile && (
+              <a href={user.githubProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-xs">
+                <i className="ri-github-fill text-lg text-neutral-800" /> GitHub
+              </a>
+            )}
+            {user.linkedinProfile && (
+              <a href={user.linkedinProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-blue-700 hover:bg-neutral-50 hover:border-blue-500/50 transition-colors shadow-xs">
+                <i className="ri-linkedin-box-fill text-lg" /> LinkedIn
+              </a>
+            )}
+            {user.xProfile && (
+              <a href={user.xProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-900 hover:bg-neutral-50 hover:border-neutral-800/50 transition-colors shadow-xs">
+                <i className="ri-twitter-x-fill text-lg" /> X
+              </a>
+            )}
+            {user.instagramProfile && (
+              <a href={user.instagramProfile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-pink-600 hover:bg-neutral-50 hover:border-pink-500/50 transition-colors shadow-xs">
+                <i className="ri-instagram-line text-lg" /> Instagram
+              </a>
+            )}
+            {user.whatsappNumber && (
+              <a href={`https://wa.me/${user.whatsappNumber.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-green-600 hover:bg-neutral-50 hover:border-green-500/50 transition-colors shadow-xs">
+                <i className="ri-whatsapp-line text-lg" /> WhatsApp
+              </a>
+            )}
+            {user.portfolioUrl && (
+              <a href={user.portfolioUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-200 rounded-lg text-xs font-medium text-orange-600 hover:bg-neutral-50 hover:border-orange-500/50 transition-colors shadow-xs">
+                <i className="ri-global-line text-lg" /> Portfolio
+              </a>
+            )}
+            {!user.githubProfile && !user.linkedinProfile && !user.xProfile && !user.instagramProfile && !user.whatsappNumber && !user.portfolioUrl && (
+              <p className="text-xs text-neutral-400 italic font-medium">No social profiles added.</p>
+            )}
+          </div>
+        </div>
       </div>
-    )}
 
     {/* Enrolled Clubs Section */}
-    {(role === 'member' || role === 'student') && (
+    {isStudentAccount && (
       <div className="mb-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">
         <h2 className="text-lg font-bold text-neutral-900 tracking-wider mb-6 flex items-center gap-2">
           Enrolled Clubs & Societies
         </h2>
         {user?.memberships && user.memberships.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-  {user.memberships.map((m, index) => {
-    const roleDisplay =
-      m.role === "CLUB_HEAD"
-        ? "Club Head"
-        : m.role === "COORDINATOR"
-        ? "Coordinator"
-        : "Member";
+            {user.memberships.map((m, index) => {
+              const roleDisplay =
+                m.role === "CLUB_HEAD"
+                  ? "Club Head"
+                  : m.role === "COORDINATOR"
+                  ? "Coordinator"
+                  : "Member";
 
-    const resolvedLogo =
-      m.clubLogo ||
-      m.club?.clubLogo ||
-      clubsMap[m.clubId] ||
-      clubsMap[m.slug] ||
-      (m.clubName && clubsMap[m.clubName.toLowerCase()]);
+              const badgeStyle =
+                m.role === "CLUB_HEAD"
+                  ? "border-amber-300 bg-amber-50 text-amber-800 font-bold"
+                  : m.role === "COORDINATOR"
+                  ? "border-orange-300 bg-orange-50 text-orange-800 font-bold"
+                  : "border-neutral-200 bg-neutral-50 text-neutral-700 font-medium";
 
-    return (
-      <Link
-        key={index}
-        to={`/club/${m.slug || m.clubId}`}
-        className="group bg-white  rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:border-black hover:shadow-sm"
-      >
-        {/* Club Logo */}
-        <div className="w-14 h-14 rounded-full border border-neutral-200 overflow-hidden flex items-center justify-center bg-white mb-4">
-          <ClubLogoImage
-            clubLogo={resolvedLogo}
-            clubName={m.clubName}
-          />
-        </div>
+              const resolvedLogo =
+                m.clubLogo ||
+                m.club?.clubLogo ||
+                clubsMap[m.clubId] ||
+                clubsMap[m.slug] ||
+                (m.clubName && clubsMap[m.clubName.toLowerCase()]);
 
-        {/* Club Name */}
-        <h3 className="font-semibold text-black text-sm leading-snug line-clamp-2 group-hover:underline">
-          {m.clubName || "Club Details"}
-        </h3>
+              return (
+                <Link
+                  key={index}
+                  to={`/club/${m.slug || m.clubId}`}
+                  className="group bg-white border border-neutral-200 hover:border-orange-500 rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 hover:shadow-md"
+                >
+                  {/* Club Logo */}
+                  <div className="w-14 h-14 rounded-full border border-neutral-200 overflow-hidden flex items-center justify-center bg-white mb-3 shadow-xs">
+                    <ClubLogoImage
+                      clubLogo={resolvedLogo}
+                      clubName={m.clubName}
+                    />
+                  </div>
 
-        {/* Role */}
-        <span className="mt-3 px-3 py-1 text-[10px]  border border-neutral-500 rounded-full text-black bg-white">
-          {roleDisplay}
-        </span>
+                  {/* Club Name */}
+                  <h3 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-2 group-hover:text-orange-600 transition-colors">
+                    {m.clubName || "Club Details"}
+                  </h3>
 
-        {/* Arrow */}
-        {/* <div className="mt-5 text-neutral-400 group-hover:text-black transition-colors">
-          <i className="ri-arrow-right-line text-lg" />
-        </div> */}
-      </Link>
-    );
-  })}
-</div>
+                  {/* Specific Role Tag in this Particular Club */}
+                  <span className={`mt-3 px-3 py-1 text-[10px] uppercase tracking-wider border rounded-full ${badgeStyle}`}>
+                    {roleDisplay}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         ) : (
           <div className="bg-neutral-50 p-6 border border-neutral-200 rounded-xl text-center">
             <i className="ri-building-4-line text-3xl text-neutral-400/60 mb-2 inline-block" />
@@ -298,15 +344,15 @@ const Profile = () => {
     )}
 
     {/* Achievements / Trophy Room */}
-    {(role === 'member' || role === 'student') && (
-      <div className="mb-12 p-6 md:p-8 bg-white border  rounded-xl shadow-sm">
-        <h2 className="text-lg font-bold text-neutral-900  mb-6 flex items-center gap-2 ">
+    {isStudentAccount && (
+      <div className="mb-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900 mb-6 flex items-center gap-2">
           Achievements & Winnings
         </h2>
         {winnings.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {winnings.map((w, index) => (
-              <div key={index} className="flex items-center gap-4 bg-white p-4  rounded-xl shadow-xs">
+              <div key={index} className="flex items-center gap-4 bg-white p-4 border border-neutral-200 rounded-xl shadow-xs">
                 <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                   <i className="ri-award-fill text-amber-600 text-lg" />
                 </div>
@@ -325,7 +371,7 @@ const Profile = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-white p-6 rounded-xl text-center">
+          <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200 text-center">
             <i className="ri-trophy-line text-3xl text-amber-400/60 mb-2 inline-block" />
             <p className="text-sm font-semibold text-neutral-700">No achievements recorded yet</p>
             <p className="text-xs text-neutral-500 mt-1">Participate and win in campus events to earn trophies and appear on the leaderboard!</p>
@@ -334,9 +380,7 @@ const Profile = () => {
       </div>
     )}
 
-    
-
-    {(role === 'club') && (
+    {isClubAccount && (
       <div className="mt-8 flex flex-wrap gap-4">
         <Link 
           to="/my-events" 
@@ -360,7 +404,7 @@ const Profile = () => {
     )}
 
     {/* Bank Information section - Restored for Club Account */}
-    {(role === 'club') && (
+    {isClubAccount && (
       <div className="mt-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">
         <h2 className="text-lg font-bold text-neutral-900 uppercase tracking-wider mb-6 flex items-center gap-2">
           <i className="ri-bank-card-line text-orange-600" /> Bank / Payment Information

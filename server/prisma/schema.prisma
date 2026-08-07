@@ -21,6 +21,7 @@ model AdminRole {
   resetPasswordToken  String?
   passwordChangeCount Int          @default(0)
   lastPasswordChangeDate DateTime?
+  profileImage      String?
   coordinatedClubs  Club[]         @relation("ClubFacultyCoordinator")
   reviewedEvents    Event[]        @relation("EventReviewedBy")
   sentNotifications Notification[] @relation("NotificationSenderAdmin")
@@ -41,6 +42,7 @@ model StudentUser {
   instagramProfile        String?
   whatsappNumber          String?
   portfolioUrl            String?
+  profileImage            String?
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
   isTwoStepEnabled        Boolean          @default(false)

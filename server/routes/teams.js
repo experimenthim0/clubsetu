@@ -588,6 +588,69 @@ router.post(
   }
 );
 
+// ── GET /api/teams/event/:eventId/lookup-leader — fetch team details by leader name/rollNo/teamName ──
+router.get(
+  "/event/:eventId/lookup-leader",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { query } = req.query;
+
+      if (!query || !query.trim()) {
+        return res.status(400).json({ message: "Search query is required." });
+      }
+
+      const q = query.trim();
+
+      const team = await prisma.team.findFirst({
+        where: {
+          eventId,
+          OR: [
+            { leader: { rollNo: { equals: q, mode: 'insensitive' } } },
+            { leader: { name: { contains: q, mode: 'insensitive' } } },
+            { teamName: { contains: q, mode: 'insensitive' } }
+          ]
+        },
+        include: {
+          leader: {
+            select: { id: true, name: true, rollNo: true, branch: true }
+          },
+          members: {
+            include: {
+              user: {
+                select: { id: true, name: true, rollNo: true, branch: true }
+              }
+            }
+          }
+        }
+      });
+
+      if (!team) {
+        return res.status(404).json({ message: "No registered team found for this leader or team name." });
+      }
+
+      const rawMembers = [
+        team.leader?.name,
+        ...(team.members || []).map(m => m.user?.name)
+      ].filter(Boolean);
+
+      const memberNames = Array.from(new Set(rawMembers));
+
+      res.json({
+        id: team.id,
+        teamName: team.teamName,
+        leaderName: team.leader?.name,
+        leaderRollNo: team.leader?.rollNo,
+        members: memberNames
+      });
+    } catch (err) {
+      console.error("Lookup team leader error:", err);
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 // ── GET /api/teams/:id — fetch team details ─────────────────────────────────────
 router.get(
   "/:id",

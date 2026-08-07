@@ -23,11 +23,11 @@ const membershipIdParamSchema = z.object({
   query: z.any().optional(),
 });
 
-// All routes require token
-router.use(verifyToken);
-
-// GET /api/clubs/:clubId/members
+// Public route: GET /api/club-members/:clubId/members
 router.get("/:clubId/members", validate(clubIdParamSchema), getClubMembers);
+
+// Protected routes require token
+router.use(verifyToken);
 
 // POST /api/clubs/:clubId/members
 router.post("/:clubId/members", allowRoles("admin", "club", "facultyCoordinator"), validate(clubIdParamSchema), addClubMember);

@@ -24,7 +24,7 @@ const CheckIcon = () => (
 
 const EventFormStepper = ({ currentStep = 1, onStepClick }) => {
   return (
-    <div className="w-full bg-white border border-neutral-300 rounded-sm p-4 md:p-6 mb-8">
+    <div className="w-full bg-white border border-neutral-300 rounded-lg p-4 md:p-6 mb-8">
       <div className="relative flex items-start justify-between">
         {/* Background track */}
         <div className="absolute top-5 left-5 right-5 h-px bg-neutral-200 z-0" />

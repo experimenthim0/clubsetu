@@ -1,10 +1,21 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { verifyToken } from "../middleware/auth.js";
 import prisma from "../lib/prisma.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { getStudentRoleAndClub, getAdminClubId } from "./auth.js";
+import profileUpload from "../middleware/profileUpload.js";
+import { validateFileSignature, processProfileImage, generateProfileFilename } from "../utils/imageProcessor.js";
+import { uploadImage, deleteImage } from "../utils/cloudinary.js";
 
 const router = express.Router();
+
+// Rate limit profile photo uploads — 10 per 15 minutes
+const photoUploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: "Too many upload attempts. Please try again later." },
+});
 
 // GET /api/users/me — fetch the authenticated user's profile
 router.get("/me", verifyToken, async (req, res) => {
@@ -229,6 +240,141 @@ router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
     return res.json(student);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ── Profile Photo Endpoints ──────────────────────────────────────────────────
+
+/**
+ * Helper to extract Cloudinary public_id from a full URL.
+ * e.g. "https://res.cloudinary.com/.../profile-photos/abc123" → "profile-photos/abc123"
+ */
+function extractCloudinaryPublicId(url) {
+  if (!url) return null;
+  try {
+    // Remove query params (cache buster)
+    const clean = url.split("?")[0];
+    // Match the upload path: .../upload/v12345/folder/filename.ext
+    const match = clean.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-z]+)?$/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+// POST /api/users/profile-photo — upload or replace profile photo
+router.post(
+  "/profile-photo",
+  verifyToken,
+  photoUploadLimiter,
+  (req, res, next) => {
+    profileUpload.single("profilePhoto")(req, res, (err) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({ message: "Maximum file size is 5 MB." });
+        }
+        return res.status(400).json({ message: err.message || "Upload failed. Please try again." });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided." });
+      }
+
+      // Validate actual file signature (magic bytes) — prevents spoofed extensions
+      const { valid, detectedFormat } = await validateFileSignature(req.file.buffer);
+      if (!valid) {
+        return res.status(400).json({
+          message: "Image must be JPG, PNG or WEBP.",
+          detail: detectedFormat ? `Detected format: ${detectedFormat}` : undefined,
+        });
+      }
+
+      // Process image: auto-orient, strip EXIF, resize ≤800px, convert to WEBP
+      const processedBuffer = await processProfileImage(req.file.buffer);
+
+      const { userId, userType } = req.user;
+
+      // Fetch current user to check for existing photo
+      const currentUser = userType === "admin"
+        ? await prisma.adminRole.findUnique({ where: { id: userId }, select: { profileImage: true } })
+        : await prisma.studentUser.findUnique({ where: { id: userId }, select: { profileImage: true } });
+
+      // Delete old photo from Cloudinary if exists
+      if (currentUser?.profileImage) {
+        const oldPublicId = extractCloudinaryPublicId(currentUser.profileImage);
+        if (oldPublicId) {
+          try {
+            await deleteImage(oldPublicId);
+          } catch (delErr) {
+            console.warn("Failed to delete old profile image from Cloudinary:", delErr.message);
+          }
+        }
+      }
+
+      // Upload processed image to Cloudinary
+      const filename = generateProfileFilename(userId);
+      const result = await uploadImage(processedBuffer, "profile-photos");
+
+      // Build versioned URL for cache busting
+      const versionedUrl = `${result.secure_url}?v=${Date.now()}`;
+
+      // Update database
+      if (userType === "admin") {
+        await prisma.adminRole.update({ where: { id: userId }, data: { profileImage: versionedUrl } });
+      } else {
+        await prisma.studentUser.update({ where: { id: userId }, data: { profileImage: versionedUrl } });
+      }
+
+      return res.json({
+        success: true,
+        imageUrl: versionedUrl,
+        message: "Profile photo updated successfully",
+      });
+    } catch (err) {
+      console.error("Profile photo upload error:", err);
+      return res.status(500).json({ message: "Upload failed. Please try again." });
+    }
+  }
+);
+
+// DELETE /api/users/profile-photo — remove profile photo
+router.delete("/profile-photo", verifyToken, async (req, res) => {
+  try {
+    const { userId, userType } = req.user;
+
+    const currentUser = userType === "admin"
+      ? await prisma.adminRole.findUnique({ where: { id: userId }, select: { profileImage: true } })
+      : await prisma.studentUser.findUnique({ where: { id: userId }, select: { profileImage: true } });
+
+    if (!currentUser?.profileImage) {
+      return res.status(400).json({ message: "No profile photo to remove." });
+    }
+
+    // Delete from Cloudinary
+    const publicId = extractCloudinaryPublicId(currentUser.profileImage);
+    if (publicId) {
+      try {
+        await deleteImage(publicId);
+      } catch (delErr) {
+        console.warn("Failed to delete profile image from Cloudinary:", delErr.message);
+      }
+    }
+
+    // Clear from database
+    if (userType === "admin") {
+      await prisma.adminRole.update({ where: { id: userId }, data: { profileImage: null } });
+    } else {
+      await prisma.studentUser.update({ where: { id: userId }, data: { profileImage: null } });
+    }
+
+    return res.json({ success: true, message: "Profile photo removed successfully" });
+  } catch (err) {
+    console.error("Profile photo delete error:", err);
+    return res.status(500).json({ message: "Failed to remove profile photo. Please try again." });
   }
 });
 

@@ -4,6 +4,7 @@ import { useNotification } from '../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { invalidateCache } from '../lib/cacheManager';
+import ProfilePhotoUpload from '../components/ProfilePhotoUpload';
 
 import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/academicYear';
 
@@ -118,6 +119,16 @@ const EditProfile = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 border border-neutral-200 rounded-xl space-y-6 shadow-sm">
+                
+                {/* Profile Photo Upload */}
+                <div className="flex justify-center pb-6 border-b border-neutral-100">
+                    <ProfilePhotoUpload
+                        user={user}
+                        onPhotoUpdate={(newUrl) => {
+                            setUser(prev => ({ ...prev, profileImage: newUrl }));
+                        }}
+                    />
+                </div>
                 
                 {/* Read Only Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50/50 p-4 border border-neutral-200 rounded-lg">

@@ -14,12 +14,43 @@ import { registerUpdateCallback, unregisterUpdateCallback } from "../lib/cacheMa
 
 import { ClubMemberRole } from "../types/index.js";
 
+const MemberSocials = ({ student }) => {
+  if (!student) return null;
+  const links = [];
+  if (student.githubProfile) links.push({ url: student.githubProfile, icon: <GithubIcon className="w-3.5 h-3.5" />, title: "GitHub" });
+  if (student.linkedinProfile) links.push({ url: student.linkedinProfile, icon: <LinkedinIcon className="w-3.5 h-3.5" />, title: "LinkedIn" });
+  if (student.xProfile) links.push({ url: student.xProfile, icon: <TwitterIcon className="w-3.5 h-3.5" />, title: "X" });
+  if (student.instagramProfile) links.push({ url: student.instagramProfile, icon: <InstagramIcon className="w-3.5 h-3.5" />, title: "Instagram" });
+  if (student.whatsappNumber) links.push({ url: `https://wa.me/${student.whatsappNumber.replace(/\s+/g, '')}`, icon: <MessageCircleIcon className="w-3.5 h-3.5" />, title: "WhatsApp" });
+  if (student.portfolioUrl) links.push({ url: student.portfolioUrl, icon: <EarthIcon className="w-3.5 h-3.5" />, title: "Portfolio" });
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 mt-3 pt-3 border-t border-neutral-100 w-full">
+      {links.map((l, idx) => (
+        <a
+          key={idx}
+          href={l.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-7 h-7 rounded-lg bg-neutral-50 hover:bg-orange-50 hover:text-orange-600 text-neutral-500 border border-neutral-200/60 flex items-center justify-center transition-colors shadow-2xs"
+          title={l.title}
+        >
+          {l.icon}
+        </a>
+      ))}
+    </div>
+  );
+};
+
 const ClubDetails = () => {
   const { slug } = useParams();
   const { isDark } = useTheme();
   const [club, setClub] = useState(null);
   const [events, setEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -65,20 +96,24 @@ const ClubDetails = () => {
           }
         }
 
-        // Fetch membership to derive RBAC flags
-        if (storedUser && res.data.club) {
-          const clubId = res.data.club._id || res.data.club.id;
+        // Fetch club members & derive RBAC flags
+        if (clubData?.club) {
+          const clubId = clubData.club._id || clubData.club.id;
           try {
             const membersRes = await axios.get(
               `${import.meta.env.VITE_API_URL}/api/club-members/${clubId}/members`
             );
-            const membership = membersRes.data.find(
-              (m) => m.studentId === storedUser.id || m.student?.id === storedUser.id
-            );
-            setCanEdit(membership?.canEditEvents ?? false);
-            setIsHead(membership?.role === ClubMemberRole.CLUB_HEAD);
+            const memberList = membersRes.data || [];
+            setMembers(memberList);
+            if (storedUser) {
+              const membership = memberList.find(
+                (m) => m.studentId === storedUser.id || m.student?.id === storedUser.id
+              );
+              setCanEdit(membership?.canEditEvents ?? false);
+              setIsHead(membership?.role === ClubMemberRole.CLUB_HEAD);
+            }
           } catch {
-            // Not a member or fetch failed — no admin controls shown
+            // Not a member or fetch failed
           }
         }
       } catch (err) {
@@ -460,6 +495,121 @@ const ClubDetails = () => {
               </p>
             </div>
           )}
+        </section>
+
+        {/* ── Team & Members ── */}
+        <section>
+          {(() => {
+            const studentMembers = members.filter((m) => {
+              if (!m.student || !m.student.id || !m.student.name) return false;
+              const sName = m.student.name.toLowerCase().trim();
+              const cName = (club.clubName || "").toLowerCase().trim();
+              const sEmail = (m.student.email || "").toLowerCase().trim();
+              const cEmail = (club.clubEmail || "").toLowerCase().trim();
+
+              if (cName && sName === cName) return false;
+              if (cEmail && sEmail === cEmail) return false;
+              return true;
+            });
+
+            return (
+              <>
+                <div className="flex items-center gap-4 my-6">
+                  <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
+                    Team & Members
+                  </h2>
+                  <div className="h-[1px] flex-1 bg-neutral-200" />
+                  {studentMembers.length > 0 && (
+                    <span className="text-xs font-semibold text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-full">
+                      {studentMembers.length} {studentMembers.length === 1 ? "Member" : "Members"}
+                    </span>
+                  )}
+                </div>
+
+                {studentMembers.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {studentMembers.map((m) => {
+                      const s = m.student;
+                      const name = s.name;
+                      const initials = name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+
+                      const roleTitle =
+                        m.role === "CLUB_HEAD"
+                          ? "Club Head"
+                          : m.role === "COORDINATOR"
+                          ? "Coordinator"
+                          : "Member";
+
+                      const roleBadgeStyle =
+                        m.role === "CLUB_HEAD"
+                          ? "bg-orange-50 border-orange-200 text-orange-600"
+                          : m.role === "COORDINATOR"
+                          ? "bg-amber-50 border-amber-200 text-amber-600"
+                          : "bg-neutral-50 border-neutral-200 text-neutral-600";
+
+                      return (
+                        <div
+                          key={m._id || m.id}
+                          className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm hover:border-orange-500/50 hover:shadow-md transition-all duration-300 flex flex-col items-center text-center group"
+                        >
+                          {/* Photo / Avatar */}
+                          <div className="w-20 h-20 rounded-full border-2 border-neutral-200 overflow-hidden shrink-0 bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xl mb-3 shadow-xs">
+                            {s.profileImage ? (
+                              <img
+                                src={s.profileImage}
+                                alt={name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <span>{initials}</span>
+                            )}
+                          </div>
+
+                          {/* Name */}
+                          <h3 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-1">
+                            {name}
+                          </h3>
+
+                          {/* Role Badge */}
+                          <span
+                            className={`inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-full mt-1.5 ${roleBadgeStyle}`}
+                          >
+                            {roleTitle}
+                          </span>
+
+                          {/* Branch & Year */}
+                          {(s.branch || s.year) && (
+                            <p className="text-xs font-semibold text-neutral-500 mt-2">
+                              {s.branch ? `${s.branch}` : ""}
+                              {s.branch && s.year ? " • " : ""}
+                              {s.year ? `${s.year}` : ""}
+                            </p>
+                          )}
+
+                          {/* Social Profiles */}
+                          <MemberSocials student={s} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-white border border-dashed border-neutral-200 py-10 text-center rounded-xl">
+                    <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+                      No team members listed yet.
+                    </p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </section>
 
         {/* ── Sponsors ── */}

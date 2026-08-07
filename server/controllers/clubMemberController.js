@@ -111,7 +111,23 @@ export const getClubMembers = async (req, res) => {
     const members = await prisma.clubMembership.findMany({
       where: { clubId },
       include: {
-        student: { select: { id: true, name: true, email: true, rollNo: true } },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            rollNo: true,
+            branch: true,
+            year: true,
+            profileImage: true,
+            githubProfile: true,
+            linkedinProfile: true,
+            xProfile: true,
+            instagramProfile: true,
+            whatsappNumber: true,
+            portfolioUrl: true,
+          },
+        },
       },
     });
 
