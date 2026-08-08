@@ -315,7 +315,7 @@ const Navbar = () => {
               )}
             </button>
 
-            {isInstallable && (
+            {/* {isInstallable && (
               <button
                 onClick={installApp}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer ml-1"
@@ -324,7 +324,7 @@ const Navbar = () => {
                 <i className="ri-download-2-line text-sm" />
                 <span>Install App</span>
               </button>
-            )}
+            )} */}
 
             {user ? (
               <>

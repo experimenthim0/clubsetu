@@ -898,7 +898,7 @@ const Home = () => {
                     </Link>
                   </div>
 
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-800 dark:text-white/80  ">
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-800 dark:text-white/80 hidden sm:flex ">
 
   <div className="flex items-center gap-2">
     <i className="ri-shield-check-line text-orange-500" />
@@ -924,7 +924,7 @@ const Home = () => {
       )}
 
       {/* ── LATEST EVENTS (Shared) ────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
+      <section className="pt-12 pb-16 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
           <ScrollReveal direction="up">
             <div className="mb-12">

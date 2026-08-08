@@ -44,6 +44,7 @@ const PRECACHE_SHELL = [
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/pwa-maskable-512x512.png',
+  '/cs_pwa_notification.png',
   '/darkthemelogo.png',
   '/lightthemelogo2.png',
   '/clubsetu-favicon.jpg',
@@ -366,8 +367,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'CampusNode';
   const options = {
     body: data.body || 'You have a new campus update.',
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
+    icon: '/cs_pwa_notification.png',
+    badge: '/cs_pwa_notification.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/',

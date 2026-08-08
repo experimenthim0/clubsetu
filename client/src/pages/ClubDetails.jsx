@@ -55,6 +55,7 @@ const ClubDetails = () => {
   const [user, setUser] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
   const [isHead, setIsHead] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const fallbackLogo = isDark ? "/darkthemelogo.png" : "/lightthemelogo.png";
   const [heroLogoSrc, setHeroLogoSrc] = useState(fallbackLogo);
 
@@ -177,69 +178,94 @@ const ClubDetails = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen pb-20">
       {/* ── Hero ── */}
       <div className="bg-white text-black pt-20 pb-28 px-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-orange-500/10 blur-[120px] rounded-full -mr-20 -mt-20 pointer-events-none" />
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-8 relative z-10">
-          {/* Logo */}
-          <div className="w-28 h-28 bg-white border border-gray-200 rounded-full flex-shrink-0 overflow-hidden">
-            <img
-              src={heroLogoSrc}
-              alt={club.clubName}
-              className="w-full h-full object-contain rounded-full"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = fallbackLogo;
-              }}
-            />
-          </div>
-
-          {/* Name + desc */}
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3 break-words">
+        <div className="max-w-5xl mx-auto relative z-10">
+          {/* Header block: Logo + Title (Column order on small devices, Row order on sm+) */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-4 text-center sm:text-left">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white border border-gray-200 rounded-full flex-shrink-0 overflow-hidden shadow-sm">
+              <img
+                src={heroLogoSrc}
+                alt={club.clubName}
+                className="w-full h-full object-contain rounded-full"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = fallbackLogo;
+                }}
+              />
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight break-words">
               {club.clubName}
             </h1>
-            <p className="text-neutral-450 max-w-xl text-sm font-medium leading-relaxed">
-              {club.description ||
-                "The official student group dedicated to community, innovation, and campus spirit."}
-            </p>
-            {/* Admin action buttons — shown only to members with appropriate permissions */}
-            {(canEdit || isHead) && (
-              <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
-                {canEdit && (
-                  <Link
-                    to="/create"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
+          </div>
+
+          {/* Description with smooth height expansion animation & Expand button */}
+          {(() => {
+            const descText =
+              club.description ||
+              "The official student group dedicated to community, innovation, and campus spirit.";
+            const isLong = descText.length > 120;
+            return (
+              <div className="text-center sm:text-left">
+                <div
+                  className={`transition-all duration-500 ease-in-out overflow-hidden max-w-3xl ${
+                    isLong && !isDescriptionExpanded
+                      ? "max-h-[4.5rem] line-clamp-3"
+                      : "max-h-[1000px]"
+                  }`}
+                >
+                  <p className="text-neutral-700 text-sm font-medium leading-relaxed">
+                    {descText}
+                  </p>
+                </div>
+                {isLong && (
+                  <button
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="mt-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 focus:outline-none inline-flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <i className="ri-add-line" /> Create Event
-                  </Link>
-                )}
-                {isHead && (
-                  <>
-                    <Link
-                      to={`/club/edit/${club._id || club.id}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
-                    >
-                      <i className="ri-settings-3-line" /> Club Settings
-                    </Link>
-                    <Link
-                      to={`/club/${club._id || club.id}/team`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
-                    >
-                      <i className="ri-team-line" /> Manage Members
-                    </Link>
-                    {/* <button
-                      onClick={handleDeleteClub}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
-                    >
-                      <i className="ri-delete-bin-line" /> Delete Club
-                    </button> */}
-                  </>
+                    <span>{isDescriptionExpanded ? "Show less" : "Expand"}</span>
+                    <i
+                      className={`ri-arrow-down-s-line text-sm transition-transform duration-300 ${
+                        isDescriptionExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
                 )}
               </div>
-            )}
-          </div>
+            );
+          })()}
+
+          {/* Admin action buttons — shown only to members with appropriate permissions */}
+          {(canEdit || isHead) && (
+            <div className="flex flex-wrap gap-2 mt-4 justify-center sm:justify-start">
+              {canEdit && (
+                <Link
+                  to="/create"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
+                >
+                  <i className="ri-add-line" /> Create Event
+                </Link>
+              )}
+              {isHead && (
+                <>
+                  <Link
+                    to={`/club/edit/${club._id || club.id}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
+                  >
+                    <i className="ri-settings-3-line" /> Club Settings
+                  </Link>
+                  <Link
+                    to={`/club/${club._id || club.id}/team`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-neutral-800 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition font-semibold text-xs uppercase tracking-wider shadow-sm"
+                  >
+                    <i className="ri-team-line" /> Manage Members
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
