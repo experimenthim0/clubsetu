@@ -60,17 +60,57 @@ export async function clearAppIconBadge() {
 }
 
 /**
- * Display a client-side push notification if browser permissions are granted.
- * @param {string} title 
- * @param {NotificationOptions} options 
+ * Check if the app/tab is currently visible and focused.
+ * When visible, we skip the native notification banner since the
+ * in-app notification list already handles it — this also avoids
+ * browsers silently suppressing foreground showNotification() calls.
+ * @returns {boolean}
+ */
+function isAppVisible() {
+  if (typeof document === 'undefined') return false;
+  return document.visibilityState === 'visible' && document.hasFocus();
+}
+
+/**
+ * Race navigator.serviceWorker.ready against a timeout so the notification
+ * doesn't silently hang if the SW hasn't activated yet (first-load race).
+ * @param {number} ms  timeout in milliseconds
+ * @returns {Promise<ServiceWorkerRegistration|null>}
+ */
+function getSwRegistration(ms = 3000) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    return Promise.resolve(null);
+  }
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
+/**
+ * Display a native OS push notification if browser permissions are granted.
+ *
+ * KEY BEHAVIOR:
+ *   - When the app tab is **hidden / not focused** → shows a native banner.
+ *   - When the app tab is **visible and focused**  → skips (in-app list is enough).
+ *   - Falls back to `new Notification()` if the Service Worker isn't ready yet.
+ *
+ * @param {string} title
+ * @param {NotificationOptions} options
  */
 export async function sendLocalPushNotification(title, options = {}) {
   if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
     return;
   }
 
+  // Skip native banner when user is actively looking at the app —
+  // the in-app notification list already handles this case.
+  if (isAppVisible()) {
+    console.log('[Push] App is visible — skipping native notification (in-app list handles it).');
+    return;
+  }
+
   try {
-    const registration = await navigator.serviceWorker.ready;
     const notificationOptions = {
       icon: options.icon || '/cs_pwa_notification.png',
       badge: options.badge || '/cs_pwa_notification.png',
@@ -88,12 +128,23 @@ export async function sendLocalPushNotification(title, options = {}) {
       ...options,
     };
 
+    // Try the Service Worker path first (required for PWA installed apps).
+    // If the SW isn't ready within 3 s, fall back to the Notification constructor.
+    const registration = await getSwRegistration(3000);
+
     if (registration && registration.showNotification) {
       await registration.showNotification(title, notificationOptions);
+      console.log('[Push] Native notification shown via Service Worker.');
     } else {
+      // Fallback — works in desktop browsers even without an active SW.
       new Notification(title, notificationOptions);
+      console.log('[Push] Native notification shown via Notification constructor (SW unavailable).');
     }
   } catch (err) {
     console.warn('[Push] Error showing notification:', err);
+    // Last-resort fallback
+    try {
+      new Notification(title, { body: options.body || '' });
+    } catch (_) { /* give up silently */ }
   }
 }

@@ -60,6 +60,7 @@ export const SocketProvider = ({ children }) => {
         );
 
         // Trigger native PWA Push Notification banner
+        console.log('[Socket] new-notification received, dispatching push notification:', notification.title);
         sendLocalPushNotification(notification.title || "CampusNode", {
           body: notification.message || notification.content || "New campus update available",
           data: { url: notificationUrl },
