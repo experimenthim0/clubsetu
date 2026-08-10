@@ -71,15 +71,27 @@ export async function sendLocalPushNotification(title, options = {}) {
 
   try {
     const registration = await navigator.serviceWorker.ready;
+    const notificationOptions = {
+      icon: options.icon || '/cs_pwa_notification.png',
+      badge: options.badge || '/cs_pwa_notification.png',
+      body: options.body || '',
+      image: options.image || undefined,
+      vibrate: options.vibrate || [100, 50, 100],
+      tag: options.tag || `notification-${Date.now()}`,
+      renotify: options.renotify ?? true,
+      requireInteraction: options.requireInteraction ?? false,
+      data: options.data || { url: '/' },
+      actions: options.actions || [
+        { action: 'open', title: 'Open' },
+        { action: 'close', title: 'Dismiss' },
+      ],
+      ...options,
+    };
+
     if (registration && registration.showNotification) {
-      await registration.showNotification(title, {
-        icon: '/pwa-192x192.png',
-        badge: '/pwa-192x192.png',
-        vibrate: [100, 50, 100],
-        ...options,
-      });
+      await registration.showNotification(title, notificationOptions);
     } else {
-      new Notification(title, options);
+      new Notification(title, notificationOptions);
     }
   } catch (err) {
     console.warn('[Push] Error showing notification:', err);

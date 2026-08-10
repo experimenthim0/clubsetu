@@ -370,11 +370,13 @@ self.addEventListener('push', (event) => {
     icon: '/cs_pwa_notification.png',
     badge: '/cs_pwa_notification.png',
     vibrate: [100, 50, 100],
+    tag: data.tag || 'campusnode-notification',
+    renotify: true,
     data: {
       url: data.url || '/',
     },
-    actions: [
-      { action: 'open', title: 'View' },
+    actions: data.actions || [
+      { action: 'open', title: 'View Details' },
       { action: 'close', title: 'Dismiss' },
     ],
   };

@@ -52,10 +52,17 @@ export const SocketProvider = ({ children }) => {
           return updatedCount;
         });
 
+        const isPaymentNotif = notification.type === "PAYMENT_REVIEW" || notification.title?.toLowerCase().includes("payment");
+        const notificationUrl = notification.link || (
+          isPaymentNotif
+            ? `/my-events${notification.eventId ? `?eventId=${notification.eventId}` : ''}`
+            : (notification.eventId ? `/event/${notification.eventId}` : "/notifications")
+        );
+
         // Trigger native PWA Push Notification banner
         sendLocalPushNotification(notification.title || "CampusNode", {
           body: notification.message || notification.content || "New campus update available",
-          data: { url: notification.link || "/notifications" },
+          data: { url: notificationUrl },
         });
       });
 

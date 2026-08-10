@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { Clock, MapPin, Users, QrCode } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { DownloadIcon } from '@/components/ui/download';
 import QRCode from 'qrcode';
 import { invalidateCache } from '../lib/cacheManager';
 const MyEvents = () => {
+  const location = useLocation();
+  const targetEventId = new URLSearchParams(location.search).get('eventId');
   const { showNotification } = useNotification();
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
@@ -33,6 +35,7 @@ const MyEvents = () => {
   const [editPayerName, setEditPayerName] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
   const [submittingEdit, setSubmittingEdit] = useState(false);
+  const [highlightedRegId, setHighlightedRegId] = useState(null);
 
   const [downloadingCert, setDownloadingCert] = useState(null);
 
@@ -228,6 +231,31 @@ const MyEvents = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!targetEventId || registrations.length === 0) return;
+
+    const targetReg = registrations.find(r => {
+      const eId = r.eventId?.id || r.eventId?._id || r.eventId;
+      return eId === targetEventId;
+    });
+
+    if (targetReg) {
+      const regId = targetReg.id || targetReg._id;
+      setHighlightedRegId(regId);
+
+      setTimeout(() => {
+        const elem = document.getElementById(`reg-card-${regId}`);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+
+      if (targetReg.paymentStatus === 'NEED_MORE_DETAILS' || targetReg.paymentStatus === 'REJECTED') {
+        openEditPaymentModal(targetReg);
+      }
+    }
+  }, [targetEventId, registrations]);
 
   const fetchRegistrations = async (userId) => {
     try {
@@ -522,14 +550,21 @@ const MyEvents = () => {
               {registrations.map(reg => {
                 const event = reg.eventId;
                 if (!event) return null;
+                const regId = reg.id || reg._id;
+                const isHighlighted = highlightedRegId === regId;
                 const now = new Date();
                 const isPast = new Date(event.endTime) < now;
                 const isLive = new Date(event.startTime) <= now && new Date(event.endTime) > now;
 
                 return (
                   <div
-                    key={reg.id || reg._id}
-                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col gap-2.5"
+                    id={`reg-card-${regId}`}
+                    key={regId}
+                    className={`bg-white dark:bg-neutral-900 border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col gap-2.5 ${
+                      isHighlighted
+                        ? 'border-orange-500 dark:border-orange-500 ring-2 ring-orange-500/20 bg-orange-50/30 dark:bg-orange-950/10'
+                        : 'border-neutral-200 dark:border-neutral-800'
+                    }`}
                   >
                     {/* Top Row: Title + Past/Live Badge */}
                     <div className="flex items-center justify-between gap-3">

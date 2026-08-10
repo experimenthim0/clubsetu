@@ -113,6 +113,7 @@ router.put(
             ...notification,
             _id: notification.id,
             sender: { name: "System" },
+            link: `/my-events?eventId=${participation.eventId}`,
           });
         }
       }

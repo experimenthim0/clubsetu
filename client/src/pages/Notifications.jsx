@@ -240,16 +240,35 @@ const Notifications = () => {
                           View Event
                         </Link>
                       </div>
-                    ) : (notif.eventId || !isRead) && (
+                    ) : (
                       <div className="mt-4 flex flex-wrap gap-3">
-                        {notif.eventId && (
+                        {(notif.type === "PAYMENT_REVIEW" || notif.title?.toLowerCase().includes("payment")) ? (
+                          <>
+                            <Link
+                              to={`/my-events${notif.eventId ? `?eventId=${notif.eventId}` : ""}`}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-[11px] font-semibold transition-colors shadow-sm"
+                            >
+                              <i className="ri-wallet-3-line text-xs" />
+                              {notif.title?.includes("Approved") ? "View Ticket in My Events" : "Update Payment Info"}
+                            </Link>
+                            {notif.eventId && (
+                              <Link
+                                to={`/event/${notif.eventId}`}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors text-[11px] font-semibold"
+                              >
+                                View Event
+                              </Link>
+                            )}
+                          </>
+                        ) : notif.eventId ? (
                           <Link
                             to={`/event/${notif.eventId}`}
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-orange-600 dark:hover:bg-orange-600 hover:text-white dark:hover:text-white text-[11px] font-semibold transition-colors"
                           >
                             View Event
                           </Link>
-                        )}
+                        ) : null}
+
                         {!isRead && (
                           <button
                             onClick={() => handleMarkAsRead(notif._id)}
