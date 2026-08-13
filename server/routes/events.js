@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import prisma from "../lib/prisma.js";
 import { serializeEvent, serializeParticipation } from "../utils/postgresEventSerializer.js";
@@ -10,6 +11,7 @@ import { validate, objectIdSchema } from "../middleware/validate.js";
 import multer from "multer";
 import { uploadImage } from "../utils/cloudinary.js";
 import { getPublicResponse, setPublicResponse } from "../utils/publicResponseCache.js";
+import { validateBooking, checkEventConflict } from "../services/conflictService.js";
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ const upload = multer({
 });
 
 // POST /api/events/upload - Handle image upload for event poster
-router.post("/upload", verifyToken, allowRoles("club", "admin"), upload.single("image"), async (req, res) => {
+router.post("/upload", verifyToken, requirePermission(PERMISSIONS.EVENT_CREATE), upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded." });
@@ -62,11 +64,10 @@ async function checkEventAccess(req, eventClubId, requiredPermission = null) {
   return false;
 }
 
-
 const eventSchema = z.object({
   body: z.object({
     title: z.string().min(3),
-    description: z.string().optional(),
+
     venue: z.string().optional(),
     startTime: z.coerce.date(),
     endTime: z.coerce.date(),
@@ -228,6 +229,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 // ── GET /events/club/:clubId — public club events ─────────────────────────────
 
 const clubIdParamSchema = z.object({
@@ -249,125 +251,285 @@ router.get("/club/:clubId", validate(clubIdParamSchema), async (req, res) => {
   }
 });
 
-// ── GET /events/club-manage/:clubId — club management view ────────────────────
+// ── GET /events/calendar — Admin date-range query for Calendar & Venue Timeline ─
+router.get("/calendar", verifyToken, requirePermission(PERMISSIONS.EVENT_VIEW), async (req, res) => {
+  try {
+    const { start, end, venue, clubId, reviewStatus, category } = req.query;
 
-router.get(
-  "/club-manage/:clubId",
-  verifyToken,
-  allowRoles("club", "facultyCoordinator", "admin", "member", "student"),
-  validate(clubIdParamSchema),
-  async (req, res) => {
-    try {
-      const targetClubId = req.params.clubId;
-      if (!(await checkEventAccess(req, targetClubId))) {
-        return res.status(403).json({ message: "Access denied. You don't have permission to view this club's events." });
-      }
+    const where = {};
 
-      const events = await prisma.event.findMany({
-        where: { clubId: targetClubId },
-        include: eventInclude,
-        orderBy: { startTime: "desc" },
-      });
-
-      // Fetch attended counts for all events in this club
-      const attandanceCounts = await prisma.participation.groupBy({
-        by: ['eventId'],
-        where: {
-          eventId: { in: events.map(e => e.id) },
-          status: 'ATTENDED'
-        },
-        _count: { _all: true }
-      });
-
-      const countMap = attandanceCounts.reduce((acc, curr) => {
-        acc[curr.eventId] = curr._count._all;
-        return acc;
-      }, {});
-
-      res.json(events.map(e => ({
-        ...serializeEvent(e),
-        attendedCount: countMap[e.id] || 0
-      })));
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+    // Date range filter
+    if (start && end) {
+      const sDate = new Date(start);
+      const eDate = new Date(end);
+      where.startTime = { lt: eDate };
+      where.endTime = { gt: sDate };
     }
-  },
-);
 
-// ── GET /events/club-manage/:clubId/export ────────────────────────────────────
+    // Venue filter (supports comma-separated multi-select)
+    if (venue && venue !== "all") {
+      const venueList = venue.split(",").map(v => v.trim()).filter(Boolean);
+      if (venueList.length === 1) {
+        where.venue = venueList[0];
+      } else if (venueList.length > 1) {
+        where.venue = { in: venueList };
+      }
+    }
 
-router.get(
-  "/club-manage/:clubId/export",
-  verifyToken,
-  allowRoles("club", "facultyCoordinator", "admin"),
-  async (req, res) => {
+    // Club filter
+    if (clubId && clubId !== "all") {
+      where.clubId = clubId;
+    }
+
+    // Review Status filter
+    if (reviewStatus && reviewStatus !== "all") {
+      where.reviewStatus = reviewStatus;
+    }
+
+    // Role scoping: if faculty coordinator, scope to assigned club if not admin
+    if (req.user.role === "facultyCoordinator" && req.user.clubId) {
+      where.clubId = req.user.clubId;
+    }
+
+    // Category filter
+    if (category && category !== "all") {
+      where.club = { category };
+    }
+
+    const events = await prisma.event.findMany({
+      where,
+      include: eventInclude,
+      orderBy: { startTime: "asc" },
+    });
+
+    // Also fetch venue blackouts for the date range
+    const blackoutWhere = {};
+    if (start && end) {
+      blackoutWhere.startTime = { lt: new Date(end) };
+      blackoutWhere.endTime = { gt: new Date(start) };
+    }
+    if (where.venue) {
+      blackoutWhere.venue = where.venue;
+    }
+
+    let blackouts = [];
     try {
-      const targetClubId = req.params.clubId;
-      if (req.user.role !== "admin" && req.user.clubId !== targetClubId) {
-        return res.status(403).json({ message: "Access denied." });
+      if (prisma.venueBlackout) {
+        blackouts = await prisma.venueBlackout.findMany({
+          where: blackoutWhere,
+          orderBy: { startTime: "asc" }
+        });
       }
-
-      const where = { clubId: targetClubId };
-      const { month, year } = req.query;
-
-      if (year && year !== "all") {
-        const y = Number.parseInt(year, 10);
-        where.startTime = {
-          gte: new Date(y, 0, 1),
-          lte: new Date(y, 11, 31, 23, 59, 59),
-        };
-      }
-
-      let events = await prisma.event.findMany({
-        where,
-        include: { club: { select: { id: true, clubName: true } } },
-        orderBy: { startTime: "desc" },
-      });
-
-      if (month && month !== "all") {
-        const m = Number.parseInt(month, 10);
-        events = events.filter((e) => new Date(e.startTime).getMonth() + 1 === m);
-      }
-
-      const successfulParticipations = await prisma.participation.findMany({
-        where: {
-          eventId: { in: events.length ? events.map((e) => e.id) : ["__none__"] },
-          paymentStatus: "SUCCESS",
-        },
-        select: { eventId: true, amountPaid: true },
-      });
-
-      const participationMap = successfulParticipations.reduce((acc, p) => {
-        const current = acc.get(p.eventId) ?? [];
-        current.push(p);
-        acc.set(p.eventId, current);
-        return acc;
-      }, new Map());
-
-      res.json({
-        events: events.map((event) => {
-          const parts = participationMap.get(event.id) ?? [];
-          return {
-            eventName: event.title,
-            clubName: event.club?.clubName || "Your Club",
-            totalRegistrations: event.registeredCount || parts.length,
-            eventDate: event.startTime,
-            totalAmountReceived: parts.reduce((sum, p) => sum + (p.amountPaid || 0), 0),
-          };
-        }),
-      });
     } catch {
-      res.status(500).json({ message: "Failed to export club event data" });
+      blackouts = [];
     }
-  },
-);
+
+    res.json({
+      events: events.map(serializeEvent),
+      blackouts
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── GET /events/conflicts — Conflict Center backend operational status report ──
+router.get("/conflicts", verifyToken, requirePermission(PERMISSIONS.EVENT_VIEW), async (req, res) => {
+  try {
+    const publishedEvents = await prisma.event.findMany({
+      where: { reviewStatus: "PUBLISHED" },
+      include: { club: { select: { id: true, clubName: true } } },
+      orderBy: { startTime: "asc" }
+    });
+
+    let blackouts = [];
+    try {
+      if (prisma.venueBlackout) {
+        blackouts = await prisma.venueBlackout.findMany({ orderBy: { startTime: "asc" } });
+      }
+    } catch {
+      blackouts = [];
+    }
+
+    const issues = [];
+
+    // 1. Check event vs event venue conflicts
+    for (let i = 0; i < publishedEvents.length; i++) {
+      for (let j = i + 1; j < publishedEvents.length; j++) {
+        const e1 = publishedEvents[i];
+        const e2 = publishedEvents[j];
+
+        if (e1.venue === e2.venue) {
+          const s1 = new Date(e1.startTime);
+          const e1End = new Date(e1.endTime);
+          const s2 = new Date(e2.startTime);
+          const e2End = new Date(e2.endTime);
+
+          if (s1 < e2End && e1End > s2) {
+            issues.push({
+              id: `conflict-${e1.id}-${e2.id}`,
+              type: "Venue Conflict",
+              severity: "HIGH",
+              venue: e1.venue,
+              event1: { id: e1.id, title: e1.title, clubName: e1.club?.clubName, startTime: e1.startTime, endTime: e1.endTime },
+              event2: { id: e2.id, title: e2.title, clubName: e2.club?.clubName, startTime: e2.startTime, endTime: e2.endTime },
+              message: `Venue "${e1.venue}" is double-booked between "${e1.title}" and "${e2.title}".`
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Check event vs blackout conflicts
+    for (const e of publishedEvents) {
+      for (const b of blackouts) {
+        if (e.venue === b.venue) {
+          const s1 = new Date(e.startTime);
+          const e1End = new Date(e.endTime);
+          const s2 = new Date(b.startTime);
+          const bEnd = new Date(b.endTime);
+
+          if (s1 < bEnd && e1End > s2) {
+            issues.push({
+              id: `blackout-${e.id}-${b.id}`,
+              type: "Blackout Conflict",
+              severity: "CRITICAL",
+              venue: e.venue,
+              event: { id: e.id, title: e.title, clubName: e.club?.clubName, startTime: e.startTime, endTime: e.endTime },
+              blackout: { id: b.id, title: b.title, reason: b.reason, startTime: b.startTime, endTime: b.endTime },
+              message: `Event "${e.title}" overlaps with blackout window "${b.title}" in ${e.venue}.`
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Capacity warnings (registered >= totalSeats when totalSeats > 0)
+    for (const e of publishedEvents) {
+      if (e.totalSeats > 0 && e.registeredCount >= e.totalSeats) {
+        issues.push({
+          id: `capacity-${e.id}`,
+          type: "Capacity Warning",
+          severity: "MEDIUM",
+          venue: e.venue,
+          event: { id: e.id, title: e.title, clubName: e.club?.clubName, registeredCount: e.registeredCount, totalSeats: e.totalSeats },
+          message: `Event "${e.title}" has reached maximum seat capacity (${e.registeredCount}/${e.totalSeats}).`
+        });
+      }
+    }
+
+    res.json({
+      totalIssues: issues.length,
+      issues
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── PUT /events/:id/reschedule — Administrative event rescheduling with validation ──
+router.put("/:id/reschedule", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), async (req, res) => {
+  try {
+    const { startTime, endTime, venue } = req.body;
+
+    if (!startTime || !endTime) {
+      return res.status(400).json({ message: "Start time and end time are required for rescheduling." });
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.id },
+      include: eventInclude
+    });
+
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    // Authorization check
+    if (req.user.role !== "admin" && event.createdById !== req.user.userId) {
+      if (req.user.role === "facultyCoordinator" && event.clubId !== req.user.clubId) {
+        return res.status(403).json({ message: "You can only reschedule events for your assigned club." });
+      }
+    }
+
+    const newStart = new Date(startTime);
+    const newEnd = new Date(endTime);
+    const newVenue = venue || event.venue;
+
+    if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime())) {
+      return res.status(400).json({ message: "Invalid date format." });
+    }
+
+    if (newStart >= newEnd) {
+      return res.status(400).json({ message: "Start time must be before end time." });
+    }
+
+    // Run authoritative booking validation
+    const validation = await validateBooking({
+      venue: newVenue,
+      startTime: newStart,
+      endTime: newEnd,
+      excludeEventId: req.params.id
+    });
+
+    if (validation.hasConflict) {
+      return res.status(409).json({
+        message: validation.message || "Selected venue/time conflicts with another booking or blackout.",
+        conflict: validation
+      });
+    }
+
+    const updated = await prisma.event.update({
+      where: { id: req.params.id },
+      data: {
+        startTime: newStart,
+        endTime: newEnd,
+        venue: newVenue
+      },
+      include: eventInclude
+    });
+
+    // Notify creator if admin rescheduled their event
+    if (event.createdById && event.createdById !== req.user.userId) {
+      try {
+        const notifTitle = `Event Rescheduled: ${event.title}`;
+        const notifMsg = `Your event "${event.title}" has been rescheduled to ${newStart.toLocaleDateString()} ${newStart.toLocaleTimeString()} at ${newVenue}.`;
+        
+        await prisma.notification.create({
+          data: {
+            id: createObjectId(),
+            recipientStudentId: event.createdById,
+            senderAdminId: req.user.role === "admin" ? req.user.userId : null,
+            eventId: event.id,
+            title: notifTitle,
+            message: notifMsg
+          }
+        });
+
+        if (req.io) {
+          req.io.to(event.createdById).emit("new-notification", {
+            title: notifTitle,
+            message: notifMsg,
+            eventId: event.id
+          });
+        }
+      } catch (notifErr) {
+        console.error("Failed to send reschedule notification:", notifErr.message);
+      }
+    }
+
+    res.json({
+      message: "Event rescheduled successfully",
+      event: serializeEvent(updated)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // ── GET /events/club-co/:id — events created by a specific user ───────────────
 
 router.get(
   "/club-co/:id",
   verifyToken,
-  allowRoles("admin", "facultyCoordinator", "club"),
   async (req, res) => {
     try {
       if (req.user.role !== "admin" && req.user.userId !== req.params.id) {
@@ -379,11 +541,67 @@ router.get(
         include: eventInclude,
         orderBy: { startTime: "asc" },
       });
-    res.json(events.map(serializeEvent));
+      res.json(events.map(serializeEvent));
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
   },
+);
+
+// ── GET /events/club-manage/:clubId — management view of events for a club ───
+
+router.get(
+  "/club-manage/:clubId",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { clubId } = req.params;
+      const events = await prisma.event.findMany({
+        where: { clubId },
+        include: eventInclude,
+        orderBy: { startTime: "desc" },
+      });
+      res.json(events.map(serializeEvent));
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// ── GET /events/club-manage/:clubId/export — export event registration stats ──
+
+router.get(
+  "/club-manage/:clubId/export",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { clubId } = req.params;
+      const events = await prisma.event.findMany({
+        where: { clubId },
+        include: {
+          club: { select: { clubName: true } },
+          participations: true,
+        },
+        orderBy: { startTime: "desc" },
+      });
+
+      const exportData = events.map((e) => {
+        const regCount = e.participations ? e.participations.length : 0;
+        const totalAmt = e.isPaid ? regCount * (e.ticketPrice || 0) : 0;
+        return {
+          eventName: e.title || e.eventName || "",
+          clubName: e.club?.clubName || "",
+          totalRegistrations: regCount,
+          eventDate: e.startTime,
+          totalAmountReceived: totalAmt,
+        };
+      });
+
+      res.json({ events: exportData });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
 );
 
 // ── GET /events/user/:userId — events a user is registered for ────────────────
@@ -391,13 +609,12 @@ router.get(
 router.get(
   "/user/:userId",
   verifyToken,
-  allowRoles("member", "club", "admin", "external", "student"),
   async (req, res) => {
     try {
       const { userId } = req.params;
-      const { userId: authUserId, userType, role } = req.user;
+      const { userId: authUserId, userType, role, email: authEmail } = req.user;
 
-      if (authUserId !== userId && role !== "admin") {
+      if (authUserId !== userId && authEmail !== userId && role !== "admin" && role !== "facultyCoordinator" && role !== "club") {
         return res.status(403).json({ message: "Access denied." });
       }
 
@@ -440,7 +657,7 @@ router.get(
 
 // ── POST /events — create event ───────────────────────────────────────────────
 
-router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema), async (req, res) => {
+router.post("/", verifyToken, requirePermission(PERMISSIONS.EVENT_CREATE), validate(eventSchema), async (req, res) => {
   try {
     const {
       title,
@@ -490,17 +707,12 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
     const start = new Date(startTime);
     const end = new Date(endTime);
 
-    const conflictingEvent = await prisma.event.findFirst({
-      where: {
-        venue,
-        reviewStatus: "PUBLISHED",
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
-
-    if (conflictingEvent) {
-      return res.status(409).json({ message: "Venue is already booked." });
+    const bookingValidation = await validateBooking({ venue, startTime: start, endTime: end });
+    if (bookingValidation.hasConflict) {
+      return res.status(409).json({
+        message: bookingValidation.message || "Venue is already booked.",
+        conflict: bookingValidation
+      });
     }
 
     const savedEvent = await prisma.event.create({
@@ -552,7 +764,7 @@ router.post("/", verifyToken, allowRoles("club", "admin"), validate(eventSchema)
 router.put(
   "/:id/review",
   verifyToken,
-  allowRoles("facultyCoordinator", "admin"),
+  requirePermission(PERMISSIONS.EVENT_APPROVE),
   async (req, res) => {
     try {
       const { status, comment } = req.body;
@@ -641,7 +853,7 @@ const registerParamSchema = z.object({
 router.post(
   "/:id/register",
   verifyToken,
-  allowRoles("member", "club", "facultyCoordinator", "admin", "external"),
+  requirePermission(PERMISSIONS.REGISTRATION_CANCEL),
   validate(registerParamSchema),
   async (req, res) => {
     try {
@@ -862,7 +1074,7 @@ router.get(
 
 // ── PUT /events/:id — update event ────────────────────────────────────────────
 
-router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdateSchema), async (req, res) => {
+router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), validate(eventUpdateSchema), async (req, res) => {
   try {
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
@@ -907,6 +1119,28 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
     if (updates.title && updates.title !== event.title) updates.slug = await slugifyUnique(updates.title, 'event', 'slug', req.params.id);
     if (updates.startTime) updates.startTime = new Date(updates.startTime);
     if (updates.endTime) updates.endTime = new Date(updates.endTime);
+
+    // Validate booking conflict if venue or times changed
+    const targetVenue = updates.venue || event.venue;
+    const targetStart = updates.startTime || new Date(event.startTime);
+    const targetEnd = updates.endTime || new Date(event.endTime);
+
+    if (updates.venue || updates.startTime || updates.endTime) {
+      const validation = await validateBooking({
+        venue: targetVenue,
+        startTime: targetStart,
+        endTime: targetEnd,
+        excludeEventId: req.params.id,
+      });
+
+      if (validation.hasConflict) {
+        return res.status(409).json({
+          message: validation.message || "Venue is already booked for the selected time.",
+          conflict: validation,
+        });
+      }
+    }
+
     if (updates.registrationDeadline !== undefined) {
       updates.registrationDeadline = updates.registrationDeadline
         ? new Date(updates.registrationDeadline)
@@ -947,7 +1181,7 @@ router.put("/:id", verifyToken, allowRoles("club", "admin"), validate(eventUpdat
 
 // ── DELETE /events/:id — delete event ─────────────────────────────────────────
 
-router.delete("/:id", verifyToken, allowRoles("club", "admin", "facultyCoordinator"), async (req, res) => {
+router.delete("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_DELETE), async (req, res) => {
   try {
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
@@ -1007,7 +1241,7 @@ async function notifyMemberDeregistered(io, recipientId, title, message) {
 router.delete(
   "/:id/register",
   verifyToken,
-  allowRoles("member", "club", "admin", "external"),
+  requirePermission(PERMISSIONS.REGISTRATION_VIEW),
   async (req, res) => {
     try {
       const eventId = req.params.id;
@@ -1174,7 +1408,7 @@ router.delete(
 router.post(
   "/:id/check-in",
   verifyToken,
-  allowRoles("club", "facultyCoordinator", "admin", "member", "student"),
+  requirePermission(PERMISSIONS.EVENT_ATTENDANCE),
   async (req, res) => {
     try {
       const { id: eventId } = req.params;
@@ -1242,7 +1476,7 @@ router.post(
 router.post(
   "/:id/attendance-manual",
   verifyToken,
-  allowRoles("club", "facultyCoordinator", "admin", "member", "student"),
+  requirePermission(PERMISSIONS.EVENT_ATTENDANCE),
   async (req, res) => {
     try {
       const { id: eventId } = req.params;

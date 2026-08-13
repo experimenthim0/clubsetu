@@ -349,18 +349,23 @@ self.addEventListener('message', (event) => {
 // ─── Web Push Notifications & App Icon Badging (preserved from v1) ──────────
 
 self.addEventListener('push', (event) => {
+  console.log('[CampusNode SW Push] Push event received.');
+
   let data = {
     title: 'CampusNode',
     body: 'New update available on CampusNode!',
     url: '/events',
     unreadCount: 1,
+    tag: 'campusnode-notification',
   };
 
   if (event.data) {
     try {
       data = event.data.json();
+      console.log(`[CampusNode SW Push] Parsed push notification payload ID: ${data.id || data.tag || 'unknown'}`);
     } catch (e) {
       data.body = event.data.text();
+      console.log('[CampusNode SW Push] Received text payload:', data.body);
     }
   }
 
@@ -369,11 +374,11 @@ self.addEventListener('push', (event) => {
     body: data.body || 'You have a new campus update.',
     icon: '/cs_pwa_notification.png',
     badge: '/cs_pwa_notification.png',
-    vibrate: [100, 50, 100],
-    tag: data.tag || 'campusnode-notification',
+    tag: data.id || data.tag || 'campusnode-notification',
     renotify: true,
     data: {
       url: data.url || '/',
+      id: data.id,
     },
     actions: data.actions || [
       { action: 'open', title: 'View Details' },
@@ -383,7 +388,13 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     Promise.all([
-      self.registration.showNotification(title, options).catch(() => {}),
+      self.registration.showNotification(title, options)
+        .then(() => {
+          console.log(`[CampusNode SW Push] OS Notification displayed successfully (${options.tag})`);
+        })
+        .catch((err) => {
+          console.error('[CampusNode Push] Failed to display notification:', err);
+        }),
       'setAppBadge' in navigator
         ? navigator.setAppBadge(data.unreadCount || 1).catch(() => {})
         : Promise.resolve(),
@@ -401,6 +412,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'close') return;
 
   const targetUrl = event.notification.data?.url || '/';
+  console.log('[CampusNode SW Push] Notification click handler triggered:', targetUrl);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

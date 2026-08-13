@@ -1,7 +1,9 @@
 import express from "express";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
+import { sendWebPushNotification } from "../utils/sendPush.js";
 
 const router = express.Router();
 
@@ -47,7 +49,7 @@ function formatSender(notification) {
 
 // ── POST /notifications — create & broadcast ──────────────────────────────────
 
-router.post("/", verifyToken, allowRoles("club", "facultyCoordinator", "admin"), async (req, res) => {
+router.post("/", verifyToken, requirePermission(PERMISSIONS.NOTIFICATION_CREATE), async (req, res) => {
   try {
     const { targetType, eventId, title, message } = req.body;
     const { userId: sender, userType } = req.user;
@@ -111,10 +113,12 @@ router.post("/", verifyToken, allowRoles("club", "facultyCoordinator", "admin"),
 
     if (targetType === "ALL_STUDENTS") {
       req.io.emit("new-notification", payload);
+      sendWebPushNotification(null, payload);
     } else {
       recipients.forEach((uId) => {
         req.io.to(uId.toString()).emit("new-notification", payload);
       });
+      sendWebPushNotification(recipients, payload);
     }
 
     res.status(201).json(payload);
@@ -128,44 +132,45 @@ router.post("/", verifyToken, allowRoles("club", "facultyCoordinator", "admin"),
 router.get(
   "/",
   verifyToken,
-  allowRoles("member", "club", "admin", "facultyCoordinator"),
+  requirePermission(PERMISSIONS.NOTIFICATION_VIEW),
   async (req, res) => {
     try {
       const { userId, userType } = req.user;
 
-      // Get the user's account creation time to filter ALL_STUDENTS notifications
-      let userCreatedAt;
+      let notifications;
+
       if (userType === "admin") {
-        const admin = await prisma.adminRole.findUnique({
-          where: { id: userId },
-          select: { createdAt: true },
+        // Admin users only see notifications sent by them
+        notifications = await prisma.notification.findMany({
+          where: { senderAdminId: userId },
+          include: senderInclude,
+          orderBy: { createdAt: "desc" },
         });
-        userCreatedAt = admin?.createdAt ?? new Date(0);
       } else {
         const student = await prisma.studentUser.findUnique({
           where: { id: userId },
           select: { createdAt: true },
         });
-        userCreatedAt = student?.createdAt ?? new Date(0);
-      }
+        const userCreatedAt = student?.createdAt ?? new Date(0);
 
-      const notifications = await prisma.notification.findMany({
-        where: {
-          createdAt: { gte: userCreatedAt },
-          OR: [
-            { recipientStudentId: userId },
-            {
-              recipientStudentId: null,
-              OR: [
-                { senderStudentId: { not: null } },
-                { senderAdminId: { not: null } },
-              ],
-            },
-          ],
-        },
-        include: senderInclude,
-        orderBy: { createdAt: "desc" },
-      });
+        notifications = await prisma.notification.findMany({
+          where: {
+            createdAt: { gte: userCreatedAt },
+            OR: [
+              { recipientStudentId: userId },
+              {
+                recipientStudentId: null,
+                OR: [
+                  { senderStudentId: { not: null } },
+                  { senderAdminId: { not: null } },
+                ],
+              },
+            ],
+          },
+          include: senderInclude,
+          orderBy: { createdAt: "desc" },
+        });
+      }
 
       res.json(
         notifications.map((n) => ({
@@ -182,7 +187,7 @@ router.get(
 
 // ── GET /notifications/sent — sent notifications for club head ────────────────
 
-router.get("/sent", verifyToken, allowRoles("club", "facultyCoordinator"), async (req, res) => {
+router.get("/sent", verifyToken, requirePermission(PERMISSIONS.NOTIFICATION_VIEW), async (req, res) => {
   try {
     const { userId, userType } = req.user;
 
@@ -217,7 +222,7 @@ router.get("/sent", verifyToken, allowRoles("club", "facultyCoordinator"), async
 router.put(
   "/read-all",
   verifyToken,
-  allowRoles("member", "club", "admin", "facultyCoordinator"),
+  requirePermission(PERMISSIONS.NOTIFICATION_VIEW),
   async (req, res) => {
     try {
       const { userId, userType } = req.user;
@@ -277,7 +282,7 @@ router.put(
 router.put(
   "/:id/read",
   verifyToken,
-  allowRoles("member", "club", "admin", "facultyCoordinator"),
+  requirePermission(PERMISSIONS.NOTIFICATION_VIEW),
   async (req, res) => {
     try {
       const { userId } = req.user;

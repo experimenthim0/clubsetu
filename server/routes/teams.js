@@ -1,10 +1,12 @@
 import express from "express";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
 
-const router = express.Router();
+import { sendWebPushNotification } from "../utils/sendPush.js";
 
+const router = express.Router();
 // helper to format/send notifications
 async function notifyTeamMember(io, recipientId, title, message, senderStudentId = null) {
   try {
@@ -17,13 +19,15 @@ async function notifyTeamMember(io, recipientId, title, message, senderStudentId
         message,
       },
     });
+    const payload = {
+      ...notification,
+      _id: notification.id,
+      sender: { name: "System" },
+    };
     if (io) {
-      io.to(recipientId).emit("new-notification", {
-        ...notification,
-        _id: notification.id,
-        sender: { name: "System" },
-      });
+      io.to(recipientId).emit("new-notification", payload);
     }
+    sendWebPushNotification(recipientId, payload);
   } catch (err) {
     console.error("Failed to send notification:", err);
   }
@@ -43,13 +47,15 @@ async function notifyInvitation(io, recipientId, eventId, teamId, teamName, even
         type: "TEAM_INVITATION",
       },
     });
+    const payload = {
+      ...notification,
+      _id: notification.id,
+      sender: { name: leaderName },
+    };
     if (io) {
-      io.to(recipientId).emit("new-notification", {
-        ...notification,
-        _id: notification.id,
-        sender: { name: leaderName },
-      });
+      io.to(recipientId).emit("new-notification", payload);
     }
+    sendWebPushNotification(recipientId, payload);
   } catch (err) {
     console.error("Failed to send invitation notification:", err);
   }
@@ -59,7 +65,7 @@ async function notifyInvitation(io, recipientId, eventId, teamId, teamName, even
 router.post(
   "/",
   verifyToken,
-  allowRoles("member", "student", "club", "admin"),
+  requirePermission(PERMISSIONS.TEAM_CREATE),
   async (req, res) => {
     const { eventId, teamName, members, formResponses, transactionId, payerName, paymentRemarks } = req.body;
     const leaderId = req.user.userId;

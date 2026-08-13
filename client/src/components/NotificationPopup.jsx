@@ -49,8 +49,8 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
   const theme = getTheme();
 
   return (
-    <div className="fixed top-6 right-6 z-[9999] max-w-sm w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg shadow-lg overflow-hidden transition-all duration-300 animate-slide-in-right">
-      <div className="p-4 flex items-start gap-3">
+    <div className="fixed bottom-5 right-5 z-[9999] max-w-sm w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-2xl overflow-hidden transition-all duration-300 animate-slide-in-right">
+      <div className="p-2 flex items-center gap-3 justify-center">
         {/* Modern Icon instead of harsh text badge */}
         <div className="flex-shrink-0 mt-0.5">
           {theme.icon}
@@ -66,7 +66,7 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
         {/* Subtle Close Button */}
         <button 
           onClick={onClose} 
-          className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer p-0.5 rounded "
           aria-label="Dismiss notification"
         >
           <i className="ri-close-line text-lg" />

@@ -849,7 +849,7 @@ const MyEvents = () => {
 
                     {/* Right — action buttons */}
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      {(role?.toLowerCase() === 'facultycoordinator' || role?.toLowerCase() === 'admin' || user?.role === 'facultyCoordinator') && 
+                      {(role?.toLowerCase() === 'facultycoordinator' || user?.role === 'facultyCoordinator') && 
                        event.reviewStatus?.toUpperCase() === 'PENDING' ? (
                         <div className="flex gap-2">
                           <button
@@ -868,7 +868,7 @@ const MyEvents = () => {
                             Reject
                           </button>
                         </div>
-                      ) : (role?.toLowerCase() === 'facultycoordinator' || role?.toLowerCase() === 'admin' || user?.role === 'facultyCoordinator') && 
+                      ) : (role?.toLowerCase() === 'facultycoordinator' || user?.role === 'facultyCoordinator') && 
                        event.reviewStatus?.toUpperCase() === 'DELETION_REQUESTED' ? (
                         <div className="flex gap-2">
                           <button

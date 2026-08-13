@@ -1,5 +1,6 @@
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
+import { hasPermission, PERMISSIONS } from "../utils/rbac.js";
 
 const VALID_ROLES = ["CLUB_HEAD", "COORDINATOR", "MEMBER"];
 
@@ -17,6 +18,9 @@ export function derivePermissions(role) {
 }
 
 async function canManageClubMembers(req, clubId) {
+  if (!hasPermission(req.user, PERMISSIONS.CLUB_MANAGE_MEMBERS, { clubId, id: clubId })) {
+    return false;
+  }
   if (req.user.role === "admin") return true;
   if (req.user.role === "facultyCoordinator") {
     return String(req.user.clubId) === String(clubId);
@@ -26,7 +30,7 @@ async function canManageClubMembers(req, clubId) {
   const membership = await prisma.clubMembership.findUnique({
     where: { clubId_studentId: { clubId, studentId: req.user.userId } },
   });
-  return membership?.role === "CLUB_HEAD";
+  return membership?.role === "CLUB_HEAD" || req.user.role === "club";
 }
 
 /**

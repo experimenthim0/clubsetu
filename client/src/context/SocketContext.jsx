@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
-import { setAppIconBadge, sendLocalPushNotification, requestNotificationPermission } from "../utils/pushNotifications";
+import { setAppIconBadge } from "../utils/pushNotifications";
+import { processNotification, normalizeNotification } from "../utils/notificationManager";
+import { registerPushSubscription } from "../utils/pushSubscription";
+import { useNotification } from "./NotificationContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -16,73 +19,150 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const { showRealtimeToast } = useNotification() || {};
+  const mountTimeRef = useRef(new Date());
+
   // Sync app icon badge whenever unreadCount updates
   useEffect(() => {
     setAppIconBadge(unreadCount);
   }, [unreadCount]);
 
-  useEffect(() => {
-    // Only connect if user is logged in
+  // Sync notifications from backend API (Polling / Recovery)
+  const syncNotifications = useCallback(async (isInitialSync = false) => {
     const userRole = localStorage.getItem("role");
     const storedUser = localStorage.getItem("user");
     const storedAdmin = localStorage.getItem("admin");
     const userString = storedUser || storedAdmin;
-    
-    if (userString && userString !== "undefined") {
-      const user = JSON.parse(userString);
-      
-      // Request push notification permission silently if not prompted yet
-      requestNotificationPermission();
 
-      const newSocket = io(API_URL.replace("/api", ""));
+    if (!userString || userString === "undefined") return;
+    const user = JSON.parse(userString);
+    const currentUserId = String(user._id || user.id);
 
-      setSocket(newSocket);
+    if (!["member", "club", "facultyCoordinator", "admin", "student"].includes(userRole)) return;
 
-      newSocket.on("connect", () => {
-        console.log("Connected to socket server");
-        // Join their personal room
-        newSocket.emit("join", user._id || user.id);
-      });
+    try {
+      const res = await axios.get(`${API_URL}/api/notifications`);
+      const fetched = res.data || [];
+      const normalizedList = fetched.map((n) => normalizeNotification(n)).filter(Boolean);
 
-      newSocket.on("new-notification", (notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-        setUnreadCount((prev) => {
-          const updatedCount = prev + 1;
-          setAppIconBadge(updatedCount);
-          return updatedCount;
+      setNotifications(normalizedList);
+
+      const unread = normalizedList.filter(
+        (n) => !(n.readBy || []).includes(currentUserId)
+      ).length;
+
+      setUnreadCount(unread);
+      setAppIconBadge(unread);
+
+      // Check if any genuinely NEW notification arrived during polling sync
+      if (!isInitialSync) {
+        normalizedList.forEach((notif) => {
+          const createdAt = new Date(notif.createdAt);
+          if (createdAt > mountTimeRef.current && !(notif.readBy || []).includes(currentUserId)) {
+            processNotification(notif, {
+              onToast: (toastData) => {
+                if (showRealtimeToast) showRealtimeToast(toastData);
+              },
+            });
+          }
         });
+      }
+    } catch (err) {
+      console.error("[SocketContext] Could not sync notifications:", err.message);
+    }
+  }, [showRealtimeToast]);
 
-        const isPaymentNotif = notification.type === "PAYMENT_REVIEW" || notification.title?.toLowerCase().includes("payment");
-        const notificationUrl = notification.link || (
-          isPaymentNotif
-            ? `/my-events${notification.eventId ? `?eventId=${notification.eventId}` : ''}`
-            : (notification.eventId ? `/event/${notification.eventId}` : "/notifications")
-        );
+  useEffect(() => {
+    const userRole = localStorage.getItem("role");
+    const storedUser = localStorage.getItem("user");
+    const storedAdmin = localStorage.getItem("admin");
+    const userString = storedUser || storedAdmin;
 
-        // Trigger native PWA Push Notification banner
-        console.log('[Socket] new-notification received, dispatching push notification:', notification.title);
-        sendLocalPushNotification(notification.title || "CampusNode", {
-          body: notification.message || notification.content || "New campus update available",
-          data: { url: notificationUrl },
-        });
-      });
+    if (!userString || userString === "undefined") return;
+    const user = JSON.parse(userString);
 
-      if (["member", "club", "facultyCoordinator", "admin", "student"].includes(userRole)) {
-        axios.get(`${API_URL}/api/notifications`)
-          .then(res => {
-            setNotifications(res.data);
-            const unread = res.data.filter(n => !(n.readBy || []).includes(user._id || user.id)).length;
-            setUnreadCount(unread);
-            setAppIconBadge(unread);
-          })
-          .catch(err => console.error("Could not fetch notifications", err));
+    // Try registering/syncing Web Push subscription if permission is granted
+    registerPushSubscription().catch(() => {});
+
+    // Initial sync
+    syncNotifications(true);
+
+    // Socket.io connection setup
+    const socketServerUrl = API_URL.replace("/api", "");
+    const newSocket = io(socketServerUrl, {
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+    });
+
+    setSocket(newSocket);
+
+    const handleConnect = () => {
+      console.log("[SocketContext] Socket connected:", newSocket.id);
+      // Join personal room using both string representations to ensure room match
+      const primaryId = String(user.id || user._id);
+      const altId = String(user._id || user.id);
+
+      newSocket.emit("join", primaryId);
+      if (altId !== primaryId) {
+        newSocket.emit("join", altId);
       }
 
-      return () => {
-        newSocket.disconnect();
-      };
-    }
-  }, []);
+      // Re-sync state after reconnect
+      syncNotifications(false);
+    };
+
+    const handleNewNotification = (rawNotif) => {
+      console.log("[SocketContext] new-notification event received:", rawNotif?.title);
+
+      const processed = processNotification(rawNotif, {
+        onToast: (toastData) => {
+          if (showRealtimeToast) showRealtimeToast(toastData);
+        },
+      });
+
+      if (processed) {
+        setNotifications((prev) => [processed, ...prev]);
+        setUnreadCount((prev) => {
+          const updated = prev + 1;
+          setAppIconBadge(updated);
+          return updated;
+        });
+      }
+    };
+
+    newSocket.on("connect", handleConnect);
+    newSocket.on("new-notification", handleNewNotification);
+
+    // ── Polling & Recovery Fallbacks ──────────────────────────────────────────
+    // 1. Periodic sync (every 45s)
+    const interval = setInterval(() => {
+      syncNotifications(false);
+    }, 45000);
+
+    // 2. Window focus & visibilitychange sync
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("[SocketContext] Tab visible — triggering immediate notification sync.");
+        syncNotifications(false);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      syncNotifications(false);
+    };
+
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+      newSocket.off("connect", handleConnect);
+      newSocket.off("new-notification", handleNewNotification);
+      newSocket.disconnect();
+    };
+  }, [syncNotifications, showRealtimeToast]);
 
   const value = {
     socket,
@@ -90,6 +170,7 @@ export const SocketProvider = ({ children }) => {
     setNotifications,
     unreadCount,
     setUnreadCount,
+    syncNotifications,
   };
 
   return (

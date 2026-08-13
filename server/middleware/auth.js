@@ -129,11 +129,31 @@ export const verifyToken = async (req, res, next) => {
   }
 };
 
-// Role-based access control — checks req.user.role
+import { hasPermission } from "../utils/rbac.js";
+
+// Granular Permission Middleware
+export const requirePermission = (permission, resourceExtractor = null) => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+    const resource = resourceExtractor ? await resourceExtractor(req) : null;
+    const allowed = hasPermission(req.user, permission, resource);
+    if (!allowed) {
+      return res.status(403).json({ message: `Access denied. Insufficient permissions for ${permission}.` });
+    }
+    next();
+  };
+};
+
+// Backward compatible role middleware delegation
 export const allowRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: "No token" });
+    }
+    if (req.user.role === "admin" || req.user.role === "SUPER_ADMIN") {
+      return next();
     }
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: "Access denied" });

@@ -5,22 +5,28 @@ import {
   Wallet,
   Users,
   UserCog,
-  CalendarDays,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Package,
   Sparkles,
   User,
+  Database,
+  Calendar,
+  Radio,
+  Bell,
+  Building2,
+  Sliders,
 } from "lucide-react";
 
-/* ─── Sidebar Link ─────────────────────────────────────────────────────── */
+/* ─── Sidebar Direct Link ─────────────────────────────────────────────────── */
 const AdminSidebarLink = ({ to, icon: Icon, label, isActive, collapsed }) => (
   <Link
     to={to}
-    className={`admin-sidebar-link group relative flex items-center rounded-xl transition-all duration-200
+    className={`admin-sidebar-link group relative flex items-center rounded-xl transition-all duration-200 py-2
       ${isActive
-        ? "bg-neutral-200 dark:bg-white text-black dark:text-white px-1.5"
-        : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800/60 hover:text-black dark:hover:text-white px-1.5"
+        ? "bg-neutral-200 dark:bg-white text-black dark:text-white px-2 font-bold"
+        : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800/60 hover:text-black dark:hover:text-white px-2"
       }`}
     title={collapsed ? label : undefined}
   >
@@ -29,7 +35,7 @@ const AdminSidebarLink = ({ to, icon: Icon, label, isActive, collapsed }) => (
       strokeWidth={isActive ? 2.2 : 1.7}
       className="shrink-0 sidebar-link-icon"
     />
-    <span className="text-[13px] font-semibold tracking-wide truncate sidebar-link-text ml-3">
+    <span className="text-[13px] font-bold tracking-wide truncate sidebar-link-text ml-3">
       {label}
     </span>
     {isActive && (
@@ -46,16 +52,97 @@ const AdminSidebarLink = ({ to, icon: Icon, label, isActive, collapsed }) => (
   </Link>
 );
 
-/* ─── Section Divider ──────────────────────────────────────────────────── */
-const SectionDivider = () => (
-  <div className="sidebar-divider my-3">
+/* ─── Collapsible Category Dropdown ─────────────────────────────────────── */
+const AdminSidebarDropdown = ({ icon: Icon, label, items, collapsed }) => {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab");
+
+  const isAnyChildActive = items.some((item) => {
+    if (item.exactPath) return location.pathname === item.exactPath;
+    return location.pathname === "/admin-dashboard" && currentTab === item.tab;
+  });
+
+  const [isOpen, setIsOpen] = useState(isAnyChildActive);
+
+  useEffect(() => {
+    if (isAnyChildActive) setIsOpen(true);
+  }, [isAnyChildActive]);
+
+  return (
+    <div className="sidebar-dropdown-group my-1">
+
+      <button
+        type="button"
+        onClick={() => !collapsed && setIsOpen((prev) => !prev)}
+        className={`w-full flex items-center justify-between rounded-xl px-2 py-2 transition-all duration-200 cursor-pointer ${isAnyChildActive
+            ? "bg-neutral-100 dark:bg-zinc-800/90 text-black dark:text-white font-bold"
+            : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100/70 dark:hover:bg-zinc-800/50 hover:text-black dark:hover:text-white"
+          }`}
+        title={collapsed ? label : undefined}
+      >
+        <div className="flex items-center min-w-0">
+          <Icon size={18} strokeWidth={isAnyChildActive ? 2.2 : 1.7} className="shrink-0" />
+          {!collapsed && (
+            <span className="text-[13px] font-bold tracking-wide truncate ml-3">
+              {label}
+            </span>
+          )}
+        </div>
+        {!collapsed && (
+          <ChevronDown
+            size={14}
+            className={`shrink-0 text-neutral-400 transition-transform duration-200 ${isOpen ? "rotate-180 text-black dark:text-white" : ""
+              }`}
+          />
+        )}
+      </button>
+
+      {/* Submenu links */}
+      {!collapsed && isOpen && (
+        <div className="pl-3.5 pt-1 pb-1 space-y-0.5 border-l-2 border-neutral-100 dark:border-zinc-800/80 ml-3.5 my-1">
+          {items.map((item, idx) => {
+            const isActive = item.exactPath
+              ? location.pathname === item.exactPath
+              : location.pathname === "/admin-dashboard" && currentTab === item.tab;
+
+            const linkTo = item.exactPath || `/admin-dashboard?tab=${item.tab}`;
+
+            return (
+              <Link
+                key={idx}
+                to={linkTo}
+                className={`flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${isActive
+                    ? "bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm"
+                    : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800/60 hover:text-black dark:hover:text-white"
+                  }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 ${isActive ? "bg-orange-500" : "bg-neutral-300 dark:bg-zinc-700"
+                  }`} />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Section Header / Divider ─────────────────────────────────────────── */
+const SectionDivider = ({ title, collapsed }) => (
+  <div className="sidebar-divider my-2">
+    {title && !collapsed && (
+      <p className="px-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        {title}
+      </p>
+    )}
     <div className="h-px bg-neutral-200 dark:bg-zinc-800" />
   </div>
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   AdminSidebar — Luxury Minimal
-   Inspired by: clean white sidebar, subtle icons, branded bottom card
+   AdminSidebar — Nested Dropdown Architecture (Existing Features Only)
    ═══════════════════════════════════════════════════════════════════════════ */
 const AdminSidebar = () => {
   const location = useLocation();
@@ -67,7 +154,7 @@ const AdminSidebar = () => {
   let user = null;
   try {
     const stored = localStorage.getItem("user");
-    if (stored && stored !== "undefined") admin = JSON.parse(stored);
+    if (stored && stored !== "undefined") user = JSON.parse(stored);
   } catch (err) {
     console.error("Error parsing admin from local storage", err);
   }
@@ -89,18 +176,15 @@ const AdminSidebar = () => {
 
   return (
     <aside
-      className={`hidden md:flex flex-col shrink-0 bg-white dark:bg-[#0a0a0a] border-r border-neutral-100 dark:border-zinc-800/80 overflow-hidden admin-sidebar-transition ${
-        collapsed ? "admin-sidebar-collapsed" : "admin-sidebar-expanded"
-      }`}
+      className={`hidden md:flex flex-col shrink-0 bg-white dark:bg-[#0a0a0a] border-r border-neutral-100 dark:border-zinc-800/80 overflow-hidden admin-sidebar-transition ${collapsed ? "admin-sidebar-collapsed" : "admin-sidebar-expanded"
+        }`}
       style={{ height: "calc(100vh - 4rem)" }}
       aria-label="Admin sidebar"
     >
       {/* ── Top: Brand + Toggle ────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 pt-5 pb-1 relative min-h-[44px]">
         <div className="flex items-center gap-2.5 min-w-0 sidebar-brand-container">
-          <div className="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center shrink-0">
-            <Sparkles size={14} className="text-orange-400 dark:text-orange-600" strokeWidth={2.5} />
-          </div>
+          
           <div className="min-w-0 sidebar-brand-text">
             <p className="text-[13px] font-bold text-black dark:text-white truncate leading-tight">
               {adminName}
@@ -124,12 +208,13 @@ const AdminSidebar = () => {
         </button>
       </div>
 
-      <SectionDivider />
+      <SectionDivider collapsed={collapsed} />
 
-      {/* ── Navigation ─────────────────────────────────────────────────── */}
+      {/* ── Navigation List ─────────────────────────────────────────────── */}
       <nav className="flex-1 px-3 py-1 space-y-1 overflow-y-auto overflow-x-hidden" aria-label="Admin navigation">
         {role === "admin" && (
           <>
+            {/* 1. Overview */}
             <AdminSidebarLink
               to="/admin-dashboard?tab=overview"
               icon={LayoutDashboard}
@@ -140,92 +225,74 @@ const AdminSidebar = () => {
               }
               collapsed={collapsed}
             />
-            <AdminSidebarLink
-              to="/admin-dashboard?tab=payouts"
-              icon={Wallet}
-              label="Payouts"
-              isActive={
-                location.pathname === "/admin-dashboard" &&
-                currentTab === "payouts"
-              }
+
+            {/* 2. Events Dropdown */}
+            <AdminSidebarDropdown
+              icon={Calendar}
+              label="Events"
               collapsed={collapsed}
+              items={[
+                { label: "All Events", tab: "event-data" },
+                { label: "Calendar & Schedule", tab: "calendar" },
+              ]}
             />
-            <AdminSidebarLink
-              to="/admin-dashboard?tab=payments-overview"
-              icon={Wallet}
-              label="Payments Management"
-              isActive={
-                location.pathname === "/admin-dashboard" &&
-                currentTab === "payments-overview"
-              }
-              collapsed={collapsed}
-            />
-            <AdminSidebarLink
-              to="/admin-dashboard?tab=club-heads"
+
+
+            {/* 3. Clubs & Users Dropdown */}
+            <AdminSidebarDropdown
               icon={Users}
-              label="Manage Clubs"
-              isActive={
-                location.pathname === "/admin-dashboard" &&
-                currentTab === "club-heads"
-              }
+              label="Clubs Management"
               collapsed={collapsed}
+              items={[
+                { label: "Clubs", tab: "club-heads" },
+                { label: "Coordinators", tab: "coordinators" },
+
+              ]}
             />
-            <AdminSidebarLink
-              to="/admin-dashboard?tab=coordinators"
-              icon={UserCog}
-              label="Coordinators"
-              isActive={
-                location.pathname === "/admin-dashboard" &&
-                currentTab === "coordinators"
-              }
+
+            {/* 4. Financial Operations Dropdown */}
+            <AdminSidebarDropdown
+              icon={Wallet}
+              label="Financial Operations"
               collapsed={collapsed}
+              items={[
+                { label: "Transactions", tab: "payments-overview" },
+                { label: "Payouts", tab: "payouts" },
+              ]}
             />
-            <AdminSidebarLink
-              to="/admin-dashboard?tab=event-data"
-              icon={CalendarDays}
-              label="Event Data"
-              isActive={
-                location.pathname === "/admin-dashboard" &&
-                currentTab === "event-data"
-              }
+
+            {/* 6. Communication Dropdown */}
+            <AdminSidebarDropdown
+              icon={Radio}
+              label="Communication"
               collapsed={collapsed}
+              items={[
+                { label: "Broadcasts", tab: "broadcasts" },
+                { label: "Notifications", tab: "notifications" },
+              ]}
+            />
+
+            {/* 7. SYSTEM ADMIN Dropdown */}
+            <AdminSidebarDropdown
+              icon={Sliders}
+              label="SYSTEM ADMIN"
+              collapsed={collapsed}
+              items={[
+                { label: "Export Center", tab: "export-center" },
+                { label: "Venues", tab: "venues" },
+              ]}
             />
           </>
-        )}
-
-        {(role === "admin" || role === "lostFoundAdmin") && (
-          <>
-            {role === "admin" && <SectionDivider />}
-            <AdminSidebarLink
-              to="/admin/lost-found"
-              icon={Package}
-              label="Lost & Found"
-              isActive={location.pathname === "/admin/lost-found"}
-              collapsed={collapsed}
-            />
-          </>
-        )}
-
-        {role === "paymentAdmin" && (
-          <AdminSidebarLink
-            to="/admin-dashboard?tab=payouts"
-            icon={Wallet}
-            label="Payouts"
-            isActive={
-              location.pathname === "/admin-dashboard" &&
-              (!currentTab || currentTab === "payouts")
-            }
-            collapsed={collapsed}
-          />
         )}
 
         {(role === "admin" || role === "paymentAdmin") && (
           <>
-            <SectionDivider />
+            <SectionDivider collapsed={collapsed} />
+            {/* 8. Profile */}
             <AdminSidebarLink
               to="/admin-dashboard?tab=profile"
               icon={User}
-              label="Profile Settings"
+              label="Profile"
               isActive={
                 location.pathname === "/admin-dashboard" &&
                 currentTab === "profile"

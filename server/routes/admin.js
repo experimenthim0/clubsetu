@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import prisma from "../lib/prisma.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import { createObjectId } from "../utils/objectId.js";
@@ -52,7 +53,7 @@ router.post("/login", async (req, res) => {
 router.get(
   "/dashboard-stats",
   verifyToken,
-  allowRoles("admin", "paymentAdmin"),
+  requirePermission(PERMISSIONS.AUDIT_VIEW),
   async (req, res) => {
     try {
       const [events, participations, totalStudents, totalClubs, totalEventsActive, totalEventsAll] =
@@ -141,7 +142,7 @@ router.get(
 router.post(
   "/complete-payout/:eventId",
   verifyToken,
-  allowRoles("admin", "paymentAdmin"),
+  requirePermission(PERMISSIONS.PAYOUT_APPROVE),
   async (req, res) => {
     try {
       const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });
@@ -168,7 +169,7 @@ router.post(
 
 // ── GET /admin/user-info/:id — bank info for payout (StudentUser) ─────────────
 
-router.get("/user-info/:id", verifyToken, allowRoles("admin"), async (req, res) => {
+router.get("/user-info/:id", verifyToken, requirePermission(PERMISSIONS.USER_VIEW), async (req, res) => {
   try {
     const student = await prisma.studentUser.findUnique({ where: { id: req.params.id } });
     if (!student) return res.status(404).json({ message: "User not found" });
@@ -215,7 +216,7 @@ router.get("/user-info/:id", verifyToken, allowRoles("admin"), async (req, res) 
 
 // ── GET /admin/clubs-list ─────────────────────────────────────────────────────
 
-router.get("/clubs-list", verifyToken, allowRoles("admin"), async (req, res) => {
+router.get("/clubs-list", verifyToken, requirePermission(PERMISSIONS.CLUB_VIEW), async (req, res) => {
   try {
     const clubs = await prisma.club.findMany({
       include: {
@@ -245,7 +246,7 @@ router.get("/clubs-list", verifyToken, allowRoles("admin"), async (req, res) => 
 
 // ── GET /admin/event-data-export ──────────────────────────────────────────────
 
-router.get("/event-data-export", verifyToken, allowRoles("admin"), async (req, res) => {
+router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDIT_EXPORT), async (req, res) => {
   try {
     const { month, year, clubId } = req.query;
     const where = {};
@@ -292,24 +293,27 @@ router.get("/event-data-export", verifyToken, allowRoles("admin"), async (req, r
       events: events.map((event) => {
         const eventParts = participationsByEvent.get(event.id) ?? [];
         return {
+          id: event.id,
           eventId: event.id,
+          slug: event.slug,
           eventName: event.title,
           clubName: event.club?.clubName || "Unknown",
           totalRegistrations: event.registeredCount || eventParts.length,
           eventType: event.entryFee > 0 ? "Paid" : "Free",
+          entryFee: event.entryFee || 0,
           eventDate: event.startTime,
           totalAmountReceived: eventParts.reduce((sum, p) => sum + (p.amountPaid || 0), 0),
         };
       }),
     });
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "Failed to export event data" });
   }
 });
 
 // ── POST /admin/clubs — create club with head and faculty coordinator ──────────
 
-router.post("/clubs", verifyToken, allowRoles("admin"), async (req, res) => {
+router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), async (req, res) => {
   try {
     const { clubName, facultyName, facultyEmail, clubEmail } = req.body;
     const slug = await slugifyUnique(clubName, 'club', 'slug');
@@ -381,7 +385,7 @@ router.post("/clubs", verifyToken, allowRoles("admin"), async (req, res) => {
 
 // ── GET /admin/coordinators — list all faculty coordinators ────────────────────
 
-router.get("/coordinators", verifyToken, allowRoles("admin"), async (req, res) => {
+router.get("/coordinators", verifyToken, requirePermission(PERMISSIONS.USER_VIEW), async (req, res) => {
   try {
     const coordinators = await prisma.adminRole.findMany({
       where: { role: "facultyCoordinator" },
@@ -397,7 +401,7 @@ router.get("/coordinators", verifyToken, allowRoles("admin"), async (req, res) =
 
 // ── POST /admin/coordinators — create a new coordinator ────────────────────────
 
-router.post("/coordinators", verifyToken, allowRoles("admin"), async (req, res) => {
+router.post("/coordinators", verifyToken, requirePermission(PERMISSIONS.USER_ASSIGN_ROLE), async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const passwordHash = await bcrypt.hash(password || "coordinator123", 10);
@@ -423,7 +427,7 @@ router.post("/coordinators", verifyToken, allowRoles("admin"), async (req, res) 
 
 // ── PUT /admin/coordinators/:id — update coordinator ───────────────────────────
 
-router.put("/coordinators/:id", verifyToken, allowRoles("admin"), async (req, res) => {
+router.put("/coordinators/:id", verifyToken, requirePermission(PERMISSIONS.USER_ASSIGN_ROLE), async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const data = { name, email };
@@ -447,7 +451,7 @@ router.put("/coordinators/:id", verifyToken, allowRoles("admin"), async (req, re
 
 // ── PUT /admin/clubs/:id — update club (admin only) ─────────────────────────────
 
-router.put("/clubs/:id", verifyToken, allowRoles("admin"), async (req, res) => {
+router.put("/clubs/:id", verifyToken, requirePermission(PERMISSIONS.CLUB_UPDATE), async (req, res) => {
   try {
     const { clubName, clubEmail, facultyCoordinatorId, facultyName, facultyEmail } = req.body;
     const updates = { clubName, clubEmail, facultyCoordinatorId, facultyName, facultyEmail };
@@ -471,7 +475,7 @@ router.put("/clubs/:id", verifyToken, allowRoles("admin"), async (req, res) => {
 });
 
 // ── GET /admin/manual-payments — get all manual payments for admin overview ───
-router.get("/manual-payments", verifyToken, allowRoles("admin", "paymentAdmin"), async (req, res) => {
+router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMENT_VERIFY), async (req, res) => {
   try {
     const participations = await prisma.participation.findMany({
       where: {

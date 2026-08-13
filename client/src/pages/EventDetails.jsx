@@ -15,6 +15,7 @@ import { TwitterIcon } from "@/components/ui/twitter";
 import { GithubIcon } from "@/components/ui/github";
 import { MessageCircleIcon } from "@/components/ui/message-circle";
 import { EarthIcon } from "@/components/ui/earth";
+import { hasPermission, PERMISSIONS } from '../utils/rbac';
 
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
 
@@ -800,7 +801,7 @@ const EventDetails = () => {
             </nav>
 
             {/* ── Event Poster ── */}
-            <div className="mb-6 rounded-2xl overflow-hidden border-2 border-neutral-200 dark:border-neutral-800 shadow-sm bg-white dark:bg-neutral-900 relative">
+            <div className="mb-6 rounded-2xl overflow-hidden border-1 border-neutral-200 dark:border-neutral-800 shadow-sm bg-white dark:bg-neutral-900 relative">
               <img
                 src={event.imageUrl || DEFAULT_IMAGE}
                 alt={title}
@@ -894,8 +895,8 @@ const EventDetails = () => {
                   About this Event
                 </h2>
                 <div 
-                  className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-relaxed event-description ql-editor px-0 whitespace-pre-wrap" 
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description, { ADD_ATTR: ['target'] }) }}
+                  className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-relaxed event-description ql-editor px-0 whitespace-pre-wrap [&_*]:!text-inherit [&_*]:!bg-transparent" 
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description, { ADD_ATTR: ['target'], FORBID_ATTR: ['style'] }) }}
                 />
               </div>
             )}
@@ -943,7 +944,7 @@ const EventDetails = () => {
                       <img
                         src={sponsor.logoUrl}
                         alt={sponsor.name}
-                        className="h-7 w-auto object-contain bg-white dark:bg-white "
+                        className="h-7 w-auto object-contain bg-white dark:bg-black"
                         onError={(e) => { e.target.src = 'https://via.placeholder.com/28?text=' + sponsor.name[0]; }}
                       />
                       <span className="text-[11px] font-medium text-black dark:text-white tracking-wide text-center">
@@ -1090,7 +1091,7 @@ const EventDetails = () => {
 
           {/* ═══════════════ RIGHT COLUMN: Transactional Widget (35%) ═══════════════ */}
           <div className="w-full lg:w-[35%] lg:sticky lg:top-[80px] shrink-0">
-            <div className="bg-white dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-neutral-900 border-1 border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
 
               {/* ── Date & Time Module ── */}
               <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800">
@@ -1107,15 +1108,15 @@ const EventDetails = () => {
                       {new Date(startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                     </p>
                   </div>
-                  <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800" />
-                  <div>
+                  {/* <div className="w-full h-px bg-neutral-100 dark:bg-neutral-800" /> */}
+                  {/* <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Ends</p>
                     <p className="text-[14px] font-semibold text-neutral-700 dark:text-neutral-300">
                       {new Date(endTime).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Kolkata' })}
                       {' · '}
                       {new Date(endTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -1222,8 +1223,8 @@ const EventDetails = () => {
               </div>
 
               {/* ── Organizer ── */}
-              <div className="px-1 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                <div className=" px-3 flex items-center gap-3">
+              <div className="px-1 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                <div className=" px-3 flex items-center gap-3 pb-4">
                   {clubSlugOrId ? (
                     <Link
                       to={`/club/${clubSlugOrId}`}

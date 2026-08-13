@@ -48,6 +48,7 @@ const Aboutfeatures = lazy(() => import('./pages/Aboutfeatures'));
 const CertificateDesigner = lazy(() => import('./pages/CertificateDesigner'));
 const LostAndFound = lazy(() => import('./pages/LostAndFound'));
 const LostFoundAdminDashboard = lazy(() => import('./pages/LostFoundAdminDashboard'));
+const ExportCenter = lazy(() => import('./pages/ExportCenter'));
 const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
 // const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
@@ -55,6 +56,7 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 // const BusTracker = lazy(() => import('./pages/BusTracker'));
 // const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
 // const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
+
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
@@ -136,6 +138,7 @@ function App() {
                   {/* ── Admin Layout — separate window, custom navbar/sidebar ── */}
                   <Route element={<AdminLayout />}>
                     <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/export-center" element={<ExportCenter />} />
                     <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} />
                   </Route>
 
@@ -188,8 +191,7 @@ function App() {
                     <Route path="/lost-found" element={<LostAndFound />} />
                     <Route path="/lost-found/guide" element={<LostFoundGuide />} />
                     {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
-                    {/* <Route path="/color-extractor-demo" element={<ColorExtractorDemo />} /> */}
-
+              
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

@@ -57,6 +57,27 @@ const EditEvent = () => {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [availableVenues, setAvailableVenues] = useState(EVENT_VENUES);
+
+    useEffect(() => {
+        const fetchOpenVenues = async () => {
+            try {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/venues?openOnly=true`);
+                if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    const fetchedNames = res.data.map(v => typeof v === 'string' ? v : v.name);
+                    setAvailableVenues(prev => {
+                        if (formData.venue && !fetchedNames.includes(formData.venue)) {
+                            return [...fetchedNames, formData.venue];
+                        }
+                        return fetchedNames;
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load open venues, falling back to static list:", err);
+            }
+        };
+        fetchOpenVenues();
+    }, [formData.venue]);
 
     const handleBranchToggle = (branch) => {
         setFormData(prev => {
@@ -585,9 +606,9 @@ const EditEvent = () => {
     }
 
     const inputCls =
-        'w-full px-4 py-2 border-2 border-neutral-200 rounded-lg focus:border-orange-600 focus:outline-none transition-colors';
+        'w-full px-4 py-2 border-2 border-neutral-200 dark:border-zinc-800 rounded-lg focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-[#0a0a0a] text-black dark:text-white';
     const labelCls =
-        'block text-sm font-bold tracking-wide text-black mb-2';
+        'block text-sm font-bold tracking-wide text-black dark:text-white mb-2';
 
     return (
         <div className="min-h-screen bg-neutral-50 py-8 md:py-12 px-4 md:px-6">
@@ -630,7 +651,9 @@ const EditEvent = () => {
                             {/* Description */}
                             <div>
                                 <label className={labelCls}>Description</label>
-                                <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="bg-white" />
+                                <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a]">
+                                    <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="quill-editor" />
+                                </div>
                             </div>
 
                             {/* Venue */}
@@ -638,7 +661,7 @@ const EditEvent = () => {
                                 <label className={labelCls}>Venue <span className="text-orange-600">*</span></label>
                                 <select name="venue" className={inputCls} value={formData.venue} onChange={handleChange}>
                                     <option value="">Select Venue</option>
-                                    {EVENT_VENUES.map((venue) => (
+                                    {availableVenues.map((venue) => (
                                         <option key={venue} value={venue}>{venue}</option>
                                     ))}
                                 </select>

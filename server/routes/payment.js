@@ -1,7 +1,9 @@
 import express from "express";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
+import { sendWebPushNotification } from "../utils/sendPush.js";
 
 const router = express.Router();
 
@@ -9,7 +11,7 @@ const router = express.Router();
 router.put(
   "/:participationId/review",
   verifyToken,
-  allowRoles("club", "admin", "member"),
+  requirePermission(PERMISSIONS.PAYMENT_VERIFY),
   async (req, res) => {
     const { status, message } = req.body;
     const { participationId } = req.params;
@@ -107,15 +109,18 @@ router.put(
           },
         });
 
+        const payload = {
+          ...notification,
+          _id: notification.id,
+          sender: { name: "System" },
+          link: `/my-events?eventId=${participation.eventId}`,
+        };
+
         // Send real-time notification via socket
         if (req.io) {
-          req.io.to(participation.studentId).emit("new-notification", {
-            ...notification,
-            _id: notification.id,
-            sender: { name: "System" },
-            link: `/my-events?eventId=${participation.eventId}`,
-          });
+          req.io.to(participation.studentId).emit("new-notification", payload);
         }
+        sendWebPushNotification(participation.studentId, payload);
       }
 
       res.json({
@@ -132,7 +137,7 @@ router.put(
 router.get(
   "/event/:eventId/registrations",
   verifyToken,
-  allowRoles("club", "admin", "member"),
+  requirePermission(PERMISSIONS.PAYMENT_VIEW),
   async (req, res) => {
     try {
       const { eventId } = req.params;
@@ -244,7 +249,7 @@ router.get(
 router.get(
   "/event/:eventId/stats",
   verifyToken,
-  allowRoles("club", "admin", "member"),
+  requirePermission(PERMISSIONS.PAYMENT_VIEW),
   async (req, res) => {
     try {
       const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });

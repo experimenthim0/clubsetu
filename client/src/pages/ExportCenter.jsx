@@ -1,0 +1,718 @@
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import {
+  EXPORT_DATASETS,
+  ACADEMIC_SESSIONS,
+  SEMESTERS,
+} from "../config/exportDatasets";
+import { useNotification } from "../context/NotificationContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+
+/* ─── Shared Compact Table Primitives ─────────────────────────────────── */
+const DataTable = ({ children }) => (
+  <div className="overflow-x-auto border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-[#0a0a0a]">
+    <table className="w-full text-left border-collapse myfont text-xs">{children}</table>
+  </div>
+);
+
+const Th = ({ children, align = "left" }) => (
+  <th
+    className={`px-4 py-3 bg-neutral-50 dark:bg-zinc-900/60 font-bold uppercase tracking-wider text-[10px] text-neutral-400 dark:text-neutral-500 border-b border-neutral-200 dark:border-zinc-800 text-${align}`}
+  >
+    {children}
+  </th>
+);
+
+const Td = ({ children, align = "left", className = "" }) => (
+  <td className={`px-4 py-3 text-neutral-700 dark:text-neutral-300 text-${align} ${className}`}>
+    {children}
+  </td>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ExportCenter Page Component
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ExportCenter = () => {
+  const { showNotification } = useNotification();
+
+  // Active dataset state
+  const [selectedDatasetId, setSelectedDatasetId] = useState("events");
+  const activeDataset = EXPORT_DATASETS[selectedDatasetId] || EXPORT_DATASETS.events;
+
+  // Session, Semester & Scope state
+  const [session, setSession] = useState("2026–27");
+  const [semester, setSemester] = useState("Odd");
+  const [clubId, setClubId] = useState("all");
+  const [eventId, setEventId] = useState("all");
+
+  // Dynamic dataset filter state
+  const [datasetFilters, setDatasetFilters] = useState({});
+
+  // Column selection state (array of selected column ids)
+  const [selectedColumns, setSelectedColumns] = useState(
+    activeDataset.defaultColumns
+  );
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+
+  // Clubs and Events list state
+  const [clubs, setClubs] = useState([]);
+  const [eventsList, setEventsList] = useState([]);
+
+  // Preview & Pagination state
+  const [previewData, setPreviewData] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Audit History state
+  const [exportHistory, setExportHistory] = useState([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // Authorized Datasets list from backend
+  const [authorizedDatasets, setAuthorizedDatasets] = useState(
+    Object.keys(EXPORT_DATASETS)
+  );
+
+  // Fetch Clubs dropdown list
+  useEffect(() => {
+    axios
+      .get(`${API_URL}/api/admin/clubs-list`)
+      .then((res) => {
+        setClubs(res.data || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch Events dropdown list ONLY after a specific club is selected
+  useEffect(() => {
+    if (clubId && clubId !== "all") {
+      axios
+        .get(`${API_URL}/api/export-center/events-list`, { params: { clubId } })
+        .then((res) => {
+          if (res.data?.success) {
+            setEventsList(res.data.events || []);
+          }
+        })
+        .catch(() => {
+          setEventsList([]);
+        });
+    } else {
+      setEventsList([]);
+      setEventId("all");
+    }
+  }, [clubId]);
+
+  // Fetch Authorized Datasets list
+  useEffect(() => {
+    axios
+      .get(`${API_URL}/api/export-center/datasets`)
+      .then((res) => {
+        if (res.data?.datasets) {
+          const authorizedIds = res.data.datasets.map((d) => d.id);
+          setAuthorizedDatasets(authorizedIds);
+          if (authorizedIds.length > 0 && !authorizedIds.includes(selectedDatasetId)) {
+            setSelectedDatasetId(authorizedIds[0]);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [selectedDatasetId]);
+
+  // Reset columns and dynamic filters when dataset changes
+  useEffect(() => {
+    const ds = EXPORT_DATASETS[selectedDatasetId];
+    if (ds) {
+      setSelectedColumns(ds.defaultColumns);
+      const initialFilters = {};
+      (ds.filterFields || []).forEach((field) => {
+        initialFilters[field.id] = field.options[0]?.value || "all";
+      });
+      setDatasetFilters(initialFilters);
+      setEventId("all");
+      setPage(1);
+    }
+  }, [selectedDatasetId]);
+
+  // Fetch server-side preview records
+  const fetchPreview = useCallback(async () => {
+    setIsLoadingPreview(true);
+    try {
+      const params = {
+        dataset: selectedDatasetId,
+        session,
+        semester,
+        clubId,
+        eventId,
+        page,
+        limit: 50,
+        ...datasetFilters,
+      };
+
+      const res = await axios.get(`${API_URL}/api/export-center/preview`, { params });
+      if (res.data?.success) {
+        setPreviewData(res.data.records || []);
+        setTotalCount(res.data.totalCount || 0);
+        setTotalPages(res.data.totalPages || 1);
+      }
+    } catch (err) {
+      showNotification(
+        err.response?.data?.message || "Failed to load data preview.",
+        "error"
+      );
+      setPreviewData([]);
+      setTotalCount(0);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  }, [selectedDatasetId, session, semester, clubId, eventId, datasetFilters, page, showNotification]);
+
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview]);
+
+  // Handle Export CSV
+  const handleExportCSV = async () => {
+    if (totalCount === 0) {
+      showNotification("No matching records found to export.", "warning");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const payload = {
+        dataset: selectedDatasetId,
+        session,
+        semester,
+        clubId,
+        columns: selectedColumns,
+        filters: { eventId, ...datasetFilters },
+      };
+
+      const res = await axios.post(`${API_URL}/api/export-center/export`, payload, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.setAttribute("download", `campusnode_${selectedDatasetId}_${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showNotification(
+        `Successfully exported ${totalCount} ${activeDataset.label} record(s).`,
+        "success"
+      );
+
+      if (isHistoryOpen) {
+        fetchHistory();
+      }
+    } catch (err) {
+      showNotification("Failed to generate CSV export file.", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Fetch Export History
+  const fetchHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/export-center/history`);
+      if (res.data?.success) {
+        setExportHistory(res.data.history || []);
+      }
+    } catch (err) {
+      // Non-fatal notice
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const toggleHistory = () => {
+    if (!isHistoryOpen) {
+      fetchHistory();
+    }
+    setIsHistoryOpen((prev) => !prev);
+  };
+
+  // Column checkbox toggling
+  const toggleColumn = (colId) => {
+    if (selectedColumns.includes(colId)) {
+      if (selectedColumns.length === 1) {
+        showNotification("At least one column must be selected.", "warning");
+        return;
+      }
+      setSelectedColumns(selectedColumns.filter((c) => c !== colId));
+    } else {
+      setSelectedColumns([...selectedColumns, colId]);
+    }
+  };
+
+  const handleSelectAllColumns = () => {
+    setSelectedColumns(activeDataset.allColumns.map((c) => c.id));
+  };
+
+  const handleClearAllColumns = () => {
+    setSelectedColumns(activeDataset.defaultColumns);
+  };
+
+  const columnLabelMap = new Map(
+    activeDataset.allColumns.map((c) => [c.id, c.label])
+  );
+
+  return (
+    <div className="min-h-full bg-white dark:bg-[#0a0a0a] myfont text-black dark:text-white p-5 lg:p-8 space-y-6">
+      {/* ── 1. Page Header & Session Context Banner ─────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-200 dark:border-zinc-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-extrabold tracking-tight text-black dark:text-white">
+              Export Center
+            </h1>
+            <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50">
+              Data Management
+            </span>
+          </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+            Export and download structured CampusNode administrative data into clean CSV files.
+          </p>
+        </div>
+
+        {/* Global Academic Session Context Indicator */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-zinc-800 bg-neutral-50 dark:bg-zinc-900/50 text-xs">
+            <i className="ri-building-line text-orange-500" />
+            <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+              Active Context:
+            </span>
+            <span className="font-bold text-black dark:text-white">
+              {session} · {semester} Semester
+            </span>
+          </div>
+
+          <button
+            onClick={toggleHistory}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-neutral-200 dark:border-zinc-800 hover:bg-neutral-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            <i className="ri-history-line text-neutral-400" />
+            <span>Audit History</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── 2. Dataset Selection ────────────────────────────────────────── */}
+      <div className="space-y-2">
+        <label className="block text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+          Select Dataset
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {Object.values(EXPORT_DATASETS).map((ds) => {
+            const isAuthorized = authorizedDatasets.includes(ds.id);
+            const isSelected = ds.id === selectedDatasetId;
+
+            return (
+              <button
+                key={ds.id}
+                disabled={!isAuthorized}
+                onClick={() => setSelectedDatasetId(ds.id)}
+                className={`p-3 rounded-xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
+                  isSelected
+                    ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm"
+                    : isAuthorized
+                    ? "bg-white dark:bg-[#0a0a0a] text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-zinc-800 hover:border-neutral-400 dark:hover:border-zinc-700"
+                    : "opacity-40 cursor-not-allowed border-neutral-200 dark:border-zinc-900 bg-neutral-100 dark:bg-zinc-900/30"
+                }`}
+              >
+                <div>
+                  <i className={`${ds.icon} text-lg ${isSelected ? "text-orange-400 dark:text-orange-600" : "text-neutral-400"}`} />
+                  <p className="text-xs font-bold mt-2 truncate">{ds.label}</p>
+                </div>
+                {!isAuthorized && (
+                  <span className="text-[9px] font-semibold text-rose-500 mt-1">Restricted</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 3. Filters Section ──────────────────────────────────────────── */}
+      <div className="p-4 rounded-xl border border-neutral-200 dark:border-zinc-800 bg-neutral-50/50 dark:bg-zinc-900/30 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+            <i className="ri-filter-3-line text-orange-500" />
+            Filters & Scope ({activeDataset.label})
+          </h2>
+          <button
+            onClick={() => {
+              setSession("2026–27");
+              setSemester("Odd");
+              setClubId("all");
+              setEventId("all");
+              const reset = {};
+              (activeDataset.filterFields || []).forEach((f) => (reset[f.id] = f.options[0]?.value || "all"));
+              setDatasetFilters(reset);
+              setPage(1);
+            }}
+            className="text-[11px] font-semibold text-neutral-400 hover:text-orange-500 cursor-pointer border-0 bg-transparent"
+          >
+            Reset Filters
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {/* Academic Session */}
+          <div>
+            <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+              Academic Session
+            </label>
+            <select
+              value={session}
+              onChange={(e) => {
+                setSession(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-[#0a0a0a] text-black dark:text-white outline-none focus:border-orange-500 transition-colors"
+            >
+              {ACADEMIC_SESSIONS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Semester */}
+          <div>
+            <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+              Semester
+            </label>
+            <select
+              value={semester}
+              onChange={(e) => {
+                setSemester(e.target.value);
+                setPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-[#0a0a0a] text-black dark:text-white outline-none focus:border-orange-500 transition-colors"
+            >
+              {SEMESTERS.map((sem) => (
+                <option key={sem.id} value={sem.id}>
+                  {sem.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Club Scope */}
+          {["events", "registrations", "transactions", "payouts"].includes(
+            selectedDatasetId
+          ) && (
+            <div>
+              <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+                Club Scope
+              </label>
+              <select
+                value={clubId}
+                onChange={(e) => {
+                  setClubId(e.target.value);
+                  setEventId("all");
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-[#0a0a0a] text-black dark:text-white outline-none focus:border-orange-500 transition-colors"
+              >
+                <option value="all">All Clubs</option>
+                {clubs.map((c) => (
+                  <option key={c._id || c.id} value={c._id || c.id}>
+                    {c.clubName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Particular Event Selector — Rendered ONLY after a specific club is selected */}
+          {["events", "registrations", "transactions", "payouts"].includes(
+            selectedDatasetId
+          ) &&
+            clubId !== "all" && (
+              <div>
+                <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+                  Particular Event
+                </label>
+                <select
+                  value={eventId}
+                  onChange={(e) => {
+                    setEventId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-[#0a0a0a] text-black dark:text-white outline-none focus:border-orange-500 transition-colors font-semibold text-orange-600 dark:text-orange-400"
+                >
+                  <option value="all">All Events in Club</option>
+                  {eventsList.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+          {/* Dynamic Dataset Filters */}
+          {(activeDataset.filterFields || []).map((field) => (
+            <div key={field.id}>
+              <label className="block text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+                {field.label}
+              </label>
+              <select
+                value={datasetFilters[field.id] || field.options[0]?.value || "all"}
+                onChange={(e) => {
+                  setDatasetFilters({ ...datasetFilters, [field.id]: e.target.value });
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 text-xs border border-neutral-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-[#0a0a0a] text-black dark:text-white outline-none focus:border-orange-500 transition-colors"
+              >
+                {field.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 4. Column Selection & Export Bar ────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a]">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsColumnModalOpen((prev) => !prev)}
+            className="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-zinc-800 rounded-lg text-xs font-semibold hover:border-black dark:hover:border-white transition-all cursor-pointer"
+          >
+            <i className="ri-layout-column-line text-neutral-400" />
+            <span>Columns ({selectedColumns.length}/{activeDataset.allColumns.length})</span>
+            <i className={`ri-chevron-${isColumnModalOpen ? "up" : "down"}-line text-xs opacity-60`} />
+          </button>
+
+          <span className="text-xs text-neutral-400">
+            Exporting as <strong>CSV</strong>
+          </span>
+        </div>
+
+        <button
+          onClick={handleExportCSV}
+          disabled={isExporting || totalCount === 0}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {isExporting ? (
+            <>
+              <i className="ri-loader-4-line animate-spin text-sm" />
+              Generating CSV...
+            </>
+          ) : (
+            <>
+              <i className="ri-download-2-line text-sm" />
+              Export CSV ({totalCount} records)
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Column Picker Modal / Drawer */}
+      {isColumnModalOpen && (
+        <div className="p-4 rounded-xl border border-neutral-200 dark:border-zinc-800 bg-neutral-50 dark:bg-zinc-900/40 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wider text-black dark:text-white">
+              Select Export Columns
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSelectAllColumns}
+                className="text-[11px] font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer border-0 bg-transparent"
+              >
+                Select All
+              </button>
+              <span className="text-neutral-300 dark:text-neutral-700">•</span>
+              <button
+                onClick={handleClearAllColumns}
+                className="text-[11px] font-bold text-neutral-400 hover:underline cursor-pointer border-0 bg-transparent"
+              >
+                Reset Default
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+            {activeDataset.allColumns.map((col) => {
+              const isChecked = selectedColumns.includes(col.id);
+              return (
+                <label
+                  key={col.id}
+                  className={`flex items-center gap-2.5 p-2 rounded-lg border text-xs cursor-pointer select-none transition-colors ${
+                    isChecked
+                      ? "bg-white dark:bg-[#0a0a0a] border-neutral-400 dark:border-zinc-700 text-black dark:text-white font-semibold"
+                      : "bg-transparent border-transparent text-neutral-400 hover:text-neutral-200"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleColumn(col.id)}
+                    className="w-3.5 h-3.5 accent-orange-600 rounded cursor-pointer"
+                  />
+                  <span className="truncate">{col.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. Server-Side Paginated Preview Table ──────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+            Preview {totalCount > 0 ? `(Showing ${(page - 1) * 50 + 1}–${Math.min(page * 50, totalCount)} of ${totalCount})` : ""}
+          </p>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 1 || isLoadingPreview}
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                className="px-2.5 py-1 rounded border border-neutral-200 dark:border-zinc-800 text-xs font-semibold disabled:opacity-40 cursor-pointer"
+              >
+                Prev
+              </button>
+              <span className="text-xs font-mono text-neutral-400">
+                {page} / {totalPages}
+              </span>
+              <button
+                disabled={page === totalPages || isLoadingPreview}
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                className="px-2.5 py-1 rounded border border-neutral-200 dark:border-zinc-800 text-xs font-semibold disabled:opacity-40 cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+
+        {isLoadingPreview ? (
+          <div className="p-12 text-center border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-[#0a0a0a]">
+            <i className="ri-loader-4-line text-2xl animate-spin text-orange-500" />
+            <p className="text-xs text-neutral-400 mt-2 font-medium">Fetching dataset preview...</p>
+          </div>
+        ) : previewData.length === 0 ? (
+          <div className="p-12 text-center border border-neutral-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-[#0a0a0a] space-y-2">
+            <i className="ri-inbox-line text-3xl text-neutral-400" />
+            <p className="text-xs font-bold text-neutral-400">No records found</p>
+            <p className="text-[11px] text-neutral-500">
+              Try adjusting your session, semester, event, or dataset filters.
+            </p>
+          </div>
+        ) : (
+          <DataTable>
+            <thead>
+              <tr>
+                <Th>#</Th>
+                {selectedColumns.map((colId) => (
+                  <Th key={colId}>{columnLabelMap.get(colId) || colId}</Th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {previewData.map((row, idx) => (
+                <tr
+                  key={row.id || row.transactionId || idx}
+                  className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-zinc-900/40 transition-colors"
+                >
+                  <Td className="text-neutral-400 font-mono">
+                    {(page - 1) * 50 + idx + 1}
+                  </Td>
+                  {selectedColumns.map((colId) => (
+                    <Td key={colId}>
+                      {row[colId] !== undefined && row[colId] !== null
+                        ? String(row[colId])
+                        : "—"}
+                    </Td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </DataTable>
+        )}
+      </div>
+
+      {/* ── 6. Export Audit History Drawer / Section ────────────────────── */}
+      {isHistoryOpen && (
+        <div className="p-5 rounded-xl border border-neutral-200 dark:border-zinc-800 bg-neutral-50/50 dark:bg-zinc-900/30 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+              <i className="ri-history-line text-orange-500" />
+              Recent Export Audit Log
+            </h3>
+            <button
+              onClick={() => setIsHistoryOpen(false)}
+              className="text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer border-0 bg-transparent text-sm"
+            >
+              <i className="ri-close-line" />
+            </button>
+          </div>
+
+          {isLoadingHistory ? (
+            <p className="text-xs text-neutral-400">Loading audit history...</p>
+          ) : exportHistory.length === 0 ? (
+            <p className="text-xs text-neutral-400">No exports logged in history yet.</p>
+          ) : (
+            <DataTable>
+              <thead>
+                <tr>
+                  <Th>Dataset</Th>
+                  <Th>Records</Th>
+                  <Th>Exported By</Th>
+                  <Th>Role</Th>
+                  <Th align="right">Date & Time</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {exportHistory.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-b border-neutral-100 dark:border-zinc-800/50"
+                  >
+                    <Td className="font-bold text-black dark:text-white uppercase">
+                      {item.dataset}
+                    </Td>
+                    <Td className="font-mono font-bold text-orange-600 dark:text-orange-400">
+                      {item.recordCount}
+                    </Td>
+                    <Td>{item.actorEmail || item.actorId}</Td>
+                    <Td className="text-[10px] font-bold uppercase text-neutral-400">
+                      {item.actorRole}
+                    </Td>
+                    <Td align="right" className="font-mono text-[11px] text-neutral-400">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </DataTable>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ExportCenter;

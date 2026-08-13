@@ -196,52 +196,52 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
 });
 
 // GET /api/users/search — search student by email or roll number
-router.get("/search", verifyToken, async (req, res) => {
-  const { query } = req.query;
-  if (!query || query.length < 2) {
-    return res.json([]);
-  }
-  try {
-    const students = await prisma.studentUser.findMany({
-      where: {
-        OR: [
-          { email: { startsWith: query, mode: 'insensitive' } },
-          { rollNo: { startsWith: query, mode: 'insensitive' } }
-        ]
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        rollNo: true,
-        branch: true,
-        year: true,
-        program: true
-      },
-      take: 10
-    });
-    res.json(students);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// router.get("/search", verifyToken, async (req, res) => {
+//   const { query } = req.query;
+//   if (!query || query.length < 2) {
+//     return res.json([]);
+//   }
+//   try {
+//     const students = await prisma.studentUser.findMany({
+//       where: {
+//         OR: [
+//           { email: { startsWith: query, mode: 'insensitive' } },
+//           { rollNo: { startsWith: query, mode: 'insensitive' } }
+//         ]
+//       },
+//       select: {
+//         id: true,
+//         name: true,
+//         email: true,
+//         rollNo: true,
+//         branch: true,
+//         year: true,
+//         program: true
+//       },
+//       take: 10
+//     });
+//     res.json(students);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
 
-// GET /api/users/lookup/:rollNo — lookup student name and branch by roll number
-router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
-  const { rollNo } = req.params;
-  try {
-    const student = await prisma.studentUser.findUnique({
-      where: { rollNo },
-      select: { name: true, branch: true }
-    });
-    if (!student) {
-      return res.status(404).json({ message: "Student not found." });
-    }
-    return res.json(student);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// // GET /api/users/lookup/:rollNo — lookup student name and branch by roll number
+// router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
+//   const { rollNo } = req.params;
+//   try {
+//     const student = await prisma.studentUser.findUnique({
+//       where: { rollNo },
+//       select: { name: true, branch: true }
+//     });
+//     if (!student) {
+//       return res.status(404).json({ message: "Student not found." });
+//     }
+//     return res.json(student);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
 
 // ── Profile Photo Endpoints ──────────────────────────────────────────────────
 
@@ -252,9 +252,9 @@ router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
 function extractCloudinaryPublicId(url) {
   if (!url) return null;
   try {
-    // Remove query params (cache buster)
+    
     const clean = url.split("?")[0];
-    // Match the upload path: .../upload/v12345/folder/filename.ext
+
     const match = clean.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-z]+)?$/);
     return match ? match[1] : null;
   } catch {
@@ -315,14 +315,14 @@ router.post(
         }
       }
 
-      // Upload processed image to Cloudinary
+
       const filename = generateProfileFilename(userId);
       const result = await uploadImage(processedBuffer, "profile-photos");
 
-      // Build versioned URL for cache busting
+    
       const versionedUrl = `${result.secure_url}?v=${Date.now()}`;
 
-      // Update database
+     
       if (userType === "admin") {
         await prisma.adminRole.update({ where: { id: userId }, data: { profileImage: versionedUrl } });
       } else {

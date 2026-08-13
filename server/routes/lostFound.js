@@ -5,6 +5,7 @@ import { verifyToken } from "../middleware/auth.js";
 import { generateSignature, uploadImage, deleteImage } from "../utils/cloudinary.js";
 import { createObjectId } from "../utils/objectId.js";
 import { sanitizeFields } from "../utils/sanitizeInput.js";
+import { sendWebPushNotification } from "../utils/sendPush.js";
 
 const router = express.Router();
 const upload = multer({
@@ -316,6 +317,9 @@ router.post("/:id/report", verifyToken, async (req, res) => {
         _id: reporterNotification.id
       });
     }
+
+    sendWebPushNotification(result.ownerId, { ...ownerNotification, _id: ownerNotification.id });
+    sendWebPushNotification(req.user.userId, { ...reporterNotification, _id: reporterNotification.id });
 
     res.json({ message: "Report submitted. Thank you for keeping the community safe." });
   } catch (error) {

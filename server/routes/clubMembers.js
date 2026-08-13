@@ -1,6 +1,7 @@
 import express from "express";
 import { z } from "zod";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import { validate, objectIdSchema } from "../middleware/validate.js";
 import {
   addClubMember,
@@ -30,12 +31,13 @@ router.get("/:clubId/members", validate(clubIdParamSchema), getClubMembers);
 router.use(verifyToken);
 
 // POST /api/clubs/:clubId/members
-router.post("/:clubId/members", allowRoles("admin", "club", "facultyCoordinator"), validate(clubIdParamSchema), addClubMember);
+router.post("/:clubId/members", requirePermission(PERMISSIONS.CLUB_MANAGE_MEMBERS), validate(clubIdParamSchema), addClubMember);
 
 // PUT /api/clubs/members/:membershipId
-router.put("/members/:membershipId", allowRoles("admin", "club", "facultyCoordinator"), validate(membershipIdParamSchema), updateMemberPermissions);
+router.put("/members/:membershipId", requirePermission(PERMISSIONS.CLUB_MANAGE_MEMBERS), validate(membershipIdParamSchema), updateMemberPermissions);
 
 // DELETE /api/clubs/members/:membershipId
-router.delete("/members/:membershipId", allowRoles("admin", "club", "facultyCoordinator"), validate(membershipIdParamSchema), removeClubMember);
+router.delete("/members/:membershipId", requirePermission(PERMISSIONS.CLUB_MANAGE_MEMBERS), validate(membershipIdParamSchema), removeClubMember);
+
 
 export default router;

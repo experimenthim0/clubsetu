@@ -3,7 +3,14 @@ import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext";
-import { requestNotificationPermission } from "../utils/pushNotifications";
+import {
+  getNotificationPermissionState,
+  requestPermissionWithUserGesture,
+} from "../utils/pushNotifications";
+import {
+  registerPushSubscription,
+  unsubscribePushSubscription,
+} from "../utils/pushSubscription";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -24,49 +31,81 @@ const formatRelativeTime = (dateStr) => {
 };
 
 const Notifications = () => {
-  const { notifications, unreadCount, setUnreadCount, setNotifications } =
+  const { notifications, unreadCount, setUnreadCount, setNotifications, syncNotifications } =
     useSocket() || {};
-  const { showNotification } = useNotification();
+  const { showNotification } = useNotification() || {};
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
-
-  const handleAcceptInvite = async (notifId) => {
-    if (actionLoading[notifId]) return;
-    setActionLoading(prev => ({ ...prev, [notifId]: 'accept' }));
-    try {
-      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/accept`);
-      showNotification(res.data.message || 'Invitation accepted successfully!', 'success');
-      const notifsRes = await axios.get(`${API_URL}/api/notifications`);
-      setNotifications(notifsRes.data);
-    } catch (err) {
-      showNotification(err.response?.data?.message || 'Failed to accept invitation', 'error');
-    } finally {
-      setActionLoading(prev => ({ ...prev, [notifId]: null }));
-    }
-  };
-
-  const handleDeclineInvite = async (notifId) => {
-    if (actionLoading[notifId]) return;
-    setActionLoading(prev => ({ ...prev, [notifId]: 'decline' }));
-    try {
-      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/decline`);
-      showNotification(res.data.message || 'Invitation declined.', 'success');
-      const notifsRes = await axios.get(`${API_URL}/api/notifications`);
-      setNotifications(notifsRes.data);
-    } catch (err) {
-      showNotification(err.response?.data?.message || 'Failed to decline invitation', 'error');
-    } finally {
-      setActionLoading(prev => ({ ...prev, [notifId]: null }));
-    }
-  };
+  const [permissionState, setPermissionState] = useState(getNotificationPermissionState());
+  const [enablingPush, setEnablingPush] = useState(false);
 
   useEffect(() => {
     document.title = "Notifications - CampusNode";
+    setPermissionState(getNotificationPermissionState());
   }, []);
 
   const userString = localStorage.getItem("user");
   const user =
     userString && userString !== "undefined" ? JSON.parse(userString) : null;
+  const currentUserId = String(user?._id || user?.id || "");
+
+  const handleEnablePush = async () => {
+    setEnablingPush(true);
+    try {
+      const state = await requestPermissionWithUserGesture();
+      setPermissionState(state);
+      if (state === "granted") {
+        await registerPushSubscription();
+        if (showNotification) showNotification("Push notifications enabled successfully!", "success");
+      } else if (state === "denied") {
+        if (showNotification) showNotification("Notifications blocked by browser settings.", "warning");
+      }
+    } catch (err) {
+      console.error("Failed to enable push:", err);
+    } finally {
+      setEnablingPush(false);
+    }
+  };
+
+  const handleDisablePush = async () => {
+    setEnablingPush(true);
+    try {
+      await unsubscribePushSubscription();
+      if (showNotification) showNotification("Unsubscribed from push notifications.", "info");
+    } catch (err) {
+      console.error("Failed to disable push:", err);
+    } finally {
+      setEnablingPush(false);
+    }
+  };
+
+  const handleAcceptInvite = async (notifId) => {
+    if (actionLoading[notifId]) return;
+    setActionLoading((prev) => ({ ...prev, [notifId]: "accept" }));
+    try {
+      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/accept`);
+      if (showNotification) showNotification(res.data.message || "Invitation accepted successfully!", "success");
+      if (syncNotifications) await syncNotifications(true);
+    } catch (err) {
+      if (showNotification) showNotification(err.response?.data?.message || "Failed to accept invitation", "error");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [notifId]: null }));
+    }
+  };
+
+  const handleDeclineInvite = async (notifId) => {
+    if (actionLoading[notifId]) return;
+    setActionLoading((prev) => ({ ...prev, [notifId]: "decline" }));
+    try {
+      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/decline`);
+      if (showNotification) showNotification(res.data.message || "Invitation declined.", "success");
+      if (syncNotifications) await syncNotifications(true);
+    } catch (err) {
+      if (showNotification) showNotification(err.response?.data?.message || "Failed to decline invitation", "error");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [notifId]: null }));
+    }
+  };
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
@@ -77,7 +116,7 @@ const Notifications = () => {
       setNotifications((prev) =>
         prev.map((n) => ({
           ...n,
-          readBy: [...(n.readBy || []), user._id || user.id],
+          readBy: [...(n.readBy || []), currentUserId],
         }))
       );
     } catch (err) {
@@ -92,14 +131,13 @@ const Notifications = () => {
       await axios.put(`${API_URL}/api/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((n) =>
-          n._id === id
-            ? { ...n, readBy: [...(n.readBy || []), user._id || user.id] }
+          (n.id === id || n._id === id)
+            ? { ...n, readBy: [...(n.readBy || []), currentUserId] }
             : n
         )
       );
       const newUnread = notifications.filter(
-        (n) =>
-          n._id !== id && !n.readBy?.includes(user._id || user.id)
+        (n) => (n.id !== id && n._id !== id) && !(n.readBy || []).includes(currentUserId)
       ).length;
       setUnreadCount(newUnread);
     } catch (err) {
@@ -112,7 +150,7 @@ const Notifications = () => {
       <div className="max-w-3xl mx-auto px-5 md:px-6 py-10 md:py-12">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight text-black dark:text-white">
@@ -128,45 +166,97 @@ const Notifications = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && (
-                <button
-                  onClick={() => requestNotificationPermission()}
-                  className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0"
-                >
-                  <i className="ri-notification-badge-line text-sm" />
-                  Enable Push
-                </button>
-              )}
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                disabled={loading}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+              >
+                {loading ? (
+                  <i className="ri-loader-4-line animate-spin text-sm" />
+                ) : (
+                  <i className="ri-check-double-line text-sm" />
+                )}
+                Mark all read
+              </button>
+            )}
+          </div>
+        </div>
 
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
-                >
-                  {loading ? (
-                    <i className="ri-loader-4-line animate-spin text-sm" />
-                  ) : (
-                    <i className="ri-check-double-line text-sm" />
-                  )}
-                  Mark all read
-                </button>
-              )}
+        {/* ── Push Notification Permission Status Card ──────────────────────── */}
+        <div className="mb-8 p-4 md:p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+              permissionState === "granted"
+                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50"
+                : permissionState === "denied"
+                ? "bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50"
+                : "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50"
+            }`}>
+              <i className={
+                permissionState === "granted" ? "ri-notification-4-fill" :
+                permissionState === "denied" ? "ri-notification-off-line" : "ri-notification-badge-line"
+              } />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-black dark:text-white">
+                  Push Notifications
+                </h3>
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                  permissionState === "granted"
+                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                    : permissionState === "denied"
+                    ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
+                    : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+                }`}>
+                  {permissionState === "granted" ? "● Enabled" : permissionState === "denied" ? "Blocked" : "Not Enabled"}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {permissionState === "granted"
+                  ? "You will receive desktop and mobile OS push alerts for new updates."
+                  : permissionState === "denied"
+                  ? "Notifications are blocked in your browser settings. Please allow notifications in browser permissions."
+                  : "Enable push notifications to receive real-time updates directly on your device."}
+              </p>
             </div>
           </div>
 
-          <div className="mt-6 h-px bg-neutral-200 dark:bg-neutral-800 w-full" />
+          {permissionState === "default" && (
+            <button
+              onClick={handleEnablePush}
+              disabled={enablingPush}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-60 shrink-0"
+            >
+              {enablingPush ? <i className="ri-loader-4-line animate-spin text-sm" /> : <i className="ri-notification-badge-line text-sm" />}
+              Enable Notifications
+            </button>
+          )}
+
+          {permissionState === "granted" && (
+            <button
+              onClick={handleDisablePush}
+              disabled={enablingPush}
+              className="inline-flex items-center gap-2 px-3.5 py-2 border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-60 shrink-0"
+            >
+              Unsubscribe
+            </button>
+          )}
         </div>
+
+        <div className="mb-6 h-px bg-neutral-200 dark:bg-neutral-800 w-full" />
 
         {/* Notification List */}
         {notifications?.length > 0 ? (
           <div className="space-y-4">
             {notifications.map((notif) => {
-              const isRead = notif.readBy?.includes(user?._id || user?.id);
+              const notifId = notif.id || notif._id;
+              const isRead = (notif.readBy || []).includes(currentUserId);
               return (
                 <div
-                  key={notif._id}
+                  key={notifId}
                   className={`relative bg-white dark:bg-neutral-900 border rounded-xl transition-all duration-200 overflow-hidden
                     ${!isRead
                       ? "border-orange-200 dark:border-orange-900/40 bg-orange-50/50 dark:bg-orange-950/10"
@@ -178,7 +268,7 @@ const Notifications = () => {
                     <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                          {notif.sender?.clubName || "CampusNode"}
+                          {notif.sender?.clubName || notif.sender?.name || "CampusNode"}
                         </span>
                         {!isRead && (
                           <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
@@ -208,44 +298,46 @@ const Notifications = () => {
                     {notif.type === "TEAM_INVITATION" && notif.title === "Team Invitation" ? (
                       <div className="mt-4 flex flex-wrap gap-3">
                         <button
-                          onClick={() => handleAcceptInvite(notif._id)}
-                          disabled={!!actionLoading[notif._id]}
+                          onClick={() => handleAcceptInvite(notifId)}
+                          disabled={!!actionLoading[notifId]}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-60 text-white text-[11px] font-bold transition-colors cursor-pointer border-0 outline-none shadow-sm"
                         >
-                          {actionLoading[notif._id] === 'accept' ? (
+                          {actionLoading[notifId] === "accept" ? (
                             <>
                               <i className="ri-loader-4-line animate-spin text-xs" /> Accepting...
                             </>
                           ) : (
-                            'Accept Invite'
+                            "Accept Invite"
                           )}
                         </button>
                         <button
-                          onClick={() => handleDeclineInvite(notif._id)}
-                          disabled={!!actionLoading[notif._id]}
+                          onClick={() => handleDeclineInvite(notifId)}
+                          disabled={!!actionLoading[notifId]}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:bg-rose-800 disabled:opacity-60 text-white text-[11px] font-bold transition-colors cursor-pointer border-0 outline-none shadow-sm"
                         >
-                          {actionLoading[notif._id] === 'decline' ? (
+                          {actionLoading[notifId] === "decline" ? (
                             <>
                               <i className="ri-loader-4-line animate-spin text-xs" /> Declining...
                             </>
                           ) : (
-                            'Decline'
+                            "Decline"
                           )}
                         </button>
-                        <Link
-                          to={`/event/${notif.eventId}`}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors text-[11px] font-semibold"
-                        >
-                          View Event
-                        </Link>
+                        {notif.eventId && (
+                          <Link
+                            to={`/event/${notif.eventId}`}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors text-[11px] font-semibold"
+                          >
+                            View Event
+                          </Link>
+                        )}
                       </div>
                     ) : (
                       <div className="mt-4 flex flex-wrap gap-3">
                         {(notif.type === "PAYMENT_REVIEW" || notif.title?.toLowerCase().includes("payment")) ? (
                           <>
                             <Link
-                              to={`/my-events${notif.eventId ? `?eventId=${notif.eventId}` : ""}`}
+                              to={notif.url || `/my-events${notif.eventId ? `?eventId=${notif.eventId}` : ""}`}
                               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-[11px] font-semibold transition-colors shadow-sm"
                             >
                               <i className="ri-wallet-3-line text-xs" />
@@ -271,7 +363,7 @@ const Notifications = () => {
 
                         {!isRead && (
                           <button
-                            onClick={() => handleMarkAsRead(notif._id)}
+                            onClick={() => handleMarkAsRead(notifId)}
                             className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white hover:border-neutral-300 transition-colors text-[11px] font-semibold cursor-pointer border-0 outline-none"
                           >
                             Mark as read

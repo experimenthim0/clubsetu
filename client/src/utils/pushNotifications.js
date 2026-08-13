@@ -1,26 +1,47 @@
 /**
- * pushNotifications.js
- * PWA Web Push Notification & App Icon Badging Utilities
+ * pushNotifications.js — PWA & Browser Push Notification Helpers
+ *
+ * Core Native Push Notification utilities for CampusNode.
  */
 
 /**
- * Request notification permissions from the user.
- * @returns {Promise<boolean>}
+ * Get current browser notification permission state.
+ * @returns {'granted' | 'denied' | 'default' | 'unsupported'}
  */
-export async function requestNotificationPermission() {
+export function getNotificationPermissionState() {
   if (typeof window === 'undefined' || !('Notification' in window)) {
-    console.warn('[Push] Notifications not supported in this browser environment.');
-    return false;
+    return 'unsupported';
+  }
+  return Notification.permission; // 'granted' | 'denied' | 'default'
+}
+
+/**
+ * Request notification permission from the user on an explicit user gesture.
+ * @returns {Promise<'granted' | 'denied' | 'default' | 'unsupported'>}
+ */
+export async function requestPermissionWithUserGesture() {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    console.warn('[CampusNode Push] Notifications not supported in this browser environment.');
+    return 'unsupported';
   }
 
   try {
-    const permission = await Notification.requestPermission();
-    console.log(`[Push] Notification permission status: ${permission}`);
-    return permission === 'granted';
+    const result = await Notification.requestPermission();
+    console.log(`[CampusNode Push] Notification permission requested: ${result}`);
+    return result;
   } catch (error) {
-    console.error('[Push] Error requesting notification permission:', error);
-    return false;
+    console.error('[CampusNode Push] Error requesting notification permission:', error);
+    return Notification.permission || 'denied';
   }
+}
+
+/**
+ * Legacy permission request wrapper (kept for backward compatibility)
+ * @returns {Promise<boolean>}
+ */
+export async function requestNotificationPermission() {
+  const state = await requestPermissionWithUserGesture();
+  return state === 'granted';
 }
 
 /**
@@ -40,7 +61,7 @@ export async function setAppIconBadge(count) {
       await navigator.clearAppBadge();
     }
   } catch (err) {
-    console.warn('[Push] Unable to set app badge:', err);
+    console.warn('[CampusNode Push] Unable to set app badge:', err);
   }
 }
 
@@ -55,96 +76,74 @@ export async function clearAppIconBadge() {
   try {
     await navigator.clearAppBadge();
   } catch (err) {
-    console.warn('[Push] Unable to clear app badge:', err);
+    console.warn('[CampusNode Push] Unable to clear app badge:', err);
   }
 }
 
 /**
- * Check if the app/tab is currently visible and focused.
- * When visible, we skip the native notification banner since the
- * in-app notification list already handles it — this also avoids
- * browsers silently suppressing foreground showNotification() calls.
- * @returns {boolean}
- */
-function isAppVisible() {
-  if (typeof document === 'undefined') return false;
-  return document.visibilityState === 'visible' && document.hasFocus();
-}
-
-/**
- * Race navigator.serviceWorker.ready against a timeout so the notification
- * doesn't silently hang if the SW hasn't activated yet (first-load race).
- * @param {number} ms  timeout in milliseconds
+ * Helper to get Service Worker registration safely
+ * @param {number} ms
  * @returns {Promise<ServiceWorkerRegistration|null>}
  */
-function getSwRegistration(ms = 3000) {
+async function getSwRegistration(ms = 3000) {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
-    return Promise.resolve(null);
+    return null;
   }
-  return Promise.race([
-    navigator.serviceWorker.ready,
-    new Promise((resolve) => setTimeout(() => resolve(null), ms)),
-  ]);
+  try {
+    return await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((resolve) => setTimeout(() => resolve(null), ms)),
+    ]);
+  } catch (_) {
+    return null;
+  }
 }
 
 /**
- * Display a native OS push notification if browser permissions are granted.
- *
- * KEY BEHAVIOR:
- *   - When the app tab is **hidden / not focused** → shows a native banner.
- *   - When the app tab is **visible and focused**  → skips (in-app list is enough).
- *   - Falls back to `new Notification()` if the Service Worker isn't ready yet.
+ * Display a native OS push notification banner.
+ * Primary: Service Worker showNotification()
+ * Fallback: new Notification() constructor
  *
  * @param {string} title
- * @param {NotificationOptions} options
+ * @param {object} options
  */
 export async function sendLocalPushNotification(title, options = {}) {
-  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
+  if (getNotificationPermissionState() !== 'granted') {
     return;
   }
 
-  // Skip native banner when user is actively looking at the app —
-  // the in-app notification list already handles this case.
-  if (isAppVisible()) {
-    console.log('[Push] App is visible — skipping native notification (in-app list handles it).');
-    return;
-  }
+  const notificationOptions = {
+    icon: options.icon || '/cs_pwa_notification.png',
+    badge: options.badge || '/cs_pwa_notification.png',
+    body: options.body || '',
+    tag: options.tag || options.id || `campusnode-${Date.now()}`,
+    renotify: options.renotify ?? true,
+    requireInteraction: options.requireInteraction ?? false,
+    data: options.data || { url: options.url || '/' },
+    actions: options.actions || [
+      { action: 'open', title: 'Open' },
+      { action: 'close', title: 'Dismiss' },
+    ],
+  };
 
   try {
-    const notificationOptions = {
-      icon: options.icon || '/cs_pwa_notification.png',
-      badge: options.badge || '/cs_pwa_notification.png',
-      body: options.body || '',
-      image: options.image || undefined,
-      vibrate: options.vibrate || [100, 50, 100],
-      tag: options.tag || `notification-${Date.now()}`,
-      renotify: options.renotify ?? true,
-      requireInteraction: options.requireInteraction ?? false,
-      data: options.data || { url: '/' },
-      actions: options.actions || [
-        { action: 'open', title: 'Open' },
-        { action: 'close', title: 'Dismiss' },
-      ],
-      ...options,
-    };
-
-    // Try the Service Worker path first (required for PWA installed apps).
-    // If the SW isn't ready within 3 s, fall back to the Notification constructor.
+    // Primary mechanism: Service Worker showNotification()
     const registration = await getSwRegistration(3000);
 
     if (registration && registration.showNotification) {
       await registration.showNotification(title, notificationOptions);
-      console.log('[Push] Native notification shown via Service Worker.');
+      console.log('[CampusNode Push] Native notification displayed via Service Worker.');
     } else {
-      // Fallback — works in desktop browsers even without an active SW.
+      // Fallback: Notification constructor
       new Notification(title, notificationOptions);
-      console.log('[Push] Native notification shown via Notification constructor (SW unavailable).');
+      console.log('[CampusNode Push] Native notification displayed via Notification constructor fallback.');
     }
-  } catch (err) {
-    console.warn('[Push] Error showing notification:', err);
-    // Last-resort fallback
+  } catch (error) {
+    console.error('[CampusNode Push] Failed to display notification:', error);
     try {
       new Notification(title, { body: options.body || '' });
-    } catch (_) { /* give up silently */ }
+    } catch (_) {
+      /* ignore */
+    }
   }
 }

@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Plus,
 } from "lucide-react";
+import { hasPermission, PERMISSIONS } from "../utils/rbac";
 
 /**
  * Returns a human-readable role label for display.
@@ -151,8 +152,8 @@ const DynamicSidebar = ({ user }) => {
         </div>
       </div>
 
-      {/* ── Create Event Action (Club account only) ── */}
-      {role === "club" && (
+      {/* ── Create Event Action (Club account or user with event.create permission) ── */}
+      {hasPermission(user, PERMISSIONS.EVENT_CREATE) && (
         <div className={`pt-5 pb-2 shrink-0 ${isCollapsed ? "px-2" : "px-4"}`}>
           <Link
             to="/create"

@@ -1,12 +1,13 @@
 import express from "express";
 import prisma from "../lib/prisma.js";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import cloudinary from "../utils/cloudinary.js";
 
 const router = express.Router();
 
 // All routes require platform lost-found moderation privileges.
-router.use(verifyToken, allowRoles("admin", "lostFoundAdmin"));
+router.use(verifyToken, requirePermission(PERMISSIONS.LOST_FOUND_MODERATE));
 
 // GET /api/admin/lost-found/all - Fetch all items (including fraud/reunited)
 router.get("/all", async (req, res) => {

@@ -1,5 +1,6 @@
 import express from "express";
-import { verifyToken, allowRoles } from "../middleware/auth.js";
+import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import { slugifyUnique } from "../utils/slugifyUnique.js";
 import prisma from "../lib/prisma.js";
 import { serializeEvent } from "../utils/postgresEventSerializer.js";
@@ -102,7 +103,7 @@ router.get("/:id", async (req, res) => {
 
 // ── PUT /clubs/:id — update club (admin or assigned club head) ────────────────
 
-router.put("/:id", verifyToken, allowRoles("admin", "club", "facultyCoordinator"), async (req, res) => {
+router.put("/:id", verifyToken, requirePermission(PERMISSIONS.CLUB_UPDATE), async (req, res) => {
   try {
     const targetClubId = req.params.id;
     const { clubId, role } = req.user;

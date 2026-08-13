@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
@@ -54,6 +54,21 @@ const CreateEvent = () => {
     const [error, setError] = useState('');
     const [uploading, setUploading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [availableVenues, setAvailableVenues] = useState(EVENT_VENUES);
+
+    useEffect(() => {
+        const fetchOpenVenues = async () => {
+            try {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/venues?openOnly=true`);
+                if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    setAvailableVenues(res.data.map(v => typeof v === 'string' ? v : v.name));
+                }
+            } catch (err) {
+                console.error("Failed to load open venues, falling back to static list:", err);
+            }
+        };
+        fetchOpenVenues();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -409,9 +424,9 @@ const CreateEvent = () => {
     };
 
     const inputCls =
-        'w-full px-4 py-3 border-2 border-neutral-200 rounded-lg focus:border-orange-600 focus:outline-none transition-colors';
+        'w-full px-4 py-3 border-2 border-neutral-200 dark:border-zinc-800 rounded-lg focus:border-orange-600 focus:outline-none transition-colors bg-white dark:bg-[#0a0a0a] text-black dark:text-white';
     const labelCls =
-        'block text-sm font-bold text-black mb-2';
+        'block text-sm font-bold text-black dark:text-white mb-2';
 
     return (
         <div className="min-h-screen bg-neutral-50 py-12 px-4">
@@ -460,7 +475,9 @@ const CreateEvent = () => {
                             {/* Description */}
                             <div>
                                 <label className={labelCls}>Description</label>
-                                <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="bg-white" />
+                                <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-[#0a0a0a]">
+                                    <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({ ...formData, description: val })} className="quill-editor" />
+                                </div>
                             </div>
 
                             {/* Event Poster Upload */}
@@ -513,7 +530,7 @@ const CreateEvent = () => {
                                 <label className={labelCls}>Venue <span className="text-orange-600">*</span></label>
                                 <select name="venue" className={inputCls} value={formData.venue} onChange={handleChange}>
                                     <option value="">Select Venue</option>
-                                    {EVENT_VENUES.map((venue) => (
+                                    {availableVenues.map((venue) => (
                                         <option key={venue} value={venue}>{venue}</option>
                                     ))}
                                 </select>

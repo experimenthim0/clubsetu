@@ -30,8 +30,8 @@ const ClubEvents = () => {
       setUser(storedUser);
       fetchClubEvents(clubId);
 
-      // Faculty coordinators and admins can review
-      setCanReview(storedRole === 'facultyCoordinator' || storedRole === 'admin');
+      // Only faculty coordinators can review events
+      setCanReview(storedRole === 'facultyCoordinator');
 
       // Fetch membership to derive RBAC flags
       axios.get(`${import.meta.env.VITE_API_URL}/api/club-members/${clubId}/members`)

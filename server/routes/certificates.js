@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken, requirePermission } from "../middleware/auth.js";
+import { PERMISSIONS } from "../utils/rbac.js";
 import { 
   downloadCertificate, 
   saveTemplate, 
@@ -23,15 +24,15 @@ router.use(verifyToken);
 
 /**
  * @route   POST /api/certificates/:eventId/template
- * @desc    Save certificate template configuration (ClubHead only)
+ * @desc    Save certificate template configuration
  */
-router.post("/:eventId/template", saveTemplate);
+router.post("/:eventId/template", requirePermission(PERMISSIONS.EVENT_CERTIFICATE), saveTemplate);
 
 /**
  * @route   POST /api/certificates/upload-template
- * @desc    Proxy to upload image to Cloudinary (ClubHead only)
+ * @desc    Proxy to upload image to Cloudinary
  */
-router.post("/upload-template", upload.single("file"), uploadTemplateProxy);
+router.post("/upload-template", requirePermission(PERMISSIONS.EVENT_CERTIFICATE), upload.single("file"), uploadTemplateProxy);
 
 /**
  * @route   GET /api/certificates/:eventId/download

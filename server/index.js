@@ -15,8 +15,13 @@ import participationRoutes from "./routes/participation.js";
 import lostFoundRoutes from "./routes/lostFound.js";
 import lostFoundAdminRoutes from "./routes/lostFoundAdmin.js";
 import teamRoutes from "./routes/teams.js";
+import exportCenterRoutes from "./routes/exportCenter.js";
+import pushRoutes from "./routes/push.js";
+import venueRoutes from "./routes/venues.js";
+import blackoutRoutes, { ensureBlackoutTable } from "./routes/blackouts.js";
 import prisma from "./lib/prisma.js";
 import compression from "compression";
+
 
 
 import { corsOptions } from "./utils/corsConfig.js";
@@ -26,6 +31,7 @@ import rateLimit from "express-rate-limit";
 import http from "http";
 import { Server } from "socket.io";
 import { apiCompression, etagSupport, getPerformanceStats, overloadProtection, publicReadCache, requestMetrics } from "./middleware/performance.js";
+import { seedPermissions } from "./utils/rbac.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -123,10 +129,14 @@ app.use("/api/teams", teamRoutes);
 app.use("/api/club-members", clubMemberRoutes);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/push", pushRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/participation", participationRoutes);
 app.use("/api/lost-found", lostFoundRoutes);
 app.use("/api/admin/lost-found", lostFoundAdminRoutes);
+app.use("/api/export-center", exportCenterRoutes);
+app.use("/api/venues/blackouts", blackoutRoutes);
+app.use("/api/venues", venueRoutes);
 
 // Auto-cleanup for reunited items (runs every 8 hours)
 const cleanupReunitedItems = async () => {
@@ -148,10 +158,35 @@ const cleanupReunitedItems = async () => {
   }
 };
 
+// Auto-cleanup for unverified student registrations older than 24 hours
+const cleanupUnverifiedStudents = async () => {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const deleted = await prisma.studentUser.deleteMany({
+      where: {
+        isVerified: false,
+        createdAt: {
+          lt: twentyFourHoursAgo
+        }
+      }
+    });
+    if (deleted.count > 0) {
+      console.log(`Auto-cleaned ${deleted.count} unverified student account(s) older than 24 hours.`);
+    }
+  } catch (error) {
+    console.error("Error running unverified student auto-cleanup:", error);
+  }
+};
+
 // Run on startup
 cleanupReunitedItems();
+cleanupUnverifiedStudents();
+seedPermissions();
+ensureBlackoutTable();
+
 
 setInterval(cleanupReunitedItems, 8 * 60 * 60 * 1000);
+setInterval(cleanupUnverifiedStudents, 60 * 60 * 1000);
 
 // Global Error Handler should be the last middleware
 app.use(errorHandler);

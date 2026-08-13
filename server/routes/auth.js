@@ -89,8 +89,18 @@ router.post("/register/student", async (req, res) => {
       });
     }
 
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const orFilters = [{ email }];
     if (rollNo) orFilters.push({ rollNo });
+
+    // Auto-delete unverified student account if 24 hours have passed without verification
+    await prisma.studentUser.deleteMany({
+      where: {
+        isVerified: false,
+        OR: orFilters,
+        createdAt: { lt: twentyFourHoursAgo },
+      },
+    });
 
     const existingUser = await prisma.studentUser.findFirst({ where: { OR: orFilters } });
     if (existingUser) {
@@ -184,7 +194,12 @@ router.post("/login/student", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!student.isVerified && (student.verificationToken || student.verificationTokenExpire)) {
+    if (!student.isVerified) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      if (student.createdAt < twentyFourHoursAgo || (student.verificationTokenExpire && new Date(student.verificationTokenExpire) < new Date())) {
+        await prisma.studentUser.delete({ where: { id: student.id } });
+        return res.status(401).json({ message: "Verification link expired (24 hours passed). Please register again." });
+      }
       return res.status(401).json({ message: "Please verify your email to login." });
     }
 
@@ -609,6 +624,11 @@ router.post("/login", async (req, res) => {
     const student = await prisma.studentUser.findUnique({ where: { email } });
     if (student) {
       if (!student.isVerified) {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        if (student.createdAt < twentyFourHoursAgo || (student.verificationTokenExpire && new Date(student.verificationTokenExpire) < new Date())) {
+          await prisma.studentUser.delete({ where: { id: student.id } });
+          return res.status(401).json({ message: "Verification link expired (24 hours passed). Please register again." });
+        }
         return res.status(401).json({ message: "Please verify your email to login." });
       }
       const isMatch = await bcrypt.compare(password, student.password);

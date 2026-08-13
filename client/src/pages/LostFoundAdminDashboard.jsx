@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { hasPermission, PERMISSIONS } from '../utils/rbac';
 
 const LostFoundAdminDashboard = () => {
     const [stats, setStats] = useState({ total: 0, active: 0, reunited: 0, fraud: 0 });
@@ -17,6 +18,9 @@ const LostFoundAdminDashboard = () => {
         confirmPassword: ''
     });
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const role = localStorage.getItem('role');
 
     const handlePasswordChange = (e) => {
         setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
@@ -48,10 +52,10 @@ const LostFoundAdminDashboard = () => {
         }
     };
 
-    const role = localStorage.getItem('role');
+    
 
     useEffect(() => {
-        if (role !== 'admin' && role !== 'lostFoundAdmin' && role !== 'facultyCoordinator') {
+        if (!hasPermission(user, PERMISSIONS.LOST_FOUND_MODERATE)) {
             navigate('/login');
             return;
         }

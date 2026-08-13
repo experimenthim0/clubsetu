@@ -266,6 +266,20 @@ model Notification {
   @@index([teamId, createdAt])
 }
 
+model PushSubscription {
+  id         String   @id @db.VarChar(24)
+  userId     String   @db.VarChar(24)
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 enum AdminRoleType {
   admin
   facultyCoordinator
@@ -398,3 +412,62 @@ model TeamMember {
   @@unique([teamId, userId])
   @@index([userId])
 }
+
+model Permission {
+  id          String           @id @db.VarChar(24)
+  name        String           @unique
+  description String?
+  resource    String
+  action      String
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @db.VarChar(24)
+  role         String
+  permissionId String     @db.VarChar(24)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+  @@index([role])
+}
+
+model ExportLog {
+  id          String   @id @db.VarChar(24)
+  dataset     String
+  recordCount Int      @default(0)
+  actorId     String   @db.VarChar(24)
+  actorEmail  String
+  actorRole   String
+  filters     Json?
+  columns     String[] @default([])
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([dataset, createdAt])
+}
+
+model Venue {
+  id        String   @id @db.VarChar(24)
+  name      String   @unique
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model VenueBlackout {
+  id          String   @id @db.VarChar(24)
+  venue       String
+  title       String
+  reason      String?
+  startTime   DateTime
+  endTime     DateTime
+  createdById String?  @db.VarChar(24)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([venue, startTime])
+  @@index([startTime, endTime])
+}
+

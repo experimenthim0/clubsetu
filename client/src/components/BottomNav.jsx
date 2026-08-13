@@ -11,6 +11,7 @@ import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
+import { hasPermission, PERMISSIONS } from "../utils/rbac";
 
 const LostFoundIcon = ({ size = 24, ...props }) => (
   <svg 
