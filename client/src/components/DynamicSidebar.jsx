@@ -117,7 +117,7 @@ const DynamicSidebar = ({ user }) => {
       <div className="px-3 py-4 border-b border-gray-200 dark:border-zinc-800 shrink-0">
         <div className={`flex items-center justify-between ${isCollapsed ? "flex-col gap-3 items-center" : "px-1"}`}>
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 select-none border border-neutral-200 dark:border-zinc-800">
+            <div className="w-8 h-8 rounded-full overflow-hidden  text-black dark:text-white bg-gray-200 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs shrink-0 select-none border border-neutral-200 dark:border-zinc-800">
               {(user?.profileImage || user?.picture) ? (
                 <img
                   src={user.profileImage || user.picture}

@@ -171,12 +171,12 @@ const ProfilePhotoUpload = ({ user, onPhotoUpdate }) => {
       >
         {/* Avatar circle */}
         <div
-          className={`w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-[3px] transition-all duration-300 flex items-center justify-center ${
+          className={`w-28 h-28 md:w-32 md:h-32 rounded-full  overflow-hidden border-[3px] transition-all duration-300 flex items-center justify-center ${
             dragActive
               ? 'border-orange-500 shadow-lg shadow-orange-500/20 ring-4 ring-orange-100'
               : displayImage
               ? 'border-neutral-200 group-hover:border-orange-400'
-              : 'border-dashed border-neutral-300 bg-gradient-to-br from-orange-500 to-amber-500 group-hover:border-orange-400'
+              : ' border-neutral-300 '
           }`}
         >
           {displayImage ? (
@@ -187,7 +187,7 @@ const ProfilePhotoUpload = ({ user, onPhotoUpdate }) => {
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
-            <span className="text-3xl md:text-4xl font-bold text-white select-none">
+            <span className="text-3xl md:text-4xl font-bold text-black dark:text-white select-none">
               {initials}
             </span>
           )}

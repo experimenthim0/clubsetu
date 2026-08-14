@@ -1468,10 +1468,10 @@ const EventDetails = () => {
       {/* ── Confirm Registration Modal ── */}
       {confirmModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-xl max-w-md w-full shadow-2xl">
-            <div className="bg-orange-600 px-6 py-4 rounded-t-xl border-b-2 border-black dark:border-neutral-700">
+          <div className="bg-white dark:bg-neutral-900 border-2  dark:border-neutral-700 rounded-xl max-w-md w-full shadow-2xl">
+            <div className="bg-orange-600 px-6 py-4 rounded-t-xl border-b-2  dark:border-neutral-700">
               <h3 className="font-black text-white text-lg flex items-center gap-2">
-                <i className="ri-question-line" /> Confirm Registration
+                <i className="ri-question-line font-medium" /> Confirm Registration
               </h3>
             </div>
             <div className="p-6">
@@ -1504,14 +1504,14 @@ const EventDetails = () => {
             <div className="px-6 pb-6 flex gap-3">
               <button
                 onClick={() => setConfirmModalOpen(false)}
-                className="flex-1 px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                className="flex-1 px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={processDirectRegistration}
                 disabled={isRegistering}
-                className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-full hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isRegistering ? 'Registering...' : 'Yes, Register'}
               </button>

@@ -1214,9 +1214,9 @@ const MyEvents = () => {
                     )}
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] font-semibold text-neutral-400 italic mb-0.5">Valid for one-time entry only</p>
-                    <p className="text-[9px] font-semibold text-neutral-400 italic">
-                      Powered by <span className='text-neutral-900 dark:text-neutral-200 logofont font-light'>Campus</span><span className="text-orange-600 logofont font-light">Node</span>
+                    <p className="text-[10px] font-medium text-neutral-400 italic mb-0.5">Valid for one-time entry only</p>
+                    <p className="text-[9px] font-light text-neutral-400 italic cursor-pointer" onClick={() => navigate('/')}>
+                      Powered by <span className='text-neutral-900 dark:text-neutral-200 logofont tracking-widest font-light'>Campus</span><span className="text-orange-600 logofont font-light tracking-widest">Node</span>
                     </p>
                   </div>
                   

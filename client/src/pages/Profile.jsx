@@ -155,11 +155,11 @@ const Profile = () => {
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 pb-8 border-b border-neutral-100">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left flex-1">
             {/* Avatar */}
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-[2px] border-orange-200 flex items-center justify-center shrink-0">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-[2px] border-neutral-200 dark:border-neutral-800 flex items-center justify-center shrink-0">
               {user.profileImage ? (
                 <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-3xl md:text-4xl font-bold text-orange-600 select-none">{profileInitials}</span>
+                <span className="text-3xl md:text-4xl font-bold text-black dark:text-white select-none">{profileInitials}</span>
               )}
             </div>
 

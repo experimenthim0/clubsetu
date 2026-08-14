@@ -31,7 +31,7 @@ const CheckIn = () => {
   const [manualId, setManualId] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
 
-  // Session attendance history
+  // Session attendance history (successful check-ins only)
   const [attendanceLog, setAttendanceLog] = useState([]);
 
   // Unified scan state
@@ -135,10 +135,9 @@ const CheckIn = () => {
     }
   }, [activeTab]);
 
-  const addToHistory = (status, name, identifier, statusType) => {
+  const addToHistory = (name, identifier) => {
     setAttendanceLog(prev => [{
-      id: Date.now(),
-      status: statusType,
+      id: Date.now() + Math.random(),
       name: name || 'Unknown',
       identifier: identifier || '',
       time: new Date(),
@@ -173,11 +172,10 @@ const CheckIn = () => {
       setScanResult(data);
       setScanState('success');
       setAttendedCount(prev => prev + 1);
+      // Only successful check-in records are added to session log
       addToHistory(
-        'success',
         data.participantName,
-        data.rollNo || data.externalEmail || data.branch || 'Checked In',
-        'success'
+        data.rollNo || data.externalEmail || data.branch || 'Checked In'
       );
     } catch (err) {
       const status = err.response?.status;
@@ -193,24 +191,19 @@ const CheckIn = () => {
 
       setScanResult({ message: errorMessage, ...data });
 
+      // Note: Duplicate check-ins and errors show in overlay feedback, but are NOT added to logs
       if (status === 409 || errorStatus === 'ALREADY_ATTENDED') {
         setScanState('already_marked');
-        addToHistory('already', data.participantName || 'Already Checked In', data.rollNo || data.externalEmail || '', 'already');
       } else if (status === 403 || errorStatus === 'UNAUTHORIZED') {
         setScanState('unauthorized');
-        addToHistory('error', 'Access Denied', qrCode.slice(0, 18), 'error');
       } else if (errorStatus === 'WRONG_EVENT') {
         setScanState('wrong_event');
-        addToHistory('error', 'Wrong Event', qrCode.slice(0, 18), 'error');
       } else if (errorStatus === 'INVALID_SIGNATURE') {
         setScanState('invalid_signature');
-        addToHistory('error', 'Invalid Signature', qrCode.slice(0, 18), 'error');
       } else if (!err.response) {
         setScanState('network_error');
-        addToHistory('error', 'Connection Error', 'Network Offline', 'error');
       } else {
         setScanState('not_found');
-        addToHistory('error', errorMessage, qrCode.slice(0, 18), 'error');
       }
     } finally {
       const cooldownMs = isManual ? 2500 : 2800;
@@ -258,25 +251,6 @@ const CheckIn = () => {
 
   const showOverlay = scanState !== 'idle';
 
-  const overlayBg = {
-    processing:     'rgba(255, 255, 255, 0.95)',
-    success:        'rgba(240, 253, 244, 0.97)',
-    already_marked: 'rgba(255, 251, 235, 0.97)',
-    unauthorized:   'rgba(254, 242, 242, 0.97)',
-    wrong_event:    'rgba(255, 241, 242, 0.97)',
-    not_found:      'rgba(254, 242, 242, 0.97)',
-  }[scanState] || 'rgba(255, 255, 255, 0.95)';
-
-  // Dark mode overlay options
-  const darkOverlayBg = {
-    processing:     'rgba(23, 23, 23, 0.95)',
-    success:        'rgba(6, 78, 59, 0.97)',
-    already_marked: 'rgba(120, 53, 4, 0.97)',
-    unauthorized:   'rgba(153, 27, 27, 0.97)',
-    wrong_event:    'rgba(159, 18, 57, 0.97)',
-    not_found:      'rgba(153, 27, 27, 0.97)',
-  }[scanState] || 'rgba(23, 23, 23, 0.95)';
-
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-[#0a0a0a] font-medium text-neutral-800 dark:text-neutral-200 transition-colors duration-300">
       <style>{`
@@ -323,9 +297,9 @@ const CheckIn = () => {
 
             if (isUpcoming) {
               return (
-                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest">Upcoming</span>
+                <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                  <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-300 uppercase tracking-widest">Upcoming</span>
                 </div>
               );
             }
@@ -338,9 +312,9 @@ const CheckIn = () => {
               );
             }
             return (
-              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-full px-3 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Live</span>
+              <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest">Live</span>
               </div>
             );
           })()}
@@ -355,12 +329,12 @@ const CheckIn = () => {
             {/* Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Registrations', val: event?.registeredCount ?? '—', icon: <Users size={18} className="text-orange-600" />, bg: 'bg-orange-50 dark:bg-orange-950/10 border-orange-100 dark:border-orange-900/20' },
-                { label: 'Attended', val: attendedCount, icon: <BadgeCheck size={18} className="text-green-600 dark:text-green-400" />, bg: 'bg-green-50 dark:bg-green-950/10 border-green-100 dark:border-green-900/20' },
-                { label: 'Check-in Rate', val: `${attendRate}%`, icon: <CheckCircle size={18} className="text-blue-600 dark:text-blue-400" />, bg: 'bg-blue-50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900/20' }
+                { label: 'Registrations', val: event?.registeredCount ?? '—', icon: <Users size={18} /> },
+                { label: 'Attended', val: attendedCount, icon: <BadgeCheck size={18} /> },
+                { label: 'Check-in Rate', val: `${attendRate}%`, icon: <CheckCircle size={18} /> }
               ].map((stat, i) => (
-                <div key={i} className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm ${stat.bg}`}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-neutral-950 shadow-sm border border-neutral-100 dark:border-neutral-800 flex-shrink-0">
+                <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-700/60 text-neutral-700 dark:text-neutral-300 flex-shrink-0">
                     {stat.icon}
                   </div>
                   <div>
@@ -375,14 +349,14 @@ const CheckIn = () => {
             <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 md:p-6 shadow-sm">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Attendance Progress</span>
-                <span className="text-xs font-bold text-orange-600 font-mono">{attendedCount} / {event?.registeredCount ?? 0}</span>
+                <span className="text-xs font-bold text-orange-600 dark:text-orange-400 font-mono">{attendedCount} / {event?.registeredCount ?? 0}</span>
               </div>
-              <div className="h-2 bg-neutral-100 dark:bg-neutral-850 rounded-full overflow-hidden">
+              <div className="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${attendRate}%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
+                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                  className="h-full bg-orange-600 rounded-full"
                 />
               </div>
             </div>
@@ -393,7 +367,7 @@ const CheckIn = () => {
                 <Clock size={14} className="text-neutral-400 dark:text-neutral-500" />
                 <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">Session History</span>
                 {attendanceLog.length > 0 && (
-                  <span className="ml-auto text-[10px] font-bold text-orange-600 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2 py-0.5">
+                  <span className="ml-auto text-[10px] font-bold text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-full px-2.5 py-0.5">
                     {attendanceLog.length} checked in
                   </span>
                 )}
@@ -402,20 +376,14 @@ const CheckIn = () => {
                 {attendanceLog.length === 0 ? (
                   <div className="py-12 flex flex-col items-center gap-2 text-center px-4">
                     <p className="text-sm font-semibold text-neutral-400 dark:text-neutral-500">No check-ins yet this session</p>
-                    <p className="text-xs text-neutral-300 dark:text-neutral-600">Records will display here in real-time as they scan</p>
+                    <p className="text-xs text-neutral-300 dark:text-neutral-600">Successful check-ins will display here in real-time as they scan</p>
                   </div>
                 ) : (
                   <ul className="m-0 p-0 list-none">
                     {attendanceLog.map((entry) => (
-                      <li key={entry.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-neutral-50/50 dark:hover:bg-neutral-850/40 transition-colors">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          entry.status === 'success' ? 'bg-green-50 dark:bg-green-950/20 text-green-600' :
-                          entry.status === 'already' ? 'bg-yellow-50 dark:bg-yellow-950/20 text-yellow-600' :
-                          'bg-red-50 dark:bg-red-950/20 text-red-600'
-                        }`}>
-                          {entry.status === 'success' && <CheckCircle size={14} />}
-                          {entry.status === 'already' && <AlertTriangle size={14} />}
-                          {entry.status === 'error' && <XCircle size={14} />}
+                      <li key={entry.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                          <CheckCircle size={14} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="m-0 text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">{entry.name}</p>
@@ -434,9 +402,9 @@ const CheckIn = () => {
             </div>
 
             {/* Connection Status */}
-            <div className="flex items-center gap-2 p-[10px_14px] bg-green-50 dark:bg-green-950/10 border border-green-200 dark:border-green-900/20 rounded-xl">
-              <Wifi size={14} className="text-green-500" />
-              <span className="text-xs font-semibold text-green-700 dark:text-green-400">Connected — Real-time validation active</span>
+            <div className="flex items-center gap-2.5 p-[10px_14px] bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Scanner active — Real-time validation enabled</span>
             </div>
           </div>
 
@@ -450,8 +418,8 @@ const CheckIn = () => {
                   onClick={() => setActiveTab('scan')}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg cursor-pointer ${
                     activeTab === 'scan'
-                      ? 'text-orange-600 bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
-                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-white'
+                      ? 'text-neutral-900 dark:text-white bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
+                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
                   }`}
                 >
                   <ScanLine size={13} />
@@ -461,8 +429,8 @@ const CheckIn = () => {
                   onClick={() => setActiveTab('manual')}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg cursor-pointer ${
                     activeTab === 'manual'
-                      ? 'text-orange-600 bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
-                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-white'
+                      ? 'text-neutral-900 dark:text-white bg-white dark:bg-neutral-800 shadow-sm border border-neutral-200/50 dark:border-neutral-700/50'
+                      : 'text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
                   }`}
                 >
                   <i className="ri-keyboard-line text-sm" />
@@ -473,21 +441,13 @@ const CheckIn = () => {
               {activeTab === 'scan' ? (
                 <>
                   <div className="relative bg-[#0F0F10] overflow-hidden m-4 rounded-xl">
-                    {/* Corner decorators */}
-                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 left-0 border-t-[3px] border-l-[3px] border-orange-500" />
-                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] top-0 right-0 border-t-[3px] border-r-[3px] border-orange-500" />
-                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 left-0 border-b-[3px] border-l-[3px] border-orange-500" />
-                    <div className="absolute w-[22px] h-[22px] z-10 rounded-[2px] bottom-0 right-0 border-b-[3px] border-r-[3px] border-orange-500" />
-
-                    {/* Scan line animation */}
-                    <div className="scan-line absolute left-3 right-3 h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent rounded shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] z-[9]"></div>
-
+                    <div className="scan-line absolute left-3 right-3 h-[2px] bg-orange-500 rounded z-[9]"></div>
                     <div id="reader" className="w-full"></div>
 
                     {/* Result Overlay */}
                     <AnimatePresence>
                       {showOverlay && (
-                        <ScanOverlay scanState={scanState} scanResult={scanResult} overlayBg={overlayBg} darkOverlayBg={darkOverlayBg} />
+                        <ScanOverlay scanState={scanState} scanResult={scanResult} />
                       )}
                     </AnimatePresence>
                   </div>
@@ -508,7 +468,7 @@ const CheckIn = () => {
                       value={manualId}
                       onChange={(e) => setManualId(e.target.value)}
                       placeholder="e.g. registration ID..."
-                      className="w-full px-4 py-3 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl text-sm font-medium outline-none text-black dark:text-white focus:border-orange-500 transition-all placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
+                      className="w-full px-4 py-3 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-850 rounded-xl text-sm font-medium outline-none text-black dark:text-white focus:border-neutral-400 transition-all placeholder:text-neutral-300 dark:placeholder:text-neutral-700"
                       disabled={manualLoading}
                       autoFocus
                     />
@@ -517,18 +477,11 @@ const CheckIn = () => {
                       disabled={manualLoading || !manualId.trim()}
                       className={`w-full py-3 rounded-xl text-white text-xs font-bold uppercase tracking-wider transition-all ${
                         manualLoading || !manualId.trim()
-                          ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed'
-                          : 'bg-orange-600 hover:bg-orange-700 cursor-pointer shadow-sm'
+                          ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed'
+                          : 'bg-neutral-900 dark:bg-neutral-700 hover:bg-black dark:hover:bg-neutral-600 cursor-pointer shadow-sm'
                       }`}
                     >
-                      {manualLoading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Marking...
-                        </span>
-                      ) : (
-                        'Mark Attendance'
-                      )}
+                      {manualLoading ? 'Marking...' : 'Mark Attendance'}
                     </button>
                   </form>
 
@@ -542,37 +495,37 @@ const CheckIn = () => {
                         className="mt-4"
                       >
                         {scanState === 'success' && (
-                          <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-xl">
-                            <CheckCircle size={20} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                          <div className="flex items-center gap-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                            <CheckCircle size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-bold text-green-700 dark:text-green-400">Successfully Checked In</p>
-                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.participantName} — {scanResult?.rollNo || scanResult?.externalEmail || 'Checked In'}</p>
+                              <p className="text-xs font-bold text-neutral-900 dark:text-white">Successfully Checked In</p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">{scanResult?.participantName} — {scanResult?.rollNo || scanResult?.externalEmail || 'Checked In'}</p>
                             </div>
                           </div>
                         )}
                         {scanState === 'already_marked' && (
-                          <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/40 rounded-xl">
-                            <AlertTriangle size={20} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                          <div className="flex items-center gap-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                            <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400">Attendance Already Recorded</p>
-                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.message || 'Attendance is already recorded.'}</p>
+                              <p className="text-xs font-bold text-neutral-900 dark:text-white">Attendance Already Recorded</p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">{scanResult?.message || 'Attendance is already recorded.'}</p>
                             </div>
                           </div>
                         )}
                         {scanState === 'wrong_event' && (
-                          <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 rounded-xl">
-                            <XCircle size={20} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                          <div className="flex items-center gap-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                            <XCircle size={18} className="text-red-500 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-bold text-rose-700 dark:text-rose-400">Wrong Event</p>
-                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.message || 'This pass is for a different event.'}</p>
+                              <p className="text-xs font-bold text-neutral-900 dark:text-white">Wrong Event</p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">{scanResult?.message || 'This pass is for a different event.'}</p>
                             </div>
                           </div>
                         )}
                         {(scanState === 'not_found' || scanState === 'unauthorized' || scanState === 'invalid_signature' || scanState === 'network_error') && (
-                          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl">
-                            <XCircle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+                          <div className="flex items-center gap-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                            <XCircle size={18} className="text-red-500 flex-shrink-0" />
                             <div>
-                              <p className="text-xs font-bold text-red-700 dark:text-red-400">
+                              <p className="text-xs font-bold text-neutral-900 dark:text-white">
                                 {scanState === 'unauthorized'
                                   ? 'Access Denied'
                                   : scanState === 'invalid_signature'
@@ -581,7 +534,7 @@ const CheckIn = () => {
                                   ? 'Connection Error'
                                   : 'Not Found'}
                               </p>
-                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
                                 {scanResult?.message ||
                                   (scanState === 'unauthorized'
                                     ? 'Lacking attendance clearance level.'
@@ -604,108 +557,99 @@ const CheckIn = () => {
   );
 };
 
-function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
-  // Check if dark mode is active to apply correct overlay background color
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
-  }, []);
-
-  const currentBg = isDark ? darkOverlayBg : overlayBg;
-
+function ScanOverlay({ scanState, scanResult }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[4px]"
-      style={{ background: currentBg }}
+      className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[3px] bg-black/75"
     >
       {scanState === 'processing' && (
-        <div className="flex flex-col items-center gap-[14px]">
-          <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
-          <p className="m-0 text-[13px] font-semibold text-neutral-800 dark:text-white">Validating registration status...</p>
+        <div className="flex flex-col items-center gap-3 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-xl border border-neutral-200 dark:border-neutral-800 w-[280px]">
+          <div className="w-8 h-8 border-3 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
+          <p className="m-0 text-xs font-semibold text-neutral-800 dark:text-neutral-200">Validating registration...</p>
         </div>
       )}
 
       {scanState === 'success' && (
         <motion.div
-          initial={{ scale: 0.92, y: 12 }}
+          initial={{ scale: 0.94, y: 8 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-green-50 dark:bg-green-950/20 mb-1">
-            <CheckCircle size={28} className="text-green-600 dark:text-green-400" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 mb-0.5">
+            <CheckCircle size={24} />
           </div>
-          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-green-600">Checked In</p>
-          <p className="m-0 text-base font-bold text-neutral-800 dark:text-white text-center">{scanResult?.participantName || 'Unknown'}</p>
-          <div className="w-full bg-neutral-50 dark:bg-neutral-950 rounded-xl p-3 mt-1 border border-neutral-100 dark:border-neutral-850">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Checked In</p>
+          <p className="m-0 text-sm font-bold text-neutral-900 dark:text-white text-center truncate max-w-full">{scanResult?.participantName || 'Attendee'}</p>
+          <div className="w-full bg-neutral-50 dark:bg-neutral-950 rounded-xl p-2.5 mt-1 border border-neutral-200/60 dark:border-neutral-800">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
                 {scanResult?.rollNo ? 'Roll No' : scanResult?.branch ? 'Branch' : 'Email'}
               </span>
-              <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 font-mono">
+              <span className="font-semibold text-neutral-700 dark:text-neutral-300 font-mono">
                 {scanResult?.rollNo || scanResult?.branch || scanResult?.externalEmail || 'Verified'}
               </span>
             </div>
           </div>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
+          <p className="m-0 text-[10px] font-medium text-neutral-400 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
 
       {scanState === 'already_marked' && (
         <motion.div
-          initial={{ scale: 0.92, y: 12 }}
+          initial={{ scale: 0.94, y: 8 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-950/20 mb-1">
-            <AlertTriangle size={28} className="text-yellow-600 dark:text-yellow-400" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-amber-500 mb-0.5">
+            <AlertTriangle size={24} />
           </div>
-          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-yellow-600">Already Marked</p>
-          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-widest text-amber-500">Already Marked</p>
+          <p className="m-0 text-xs font-medium text-neutral-600 dark:text-neutral-300 text-center leading-relaxed">
             {scanResult?.message || 'Attendance record is already active.'}
           </p>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
+          <p className="m-0 text-[10px] font-medium text-neutral-400 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
 
       {scanState === 'wrong_event' && (
         <motion.div
-          initial={{ scale: 0.92, y: 12 }}
+          initial={{ scale: 0.94, y: 8 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 mb-1">
-            <XCircle size={28} className="text-rose-600 dark:text-rose-400" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-red-500 mb-0.5">
+            <XCircle size={24} />
           </div>
-          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-rose-600">Wrong Event</p>
-          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
-            {scanResult?.message || 'This ticket was registered for another event.'}
+          <p className="m-0 text-[10px] font-bold uppercase tracking-widest text-red-500">Wrong Event</p>
+          <p className="m-0 text-xs font-medium text-neutral-600 dark:text-neutral-300 text-center leading-relaxed">
+            {scanResult?.message || 'This ticket is for a different event.'}
           </p>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
+          <p className="m-0 text-[10px] font-medium text-neutral-400 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
 
       {(scanState === 'unauthorized' || scanState === 'not_found' || scanState === 'invalid_signature' || scanState === 'network_error') && (
         <motion.div
-          initial={{ scale: 0.92, y: 12 }}
+          initial={{ scale: 0.94, y: 8 }}
           animate={{ scale: 1, y: 0 }}
-          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-950/20 mb-1">
-            <XCircle size={28} className="text-red-600 dark:text-red-400" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-red-500 mb-0.5">
+            <XCircle size={24} />
           </div>
-          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-red-600">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-widest text-red-500">
             {scanState === 'unauthorized'
               ? 'Access Denied'
               : scanState === 'invalid_signature'
-              ? 'Security Verification Failed'
+              ? 'Security Failed'
               : scanState === 'network_error'
               ? 'Connection Error'
               : 'Invalid Ticket'}
           </p>
-          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
+          <p className="m-0 text-xs font-medium text-neutral-600 dark:text-neutral-300 text-center leading-relaxed">
             {scanResult?.message ||
               (scanState === 'unauthorized'
                 ? 'Lacking attendance clearance permissions.'
@@ -713,7 +657,7 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
                 ? 'This pass signature could not be verified.'
                 : 'Registration record not found.')}
           </p>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
+          <p className="m-0 text-[10px] font-medium text-neutral-400 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
     </motion.div>

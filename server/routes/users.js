@@ -196,52 +196,52 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
 });
 
 // GET /api/users/search — search student by email or roll number
-// router.get("/search", verifyToken, async (req, res) => {
-//   const { query } = req.query;
-//   if (!query || query.length < 2) {
-//     return res.json([]);
-//   }
-//   try {
-//     const students = await prisma.studentUser.findMany({
-//       where: {
-//         OR: [
-//           { email: { startsWith: query, mode: 'insensitive' } },
-//           { rollNo: { startsWith: query, mode: 'insensitive' } }
-//         ]
-//       },
-//       select: {
-//         id: true,
-//         name: true,
-//         email: true,
-//         rollNo: true,
-//         branch: true,
-//         year: true,
-//         program: true
-//       },
-//       take: 10
-//     });
-//     res.json(students);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
+router.get("/search", verifyToken, async (req, res) => {
+  const { query } = req.query;
+  if (!query || query.length < 2) {
+    return res.json([]);
+  }
+  try {
+    const students = await prisma.studentUser.findMany({
+      where: {
+        OR: [
+          { email: { startsWith: query, mode: 'insensitive' } },
+          { rollNo: { startsWith: query, mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        rollNo: true,
+        branch: true,
+        year: true,
+        program: true
+      },
+      take: 10
+    });
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-// // GET /api/users/lookup/:rollNo — lookup student name and branch by roll number
-// router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
-//   const { rollNo } = req.params;
-//   try {
-//     const student = await prisma.studentUser.findUnique({
-//       where: { rollNo },
-//       select: { name: true, branch: true }
-//     });
-//     if (!student) {
-//       return res.status(404).json({ message: "Student not found." });
-//     }
-//     return res.json(student);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
+// GET /api/users/lookup/:rollNo — lookup student name and branch by roll number
+router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
+  const { rollNo } = req.params;
+  try {
+    const student = await prisma.studentUser.findUnique({
+      where: { rollNo },
+      select: { name: true, branch: true }
+    });
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+    return res.json(student);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // ── Profile Photo Endpoints ──────────────────────────────────────────────────
 

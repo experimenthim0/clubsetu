@@ -335,7 +335,7 @@ const ClubMembers = () => {
       </div>
 
       {/* ── Members table ────────────────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-xl border border-neutral-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-neutral-100 bg-white ">
         {members.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <PeopleIcon />
@@ -355,7 +355,7 @@ const ClubMembers = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-50">
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                 {members.map((member) => {
                   const id = member._id || member.id;
                   const updatingType = updatingIds[id];
@@ -364,7 +364,7 @@ const ClubMembers = () => {
                   return (
                     <tr
                       key={id}
-                      className={`transition-colors hover:bg-neutral-50/60 ${
+                      className={`transition-colors hover:bg-neutral-50/60 dark:hover:bg-neutral-800/60 ${
                         isUpdating ? "bg-amber-50/30" : ""
                       }`}
                     >
