@@ -43,9 +43,12 @@ export function normalizeNotification(rawNotif) {
   const title = rawNotif.title || rawNotif.heading || 'CampusNode';
   const message = rawNotif.message || rawNotif.content || rawNotif.body || 'New campus update!';
   
+  const isTeamInvitation = rawNotif.type === 'TEAM_INVITATION' || title.toLowerCase().includes('team invitation');
   const isPayment = rawNotif.type === 'PAYMENT_REVIEW' || title.toLowerCase().includes('payment');
   const url = rawNotif.link || rawNotif.url || (
-    isPayment
+    isTeamInvitation
+      ? '/notifications'
+      : isPayment
       ? `/my-events${rawNotif.eventId ? `?eventId=${rawNotif.eventId}` : ''}`
       : (rawNotif.eventId ? `/event/${rawNotif.eventId}` : '/notifications')
   );

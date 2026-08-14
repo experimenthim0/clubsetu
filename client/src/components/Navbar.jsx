@@ -344,21 +344,34 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {notifDropdownOpen && (
-                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800 rounded-sm z-50 mt-1 shadow-lg">
-                        <div className="px-4 py-3 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
-                          <h3 className="text-[14px] font-black tracking-widest text-neutral-800 dark:text-neutral-200">Notifications</h3>
+                      <div className="absolute top-[calc(100%+10px)] right-0 w-80 max-h-96  overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800  rounded-t-4xl rounded-sm z-50 mt-1 shadow-lg">
+                        <div className="px-4 py-2 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
+                          <h3 className="text-[12px] font-black tracking-widest text-neutral-800 dark:text-neutral-200">Notifications</h3>
+                          <Link
+                          to="/notifications"
+                          onClick={() => setNotifDropdownOpen(false)}
+                          className="flex items-center gap-1 text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 transition-colors text-[12px]"
+                        >
+                          See All
+                          <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
+                        </Link>
                         </div>
                         <div className="divide-y divide-neutral-100 dark:divide-neutral-850">
                           {notifications?.length > 0 ? (
                             notifications.slice(0, 4).map((notif, idx) => (
-                              <div key={idx} className={`p-4 transition-colors ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50 dark:bg-orange-500/10' : 'bg-transparent'}`}>
+                              <Link
+                                key={idx}
+                                to={notif.type === 'TEAM_INVITATION' ? '/notifications' : notif.url || '/notifications'}
+                                onClick={() => setNotifDropdownOpen(false)}
+                                className={`block p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/60 ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50 dark:bg-orange-500/10' : 'bg-transparent'}`}
+                              >
                                 <div className="flex justify-between items-start mb-1">
-                                  <span className="text-[10px] font-medium text-orange-600 dark:text-orange-500 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
+                                  <span className="text-[10px] font-medium text-orange-600 dark:text-orange-500 tracking-widest">{notif.sender?.clubName || notif.sender?.name || "CampusNode"}</span>
                                   <span className="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(notif.createdAt)}</span>
                                 </div>
                                 <h4 className="text-[13px] font-bold text-black dark:text-neutral-100 mb-1">{notif.title}</h4>
-                                <p className="text-[12px] text-neutral-600 dark:text-neutral-400">{notif.message}</p>
-                              </div>
+                                <p className="text-[12px] text-neutral-600 dark:text-neutral-400 line-clamp-2">{notif.message}</p>
+                              </Link>
                             ))
                           ) : (
                             <div className="p-6 text-center text-neutral-500 dark:text-neutral-450 text-[12px] font-bold uppercase tracking-widest">
@@ -366,14 +379,7 @@ const Navbar = () => {
                             </div>
                           )}
                         </div>
-                        <Link
-                          to="/notifications"
-                          onClick={() => setNotifDropdownOpen(false)}
-                          className="block w-full py-2 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 dark:text-orange-500 border-t-2 border-gray-300 dark:border-neutral-800 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
-                        >
-                          See all notifications
-                          <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
-                        </Link>
+                        
                       </div>
                     )}
                   </div>

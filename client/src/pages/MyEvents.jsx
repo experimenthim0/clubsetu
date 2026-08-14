@@ -651,18 +651,26 @@ const MyEvents = () => {
                         ✓ {reg.status === 'CONFIRMED' || reg.status === 'REGISTERED' ? 'Registered' : reg.status}
                       </span>
 
-                      {event.paymentMethod && event.paymentMethod !== 'FREE' && (
-                        <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                          reg.paymentStatus === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50' :
-                          reg.paymentStatus === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50' :
-                          'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50 animate-pulse-slow'
-                        }`}>
-                          Payment: {reg.paymentStatus}
-                        </span>
-                      )}
+                      {event.paymentMethod && event.paymentMethod !== 'FREE' && (() => {
+                        const isTeamMember = reg.team && reg.team.leaderId !== (user?.id || user?._id);
+                        const isSuccess = isTeamMember || ['APPROVED', 'SUCCESS'].includes(reg.paymentStatus);
+                        const isRejected = reg.paymentStatus === 'REJECTED';
+
+                        return (
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                            isSuccess
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50'
+                              : isRejected
+                              ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50 animate-pulse-slow'
+                          }`}>
+                            Payment: {isSuccess ? 'Successful' : reg.paymentStatus}
+                          </span>
+                        );
+                      })()}
                       
                       <div className="ml-auto flex gap-2">
-                        {(reg.paymentStatus === 'NEED_MORE_DETAILS' || reg.paymentStatus === 'REJECTED') && (
+                        {(!reg.team || reg.team.leaderId === (user?.id || user?._id)) && (reg.paymentStatus === 'NEED_MORE_DETAILS' || reg.paymentStatus === 'REJECTED') && (
                           <button
                             onClick={() => openEditPaymentModal(reg)}
                             className="px-3 py-1.5 text-xs font-semibold rounded-full bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-950/40 dark:hover:bg-orange-900/60 dark:text-orange-350 transition-colors shadow-sm cursor-pointer border-0 outline-none whitespace-nowrap"

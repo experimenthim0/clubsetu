@@ -195,19 +195,22 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
   }
 });
 
-// GET /api/users/search — search student by email or roll number
+// GET /api/users/search — search student by roll number, email, or name
 router.get("/search", verifyToken, async (req, res) => {
   const { query } = req.query;
-  if (!query || query.length < 2) {
+  const q = String(query || "").trim();
+  if (!q || q.length < 2) {
     return res.json([]);
   }
   try {
     const students = await prisma.studentUser.findMany({
       where: {
+        isBlocked: false,
         OR: [
-          { email: { startsWith: query, mode: 'insensitive' } },
-          { rollNo: { startsWith: query, mode: 'insensitive' } }
-        ]
+          { rollNo: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { name: { contains: q, mode: "insensitive" } },
+        ],
       },
       select: {
         id: true,
@@ -216,9 +219,9 @@ router.get("/search", verifyToken, async (req, res) => {
         rollNo: true,
         branch: true,
         year: true,
-        program: true
+        program: true,
       },
-      take: 10
+      take: 15,
     });
     res.json(students);
   } catch (err) {
@@ -229,10 +232,23 @@ router.get("/search", verifyToken, async (req, res) => {
 // GET /api/users/lookup/:rollNo — lookup student name and branch by roll number
 router.get("/lookup/:rollNo", verifyToken, async (req, res) => {
   const { rollNo } = req.params;
+  const q = String(rollNo || "").trim();
+  if (!q) {
+    return res.status(400).json({ message: "Roll number is required." });
+  }
   try {
-    const student = await prisma.studentUser.findUnique({
-      where: { rollNo },
-      select: { name: true, branch: true }
+    const student = await prisma.studentUser.findFirst({
+      where: {
+        rollNo: { equals: q, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        name: true,
+        rollNo: true,
+        branch: true,
+        year: true,
+        program: true,
+      },
     });
     if (!student) {
       return res.status(404).json({ message: "Student not found." });
