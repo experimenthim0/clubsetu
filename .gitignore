@@ -1,5 +1,6 @@
 **/.env
 .txt
+**/*.pem
 whatextend.txt
 whatnext.md
 CLUB_HEAD_PITCH.md

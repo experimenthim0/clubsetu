@@ -9,8 +9,12 @@ export const allowedOrigins = [
   "http://127.0.0.1:5173"
 ];
 
+if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 export const getClientUrl = (origin) => {
-  return allowedOrigins.includes(origin) ? origin : process.env.CLIENT_URL;
+  return allowedOrigins.includes(origin) ? origin : (process.env.CLIENT_URL || "https://clubsetu.nikhim.me");
 };
 
 export const corsOptions = {
@@ -22,9 +26,8 @@ export const corsOptions = {
     
     // Check wildcards for previews and testing domains
     const isPreview = origin && (
-       
       /\.nikhim\.me$/.test(origin) ||
-    
+      /\.vercel\.app$/.test(origin) ||
       origin.startsWith("http://192.168.") // typical local network IPs
     );
     
@@ -37,5 +40,29 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "If-Modified-Since",
+    "If-None-Match",
+    "If-Match",
+    "If-Unmodified-Since",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "X-Request-Id",
+    "Cache-Control",
+    "Pragma",
+    "Range"
+  ],
+  exposedHeaders: [
+    "ETag",
+    "Last-Modified",
+    "Content-Length",
+    "Content-Range",
+    "X-Request-Id",
+    "X-Response-Time"
+  ],
+  maxAge: 86400,
 };
+
