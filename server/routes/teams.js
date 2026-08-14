@@ -3,7 +3,8 @@ import { verifyToken, allowRoles, requirePermission } from "../middleware/auth.j
 import { PERMISSIONS } from "../utils/rbac.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
-
+import crypto from "crypto";
+import { signTicket } from "../services/qrSigningService.js";
 import { sendWebPushNotification } from "../utils/sendPush.js";
 
 const router = express.Router();
@@ -206,7 +207,11 @@ router.post(
             payerName: payerName || null,
             paymentRemarks: paymentRemarks || null,
             paymentTimestamp: isPaid ? new Date() : null,
-            qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
+            ...(() => {
+              const ticketId = crypto.randomBytes(12).toString("base64url");
+              const { qrPayload, qrVersion, qrKeyId } = signTicket(eventId, ticketId);
+              return { qrCode: ticketId, qrPayload, qrVersion, qrKeyId };
+            })(),
             formResponses: formResponses || {},
           },
         });
@@ -242,6 +247,9 @@ router.post(
             },
           });
 
+          const memberTicketId = crypto.randomBytes(12).toString("base64url");
+          const { qrPayload: mPayload, qrVersion: mVer, qrKeyId: mKey } = signTicket(eventId, memberTicketId);
+
           await tx.participation.create({
             data: {
               id: createObjectId(),
@@ -251,7 +259,10 @@ router.post(
               status: "INVITED",
               paymentStatus: "SUCCESS",
               amountPaid: 0,
-              qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
+              qrCode: memberTicketId,
+              qrPayload: mPayload,
+              qrVersion: mVer,
+              qrKeyId: mKey,
               formResponses: formResponses || {},
             },
           });
@@ -556,6 +567,9 @@ router.post(
           }
         });
 
+        const memberTicketId = crypto.randomBytes(12).toString("base64url");
+        const { qrPayload: mPayload, qrVersion: mVer, qrKeyId: mKey } = signTicket(event.id, memberTicketId);
+
         await tx.participation.create({
           data: {
             id: createObjectId(),
@@ -565,7 +579,10 @@ router.post(
             status: "INVITED",
             paymentStatus: "SUCCESS",
             amountPaid: 0,
-            qrCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
+            qrCode: memberTicketId,
+            qrPayload: mPayload,
+            qrVersion: mVer,
+            qrKeyId: mKey,
             formResponses: {}
           }
         });

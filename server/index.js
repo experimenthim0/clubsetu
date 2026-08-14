@@ -19,6 +19,7 @@ import exportCenterRoutes from "./routes/exportCenter.js";
 import pushRoutes from "./routes/push.js";
 import venueRoutes from "./routes/venues.js";
 import blackoutRoutes, { ensureBlackoutTable } from "./routes/blackouts.js";
+import scannerRoutes from "./routes/scanner.js";
 import prisma from "./lib/prisma.js";
 import compression from "compression";
 
@@ -137,6 +138,7 @@ app.use("/api/admin/lost-found", lostFoundAdminRoutes);
 app.use("/api/export-center", exportCenterRoutes);
 app.use("/api/venues/blackouts", blackoutRoutes);
 app.use("/api/venues", venueRoutes);
+app.use("/api/scanner", scannerRoutes);
 
 // Auto-cleanup for reunited items (runs every 8 hours)
 const cleanupReunitedItems = async () => {

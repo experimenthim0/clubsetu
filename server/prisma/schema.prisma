@@ -173,11 +173,54 @@ model Event {
   participations       Participation[]
   sponsors             Sponsor[]
   teams                Team[]
+  scannerSessions      ScannerSession[]
+  attendanceRecords    AttendanceRecord[]
 
   @@index([clubId, startTime])
   @@index([reviewStatus, startTime])
   @@index([createdById, startTime])
 }
+
+model ScannerSession {
+  id        String    @id @db.VarChar(24)
+  eventId   String    @db.VarChar(24)
+  clubId    String    @db.VarChar(24)
+  userId    String    @db.VarChar(24)
+  deviceId  String
+  mode      String    // "ONLINE" | "OFFLINE"
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  status    String    @default("ACTIVE") // "ACTIVE" | "ENDED"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, deviceId, mode])
+  @@index([eventId, status])
+  @@index([userId])
+}
+
+model AttendanceRecord {
+  id                String        @id @db.VarChar(24)
+  eventId           String        @db.VarChar(24)
+  participationId   String        @db.VarChar(24)
+  scannerSessionId  String?       @db.VarChar(24)
+  scannedAt         DateTime
+  verificationMode  String        // "ONLINE" | "OFFLINE"
+  syncedAt          DateTime?
+  localAttendanceId String?       @unique // Client-generated UUID for idempotency
+  gate              String?
+  createdAt         DateTime      @default(now())
+
+  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participation Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, participationId]) // DB-level duplicate prevention
+  @@index([eventId, scannedAt])
+  @@index([scannerSessionId])
+}
+
 
 model Participation {
   id               String              @id @db.VarChar(24)
@@ -187,6 +230,9 @@ model Participation {
   externalName     String?
   status           ParticipationStatus @default(REGISTERED)
   qrCode           String?             @unique
+  qrVersion        Int?                // 1 = signed v1, null = legacy unsigned
+  qrPayload        String?             // Full signed base64url payload for QR
+  qrKeyId          String?             // Key ID used for signing (for rotation)
   attendedAt       DateTime?
   markedByMemberId String?             @db.VarChar(24)
   paymentStatus        PaymentStatus       @default(SUCCESS)
@@ -207,6 +253,7 @@ model Participation {
   student          StudentUser?        @relation(fields: [studentId], references: [id])
   teamId           String?             @db.VarChar(24)
   team             Team?               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  attendanceRecords AttendanceRecord[]
 
   @@index([eventId])
   @@index([studentId, createdAt])
@@ -214,6 +261,7 @@ model Participation {
   @@index([eventId, paymentStatus])
   @@index([eventId, status])
 }
+
 
 model Sponsor {
   id         String  @id @db.VarChar(24)
@@ -414,7 +462,7 @@ model TeamMember {
 }
 
 model Permission {
-  id          String           @id @db.VarChar(24)
+  id          String           @id
   name        String           @unique
   description String?
   resource    String
@@ -424,9 +472,9 @@ model Permission {
 }
 
 model RolePermission {
-  id           String     @id @db.VarChar(24)
+  id           String     @id
   role         String
-  permissionId String     @db.VarChar(24)
+  permissionId String
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([role, permissionId])

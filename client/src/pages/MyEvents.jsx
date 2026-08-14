@@ -675,7 +675,8 @@ const MyEvents = () => {
                             setSelectedTicket(reg); 
                             setTicketModalOpen(true);
                             try {
-                              const url = await QRCode.toDataURL(reg.qrCode, { width: 400, margin: 2 });
+                              const payloadToEncode = reg.qrPayload || reg.qrCode;
+                              const url = await QRCode.toDataURL(payloadToEncode, { width: 400, margin: 2 });
                               setQrDataUrl(url);
                             } catch (err) {
                               console.error(err);

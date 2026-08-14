@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import { createObjectId } from "./objectId.js";
 
 /**
  * Granular Permission Definitions (resource.action)
@@ -345,13 +346,12 @@ export async function seedPermissions() {
     console.log("Seeding initial RBAC permissions...");
     for (const [key, permName] of Object.entries(PERMISSIONS)) {
       const [resource, action] = permName.split(".");
-      const permId = permName.replace(".", "_");
       
       const perm = await prisma.permission.upsert({
         where: { name: permName },
         update: {},
         create: {
-          id: permId,
+          id: createObjectId(),
           name: permName,
           resource,
           action,
@@ -361,12 +361,11 @@ export async function seedPermissions() {
 
       for (const [role, permList] of Object.entries(ROLE_PERMISSIONS_MAP)) {
         if (permList.includes(permName)) {
-          const rolePermId = `${role}_${permId}`;
           await prisma.rolePermission.upsert({
             where: { role_permissionId: { role, permissionId: perm.id } },
             update: {},
             create: {
-              id: rolePermId,
+              id: createObjectId(),
               role,
               permissionId: perm.id,
             },

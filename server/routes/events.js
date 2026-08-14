@@ -9,9 +9,11 @@ import { createObjectId } from "../utils/objectId.js";
 import { z } from "zod";
 import { validate, objectIdSchema } from "../middleware/validate.js";
 import multer from "multer";
+import crypto from "crypto";
 import { uploadImage } from "../utils/cloudinary.js";
 import { getPublicResponse, setPublicResponse } from "../utils/publicResponseCache.js";
 import { validateBooking, checkEventConflict } from "../services/conflictService.js";
+import { signTicket } from "../services/qrSigningService.js";
 
 const router = express.Router();
 
@@ -641,7 +643,27 @@ router.get(
 
       res.json(
         participations.map((p) => {
-          const serialized = serializeParticipation(p);
+          let qrPayload = p.qrPayload;
+          let qrVersion = p.qrVersion;
+          let qrKeyId = p.qrKeyId;
+
+          if (!qrPayload && p.qrCode && p.eventId) {
+            try {
+              const signed = signTicket(p.eventId, p.qrCode);
+              qrPayload = signed.qrPayload;
+              qrVersion = signed.qrVersion;
+              qrKeyId = signed.qrKeyId;
+            } catch (e) {
+              console.error("Lazy signTicket error:", e);
+            }
+          }
+
+          const serialized = serializeParticipation({
+            ...p,
+            qrPayload,
+            qrVersion,
+            qrKeyId,
+          });
           return {
             ...serialized,
             // Frontend compatibility: eventId is often treated as the object
@@ -916,7 +938,8 @@ router.post(
           ? "WAITLISTED"
           : "REGISTERED";
 
-      const qrCode = Math.floor(1000000 + Math.random() * 9000000).toString();
+      const ticketId = crypto.randomBytes(12).toString("base64url");
+      const { qrPayload, qrVersion, qrKeyId } = signTicket(eventId, ticketId);
 
       const participationData = isExternal
         ? {
@@ -925,7 +948,10 @@ router.post(
           studentId: null,
           externalEmail,
           externalName: externalName || null,
-          qrCode,
+          qrCode: ticketId,
+          qrPayload,
+          qrVersion,
+          qrKeyId,
           status,
         }
         : {
@@ -934,7 +960,10 @@ router.post(
           studentId: req.user.userId,
           externalEmail: null,
           externalName: null,
-          qrCode,
+          qrCode: ticketId,
+          qrPayload,
+          qrVersion,
+          qrKeyId,
           status,
           transactionId: transactionId || null,
           payerName: payerName || null,
