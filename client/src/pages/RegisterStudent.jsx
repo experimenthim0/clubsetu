@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
-import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
+import {
+  PROGRAM_LABELS,
+  PROGRAM_OPTIONS,
+  getBranchesForProgram,
+  getMaxDurationForProgram,
+} from '../constants/academicConstants';
 import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/academicYear';
 import { Eye, EyeOff } from 'lucide-react';
-
-const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
 
 const RegisterStudent = () => {
   const navigate = useNavigate();
@@ -25,7 +28,10 @@ const RegisterStudent = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isOtherProgram = formData.program === 'OTHER';
-  const gradYearOptions = getGraduationYearOptions();
+
+  const availableBranches = getBranchesForProgram(formData.program);
+  const maxDurationYears = getMaxDurationForProgram(formData.program);
+  const gradYearOptions = getGraduationYearOptions(maxDurationYears);
 
   const handleGraduationYearChange = (e) => {
     const selectedGradYear = e.target.value;
@@ -40,18 +46,18 @@ const RegisterStudent = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === 'program' && value === 'OTHER') {
+    if (name === 'program') {
       setGraduationYear('');
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         program: value,
         branch: '',
         year: '',
-      });
+      }));
       return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -70,7 +76,7 @@ const RegisterStudent = () => {
       } else {
         // Verification required - Redirect to Home with notification
         showNotification(res.data.message, 'success', 5000);
-        navigate('/'); 
+        navigate('/');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
@@ -91,8 +97,8 @@ const RegisterStudent = () => {
         {/* Brand */}
         <div className="text-center mb-8">
           <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none logofont">
-              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
-            </span>
+            Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+          </span>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Create your student account
           </p>
@@ -140,10 +146,21 @@ const RegisterStudent = () => {
               </div>
               <div>
                 <label htmlFor="branch" className={labelCls}>Branch</label>
-                <select id="branch" name="branch" required={!isOtherProgram} className={inputCls}
-                  value={formData.branch} onChange={handleChange}>
-                  <option value="">Select</option>
-                  {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                <select
+                  id="branch"
+                  name="branch"
+                  required={!isOtherProgram}
+                  disabled={!formData.program}
+                  className={inputCls}
+                  value={formData.branch}
+                  onChange={handleChange}
+                >
+                  <option value="">{formData.program ? "Select Branch" : "Select Program First"}</option>
+                  {availableBranches.map((b) => (
+                    <option key={b.code} value={b.code}>
+                      {b.code} ({b.label})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -194,11 +211,10 @@ const RegisterStudent = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all mt-1 ${
-                loading
+              className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all mt-1 ${loading
                   ? 'bg-neutral-400 cursor-not-allowed'
                   : 'bg-orange-600 hover:bg-orange-700 cursor-pointer hover:-translate-y-0.5'
-              }`}
+                }`}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2"><i className="ri-loader-4-line animate-spin" /> Registering…</span>

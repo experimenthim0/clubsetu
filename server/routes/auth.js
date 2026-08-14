@@ -8,9 +8,10 @@ import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { checkPasswordRateLimit } from "../utils/checkPasswordRateLimit.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
+import { PROGRAM_OPTIONS, isValidBranchForProgram } from "../constants/academicConstants.js";
 
 const router = express.Router();
-const ALLOWED_PROGRAMS = ["BTECH", "MTECH", "OTHER"];
+const ALLOWED_PROGRAMS = PROGRAM_OPTIONS;
 
 const isProduction = process.env.NODE_ENV === "production";
 const getCookieOptions = (maxAge = 7 * 24 * 60 * 60 * 1000) => ({
@@ -83,10 +84,17 @@ router.post("/register/student", async (req, res) => {
       return res.status(400).json({ message: "Invalid program selected." });
     }
 
-    if (program !== "OTHER" && (!rollNo || !branch || !year)) {
-      return res.status(400).json({
-        message: "Roll number, branch, and year are required for BTECH and MTECH registrations.",
-      });
+    if (program !== "OTHER") {
+      if (!rollNo || !branch || !year) {
+        return res.status(400).json({
+          message: "Roll number, branch, and academic year are required.",
+        });
+      }
+      if (!isValidBranchForProgram(program, branch)) {
+        return res.status(400).json({
+          message: `Invalid branch '${branch}' for ${program} program.`,
+        });
+      }
     }
 
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

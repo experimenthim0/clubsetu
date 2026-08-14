@@ -10,6 +10,7 @@ import {
 import {
   registerPushSubscription,
   unsubscribePushSubscription,
+  isPushSubscribed,
 } from "../utils/pushSubscription";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -37,11 +38,17 @@ const Notifications = () => {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
   const [permissionState, setPermissionState] = useState(getNotificationPermissionState());
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const [enablingPush, setEnablingPush] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem("hidePushBanner") === "true"
+  );
 
   useEffect(() => {
     document.title = "Notifications - CampusNode";
-    setPermissionState(getNotificationPermissionState());
+    const state = getNotificationPermissionState();
+    setPermissionState(state);
+    isPushSubscribed().then((sub) => setIsSubscribed(sub));
   }, []);
 
   const userString = localStorage.getItem("user");
@@ -55,7 +62,8 @@ const Notifications = () => {
       const state = await requestPermissionWithUserGesture();
       setPermissionState(state);
       if (state === "granted") {
-        await registerPushSubscription();
+        const sub = await registerPushSubscription();
+        setIsSubscribed(!!sub);
         if (showNotification) showNotification("Push notifications enabled successfully!", "success");
       } else if (state === "denied") {
         if (showNotification) showNotification("Notifications blocked by browser settings.", "warning");
@@ -71,12 +79,18 @@ const Notifications = () => {
     setEnablingPush(true);
     try {
       await unsubscribePushSubscription();
+      setIsSubscribed(false);
       if (showNotification) showNotification("Unsubscribed from push notifications.", "info");
     } catch (err) {
       console.error("Failed to disable push:", err);
     } finally {
       setEnablingPush(false);
     }
+  };
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+    localStorage.setItem("hidePushBanner", "true");
   };
 
   const handleAcceptInvite = async (notifId) => {
@@ -166,85 +180,84 @@ const Notifications = () => {
               </p>
             </div>
 
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Clean Push Notification Control Pill */}
               <button
-                onClick={handleMarkAllAsRead}
-                disabled={loading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+                onClick={isSubscribed ? handleDisablePush : handleEnablePush}
+                disabled={enablingPush}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+                title={isSubscribed ? "Click to unsubscribe from Push Notifications" : "Click to enable Push Notifications"}
               >
-                {loading ? (
+                {enablingPush ? (
+                  <i className="ri-loader-4-line animate-spin text-orange-500" />
+                ) : isSubscribed ? (
+                  <i className="ri-notification-3-fill text-emerald-500" />
+                ) : (
+                  <i className="ri-notification-3-line text-neutral-400" />
+                )}
+                <span>{enablingPush ? "Updating..." : isSubscribed ? "Push Enabled" : "Enable Push"}</span>
+              </button>
+
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900 text-black dark:text-white border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-semibold hover:border-orange-500 dark:hover:border-orange-500 transition-all cursor-pointer disabled:opacity-60 shrink-0"
+                >
+                  {loading ? (
+                    <i className="ri-loader-4-line animate-spin text-sm" />
+                  ) : (
+                    <i className="ri-check-double-line text-sm" />
+                  )}
+                  Mark all read
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Dismissible Push Notification Promotion Banner ──────────────────────── */}
+        {!isSubscribed && !bannerDismissed && permissionState !== "denied" && (
+          <div className="mb-6 p-4 md:p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm relative transition-all">
+            <button
+              onClick={handleDismissBanner}
+              className="absolute top-3 right-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1 transition-colors cursor-pointer"
+              title="Dismiss notification banner"
+            >
+              <i className="ri-close-line text-lg" />
+            </button>
+
+            <div className="flex items-center justify-between gap-4 flex-wrap pr-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 flex items-center justify-center text-lg shrink-0">
+                  <i className="ri-notification-badge-line" />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-black dark:text-white">
+                    Get Real-time Event Alerts
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    Enable push notifications for direct updates on registered events, approvals, and messages.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleEnablePush}
+                disabled={enablingPush}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-60 shrink-0"
+              >
+                {enablingPush ? (
                   <i className="ri-loader-4-line animate-spin text-sm" />
                 ) : (
-                  <i className="ri-check-double-line text-sm" />
+                  <i className="ri-notification-badge-line text-sm" />
                 )}
-                Mark all read
+                Enable Push Notifications
               </button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Push Notification Permission Status Card ──────────────────────── */}
-        <div className="mb-8 p-4 md:p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${
-              permissionState === "granted"
-                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50"
-                : permissionState === "denied"
-                ? "bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50"
-                : "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50"
-            }`}>
-              <i className={
-                permissionState === "granted" ? "ri-notification-4-fill" :
-                permissionState === "denied" ? "ri-notification-off-line" : "ri-notification-badge-line"
-              } />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-black dark:text-white">
-                  Push Notifications
-                </h3>
-                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-                  permissionState === "granted"
-                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
-                    : permissionState === "denied"
-                    ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
-                    : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
-                }`}>
-                  {permissionState === "granted" ? "● Enabled" : permissionState === "denied" ? "Blocked" : "Not Enabled"}
-                </span>
-              </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                {permissionState === "granted"
-                  ? "You will receive desktop and mobile OS push alerts for new updates."
-                  : permissionState === "denied"
-                  ? "Notifications are blocked in your browser settings. Please allow notifications in browser permissions."
-                  : "Enable push notifications to receive real-time updates directly on your device."}
-              </p>
             </div>
           </div>
-
-          {permissionState === "default" && (
-            <button
-              onClick={handleEnablePush}
-              disabled={enablingPush}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-60 shrink-0"
-            >
-              {enablingPush ? <i className="ri-loader-4-line animate-spin text-sm" /> : <i className="ri-notification-badge-line text-sm" />}
-              Enable Notifications
-            </button>
-          )}
-
-          {permissionState === "granted" && (
-            <button
-              onClick={handleDisablePush}
-              disabled={enablingPush}
-              className="inline-flex items-center gap-2 px-3.5 py-2 border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-60 shrink-0"
-            >
-              Unsubscribe
-            </button>
-          )}
-        </div>
+        )}
 
         <div className="mb-6 h-px bg-neutral-200 dark:bg-neutral-800 w-full" />
 

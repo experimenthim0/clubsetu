@@ -37,17 +37,20 @@ export function calculateYearFromGraduation(gradYear) {
 }
 
 /**
- * Generates options for graduation year dropdowns with calculated academic year labels.
+ * Generates options for graduation year dropdowns with calculated academic year labels,
+ * constrained by maxDurationYears (e.g. 4 for BTech, 2 for MTech/MSc/MBA, 5 for PhD).
+ * @param {number} [maxDurationYears=4] - Maximum interval duration for the program
  * @returns {Array<{ gradYear: string, label: string, academicYear: string }>}
  */
-export function getGraduationYearOptions() {
+export function getGraduationYearOptions(maxDurationYears = 4) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
   const sessionStart = currentMonth >= 7 ? currentYear : currentYear - 1;
 
   const options = [];
-  // Generates options for batches from current year down to +5 years out
-  for (let y = sessionStart + 4; y >= sessionStart; y--) {
+  const duration = Math.min(Math.max(parseInt(maxDurationYears, 10) || 4, 1), 6);
+
+  for (let y = sessionStart + duration; y >= sessionStart; y--) {
     const calcYear = calculateYearFromGraduation(y);
     options.push({
       gradYear: y.toString(),

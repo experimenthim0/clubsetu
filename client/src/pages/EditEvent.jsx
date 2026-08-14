@@ -5,12 +5,12 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useNotification } from '../context/NotificationContext';
 import { EVENT_VENUES } from '../constants/eventVenues';
-import { PROGRAM_LABELS, PROGRAM_OPTIONS } from '../constants/programs';
+import { PROGRAM_LABELS, PROGRAM_OPTIONS, ALL_BRANCH_CODES } from '../constants/academicConstants';
 import { MediaType } from '../types/index';
 import EventFormStepper from '../components/EventFormStepper';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
-const BRANCHES = ['CSE', 'IT', 'ME', 'CH', 'IPE', 'ICE', 'ECE', 'EE', 'BT', 'TT', 'CE'];
+const BRANCHES = ALL_BRANCH_CODES;
 
 const EditEvent = () => {
     const navigate = useNavigate();

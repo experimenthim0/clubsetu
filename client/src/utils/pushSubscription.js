@@ -114,3 +114,20 @@ export async function unsubscribePushSubscription() {
     console.error('[CampusNode PushSub] Error unsubscribing:', error);
   }
 }
+
+/**
+ * Checks if an active PushSubscription exists for the browser Service Worker.
+ * @returns {Promise<boolean>}
+ */
+export async function isPushSubscribed() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return false;
+  }
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+  } catch (error) {
+    return false;
+  }
+}

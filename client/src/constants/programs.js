@@ -1,7 +1,9 @@
-export const PROGRAM_OPTIONS = ["BTECH", "MTECH", "OTHER"];
-
-export const PROGRAM_LABELS = {
-  BTECH: "BTECH",
-  MTECH: "MTECH",
-  OTHER: "Other",
-};
+export {
+  PROGRAM_OPTIONS,
+  PROGRAM_LABELS,
+  PROGRAM_BRANCH_MAP,
+  getBranchesForProgram,
+  isValidBranchForProgram,
+  getMaxDurationForProgram,
+  ALL_BRANCH_CODES,
+} from "./academicConstants";

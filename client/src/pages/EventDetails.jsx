@@ -81,6 +81,7 @@ const EventDetails = () => {
   const [missingFields, setMissingFields] = useState([]);
   const [modalInputs, setModalInputs] = useState({});
   const [customFormModalOpen, setCustomFormModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [customFormResponses, setCustomFormResponses] = useState({});
   const [externalEmail, setExternalEmail] = useState('');
   const [externalName, setExternalName] = useState('');
@@ -263,6 +264,41 @@ const EventDetails = () => {
     setTeamModalOpen(true);
   };
 
+  const processDirectRegistration = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    setIsRegistering(true);
+    setConfirmModalOpen(false);
+
+    try {
+      const registerBody = user
+        ? { studentId: user.id }
+        : { externalEmail, externalName };
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`,
+        registerBody
+      );
+
+      if (res.data.status === 'WAITLISTED') {
+        showNotification('You have been added to the waitlist.', 'info');
+      } else if (res.data.status === 'REGISTERED') {
+        setRegistrationId(res.data.qrCode);
+        setShowSuccessModal(true);
+        showNotification('Successfully registered!', 'success');
+      } else {
+        showNotification(res.data.message || 'Successfully registered!', 'success');
+      }
+    } catch (err) {
+      if (err.response?.status === 400 && err.response.data.message === 'Already registered for this event.') {
+        setAlreadyRegistered(true);
+      } else {
+        showNotification(err.response?.data?.message || 'Registration failed', 'error');
+      }
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
   const handleIndividualRegister = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const role = localStorage.getItem('role');
@@ -284,25 +320,7 @@ const EventDetails = () => {
         setPaymentModalOpen(true);
         return;
       }
-      setIsRegistering(true);
-      try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: user.id });
-        if (res.data.status === 'WAITLISTED') {
-          showNotification('You have been added to the waitlist.', 'info');
-        } else if (res.data.status === 'REGISTERED') {
-          setRegistrationId(res.data.qrCode);
-          setShowSuccessModal(true);
-          showNotification('Successfully registered!', 'success');
-        } else {
-          showNotification(res.data.message || 'Successfully registered!', 'success');
-        }
-      } catch (err) {
-        if (err.response?.status === 400 && err.response.data.message === 'Already registered for this event.') {
-          setAlreadyRegistered(true);
-        } else {
-          showNotification(err.response?.data?.message || 'Registration failed', 'error');
-        }
-      } finally { setIsRegistering(false); }
+      setConfirmModalOpen(true);
       return;
     }
 
@@ -323,25 +341,7 @@ const EventDetails = () => {
         setPaymentModalOpen(true);
         return;
       }
-      setIsRegistering(true);
-      try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { externalEmail, externalName });
-        if (res.data.status === 'WAITLISTED') {
-          showNotification('You have been added to the waitlist.', 'info');
-        } else if (res.data.status === 'REGISTERED') {
-          setRegistrationId(res.data.qrCode);
-          setShowSuccessModal(true);
-          showNotification('Successfully registered!', 'success');
-        } else {
-          showNotification(res.data.message || 'Successfully registered!', 'success');
-        }
-      } catch (err) {
-        if (err.response?.status === 400 && err.response.data.message === 'Already registered for this event.') {
-          setAlreadyRegistered(true);
-        } else {
-          showNotification(err.response?.data?.message || 'Registration failed', 'error');
-        }
-      } finally { setIsRegistering(false); }
+      setConfirmModalOpen(true);
       return;
     }
   };
@@ -472,9 +472,7 @@ const EventDetails = () => {
         setPaymentModalOpen(true);
         return;
       }
-      const regRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: updatedUser.id });
-      showNotification(regRes.data.message, 'success');
-      setTimeout(() => navigate('/my-events'), 1500);
+      setConfirmModalOpen(true);
     } catch (err) { showNotification(err.response?.data?.message || 'Failed to update profile', 'error'); }
     finally { setIsRegistering(false); }
   };
@@ -1461,6 +1459,61 @@ const EventDetails = () => {
               </button>
               <button onClick={handleCustomFormSubmit} disabled={isRegistering} className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 {isRegistering ? 'Processing...' : (event.paymentMethod && event.paymentMethod !== 'FREE' ? 'Pay & Register' : 'Register')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Confirm Registration Modal ── */}
+      {confirmModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 rounded-xl max-w-md w-full shadow-2xl">
+            <div className="bg-orange-600 px-6 py-4 rounded-t-xl border-b-2 border-black dark:border-neutral-700">
+              <h3 className="font-black text-white text-lg flex items-center gap-2">
+                <i className="ri-question-line" /> Confirm Registration
+              </h3>
+            </div>
+            <div className="p-6">
+              <p className="text-base font-bold text-black dark:text-white mb-3">
+                Are you sure you want to register for this event?
+              </p>
+              <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 mb-4 space-y-2">
+                <p className="text-sm font-extrabold text-black dark:text-white truncate">
+                  {event.title}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                  <i className="ri-calendar-event-line text-orange-500" />
+                  <span>{new Date(startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                  <i className="ri-map-pin-2-line text-orange-500" />
+                  <span className="truncate">{venue}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                  <i className="ri-ticket-2-line text-orange-500" />
+                  <span className="font-bold text-green-600 dark:text-green-400">{entryFee > 0 ? `₹${entryFee}` : 'Free Entry'}</span>
+                </div>
+              </div>
+              {isFull && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  Note: All regular seats are filled. Confirming will place you on the waitlist.
+                </p>
+              )}
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setConfirmModalOpen(false)}
+                className="flex-1 px-4 py-3 bg-white dark:bg-neutral-800 border-2 border-black dark:border-neutral-600 text-black dark:text-white font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processDirectRegistration}
+                disabled={isRegistering}
+                className="flex-1 px-4 py-3 bg-black dark:bg-white border-2 border-black dark:border-white text-white dark:text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-orange-600 hover:border-orange-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isRegistering ? 'Registering...' : 'Yes, Register'}
               </button>
             </div>
           </div>

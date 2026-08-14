@@ -91,7 +91,7 @@ router.put("/:role/:id", verifyToken, async (req, res) => {
   }
 
   const studentAllowedFields = [
-    "name", "branch", "year", "program", "isTwoStepEnabled",
+    "name", "isTwoStepEnabled",
     "githubProfile", "linkedinProfile", "xProfile", "instagramProfile", "whatsappNumber", "portfolioUrl"
   ];
   const adminAllowedFields = ["name", "isTwoStepEnabled"];

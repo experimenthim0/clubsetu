@@ -38,20 +38,30 @@ const RoleBadge = ({ role }) => {
 };
 
 // ── Permission Toggle ──────────────────────────────────────────────────────────
-const PermissionToggle = ({ active, onToggle, disabled = false }) => (
+const PermissionToggle = ({ active, onToggle, disabled = false, loading = false }) => (
   <button
     type="button"
-    onClick={disabled ? null : onToggle}
-    disabled={disabled}
+    onClick={disabled || loading ? null : onToggle}
+    disabled={disabled || loading}
     className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${
       active ? "bg-neutral-800" : "bg-neutral-200"
-    } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+    } ${disabled || loading ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+    title={loading ? "Updating permission..." : active ? "Permission granted" : "Permission revoked"}
   >
-    <span
-      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
-        active ? "translate-x-[18px]" : "translate-x-[3px]"
-      }`}
-    />
+    {loading ? (
+      <span className="flex h-full w-full items-center justify-center">
+        <svg className="h-3 w-3 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </span>
+    ) : (
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+          active ? "translate-x-[18px]" : "translate-x-[3px]"
+        }`}
+      />
+    )}
   </button>
 );
 
@@ -108,20 +118,21 @@ const ClubMembers = () => {
   const [inviting, setInviting]     = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedRole, setSelectedRole] = useState(ClubMemberRole.MEMBER);
+  const [updatingIds, setUpdatingIds]   = useState({});
 
   useEffect(() => {
     fetchMembers();
   }, [clubId]);
 
-  const fetchMembers = async () => {
+  const fetchMembers = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await axios.get(`${API_URL}/api/club-members/${clubId}/members`);
       setMembers(res.data);
     } catch {
-      toast.error("Failed to fetch members");
+      if (!silent) toast.error("Failed to fetch members");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -131,55 +142,142 @@ const ClubMembers = () => {
       toast.error("Only @nitj.ac.in emails allowed");
       return;
     }
+    const toastId = toast.loading("Adding member...");
     try {
       setInviting(true);
       await axios.post(`${API_URL}/api/club-members/${clubId}/members`, {
         email: inviteEmail,
         role: selectedRole,
       });
-      toast.success("Member added successfully");
+      toast.success("Member added successfully", { id: toastId });
       setInviteEmail("");
-      fetchMembers();
+      fetchMembers(true);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add member");
+      toast.error(err.response?.data?.message || "Failed to add member", { id: toastId });
     } finally {
       setInviting(false);
     }
   };
 
   const togglePermission = async (membershipId, field, currentValue) => {
+    if (updatingIds[membershipId]) return;
+
+    const member = members.find((m) => (m.id || m._id) === membershipId);
+    if (!member) return;
+
+    const fieldLabel = field === "canEditEvents" ? "Edit Events" : "Take Attendance";
+    const newPermValue = !currentValue;
+    const actionLabel = newPermValue ? "Granting" : "Revoking";
+    const toastId = toast.loading(`${actionLabel} '${fieldLabel}' permission for ${member.student?.name || "member"}...`);
+
+    setUpdatingIds((prev) => ({ ...prev, [membershipId]: field }));
+
+    const previousMembers = [...members];
+    const permissions = {
+      canTakeAttendance: field === "canTakeAttendance" ? newPermValue : member.canTakeAttendance,
+      canEditEvents:     field === "canEditEvents"     ? newPermValue : member.canEditEvents,
+    };
+
+    // Optimistic UI update
+    setMembers((prev) =>
+      prev.map((m) =>
+        (m.id || m._id) === membershipId ? { ...m, ...permissions } : m
+      )
+    );
+
     try {
-      const member = members.find((m) => (m.id || m._id) === membershipId);
-      const permissions = {
-        canTakeAttendance: field === "canTakeAttendance" ? !currentValue : member.canTakeAttendance,
-        canEditEvents:     field === "canEditEvents"     ? !currentValue : member.canEditEvents,
-      };
-      await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { permissions });
-      toast.success("Permission updated");
-      fetchMembers();
+      const res = await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { permissions });
+      toast.success(
+        res.data.message || `'${fieldLabel}' permission ${newPermValue ? "granted to" : "revoked from"} ${member.student?.name || "member"}!`,
+        { id: toastId }
+      );
+      fetchMembers(true);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update permission");
+      setMembers(previousMembers);
+      toast.error(err.response?.data?.message || "Failed to update permission", { id: toastId });
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[membershipId];
+        return next;
+      });
     }
   };
 
   const changeRole = async (membershipId, newRole) => {
+    if (updatingIds[membershipId]) return;
+
+    const member = members.find((m) => (m.id || m._id) === membershipId);
+    if (!member) return;
+
+    const roleLabels = {
+      [ClubMemberRole.CLUB_HEAD]: "Club Head",
+      [ClubMemberRole.COORDINATOR]: "Coordinator",
+      [ClubMemberRole.MEMBER]: "Member",
+    };
+    const targetRoleLabel = roleLabels[newRole] || newRole;
+    const toastId = toast.loading(`Updating role to '${targetRoleLabel}' for ${member.student?.name || "member"}...`);
+
+    setUpdatingIds((prev) => ({ ...prev, [membershipId]: "role" }));
+
+    const previousMembers = [...members];
+    const derived = newRole === "CLUB_HEAD" || newRole === "COORDINATOR"
+      ? { canTakeAttendance: true, canEditEvents: true }
+      : { canTakeAttendance: true, canEditEvents: false };
+
+    // Optimistic UI update
+    setMembers((prev) =>
+      prev.map((m) =>
+        (m.id || m._id) === membershipId ? { ...m, role: newRole, ...derived } : m
+      )
+    );
+
     try {
-      await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { role: newRole });
-      toast.success("Role updated");
-      fetchMembers();
+      const res = await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { role: newRole });
+      toast.success(
+        res.data.message || `Role updated to ${targetRoleLabel} for ${member.student?.name || "member"}!`,
+        { id: toastId }
+      );
+      fetchMembers(true);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update role");
+      setMembers(previousMembers);
+      toast.error(err.response?.data?.message || "Failed to update role", { id: toastId });
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[membershipId];
+        return next;
+      });
     }
   };
 
   const removeMember = async (membershipId) => {
-    if (!window.confirm("Remove this member?")) return;
+    if (updatingIds[membershipId]) return;
+
+    const member = members.find((m) => (m.id || m._id) === membershipId);
+    if (!member) return;
+
+    if (!window.confirm(`Remove ${member.student?.name || "this member"} from the club?`)) return;
+
+    const toastId = toast.loading(`Removing ${member.student?.name || "member"}...`);
+    setUpdatingIds((prev) => ({ ...prev, [membershipId]: "remove" }));
+
+    const previousMembers = [...members];
+    setMembers((prev) => prev.filter((m) => (m.id || m._id) !== membershipId));
+
     try {
       await axios.delete(`${API_URL}/api/club-members/members/${membershipId}`);
-      toast.success("Member removed");
-      fetchMembers();
-    } catch {
-      toast.error("Failed to remove member");
+      toast.success(`Member ${member.student?.name || ""} removed successfully`, { id: toastId });
+      fetchMembers(true);
+    } catch (err) {
+      setMembers(previousMembers);
+      toast.error(err.response?.data?.message || "Failed to remove member", { id: toastId });
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = { ...prev };
+        delete next[membershipId];
+        return next;
+      });
     }
   };
 
@@ -260,16 +358,31 @@ const ClubMembers = () => {
               <tbody className="divide-y divide-neutral-50">
                 {members.map((member) => {
                   const id = member._id || member.id;
+                  const updatingType = updatingIds[id];
+                  const isUpdating = Boolean(updatingType);
+
                   return (
-                    <tr key={id} className="transition-colors hover:bg-neutral-50/60">
+                    <tr
+                      key={id}
+                      className={`transition-colors hover:bg-neutral-50/60 ${
+                        isUpdating ? "bg-amber-50/30" : ""
+                      }`}
+                    >
                       {/* Member info */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <Avatar name={member.student?.name} />
                           <div>
-                            <p className="text-sm font-medium text-neutral-800">
-                              {member.student?.name}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-neutral-800">
+                                {member.student?.name}
+                              </p>
+                              {isUpdating && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700 animate-pulse">
+                                  Updating…
+                                </span>
+                              )}
+                            </div>
                             <p className="font-mono text-[11px] text-neutral-400">
                               {member.student?.email}
                             </p>
@@ -279,25 +392,40 @@ const ClubMembers = () => {
 
                       {/* Role */}
                       <td className="px-4 py-3.5">
-                        <select
-                          value={member.role}
-                          onChange={(e) => changeRole(id, e.target.value)}
-                          disabled={member.role === ClubMemberRole.CLUB_HEAD}
-                          className={`h-8 rounded-lg border border-neutral-100 bg-neutral-50 px-2 text-[11px] font-medium text-neutral-700 focus:border-neutral-400 focus:outline-none ${
-                            member.role === ClubMemberRole.CLUB_HEAD ? "cursor-not-allowed opacity-70" : ""
-                          }`}
-                        >
-                          <option value={ClubMemberRole.MEMBER}>Member</option>
-                          <option value={ClubMemberRole.COORDINATOR}>Coordinator</option>
-                          <option value={ClubMemberRole.CLUB_HEAD}>Club Head</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={member.role}
+                            onChange={(e) => changeRole(id, e.target.value)}
+                            disabled={member.role === ClubMemberRole.CLUB_HEAD || isUpdating}
+                            className={`h-8 rounded-lg border border-neutral-100 bg-neutral-50 px-2 text-[11px] font-medium text-neutral-700 focus:border-neutral-400 focus:outline-none ${
+                              member.role === ClubMemberRole.CLUB_HEAD || isUpdating
+                                ? "cursor-not-allowed opacity-70"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <option value={ClubMemberRole.MEMBER}>Member</option>
+                            <option value={ClubMemberRole.COORDINATOR}>Coordinator</option>
+                            <option value={ClubMemberRole.CLUB_HEAD}>Club Head</option>
+                          </select>
+                          {updatingType === "role" && (
+                            <svg
+                              className="h-3.5 w-3.5 animate-spin text-orange-600 shrink-0"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                            >
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                            </svg>
+                          )}
+                        </div>
                       </td>
 
                       {/* Permissions */}
                       <td className="px-4 py-3.5 text-center">
                         <PermissionToggle
                           active={member.canTakeAttendance}
-                          disabled={member.role === ClubMemberRole.CLUB_HEAD}
+                          disabled={member.role === ClubMemberRole.CLUB_HEAD || isUpdating}
+                          loading={updatingType === "canTakeAttendance"}
                           onToggle={() =>
                             togglePermission(id, "canTakeAttendance", member.canTakeAttendance)
                           }
@@ -306,7 +434,8 @@ const ClubMembers = () => {
                       <td className="px-4 py-3.5 text-center">
                         <PermissionToggle
                           active={member.canEditEvents}
-                          disabled={member.role === ClubMemberRole.CLUB_HEAD}
+                          disabled={member.role === ClubMemberRole.CLUB_HEAD || isUpdating}
+                          loading={updatingType === "canEditEvents"}
                           onToggle={() =>
                             togglePermission(id, "canEditEvents", member.canEditEvents)
                           }
@@ -318,14 +447,22 @@ const ClubMembers = () => {
                         <button
                           type="button"
                           onClick={() => removeMember(id)}
-                          disabled={member.role === ClubMemberRole.CLUB_HEAD}
+                          disabled={member.role === ClubMemberRole.CLUB_HEAD || isUpdating}
                           className={`inline-flex items-center justify-center rounded-lg p-1.5 transition-colors ${
-                             member.role === ClubMemberRole.CLUB_HEAD 
-                             ? "text-neutral-200 cursor-not-allowed" 
-                             : "text-neutral-300 hover:bg-red-50 hover:text-red-400"
+                            member.role === ClubMemberRole.CLUB_HEAD || isUpdating
+                              ? "text-neutral-200 cursor-not-allowed"
+                              : "text-neutral-300 hover:bg-red-50 hover:text-red-400 cursor-pointer"
                           }`}
+                          title="Remove member"
                         >
-                          <TrashIcon />
+                          {updatingType === "remove" ? (
+                            <svg className="h-4 w-4 animate-spin text-red-500" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                            </svg>
+                          ) : (
+                            <TrashIcon />
+                          )}
                         </button>
                       </td>
                     </tr>

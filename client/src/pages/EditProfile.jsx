@@ -130,15 +130,25 @@ const EditProfile = () => {
                     />
                 </div>
                 
-                {/* Read Only Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-neutral-50/50 p-4 border border-neutral-200 rounded-lg">
+                {/* Read Only Academic & Core Fields (Immutability enforced) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-neutral-50/60 p-4 border border-neutral-200 rounded-lg">
                     <div>
-                        <label className="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</label>
-                        <p className="font-mono text-neutral-600 text-sm">{user.rollNo}</p>
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Roll No</label>
+                        <p className="font-mono text-neutral-800 font-semibold text-xs truncate">{user.rollNo || 'N/A'}</p>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Email</label>
-                        <p className="font-mono text-neutral-600 text-sm break-all">{user.email}</p>
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Email</label>
+                        <p className="font-mono text-neutral-800 font-semibold text-xs truncate" title={user.email}>{user.email}</p>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Program & Branch</label>
+                        <p className="font-semibold text-neutral-800 text-xs truncate">
+                          {user.program || 'N/A'}{user.branch ? ` • ${user.branch}` : ''}
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Academic Year</label>
+                        <p className="font-semibold text-orange-600 text-xs truncate">{user.year || 'N/A'}</p>
                     </div>
                 </div>
 
@@ -154,32 +164,6 @@ const EditProfile = () => {
                             className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800"
                         />
                     </div>
-
-                    {(role === 'member' || role === 'student') && (
-                        <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">Graduation Year</label>
-                            <select 
-                                value={graduationYear} 
-                                onChange={(e) => {
-                                    const selectedGrad = e.target.value;
-                                    setGraduationYear(selectedGrad);
-                                    const calculatedYear = calculateYearFromGraduation(selectedGrad);
-                                    setFormData(prev => ({ ...prev, year: calculatedYear }));
-                                }}
-                                className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all text-sm font-medium text-neutral-800 bg-white"
-                            >
-                                <option value="">Select Graduation Year</option>
-                                {gradYearOptions.map(opt => (
-                                    <option key={opt.gradYear} value={opt.gradYear}>{opt.label}</option>
-                                ))}
-                            </select>
-                            {formData.year && (
-                                <p className="mt-1 text-xs text-orange-600 font-medium">
-                                    Current Academic Year: <span className="font-semibold">{formData.year}</span>
-                                </p>
-                            )}
-                        </div>
-                    )}
 
                     <div>
                         <label className="block text-xs font-semibold text-neutral-600 tracking-wider mb-2">GitHub URL</label>

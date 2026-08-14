@@ -1079,7 +1079,11 @@ router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), val
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    if (event.createdById !== req.user.userId && req.user.role !== "admin") {
+    const isCreator = event.createdById === req.user.userId;
+    const isClubOwner = (req.user.clubId && String(event.clubId) === String(req.user.clubId)) || (req.user.userId && String(event.clubId) === String(req.user.userId));
+    const isAdminOrFaculty = req.user.role === "admin" || req.user.role === "facultyCoordinator";
+
+    if (!isCreator && !isClubOwner && !isAdminOrFaculty) {
       return res.status(403).json({ message: "Unauthorized to update this event." });
     }
 
@@ -1179,37 +1183,36 @@ router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), val
   }
 });
 
-// ── DELETE /events/:id — delete event ─────────────────────────────────────────
-
 router.delete("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_DELETE), async (req, res) => {
   try {
     const event = await prisma.event.findUnique({ where: { id: req.params.id } });
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    // Club role: can only request deletion
-    if (req.user.role === "club") {
-      if (event.createdById !== req.user.userId) {
-        return res.status(403).json({ message: "Unauthorized to request deletion of this event." });
-      }
+    const isCreator = event.createdById === req.user.userId;
+    const isClubOwner = (req.user.clubId && String(event.clubId) === String(req.user.clubId)) || (req.user.userId && String(event.clubId) === String(req.user.userId));
+    const isAdmin = req.user.role === "admin";
+    const isFaculty = req.user.role === "facultyCoordinator";
 
-      await prisma.event.update({
-        where: { id: req.params.id },
-        data: { reviewStatus: "DELETION_REQUESTED" }
-      });
-      return res.json({ message: "Deletion request submitted for faculty approval." });
+    if (!isCreator && !isClubOwner && !isAdmin && !isFaculty) {
+      return res.status(403).json({ message: "Unauthorized to request deletion of this event." });
     }
 
     // Admin / Faculty Coordinator role: can delete/approve deletion immediately
-    if (req.user.role !== "admin" && req.user.role !== "facultyCoordinator") {
-      return res.status(403).json({ message: "Unauthorized to delete this event." });
+    if (isAdmin || isFaculty) {
+      if (isFaculty && req.user.clubId && String(event.clubId) !== String(req.user.clubId)) {
+        return res.status(403).json({ message: "You can only delete events for your assigned club." });
+      }
+
+      await prisma.event.delete({ where: { id: req.params.id } });
+      return res.json({ message: "Event deleted successfully." });
     }
 
-    if (req.user.role === "facultyCoordinator" && event.clubId !== req.user.clubId) {
-      return res.status(403).json({ message: "You can only delete events for your assigned club." });
-    }
-
-    await prisma.event.delete({ where: { id: req.params.id } });
-    res.json({ message: "Event deleted successfully." });
+    // Club / Member role: submit deletion request for faculty approval
+    await prisma.event.update({
+      where: { id: req.params.id },
+      data: { reviewStatus: "DELETION_REQUESTED" }
+    });
+    return res.json({ message: "Deletion request submitted for faculty approval." });
   } catch (err) {
     res.status(550).json({ message: err.message });
   }
