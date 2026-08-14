@@ -35,6 +35,34 @@ describe("qrSigningService", () => {
     expect(verification.valid).toBe(false);
   });
 
+  it("should reject when signature bytes are corrupted", () => {
+    const { qrPayload } = signTicket(eventId, ticketId);
+    const buf = Buffer.from(qrPayload, "base64url");
+    // Invert the last byte of the signature
+    buf[buf.length - 1] ^= 0xff;
+    const tamperedPayload = buf.toString("base64url");
+    const verification = verifyTicket(tamperedPayload);
+
+    expect(verification.valid).toBe(false);
+    expect(verification.error).toBe("INVALID_SIGNATURE");
+  });
+
+  it("should reject when ticketId inside payload is modified without valid signature", () => {
+    const { qrPayload } = signTicket(eventId, "tkt_original");
+    const buf = Buffer.from(qrPayload, "base64url");
+    // Modify a character in the ticketId section
+    // Format: [v:1][kLen:1][k:N][eLen:1][e:N][tLen:1][t:N][sig:64]
+    const kLen = buf[1];
+    const eLen = buf[2 + kLen];
+    const tLenOffset = 3 + kLen + eLen;
+    buf[tLenOffset + 1] = "X".charCodeAt(0);
+    const tamperedPayload = buf.toString("base64url");
+    const verification = verifyTicket(tamperedPayload);
+
+    expect(verification.valid).toBe(false);
+    expect(verification.error).toBe("INVALID_SIGNATURE");
+  });
+
   it("should reject unsupported QR version", () => {
     // Generate a raw buffer with invalid version 99
     const buf = Buffer.from([99, 14, 99, 110, 45, 113, 114, 45, 50, 48, 50, 54, 45, 48, 49]);
@@ -51,3 +79,4 @@ describe("qrSigningService", () => {
     expect(keyInfo.publicKey).toContain("BEGIN PUBLIC KEY");
   });
 });
+

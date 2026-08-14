@@ -24,15 +24,27 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
     let targetTicketId = rawInput;
     let targetEventId = null;
 
-    // Try verifying as signed Ed25519 payload first
+    // Check if input is a signed binary QR payload
     try {
       const verified = verifyTicket(rawInput);
-      if (verified && verified.valid) {
-        targetTicketId = verified.ticketId;
-        targetEventId = verified.eventId;
+      if (verified) {
+        if (verified.valid) {
+          targetTicketId = verified.ticketId;
+          targetEventId = verified.eventId;
+        } else if (verified.error === 'INVALID_SIGNATURE' || verified.error === 'INVALID_SIGNATURE_LENGTH') {
+          return res.status(400).json({
+            status: 'INVALID_SIGNATURE',
+            message: 'Ticket signature verification failed.',
+          });
+        } else if (verified.error === 'UNSUPPORTED_VERSION') {
+          return res.status(400).json({
+            status: 'UNSUPPORTED_VERSION',
+            message: 'Unsupported ticket QR version.',
+          });
+        }
       }
     } catch {
-      // Not a signed binary payload, treat as raw ticketId / qrCode
+      // Not a signed binary payload, fallback to raw ticketId / qrCode string
     }
 
     // Step 1: Look up participation by ticketId, qrPayload, qrCode, or ID
@@ -103,31 +115,37 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
     // Step 3: Check cancelled
     if (participation.status === 'CANCELLED') {
       return res.status(400).json({
-        status: 'TICKET_CANCELLED',
+        status: 'TICKET_REVOKED',
         message: 'This ticket registration has been cancelled.',
       });
     }
 
-    // Step 4: Guard against double-marking
-    if (participation.status === 'ATTENDED') {
+    // Step 4: Guard against double-marking (both participation status and AttendanceRecord check)
+    const existingRecord = await prisma.attendanceRecord.findUnique({
+      where: { eventId_participationId: { eventId: participation.eventId, participationId: participation.id } },
+    });
+
+    if (participation.status === 'ATTENDED' || existingRecord) {
       return res.status(409).json({
         status: 'ALREADY_ATTENDED',
         message: 'Attendance already recorded for this attendee.',
         participantName: participation.student?.name || participation.externalName || 'Unknown',
+        branch: participation.student?.branch || null,
         rollNo: participation.student?.rollNo || null,
         externalEmail: participation.externalEmail || null,
-        attendedAt: participation.attendedAt,
+        attendedAt: existingRecord?.scannedAt || participation.attendedAt || new Date(),
       });
     }
 
     // Step 5: Mark attendance in participation and attendanceRecord
     const attendanceId = createObjectId();
+    const now = new Date();
     await prisma.$transaction([
       prisma.participation.update({
         where: { id: participation.id },
         data: {
           status: 'ATTENDED',
-          attendedAt: new Date(),
+          attendedAt: now,
           markedByMemberId: scannerId,
         },
       }),
@@ -136,7 +154,7 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
           id: attendanceId,
           eventId: participation.eventId,
           participationId: participation.id,
-          scannedAt: new Date(),
+          scannedAt: now,
           verificationMode: 'ONLINE',
         },
       }),
@@ -144,6 +162,7 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
 
     // Step 6: Return attendance confirmation
     const participantName = participation.student?.name || participation.externalName || 'Unknown';
+    const branch = participation.student?.branch || null;
     const rollNo = participation.student?.rollNo || null;
     const externalEmail = participation.externalEmail || null;
 
@@ -151,9 +170,10 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
       status: 'VALID',
       message: 'Attendance recorded successfully!',
       participantName,
+      branch,
       rollNo,
       externalEmail,
-      attendedAt: new Date(),
+      attendedAt: now,
       markedByMemberId: scannerId,
     });
   } catch (err) {

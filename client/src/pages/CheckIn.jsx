@@ -150,65 +150,81 @@ const CheckIn = () => {
       if (isProcessingRef.current || (qrCode === lastScannedCodeRef.current)) return;
       isProcessingRef.current = true;
       lastScannedCodeRef.current = qrCode;
-      
-      if (scannerRef.current) {
-        try { await scannerRef.current.pause(); } catch (e) { console.warn('Pause failed:', e); }
-      }
     }
 
     setProcessing(true);
     setScanState('processing');
     setScanResult(null);
 
+    const token = localStorage.getItem('token');
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/participation/verify`, {
-        qrCode,
-        eventId: id,
-      });
-      setScanResult(res.data);
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/participation/verify`,
+        {
+          qrCode,
+          eventId: id,
+        },
+        { headers: authHeaders }
+      );
+
+      const data = res.data || {};
+      setScanResult(data);
       setScanState('success');
       setAttendedCount(prev => prev + 1);
-      addToHistory('success', res.data.participantName, res.data.rollNo || res.data.externalEmail, 'success');
+      addToHistory(
+        'success',
+        data.participantName,
+        data.rollNo || data.externalEmail || data.branch || 'Checked In',
+        'success'
+      );
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data || {};
-      const errorMessage = data.message || (status === 404 ? 'Ticket not found in registration database.' : 'Verification failed.');
+      const errorStatus = data.status;
+      const errorMessage =
+        data.message ||
+        (status === 404
+          ? 'Ticket not found in registration database.'
+          : status === 401 || status === 403
+          ? 'Unauthorized: scanner clearance required.'
+          : 'Verification failed. Please check network connection.');
+
       setScanResult({ message: errorMessage, ...data });
 
-      if (status === 409) {
+      if (status === 409 || errorStatus === 'ALREADY_ATTENDED') {
         setScanState('already_marked');
-        addToHistory('already', data.participantName || 'Already Checked In', data.rollNo || '', 'already');
-      } else if (status === 403) {
+        addToHistory('already', data.participantName || 'Already Checked In', data.rollNo || data.externalEmail || '', 'already');
+      } else if (status === 403 || errorStatus === 'UNAUTHORIZED') {
         setScanState('unauthorized');
         addToHistory('error', 'Access Denied', qrCode.slice(0, 18), 'error');
-      } else if (data.status === 'WRONG_EVENT') {
+      } else if (errorStatus === 'WRONG_EVENT') {
         setScanState('wrong_event');
         addToHistory('error', 'Wrong Event', qrCode.slice(0, 18), 'error');
+      } else if (errorStatus === 'INVALID_SIGNATURE') {
+        setScanState('invalid_signature');
+        addToHistory('error', 'Invalid Signature', qrCode.slice(0, 18), 'error');
+      } else if (!err.response) {
+        setScanState('network_error');
+        addToHistory('error', 'Connection Error', 'Network Offline', 'error');
       } else {
         setScanState('not_found');
         addToHistory('error', errorMessage, qrCode.slice(0, 18), 'error');
       }
     } finally {
-      if (isManual) {
-        setTimeout(() => {
-          setScanState('idle');
-          setProcessing(false);
-        }, 2500);
-      } else {
-        setTimeout(async () => {
-          setScanState('idle');
-          setProcessing(false);
-          isProcessingRef.current = false;
-          lastScannedCodeRef.current = null;
-          if (scannerRef.current) {
-            try { await scannerRef.current.resume(); } catch (e) { console.error('Resume failed:', e); }
-          }
-        }, 3000);
-      }
+      const cooldownMs = isManual ? 2500 : 2800;
+      setTimeout(() => {
+        setScanState('idle');
+        setProcessing(false);
+        isProcessingRef.current = false;
+        lastScannedCodeRef.current = null;
+      }, cooldownMs);
     }
   }
 
   async function onScanSuccess(decodedText) {
+    if (isProcessingRef.current) return;
     await processVerification(decodedText, false);
   }
 
@@ -530,7 +546,7 @@ const CheckIn = () => {
                             <CheckCircle size={20} className="text-green-600 dark:text-green-400 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-bold text-green-700 dark:text-green-400">Successfully Checked In</p>
-                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.participantName} — {scanResult?.rollNo || scanResult?.externalEmail || 'N/A'}</p>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.participantName} — {scanResult?.rollNo || scanResult?.externalEmail || 'Checked In'}</p>
                             </div>
                           </div>
                         )}
@@ -543,15 +559,33 @@ const CheckIn = () => {
                             </div>
                           </div>
                         )}
-                        {(scanState === 'not_found' || scanState === 'unauthorized') && (
+                        {scanState === 'wrong_event' && (
+                          <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 rounded-xl">
+                            <XCircle size={20} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-bold text-rose-700 dark:text-rose-400">Wrong Event</p>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">{scanResult?.message || 'This pass is for a different event.'}</p>
+                            </div>
+                          </div>
+                        )}
+                        {(scanState === 'not_found' || scanState === 'unauthorized' || scanState === 'invalid_signature' || scanState === 'network_error') && (
                           <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl">
                             <XCircle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-bold text-red-700 dark:text-red-400">
-                                {scanState === 'unauthorized' ? 'Access Denied' : 'Not Found'}
+                                {scanState === 'unauthorized'
+                                  ? 'Access Denied'
+                                  : scanState === 'invalid_signature'
+                                  ? 'Security Verification Failed'
+                                  : scanState === 'network_error'
+                                  ? 'Connection Error'
+                                  : 'Not Found'}
                               </p>
                               <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
-                                {scanState === 'unauthorized' ? 'Lacking attendance clearance level.' : 'Invalid registration identifier.'}
+                                {scanResult?.message ||
+                                  (scanState === 'unauthorized'
+                                    ? 'Lacking attendance clearance level.'
+                                    : 'Invalid registration identifier.')}
                               </p>
                             </div>
                           </div>
@@ -608,14 +642,14 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
           <div className="w-full bg-neutral-50 dark:bg-neutral-950 rounded-xl p-3 mt-1 border border-neutral-100 dark:border-neutral-850">
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
-                {scanResult?.rollNo ? 'Roll No' : 'Email'}
+                {scanResult?.rollNo ? 'Roll No' : scanResult?.branch ? 'Branch' : 'Email'}
               </span>
               <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 font-mono">
-                {scanResult?.rollNo || scanResult?.externalEmail || 'N/A'}
+                {scanResult?.rollNo || scanResult?.branch || scanResult?.externalEmail || 'Verified'}
               </span>
             </div>
           </div>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
 
@@ -632,11 +666,28 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
           <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
             {scanResult?.message || 'Attendance record is already active.'}
           </p>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
 
-      {(scanState === 'unauthorized' || scanState === 'not_found' || scanState === 'wrong_event') && (
+      {scanState === 'wrong_event' && (
+        <motion.div
+          initial={{ scale: 0.92, y: 12 }}
+          animate={{ scale: 1, y: 0 }}
+          className="bg-white dark:bg-neutral-900 rounded-2xl p-6 flex flex-col items-center gap-2.5 w-[280px] shadow-sm border border-neutral-200 dark:border-neutral-850"
+        >
+          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/20 mb-1">
+            <XCircle size={28} className="text-rose-600 dark:text-rose-400" />
+          </div>
+          <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-rose-600">Wrong Event</p>
+          <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
+            {scanResult?.message || 'This ticket was registered for another event.'}
+          </p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
+        </motion.div>
+      )}
+
+      {(scanState === 'unauthorized' || scanState === 'not_found' || scanState === 'invalid_signature' || scanState === 'network_error') && (
         <motion.div
           initial={{ scale: 0.92, y: 12 }}
           animate={{ scale: 1, y: 0 }}
@@ -648,17 +699,21 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
           <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-red-600">
             {scanState === 'unauthorized'
               ? 'Access Denied'
-              : scanState === 'wrong_event'
-              ? 'Wrong Event'
-              : 'Verification Error'}
+              : scanState === 'invalid_signature'
+              ? 'Security Verification Failed'
+              : scanState === 'network_error'
+              ? 'Connection Error'
+              : 'Invalid Ticket'}
           </p>
           <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
             {scanResult?.message ||
               (scanState === 'unauthorized'
                 ? 'Lacking attendance clearance permissions.'
+                : scanState === 'invalid_signature'
+                ? 'This pass signature could not be verified.'
                 : 'Registration record not found.')}
           </p>
-          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
+          <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming scan in 2.5s</p>
         </motion.div>
       )}
     </motion.div>
