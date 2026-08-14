@@ -21,7 +21,7 @@ const EditProfile = lazy(() => import('./pages/EditProfile'));
 const EditEvent = lazy(() => import('./pages/EditEvent'));
 const EventRegistrations = lazy(() => import('./pages/EventRegistrations'));
 const CheckIn = lazy(() => import('./pages/CheckIn'));
-const RegisterLanding = lazy(() => import('./pages/RegisterLanding'));
+
 const ClubsPage = lazy(() => import('./pages/Clubspage'));
 const ClubDetails = lazy(() => import('./pages/ClubDetails'));
 const EditClub = lazy(() => import('./pages/EditClub'));
@@ -44,7 +44,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const FAQ = lazy(() => import('./pages/FAQ'));
-const Aboutfeatures = lazy(() => import('./pages/Aboutfeatures'));
+
 const CertificateDesigner = lazy(() => import('./pages/CertificateDesigner'));
 const LostAndFound = lazy(() => import('./pages/LostAndFound'));
 const LostFoundAdminDashboard = lazy(() => import('./pages/LostFoundAdminDashboard'));
@@ -56,6 +56,11 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 // const BusTracker = lazy(() => import('./pages/BusTracker'));
 // const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
 // const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
+
+
+
+
+
 
 
 import { NotificationProvider } from './context/NotificationContext';
@@ -187,12 +192,16 @@ function App() {
                     <Route path="/verify-email/:token" element={<VerifyEmail />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/team" element={<Team />} />
-                    <Route path="/about-features" element={<Aboutfeatures />} />
+                   
                     <Route path="/lost-found" element={<LostAndFound />} />
                     <Route path="/lost-found/guide" element={<LostFoundGuide />} />
                     {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
               
                     <Route path="*" element={<NotFound />} />
+
+              
+
+
                   </Route>
                 </Routes>
               </Suspense>

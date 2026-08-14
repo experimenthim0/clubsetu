@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
-import { Clock, MapPin, Users, QrCode } from 'lucide-react';
+import { Clock, MapPin, Users, QrCode, MoreVertical, Trophy, FileText, Edit, Trash2, Award } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { DownloadIcon } from '@/components/ui/download';
 import QRCode from 'qrcode';
 import { invalidateCache } from '../lib/cacheManager';
+import WinnerModal from '../components/WinnerModal';
+
 const MyEvents = () => {
   const location = useLocation();
   const targetEventId = new URLSearchParams(location.search).get('eventId');
@@ -38,6 +40,18 @@ const MyEvents = () => {
   const [highlightedRegId, setHighlightedRegId] = useState(null);
 
   const [downloadingCert, setDownloadingCert] = useState(null);
+  const [openMenuEventId, setOpenMenuEventId] = useState(null);
+  const [winnerModalEvent, setWinnerModalEvent] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.event-action-menu')) {
+        setOpenMenuEventId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
  const handleDownloadTicket = async () => {
   if (!selectedTicket || !qrDataUrl) return;
@@ -803,15 +817,17 @@ const MyEvents = () => {
                     'DRAFT': 'bg-neutral-100 text-neutral-600 border-neutral-200'
                 };
 
+                const eventIdStr = String(event.id || event._id);
+
                 return (
                 <div
-                  key={event.id || event._id}
-                  className="bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+                  key={eventIdStr}
+                  className="bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative"
                 >
                   {/* Top stripe: title */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 md:px-6 pt-5 pb-3 border-b border-neutral-100 bg-neutral-50/30 gap-3">
                     <h3 className="text-lg font-bold text-neutral-900 leading-tight">
-                        <Link to={`/event/${event.slug || event.id || event._id}`} className="hover:text-orange-600 transition-colors">
+                        <Link to={`/event/${event.slug || eventIdStr}`} className="hover:text-orange-600 transition-colors">
                             {event.title}
                         </Link>
                     </h3>
@@ -853,7 +869,7 @@ const MyEvents = () => {
                        event.reviewStatus?.toUpperCase() === 'PENDING' ? (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
+                            onClick={() => handleReview(eventIdStr, 'PUBLISHED')}
                             className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm animate-pulse-slow"
                           >
                             Approve
@@ -861,7 +877,7 @@ const MyEvents = () => {
                           <button
                             onClick={() => {
                                 const reason = prompt('Enter rejection reason:');
-                                if (reason) handleReview(event.id || event._id, 'REJECTED', reason);
+                                if (reason) handleReview(eventIdStr, 'REJECTED', reason);
                             }}
                             className="px-4 py-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
                           >
@@ -872,66 +888,107 @@ const MyEvents = () => {
                        event.reviewStatus?.toUpperCase() === 'DELETION_REQUESTED' ? (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleDelete(event.id || event._id)}
+                            onClick={() => handleDelete(eventIdStr)}
                             className="px-4 py-1.5 bg-rose-650 text-white rounded-lg hover:bg-rose-700 transition font-bold text-xs cursor-pointer shadow-sm"
                           >
                             Approve Deletion
                           </button>
                           <button
-                            onClick={() => handleReview(event.id || event._id, 'PUBLISHED')}
+                            onClick={() => handleReview(eventIdStr, 'PUBLISHED')}
                             className="px-4 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-bold text-xs cursor-pointer shadow-sm"
                           >
                             Restore Event
                           </button>
                         </div>
                       ) : (
-                        <>
-                          {(role === 'club' || user?.role === 'club' || role === 'facultyCoordinator' || user?.role === 'facultyCoordinator' || role === 'admin') && (
-                            <Link
-                              to={`/event/${event.id || event._id}/registrations`}
-                              className="px-4 py-1.5 bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-lg hover:bg-neutral-200 transition font-bold text-xs cursor-pointer shadow-sm whitespace-nowrap"
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/event/${eventIdStr}/registrations`}
+                            className="px-3.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition font-semibold text-xs cursor-pointer shadow-sm whitespace-nowrap"
+                          >
+                            Registrations
+                          </Link>
+
+                          <div className="relative event-action-menu">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuEventId(openMenuEventId === eventIdStr ? null : eventIdStr);
+                              }}
+                              className="p-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition cursor-pointer"
+                              title="More options"
                             >
-                              Registrations
-                            </Link>
-                          )}
-                          {(role === 'club' || role === 'facultyCoordinator' || role === 'admin' || 
-                            (role === 'member' && user?.memberships?.find(m => m.clubId === event.clubId || m.clubId === user.clubId)?.canTakeAttendance) ||
-                            (role === 'member' && user?.memberships?.find(m => m.clubId === event.clubId || m.clubId === user.clubId)?.permissions?.canTakeAttendance)
-                          ) && !isPast && (
-                            <Link
-                              to={`/event/${event.id || event._id}/check-in`}
-                              className="px-4 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-bold text-xs cursor-pointer shadow-sm whitespace-nowrap flex items-center gap-1.5"
-                            >
-                              <QrCode className="w-3.5 h-3.5" /> Scan Attendance
-                            </Link>
-                          )}
-                          {role === 'club' && event.provideCertificate && (
-                            <Link
-                                to={`/event/${event.id || event._id}/design-certificate`}
-                                className="px-4 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition font-bold text-xs cursor-pointer shadow-sm whitespace-nowrap"
-                            >
-                                Design Certificate
-                            </Link>
-                          )}
-                          {(role === 'club' || user?.role === 'club' || role === 'admin' || role === 'facultyCoordinator' || user?.role === 'facultyCoordinator') && (
-                            <>
-                              <Link
-                                to={`/events/edit/${event.id || event._id}`}
-                                className="px-3 py-1.5 bg-neutral-50 text-neutral-700 border border-neutral-200 rounded-lg hover:bg-neutral-200 transition font-bold text-xs shadow-sm"
-                              >
-                                <i className="ri-edit-line text-sm font-medium"></i>
-                              </Link>
-                              
-                              <button
-                                onClick={() => handleDelete(event.id || event._id)}
-                                className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition font-bold text-xs shadow-sm cursor-pointer border-0 outline-none"
-                                title="Delete Event"
-                              >
-                                <i className="ri-delete-bin-line text-sm"></i>
-                              </button>
-                            </>
-                          )}
-                        </>
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {openMenuEventId === eventIdStr && (
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100">
+                                <Link
+                                  to={`/event/${eventIdStr}/registrations`}
+                                  onClick={() => setOpenMenuEventId(null)}
+                                  className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-neutral-400" /> View Registrations
+                                </Link>
+
+                                {!isPast && (
+                                  <Link
+                                    to={`/event/${eventIdStr}/check-in`}
+                                    onClick={() => setOpenMenuEventId(null)}
+                                    className="flex items-center gap-2 px-3.5 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 font-medium transition"
+                                  >
+                                    <QrCode className="w-3.5 h-3.5" /> Scan Attendance
+                                  </Link>
+                                )}
+
+                                {(event.showWinner || isPast) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuEventId(null);
+                                      setWinnerModalEvent(event);
+                                    }}
+                                    className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition cursor-pointer"
+                                  >
+                                    <Trophy className="w-3.5 h-3.5" /> Announce Winners
+                                  </button>
+                                )}
+
+                                {event.provideCertificate && (
+                                  <Link
+                                    to={`/event/${eventIdStr}/design-certificate`}
+                                    onClick={() => setOpenMenuEventId(null)}
+                                    className="flex items-center gap-2 px-3.5 py-2 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition"
+                                  >
+                                    <Award className="w-3.5 h-3.5" /> Design Certificate
+                                  </Link>
+                                )}
+
+                                <Link
+                                  to={`/events/edit/${eventIdStr}`}
+                                  onClick={() => setOpenMenuEventId(null)}
+                                  className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
+                                >
+                                  <Edit className="w-3.5 h-3.5 text-neutral-400" /> Edit Event
+                                </Link>
+
+                                <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuEventId(null);
+                                    handleDelete(eventIdStr);
+                                  }}
+                                  className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete Event
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>  {/* closes action buttons div */}
                   </div>  
@@ -1376,6 +1433,19 @@ const MyEvents = () => {
           </div>
         </div>
       )}
+      {/* ── WINNER ANNOUNCEMENT MODAL ── */}
+      <WinnerModal
+        isOpen={!!winnerModalEvent}
+        onClose={() => setWinnerModalEvent(null)}
+        event={winnerModalEvent}
+        onWinnersUpdated={(updatedEvent) => {
+          setCreatedEvents(prev =>
+            prev.map(ev =>
+              (ev.id || ev._id) === (updatedEvent.id || updatedEvent._id) ? { ...ev, ...updatedEvent } : ev
+            )
+          );
+        }}
+      />
     </div>
   );
 };

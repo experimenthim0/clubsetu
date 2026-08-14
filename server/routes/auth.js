@@ -137,7 +137,7 @@ router.post("/register/student", async (req, res) => {
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto;">
           <h1 style="color: #FF4400; text-align: center;">Welcome to <span style="color:#000;">Campus</span>Node!</h1>
           <p style="font-size: 16px; text-align: center;">
-            Hi ${name},<br><br>
+            Hi <b>${name}</b>,<br><br>
             Thank you for signing up. To complete your registration, please verify your email address.
           </p>
           <div style="text-align: center; margin: 30px 0;">
@@ -310,7 +310,7 @@ router.post("/register/external", async (req, res) => {
     await sendEmail({
       email,
       subject: "Your CampusNode Event Access Code",
-      message: `<div style="font-family:Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
+      message: `<div style="font-family: logofont,Arial,sans-serif;color:#333;line-height:1.6;max-width:600px;margin:auto;text-align:center">
         <h1 style="color:#FF4400;"><span style="color:#000">Club</span>Setu</h1>
         <h2>Event Access Code</h2>
         <p>Hi ${name}, use this code to confirm your registration:</p>

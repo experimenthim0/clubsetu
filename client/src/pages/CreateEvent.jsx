@@ -460,7 +460,7 @@ const CreateEvent = () => {
                         <div className="space-y-6 animate-step-fadeIn">
                             <div className="border-b border-neutral-200 pb-3">
                                 <h2 className="text-xl font-bold text-black uppercase tracking-wide flex items-center gap-2">
-                                    <i className="ri-file-list-line text-orange-600" /> Step 1: Basic Details
+                                     Step 1: Basic Details
                                 </h2>
                                 <p className="text-xs text-neutral-500 mt-1">Provide core event title, description, venue and poster.</p>
                             </div>
@@ -543,7 +543,7 @@ const CreateEvent = () => {
                         <div className="space-y-6 animate-step-fadeIn">
                             <div className="border-b border-neutral-200 pb-3">
                                 <h2 className="text-xl font-bold text-black uppercase tracking-wide flex items-center gap-2">
-                                    <i className="ri-calendar-event-line text-orange-600" /> Step 2: Timings & Access
+                                     Step 2: Timings & Access
                                 </h2>
                                 <p className="text-xs text-neutral-500 mt-1">Set event timings, registration deadline, and target audience restrictions.</p>
                             </div>
@@ -658,7 +658,7 @@ const CreateEvent = () => {
                         <div className="space-y-6 animate-step-fadeIn">
                             <div className="border-b border-neutral-200 pb-3">
                                 <h2 className="text-xl font-bold text-black uppercase tracking-wide flex items-center gap-2">
-                                    <i className="ri-ticket-2-line text-orange-600" /> Step 3: Registration & Payments
+                                     Step 3: Registration & Payments
                                 </h2>
                                 <p className="text-xs text-neutral-500 mt-1">Configure registration types, capacity, payment methods, and custom form fields.</p>
                             </div>
@@ -988,7 +988,7 @@ const CreateEvent = () => {
                         <div className="space-y-6 animate-step-fadeIn">
                             <div className="border-b border-neutral-200 pb-3">
                                 <h2 className="text-xl font-bold text-black uppercase tracking-wide flex items-center gap-2">
-                                    <i className="ri-sparkles-line text-orange-600" /> Step 4: Extras & Publishing
+                                     Step 4: Extras & Publishing
                                 </h2>
                                 <p className="text-xs text-neutral-500 mt-1">Configure winner display, digital certificates, event sponsors, and media assets.</p>
                             </div>

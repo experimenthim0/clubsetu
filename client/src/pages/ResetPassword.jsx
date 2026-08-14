@@ -8,7 +8,7 @@ const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  
+
   const [role, setRole] = useState('student');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,26 +41,37 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-3xl font-black text-black">
-          Reset <span className="text-orange-600">Password</span>
-        </h2>
-        <p className="mt-2 text-center text-sm text-neutral-500 font-bold uppercase tracking-widest">
-          Enter your new password below
-        </p>
-      </div>
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col items-center justify-center px-5 py-12 transition-colors duration-300">
+      <div className="w-full max-w-md">
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-medium tracking-wider text-black dark:text-white logofont">
+            Campus<span className="text-orange-600">Node</span>
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            Reset your password
+          </p>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 border-2 border-black shadow-[8px_8px_0px_#000] rounded-sm">
-          
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex border-2 border-black rounded-sm overflow-hidden">
+        {/* Card */}
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg font-bold text-black dark:text-white text-center">
+            Set New Password
+          </h2>
+          <p className="mt-1 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            Please enter your new password below
+          </p>
+
+          {/* Role Toggle */}
+          {/* <div className="flex justify-center mt-6 mb-6">
+            <div className="inline-flex rounded-full border border-neutral-200 dark:border-neutral-800 overflow-hidden p-1 bg-neutral-50 dark:bg-neutral-950">
               <button
                 type="button"
-                onClick={() => setRole('member')}
-                className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
-                  role === 'member' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                onClick={() => setRole('student')}
+                className={`px-5 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  role === 'student'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Student
@@ -68,18 +79,21 @@ const ResetPassword = () => {
               <button
                 type="button"
                 onClick={() => setRole('club')}
-                className={`flex-1 py-1 text-sm font-bold tracking-tight border-2 border-black rounded transition-colors ${
-                  role === 'club' ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-50'
+                className={`px-5 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer ${
+                  role === 'club'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-transparent text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Club Head
               </button>
             </div>
-          </div>
+          </div> */}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-5">
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">
+              <label className="block text-[13px] font-semibold  tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
                 New Password
               </label>
               <div className="relative">
@@ -88,13 +102,13 @@ const ResetPassword = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
+                  className="w-full px-4 py-3 pr-10 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white text-sm font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400"
                   placeholder="Enter new password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -102,7 +116,7 @@ const ResetPassword = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">
+              <label className="block text-[13px] font-semibold  tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -111,33 +125,39 @@ const ResetPassword = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:outline-none focus:ring-0 focus:border-orange-600 transition-colors"
+                  className="w-full px-4 py-3 pr-10 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white text-sm font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400"
                   placeholder="Confirm new password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 cursor-pointer focus:outline-none"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer focus:outline-none"
                 >
                   {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <div className="flex justify-center mt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3.5 bg-black text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_#EA580C] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {loading ? 'Resetting...' : 'Update Password'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${
+                loading
+                  ? 'bg-neutral-400 cursor-not-allowed'
+                  : 'bg-orange-600 hover:bg-orange-700 cursor-pointer hover:-translate-y-0.5 shadow-sm'
+              }`}
+            >
+              {loading ? 'Resetting Password...' : 'Update Password'}
+            </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <Link to="/login" className="text-xs font-black uppercase tracking-widest text-black hover:text-orange-600 underline">
-              Return to Login
+          {/* Footer */}
+          <div className="mt-6 pt-5 border-t border-neutral-100 dark:border-neutral-800 text-center">
+            <Link
+              to="/login"
+              className="text-sm font-semibold text-neutral-500 hover:text-orange-600 dark:text-neutral-400 dark:hover:text-orange-500 transition-colors"
+            >
+              ← Back to Sign In
             </Link>
           </div>
         </div>

@@ -129,6 +129,7 @@ const NoInternet = ({ onRetrySuccess, targetPath }) => {
           hover:opacity-90
           transition
           disabled:opacity-70
+          
         "
         >
           <RefreshCw
@@ -153,7 +154,7 @@ const NoInternet = ({ onRetrySuccess, targetPath }) => {
         {/* Branding */}
 
         <div>
-          <h2 className="font-medium text-neutral-900 dark:text-white logofont">
+          <h2 className="font-medium text-neutral-900 dark:text-white logofont tracking-wider">
             Campus<span className="text-orange-500">Node</span>
           </h2>
 

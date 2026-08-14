@@ -1314,118 +1314,21 @@ const EditEvent = () => {
                                 </button>
                             </div>
 
-                            {/* Winners Section */}
-                            <div>
-                                {isEventCompleted ? (
-                                    <div className="bg-white p-6 border-2 border-neutral-200 mt-6 rounded-sm">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <div>
-                                                <h2 className="text-xl font-black uppercase">Winners List</h2>
-                                                <p className="text-xs text-neutral-400 mt-1 font-medium">Event has ended — declare winners below.</p>
-                                            </div>
-                                            <button 
-                                                type="button" 
-                                                onClick={addWinner}
-                                                className="bg-black text-white px-4 py-2 text-xs font-bold uppercase hover:bg-orange-600 cursor-pointer"
-                                            >
-                                                + Add Winner
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="space-y-3">
-                                            {formData.winners.map((winner, index) => {
-                                                const isTeamEvent = formData.registrationType === 'team' || formData.registrationType === 'both';
-
-                                                return (
-                                                    <div key={index} className="bg-neutral-50 dark:bg-neutral-800/40 p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg relative">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeWinner(index)}
-                                                            className="absolute top-3 right-3 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors sm:static sm:p-3 cursor-pointer"
-                                                            title="Remove winner"
-                                                        >
-                                                            <i className="ri-delete-bin-line text-lg" />
-                                                        </button>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-[70px_1fr_1fr] gap-3 pr-10 sm:pr-0 items-start">
-                                                            <div>
-                                                                <label className="text-[10px] font-bold uppercase mb-1 block">Rank</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={winner.rank}
-                                                                    onChange={(e) => updateWinner(index, 'rank', Number(e.target.value))}
-                                                                    className={inputCls}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-[10px] font-bold uppercase mb-1 block">
-                                                                    {isTeamEvent ? 'Leader Name / Roll No' : 'Roll Number'}
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder={isTeamEvent ? "Enter Leader Name or Roll No" : "Enter roll number"}
-                                                                    value={winner.rollNo || ''}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value;
-                                                                        updateWinner(index, 'rollNo', val);
-                                                                        if (val.trim().length >= 3) {
-                                                                            handleWinnerLookup(index, val);
-                                                                        }
-                                                                    }}
-                                                                    onBlur={(e) => handleWinnerLookup(index, e.target.value)}
-                                                                    className={inputCls}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-[10px] font-bold uppercase mb-1 block">
-                                                                    {isTeamEvent ? 'Team Name' : 'Winner Name'}
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder={isTeamEvent ? "Identified Team Name" : "Identified Name"}
-                                                                    value={winner.name || ''}
-                                                                    onChange={(e) => updateWinner(index, 'name', e.target.value)}
-                                                                    className={inputCls}
-                                                                />
-                                                                {winner.members && winner.members.length > 0 && (() => {
-                                                                    const raw = Array.isArray(winner.members)
-                                                                        ? winner.members.map(m => (typeof m === 'string' ? m : m?.name)).filter(Boolean)
-                                                                        : [typeof winner.members === 'string' ? winner.members : winner.members?.name].filter(Boolean);
-                                                                    const uniqueM = Array.from(new Set(raw));
-                                                                    if (uniqueM.length === 0) return null;
-                                                                    return (
-                                                                        <div className="mt-2 p-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded text-xs">
-                                                                            <span className="font-bold text-black dark:text-white">Members: </span>
-                                                                            <span className="text-neutral-600 dark:text-neutral-400">
-                                                                                {uniqueM.join(', ')}
-                                                                            </span>
-                                                                        </div>
-                                                                    );
-                                                                })()}
-                                                                {winner.error && (
-                                                                    <p className="text-[10px] text-rose-500 font-bold mt-1">{winner.error}</p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                            {formData.winners.length === 0 && (
-                                                <p className="text-sm text-neutral-400 italic text-center py-4">No winners declared yet.</p>
-                                            )}
-                                        </div>
+                            {/* Winners Section Note */}
+                            <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-5 rounded-2xl flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-orange-600 text-white rounded-xl shadow-sm">
+                                        <i className="ri-trophy-line text-xl" />
                                     </div>
-                                ) : (
-                                    <div className="mt-5 bg-amber-50 border-2 border-amber-200 px-5 py-4 flex items-center gap-3 rounded-sm">
-                                        <i className="ri-trophy-line text-amber-500 text-xl flex-shrink-0" />
-                                        <p className="text-xs font-bold text-amber-700 tracking-wide">
-                                            Winners can be declared once the event ends on{' '}
-                                            {new Date(formData.endTime).toLocaleString([], {
-                                                dateStyle: 'medium',
-                                                timeStyle: 'short',
-                                            })}
+                                    <div>
+                                        <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
+                                            Winner Announcement Tool
+                                        </h4>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                            Winners can now be announced and edited directly from the event card on your <strong>My Events</strong> or <strong>Club Events</strong> page using the Three-Dot action menu.
                                         </p>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     )}
