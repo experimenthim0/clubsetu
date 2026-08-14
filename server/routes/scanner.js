@@ -665,7 +665,7 @@ router.get("/events/:eventId/sync-state", verifyToken, async (req, res) => {
 // GET /scanner/keys/public — Get public verification keys
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.get("/keys/public", async (req, res) => {
+router.get(["/keys/public", "/keys"], async (req, res) => {
   try {
     const keyInfo = getPublicKeyInfo();
     return res.json({ keys: [keyInfo] });

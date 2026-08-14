@@ -161,23 +161,32 @@ const CheckIn = () => {
     setScanResult(null);
 
     try {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/participation/verify/${qrCode}`);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/participation/verify`, {
+        qrCode,
+        eventId: id,
+      });
       setScanResult(res.data);
       setScanState('success');
       setAttendedCount(prev => prev + 1);
       addToHistory('success', res.data.participantName, res.data.rollNo || res.data.externalEmail, 'success');
     } catch (err) {
       const status = err.response?.status;
+      const data = err.response?.data || {};
+      const errorMessage = data.message || (status === 404 ? 'Ticket not found in registration database.' : 'Verification failed.');
+      setScanResult({ message: errorMessage, ...data });
+
       if (status === 409) {
         setScanState('already_marked');
-        if (err.response.data?.participantName) setScanResult(err.response.data);
-        addToHistory('already', err.response.data?.participantName, err.response.data?.rollNo || '', 'already');
+        addToHistory('already', data.participantName || 'Already Checked In', data.rollNo || '', 'already');
       } else if (status === 403) {
         setScanState('unauthorized');
-        addToHistory('error', 'Unauthorized', qrCode, 'error');
+        addToHistory('error', 'Access Denied', qrCode.slice(0, 18), 'error');
+      } else if (data.status === 'WRONG_EVENT') {
+        setScanState('wrong_event');
+        addToHistory('error', 'Wrong Event', qrCode.slice(0, 18), 'error');
       } else {
         setScanState('not_found');
-        addToHistory('error', 'Not Found', qrCode, 'error');
+        addToHistory('error', errorMessage, qrCode.slice(0, 18), 'error');
       }
     } finally {
       if (isManual) {
@@ -238,6 +247,7 @@ const CheckIn = () => {
     success:        'rgba(240, 253, 244, 0.97)',
     already_marked: 'rgba(255, 251, 235, 0.97)',
     unauthorized:   'rgba(254, 242, 242, 0.97)',
+    wrong_event:    'rgba(255, 241, 242, 0.97)',
     not_found:      'rgba(254, 242, 242, 0.97)',
   }[scanState] || 'rgba(255, 255, 255, 0.95)';
 
@@ -247,6 +257,7 @@ const CheckIn = () => {
     success:        'rgba(6, 78, 59, 0.97)',
     already_marked: 'rgba(120, 53, 4, 0.97)',
     unauthorized:   'rgba(153, 27, 27, 0.97)',
+    wrong_event:    'rgba(159, 18, 57, 0.97)',
     not_found:      'rgba(153, 27, 27, 0.97)',
   }[scanState] || 'rgba(23, 23, 23, 0.95)';
 
@@ -278,12 +289,45 @@ const CheckIn = () => {
                 <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Attendance</span>
               </div>
               <h1 className="m-0 text-base font-extrabold text-black dark:text-white leading-tight">{event?.title}</h1>
+              {event?.startTime && (
+                <p className="m-0 text-[11px] text-neutral-400 dark:text-neutral-500 font-medium">
+                  {new Date(event.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' })},{' '}
+                  {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {event.endTime ? ` – ${new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Live</span>
-          </div>
+          {(() => {
+            const now = new Date();
+            const start = event?.startTime ? new Date(event.startTime) : null;
+            const end = event?.endTime ? new Date(event.endTime) : null;
+            const isUpcoming = start && start > now;
+            const isEnded = end && end < now;
+
+            if (isUpcoming) {
+              return (
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest">Upcoming</span>
+                </div>
+              );
+            }
+            if (isEnded) {
+              return (
+                <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                  <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-300 uppercase tracking-widest">Ended</span>
+                </div>
+              );
+            }
+            return (
+              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900/40 rounded-full px-3 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest">Live</span>
+              </div>
+            );
+          })()}
         </div>
       </header>
 
@@ -592,7 +636,7 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
         </motion.div>
       )}
 
-      {(scanState === 'unauthorized' || scanState === 'not_found') && (
+      {(scanState === 'unauthorized' || scanState === 'not_found' || scanState === 'wrong_event') && (
         <motion.div
           initial={{ scale: 0.92, y: 12 }}
           animate={{ scale: 1, y: 0 }}
@@ -602,12 +646,17 @@ function ScanOverlay({ scanState, scanResult, overlayBg, darkOverlayBg }) {
             <XCircle size={28} className="text-red-600 dark:text-red-400" />
           </div>
           <p className="m-0 text-[11px] font-bold uppercase tracking-widest text-red-600">
-            {scanState === 'unauthorized' ? 'Access Denied' : 'Not Found'}
+            {scanState === 'unauthorized'
+              ? 'Access Denied'
+              : scanState === 'wrong_event'
+              ? 'Wrong Event'
+              : 'Verification Error'}
           </p>
           <p className="m-0 text-xs font-semibold text-neutral-700 dark:text-neutral-300 text-center leading-relaxed">
-            {scanState === 'unauthorized'
-              ? 'Lacking clearance permissions.'
-              : 'Registration database record not found.'}
+            {scanResult?.message ||
+              (scanState === 'unauthorized'
+                ? 'Lacking attendance clearance permissions.'
+                : 'Registration record not found.')}
           </p>
           <p className="m-0 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mt-1">Resuming loop in 3s</p>
         </motion.div>

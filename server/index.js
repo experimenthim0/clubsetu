@@ -20,6 +20,7 @@ import pushRoutes from "./routes/push.js";
 import venueRoutes from "./routes/venues.js";
 import blackoutRoutes, { ensureBlackoutTable } from "./routes/blackouts.js";
 import scannerRoutes from "./routes/scanner.js";
+import { getPublicKeyInfo } from "./services/qrSigningService.js";
 import prisma from "./lib/prisma.js";
 import compression from "compression";
 
@@ -139,6 +140,16 @@ app.use("/api/export-center", exportCenterRoutes);
 app.use("/api/venues/blackouts", blackoutRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/scanner", scannerRoutes);
+
+// Public verification keys distribution for Android / offline scanners
+app.get(["/api/keys", "/api/keys/public"], (req, res) => {
+  try {
+    const keyInfo = getPublicKeyInfo();
+    return res.json({ keys: [keyInfo] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // Auto-cleanup for reunited items (runs every 8 hours)
 const cleanupReunitedItems = async () => {

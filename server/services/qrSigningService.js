@@ -177,9 +177,27 @@ export function getPublicKeyInfo() {
   if (!raw) throw new Error("QR_SIGNING_PUBLIC_KEY is not set");
   const pem = raw.replace(/\\n/g, "\n");
 
+  let rawPublicKey = null;
+  let rawPublicKeyHex = null;
+
+  try {
+    const keyObject = getPublicKey();
+    const der = keyObject.export({ type: "spki", format: "der" });
+    // Ed25519 SPKI DER: 12-byte header (30 2a 30 05 06 03 2b 65 70 03 21 00) + 32 bytes raw key = 44 bytes
+    if (der.length >= 44) {
+      const rawKeyBytes = der.subarray(der.length - 32);
+      rawPublicKey = rawKeyBytes.toString("base64");
+      rawPublicKeyHex = rawKeyBytes.toString("hex");
+    }
+  } catch (e) {
+    console.warn("Failed to extract raw public key bytes:", e);
+  }
+
   return {
     keyId: KEY_ID,
     publicKey: pem,
+    rawPublicKey,
+    rawPublicKeyHex,
     algorithm: "Ed25519",
   };
 }
