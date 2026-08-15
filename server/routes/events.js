@@ -122,6 +122,12 @@ const eventInclude = {
   reviewedBy: {
     select: { id: true, name: true },
   },
+  centralOrganizer: {
+    select: { id: true, name: true, email: true, profileImage: true },
+  },
+  participatingClubs: {
+    include: { club: { select: { id: true, clubName: true, clubLogo: true, slug: true } } },
+  },
   club: {
     select: { id: true, clubName: true, clubLogo: true, slug: true, category: true, socialLinks: true },
   },
@@ -152,6 +158,8 @@ const publicEventSelect = {
   requiredFields: true,
   createdById: true,
   clubId: true,
+  organizerType: true,
+  centralOrganizerId: true,
   registrationDeadline: true,
   reviewStatus: true,
   winners: true,
@@ -166,6 +174,12 @@ const publicEventSelect = {
   updatedAt: true,
   createdBy: {
     select: { id: true, name: true },
+  },
+  centralOrganizer: {
+    select: { id: true, name: true },
+  },
+  participatingClubs: {
+    include: { club: { select: { id: true, clubName: true, clubLogo: true, slug: true } } },
   },
   club: {
     select: {
@@ -841,8 +855,10 @@ router.get("/:id", async (req, res) => {
       const isAdmin = decoded?.role === "admin";
       const isAssignedFaculty =
         decoded?.role === "facultyCoordinator" && event.clubId === decoded.clubId;
+      const isCO =
+        decoded && event.organizerType === "CENTRAL" && event.centralOrganizerId === decoded.userId;
 
-      if (!isCreator && !isAdmin && !isAssignedFaculty) {
+      if (!isCreator && !isAdmin && !isAssignedFaculty && !isCO) {
         return res.status(403).json({ message: "This event is currently under review." });
       }
     }
@@ -1109,10 +1125,11 @@ router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), val
     if (!event) return res.status(404).json({ message: "Event not found" });
 
     const isCreator = event.createdById === req.user.userId;
+    const isCentralOrg = event.organizerType === "CENTRAL" && event.centralOrganizerId === req.user.userId;
     const isClubOwner = (req.user.clubId && String(event.clubId) === String(req.user.clubId)) || (req.user.userId && String(event.clubId) === String(req.user.userId));
     const isAdminOrFaculty = req.user.role === "admin" || req.user.role === "facultyCoordinator";
 
-    if (!isCreator && !isClubOwner && !isAdminOrFaculty) {
+    if (!isCreator && !isCentralOrg && !isClubOwner && !isAdminOrFaculty) {
       return res.status(403).json({ message: "Unauthorized to update this event." });
     }
 

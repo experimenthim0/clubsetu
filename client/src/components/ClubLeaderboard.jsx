@@ -18,7 +18,6 @@ const ClubLeaderboard = () => {
         ]);
         setClubs(Array.isArray(clubsData) ? clubsData : []);
         setEvents(Array.isArray(eventsData) ? eventsData : []);
-        setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
       } catch (err) {
         console.error("Error fetching leaderboard data:", err);
       } finally {

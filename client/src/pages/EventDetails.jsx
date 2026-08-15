@@ -588,11 +588,16 @@ const EventDetails = () => {
     3: { badgeBg: 'bg-amber-600 text-white', icon: 'ri-award-fill', label: '3rd' },
   };
 
-  const clubCategory = event.club?.category || null;
-  const clubSlugOrId = event.club?.slug || event.club?._id || event.club?.id || event.createdBy?.slug || event.createdBy?._id || event.createdBy?.id;
-  const displayName = event.club?.clubName || event.createdBy?.clubName || '—';
+  const isCentralEvent = event.organizerType === 'CENTRAL' || !!event.centralOrganizerId || (!event.club && !event.clubId && (!!event.centralOrganizer || !!event.participatingClubs));
+  const clubCategory = isCentralEvent ? 'College-Wide' : (event.club?.category || null);
+  const clubSlugOrId = isCentralEvent ? null : (event.club?.slug || event.club?._id || event.club?.id || event.createdBy?.slug || event.createdBy?._id || event.createdBy?.id);
+  const displayName = isCentralEvent ? 'Office of DSW' : (event.club?.clubName || event.createdBy?.clubName || '—');
 
-  const btnConfig = isEnded
+  const isOpenEvent = event.registrationType === 'none';
+
+  const btnConfig = isOpenEvent
+    ? { label: 'Open Entry • No Registration Needed', cls: 'bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 dark:border-emerald-500 cursor-default', disabled: true }
+    : isEnded
     ? { label: showWinners ? 'View Results' : 'Event Ended', cls: showWinners ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-white border-neutral-300 dark:border-white hover:bg-neutral-300 dark:hover:bg-neutral-700 cursor-pointer' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700 opacity-80 cursor-not-allowed', disabled: !showWinners }
     : isLive
     ? { label: 'Event is Live', cls: 'bg-orange-600 text-white border-orange-600 cursor-not-allowed', disabled: true }
@@ -604,8 +609,8 @@ const EventDetails = () => {
     ? { label: 'Join Waitlist', cls: 'bg-yellow-400 text-black border-black hover:bg-yellow-300 cursor-pointer', disabled: false }
     : { label: entryFee > 0 ? `Pay ₹${entryFee} & Register` : 'Get Tickets', cls: 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white hover:bg-orange-600 hover:border-orange-600 hover:text-white cursor-pointer', disabled: false };
 
-  const isUpcoming = !isEnded && !isLive && !isDeadlinePassed ;
-  const showMobileCTA = isUpcoming && !alreadyRegistered;
+  const isUpcoming = !isEnded && !isLive && !isDeadlinePassed;
+  const showMobileCTA = isUpcoming && !alreadyRegistered && !isOpenEvent;
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -745,12 +750,23 @@ const EventDetails = () => {
       question: 'Who is organizing this event and can I cancel my ticket?',
       answer: (
         <span>
-          This event is organized by{' '}
-          <strong className="font-bold text-black dark:text-white">
-            {displayName}
-          </strong>.
-          {clubSlugOrId ? ' You can click the organizer name in the sidebar to visit their club page.' : ''}{' '}
-          If you need to cancel your registration, you can do so in the "My Events" section on CampusNode before the event begins.
+          {isCentralEvent ? (
+            <>
+              This event is organized centrally by the{' '}
+              <strong className="font-bold text-black dark:text-white">
+                Office of DSW (Dean Student Welfare)
+              </strong>.
+            </>
+          ) : (
+            <>
+              This event is organized by{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {displayName}
+              </strong>.
+              {clubSlugOrId ? ' You can click the organizer name in the sidebar to visit their club page.' : ''}{' '}
+            </>
+          )}
+          {!isOpenEvent ? ' If you need to cancel your registration, you can do so in the "My Events" section on CampusNode before the event begins.' : ''}
         </span>
       ),
     }
@@ -820,7 +836,7 @@ const EventDetails = () => {
                   </span>
                 )}
                 {!isLive && !isEnded && (
-                  <span className="inline-flex items-center gap-1.5 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                  <span className="inline-flex items-center gap-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
                     <i className="ri-time-line" /> Upcoming
                   </span>
                 )}
@@ -829,10 +845,21 @@ const EventDetails = () => {
 
             {/* ── Category & Status Badges ── */}
             <div className="flex items-center gap-2 flex-wrap mb-3">
-              {clubCategory && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[11px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
-                  {clubCategory}
-                </span>
+              {isCentralEvent ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[11px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
+                    <i className="ri-sparkling-line" /> College-Wide Event
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                    <i className="ri-building-2-line text-orange-600" /> Office of DSW
+                  </span>
+                </>
+              ) : (
+                clubCategory && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[11px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
+                    {clubCategory}
+                  </span>
+                )
               )}
               {entryFee === 0 && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/50 text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">
@@ -863,7 +890,12 @@ const EventDetails = () => {
                 <span className="truncate max-w-[160px]">{venue}</span>
               </span>
               <span className="w-1 h-1 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-              {clubSlugOrId ? (
+              {isCentralEvent ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <i className="ri-building-2-line text-orange-500" />
+                  <span className="truncate max-w-[140px]">Office of DSW</span>
+                </span>
+              ) : clubSlugOrId ? (
                 <Link to={`/club/${clubSlugOrId}`} className="inline-flex items-center gap-1.5 hover:text-orange-600 transition-colors">
                   <i className="ri-team-line text-orange-500" />
                   <span className="truncate max-w-[140px]">{displayName}</span>
@@ -893,7 +925,7 @@ const EventDetails = () => {
                   About this Event
                 </h2>
                 <div 
-                  className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-relaxed event-description ql-editor px-0 whitespace-pre-wrap [&_*]:!text-inherit [&_*]:!bg-transparent" 
+                  className="text-[15px] text-neutral-700 dark:text-neutral-300  leading-relaxed event-description ql-editor px-0 whitespace-pre-wrap [&_*]:!text-inherit [&_*]:!bg-transparent" 
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description, { ADD_ATTR: ['target'], FORBID_ATTR: ['style'] }) }}
                 />
               </div>
@@ -1221,77 +1253,113 @@ const EventDetails = () => {
               </div>
 
               {/* ── Organizer ── */}
-              <div className="px-1 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                <div className=" px-3 flex items-center gap-3 pb-4">
-                  {clubSlugOrId ? (
-                    <Link
-                      to={`/club/${clubSlugOrId}`}
-                      className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center shrink-0 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors overflow-hidden"
-                    >
-                      {event.club?.clubLogo ? (
-                        <img src={event.club.clubLogo} alt={displayName} className="w-9 h-9 rounded-full object-cover" />
-                      ) : (
-                        <i className="ri-team-line text-orange-600 text-sm" />
-                      )}
-                    </Link>
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center shrink-0">
-                      <i className="ri-team-line text-orange-600 text-sm" />
+              {isCentralEvent ? (
+                <div className="px-1 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                  <div className="px-3 flex items-center gap-3 pb-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center shrink-0 border border-orange-200 dark:border-orange-900/50">
+                      <i className="ri-building-2-line text-orange-600 text-lg" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Organized by</p>
+                      <p className="text-[14px] font-black text-black dark:text-white truncate">Office of DSW</p>
+                      <p className="text-[11px] font-medium text-orange-600 dark:text-orange-400">Dean Student Welfare</p>
+                    </div>
+                  </div>
+
+                  {event.participatingClubs?.length > 0 && (
+                    <div className="px-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+                        Participating Clubs
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {event.participatingClubs.map((pc) => (
+                          <Link
+                            key={pc.id}
+                            to={`/club/${pc.club?.slug || pc.club?.id}`}
+                            className="px-2.5 py-1 text-[11px] font-semibold bg-neutral-100 dark:bg-neutral-800 hover:bg-orange-50 dark:hover:bg-orange-950/40 text-neutral-700 dark:text-neutral-300 hover:text-orange-600 rounded-lg transition-colors"
+                          >
+                            {pc.club?.clubName}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Organized by</p>
+                </div>
+              ) : (
+                <div className="px-1 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                  <div className="px-3 flex items-center gap-3 pb-4">
                     {clubSlugOrId ? (
                       <Link
                         to={`/club/${clubSlugOrId}`}
-                        className="text-[13px] font-bold text-black dark:text-white hover:text-orange-600 transition-colors duration-200 truncate block hover:underline"
+                        className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center shrink-0 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors overflow-hidden"
                       >
-                        {displayName}
+                        {event.club?.clubLogo ? (
+                          <img src={event.club.clubLogo} alt={displayName} className="w-9 h-9 rounded-full object-cover" />
+                        ) : (
+                          <i className="ri-team-line text-orange-600 text-sm" />
+                        )}
                       </Link>
                     ) : (
-                      <p className="text-[13px] font-bold text-black dark:text-white truncate">{displayName}</p>
+                      <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-950/50 flex items-center justify-center shrink-0">
+                        <i className="ri-team-line text-orange-600 text-sm" />
+                      </div>
                     )}
-                  </div>
-                </div>
-              {/* ── Club Social Media / Contact Links ── */}
-              {event?.club?.socialLinks && event.club.socialLinks.length > 0 && (
-                <div className="px-6 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2.5">
-                    Connect with {displayName}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {event.club.socialLinks.map((link, i) => {
-                      const platform = link.platform?.toLowerCase() || "website";
-                      const iconProps = { className: "w-4 h-4" };
-
-                      const getIcon = () => {
-                        if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
-                        if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28} />;
-                        if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28} />;
-                        if (platform.includes("github")) return <GithubIcon {...iconProps} size={28} />;
-                        if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28} />;
-                        if (platform.includes("website")) return <EarthIcon {...iconProps} size={28} />;
-                        return <i className="ri-links-line text-sm" />;
-                      };
-
-                      const href = platform === "whatsapp" 
-                        ? `https://wa.me/${link.url.replace(/\s+/g, "")}` 
-                        : link.url;
-
-                      return (
-                        <a
-                          key={link._id || link.id || i}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-9 h-9 rounded-xl  flex items-center justify-center text-neutral-700 dark:text-neutral-300  hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
-                          title={link.platform}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">Organized by</p>
+                      {clubSlugOrId ? (
+                        <Link
+                          to={`/club/${clubSlugOrId}`}
+                          className="text-[13px] font-bold text-black dark:text-white hover:text-orange-600 transition-colors duration-200 truncate block hover:underline"
                         >
-                          {getIcon()}
-                        </a>
-                      );
-                    })}
+                          {displayName}
+                        </Link>
+                      ) : (
+                        <p className="text-[13px] font-bold text-black dark:text-white truncate">{displayName}</p>
+                      )}
+                    </div>
                   </div>
+
+                  {/* ── Club Social Media / Contact Links ── */}
+                  {event?.club?.socialLinks && event.club.socialLinks.length > 0 && (
+                    <div className="px-6 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2.5">
+                        Connect with {displayName}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {event.club.socialLinks.map((link, i) => {
+                          const platform = link.platform?.toLowerCase() || "website";
+                          const iconProps = { className: "w-4 h-4" };
+
+                          const getIcon = () => {
+                            if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
+                            if (platform.includes("linkedin")) return <LinkedinIcon {...iconProps} size={28} />;
+                            if (platform.includes("twitter") || platform.includes("x")) return <TwitterIcon {...iconProps} size={28} />;
+                            if (platform.includes("github")) return <GithubIcon {...iconProps} size={28} />;
+                            if (platform.includes("whatsapp")) return <MessageCircleIcon {...iconProps} size={28} />;
+                            if (platform.includes("website")) return <EarthIcon {...iconProps} size={28} />;
+                            return <i className="ri-links-line text-sm" />;
+                          };
+
+                          const href = platform === "whatsapp" 
+                            ? `https://wa.me/${link.url.replace(/\s+/g, "")}` 
+                            : link.url;
+
+                          return (
+                            <a
+                              key={link._id || link.id || i}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-xl flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
+                              title={link.platform}
+                            >
+                              {getIcon()}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1752,7 +1820,6 @@ const EventDetails = () => {
         isRegistering={isRegistering}
         showNotification={showNotification}
       />
-    </div>
     </div>
   );
 };

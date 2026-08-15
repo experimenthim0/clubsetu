@@ -1,18 +1,20 @@
 /**
  * CampusNode Scanner API Routes
  *
- * Endpoints for the Android scanner application.
- * Supports both online and offline scanning workflows.
+ * Endpoints for the Android scanner application and web scanner interface.
+ * Supports both online and offline scanning workflows with strict event-scoped authorization.
  */
 
 import express from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { generateToken, verifyToken } from "../middleware/auth.js";
-import { validate, objectIdSchema } from "../middleware/validate.js";
+import { validate } from "../middleware/validate.js";
 import prisma from "../lib/prisma.js";
 import { createObjectId } from "../utils/objectId.js";
 import { signTicket, verifyTicket, getPublicKeyInfo } from "../services/qrSigningService.js";
+import { verifyAttendancePermission, EVENT_STAFF_PERMISSIONS } from "../middleware/eventStaffAuth.js";
+import { createAuditLog, AUDIT_ACTIONS } from "../utils/auditLog.js";
 
 const router = express.Router();
 
@@ -33,7 +35,7 @@ router.post("/login", validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Try AdminRole first (faculty coordinator with club)
+    // Try AdminRole first (faculty coordinator with club or super admin)
     const admin = await prisma.adminRole.findUnique({
       where: { email },
       select: { id: true, email: true, password: true, role: true, name: true, coordinatedClubs: { select: { id: true, clubName: true } } },
@@ -67,14 +69,31 @@ router.post("/login", validate(loginSchema), async (req, res) => {
       });
     }
 
-    // Try StudentUser with ClubMembership
+    // Try StudentUser
     const student = await prisma.studentUser.findUnique({
       where: { email },
       select: {
-        id: true, email: true, password: true, name: true, isBlocked: true,
+        id: true,
+        email: true,
+        password: true,
+        name: true,
+        isBlocked: true,
+        accessLevel: true,
         memberships: {
           where: { role: { in: ["CLUB_HEAD", "COORDINATOR", "MEMBER"] } },
           include: { club: { select: { id: true, clubName: true } } },
+        },
+        eventStaffAssignments: {
+          where: {
+            status: "ACTIVE",
+            permissions: { has: EVENT_STAFF_PERMISSIONS.ATTENDANCE_OPERATOR },
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          include: {
+            event: {
+              select: { id: true, title: true, slug: true, venue: true, startTime: true, endTime: true },
+            },
+          },
         },
       },
     });
@@ -85,16 +104,47 @@ router.post("/login", validate(loginSchema), async (req, res) => {
     const match = await bcrypt.compare(password, student.password);
     if (!match) return res.status(401).json({ message: "Invalid credentials." });
 
-    // Must have at least one club membership with attendance permission
+    // 1. Check if user is Central Organizer
+    if (student.accessLevel === "central_organizer") {
+      const token = generateToken(student, "central_organizer", "student", null);
+      return res.json({
+        token,
+        user: {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          role: "central_organizer",
+          userType: "student",
+          accessLevel: "central_organizer",
+          clubs: [],
+          staffEvents: student.eventStaffAssignments.map((s) => ({
+            id: s.event.id,
+            title: s.event.title,
+            permissions: s.permissions,
+          })),
+        },
+      });
+    }
+
+    // 2. Check Club Memberships with attendance permission
     const scannerMemberships = student.memberships.filter(
       (m) => m.canTakeAttendance || ["CLUB_HEAD", "COORDINATOR"].includes(m.role),
     );
-    if (scannerMemberships.length === 0) {
-      return res.status(403).json({ message: "Scanner access requires club membership with attendance permission." });
+
+    // 3. Check EventStaff assignments with ATTENDANCE_OPERATOR
+    const activeStaffAssignments = student.eventStaffAssignments;
+
+    if (scannerMemberships.length === 0 && activeStaffAssignments.length === 0) {
+      return res.status(403).json({
+        message: "Scanner access requires club membership or active event staff assignment with attendance permission.",
+      });
     }
 
     const primaryMembership = scannerMemberships.find((m) => ["CLUB_HEAD", "COORDINATOR"].includes(m.role)) || scannerMemberships[0];
-    const token = generateToken(student, "club", "student", primaryMembership.clubId);
+    const role = primaryMembership ? "club" : "student";
+    const primaryClubId = primaryMembership?.clubId || null;
+
+    const token = generateToken(student, role, "student", primaryClubId);
 
     return res.json({
       token,
@@ -102,7 +152,7 @@ router.post("/login", validate(loginSchema), async (req, res) => {
         id: student.id,
         name: student.name,
         email: student.email,
-        role: primaryMembership.role,
+        role: primaryMembership ? primaryMembership.role : "EVENT_STAFF",
         userType: "student",
         clubs: scannerMemberships.map((m) => ({
           id: m.club.id,
@@ -110,6 +160,14 @@ router.post("/login", validate(loginSchema), async (req, res) => {
           membershipId: m.id,
           role: m.role,
           canTakeAttendance: m.canTakeAttendance,
+        })),
+        staffEvents: activeStaffAssignments.map((s) => ({
+          id: s.event.id,
+          title: s.event.title,
+          venue: s.event.venue,
+          startTime: s.event.startTime,
+          endTime: s.event.endTime,
+          permissions: s.permissions,
         })),
       },
     });
@@ -126,34 +184,93 @@ router.get("/events", verifyToken, async (req, res) => {
   try {
     const { userId, role, clubId, userType } = req.user;
 
-    let clubIds = [];
-
+    // Admin can scan all published events
     if (role === "admin") {
-      // Admin can scan any event — get all clubs
-      const clubs = await prisma.club.findMany({ select: { id: true } });
-      clubIds = clubs.map((c) => c.id);
-    } else if (userType === "admin" && clubId) {
-      // Faculty coordinator
-      clubIds = [clubId];
-    } else {
-      // Student with membership
-      const memberships = await prisma.clubMembership.findMany({
-        where: {
-          studentId: userId,
-          OR: [{ canTakeAttendance: true }, { role: { in: ["CLUB_HEAD", "COORDINATOR"] } }],
+      const events = await prisma.event.findMany({
+        where: { reviewStatus: "PUBLISHED" },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          venue: true,
+          startTime: true,
+          endTime: true,
+          clubId: true,
+          organizerType: true,
+          registeredCount: true,
+          imageUrl: true,
+          club: { select: { id: true, clubName: true } },
+          _count: { select: { participations: { where: { status: "ATTENDED" } } } },
         },
-        select: { clubId: true },
+        orderBy: { startTime: "desc" },
       });
-      clubIds = memberships.map((m) => m.clubId);
+
+      return res.json({
+        events: events.map((e) => ({
+          id: e.id,
+          title: e.title,
+          slug: e.slug,
+          venue: e.venue,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          clubId: e.clubId,
+          clubName: e.club?.clubName || (e.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
+          organizerType: e.organizerType,
+          registeredCount: e.registeredCount,
+          attendedCount: e._count.participations,
+          imageUrl: e.imageUrl,
+        })),
+      });
     }
 
-    if (clubIds.length === 0) {
+    const eventQueryOrs = [];
+
+    // Faculty coordinator
+    if (userType === "admin" && clubId) {
+      eventQueryOrs.push({ clubId });
+    }
+
+    // Student club memberships with attendance rights
+    const memberships = await prisma.clubMembership.findMany({
+      where: {
+        studentId: userId,
+        OR: [{ canTakeAttendance: true }, { role: { in: ["CLUB_HEAD", "COORDINATOR"] } }],
+      },
+      select: { clubId: true },
+    });
+    if (memberships.length > 0) {
+      eventQueryOrs.push({ clubId: { in: memberships.map((m) => m.clubId) } });
+    }
+
+    // Central Organizer: can scan their own central events
+    if (role === "central_organizer") {
+      eventQueryOrs.push({
+        organizerType: "CENTRAL",
+        centralOrganizerId: userId,
+      });
+    }
+
+    // EventStaff with ATTENDANCE_OPERATOR
+    const staffAssignments = await prisma.eventStaff.findMany({
+      where: {
+        userId,
+        status: "ACTIVE",
+        permissions: { has: EVENT_STAFF_PERMISSIONS.ATTENDANCE_OPERATOR },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      select: { eventId: true },
+    });
+    if (staffAssignments.length > 0) {
+      eventQueryOrs.push({ id: { in: staffAssignments.map((s) => s.eventId) } });
+    }
+
+    if (eventQueryOrs.length === 0) {
       return res.json({ events: [] });
     }
 
     const events = await prisma.event.findMany({
       where: {
-        clubId: { in: clubIds },
+        OR: eventQueryOrs,
         reviewStatus: "PUBLISHED",
       },
       select: {
@@ -164,6 +281,7 @@ router.get("/events", verifyToken, async (req, res) => {
         startTime: true,
         endTime: true,
         clubId: true,
+        organizerType: true,
         registeredCount: true,
         imageUrl: true,
         club: { select: { id: true, clubName: true } },
@@ -181,7 +299,8 @@ router.get("/events", verifyToken, async (req, res) => {
         startTime: e.startTime,
         endTime: e.endTime,
         clubId: e.clubId,
-        clubName: e.club.clubName,
+        clubName: e.club?.clubName || (e.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
+        organizerType: e.organizerType,
         registeredCount: e.registeredCount,
         attendedCount: e._count.participations,
         imageUrl: e.imageUrl,
@@ -199,7 +318,7 @@ router.get("/events", verifyToken, async (req, res) => {
 router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { userId, role, clubId, userType } = req.user;
+    const { userId } = req.user;
 
     // Find event
     const event = await prisma.event.findUnique({
@@ -212,6 +331,8 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
         startTime: true,
         endTime: true,
         clubId: true,
+        organizerType: true,
+        centralOrganizerId: true,
         registeredCount: true,
         club: { select: { id: true, clubName: true } },
       },
@@ -219,26 +340,10 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
 
     if (!event) return res.status(404).json({ message: "Event not found." });
 
-    // Authorization: must belong to the club
-    if (role !== "admin") {
-      if (userType === "admin") {
-        // Faculty coordinator
-        if (event.clubId !== clubId) {
-          return res.status(403).json({ message: "Unauthorized for this event." });
-        }
-      } else {
-        // Student membership
-        const membership = await prisma.clubMembership.findFirst({
-          where: {
-            studentId: userId,
-            clubId: event.clubId,
-            OR: [{ canTakeAttendance: true }, { role: { in: ["CLUB_HEAD", "COORDINATOR"] } }],
-          },
-        });
-        if (!membership) {
-          return res.status(403).json({ message: "Unauthorized for this event." });
-        }
-      }
+    // Enforce server-side authorization check (User + Event + ATTENDANCE_OPERATOR / Club membership / Admin)
+    const isAuthorized = await verifyAttendancePermission(userId, eventId, event, req.user);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Unauthorized to access attendance package for this event." });
     }
 
     // Get all registered participations
@@ -278,7 +383,8 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
         startTime: event.startTime,
         endTime: event.endTime,
         clubId: event.clubId,
-        clubName: event.club.clubName,
+        clubName: event.club?.clubName || (event.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
+        organizerType: event.organizerType,
         registeredCount: event.registeredCount,
       },
       tickets: participations.map((p) => ({
@@ -318,11 +424,20 @@ const sessionSchema = z.object({
 router.post("/sessions", verifyToken, validate(sessionSchema), async (req, res) => {
   try {
     const { eventId, deviceId, mode } = req.body;
-    const { userId, clubId } = req.user;
+    const { userId } = req.user;
 
     // Verify event exists
-    const event = await prisma.event.findUnique({ where: { id: eventId }, select: { id: true, clubId: true } });
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, clubId: true, organizerType: true, centralOrganizerId: true },
+    });
     if (!event) return res.status(404).json({ message: "Event not found." });
+
+    // Validate user is authorized for attendance on this event
+    const isAuthorized = await verifyAttendancePermission(userId, eventId, event, req.user);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Unauthorized to create a scanner session for this event." });
+    }
 
     // For OFFLINE mode, check no other active offline session exists
     if (mode === "OFFLINE") {
@@ -340,11 +455,11 @@ router.post("/sessions", verifyToken, validate(sessionSchema), async (req, res) 
     // Upsert session (same device + event + mode = update)
     const session = await prisma.scannerSession.upsert({
       where: { eventId_deviceId_mode: { eventId, deviceId, mode } },
-      update: { status: "ACTIVE", startedAt: new Date(), endedAt: null },
+      update: { status: "ACTIVE", startedAt: new Date(), endedAt: null, userId },
       create: {
         id: createObjectId(),
         eventId,
-        clubId: event.clubId,
+        clubId: event.clubId || null,
         userId,
         deviceId,
         mode,
@@ -364,6 +479,13 @@ router.post("/sessions", verifyToken, validate(sessionSchema), async (req, res) 
 router.post("/sessions/:sessionId/end", verifyToken, async (req, res) => {
   try {
     const { sessionId } = req.params;
+
+    const existingSession = await prisma.scannerSession.findUnique({ where: { id: sessionId } });
+    if (!existingSession) return res.status(404).json({ message: "Session not found." });
+
+    if (req.user.role !== "admin" && existingSession.userId !== req.user.userId) {
+      return res.status(403).json({ message: "Cannot end another user's session." });
+    }
 
     const session = await prisma.scannerSession.update({
       where: { id: sessionId },
@@ -394,6 +516,27 @@ const checkInSchema = z.object({
 router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async (req, res) => {
   try {
     const { eventId, qrPayload, scannerSessionId, gate } = req.body;
+    const { userId } = req.user;
+
+    // Verify event exists & check authorization
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, clubId: true, organizerType: true, centralOrganizerId: true, title: true },
+    });
+    if (!event) return res.status(404).json({ message: "Event not found." });
+
+    const isAuthorized = await verifyAttendancePermission(userId, eventId, event, req.user);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Not authorized to mark attendance for this event." });
+    }
+
+    // If scannerSessionId provided, verify it belongs to this user and event
+    if (scannerSessionId) {
+      const session = await prisma.scannerSession.findUnique({ where: { id: scannerSessionId } });
+      if (!session || session.eventId !== eventId || (req.user.role !== "admin" && session.userId !== userId)) {
+        return res.status(403).json({ message: "Invalid scanner session." });
+      }
+    }
 
     // 1. Verify QR signature
     const verification = verifyTicket(qrPayload);
@@ -466,9 +609,19 @@ router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async 
       }),
       prisma.participation.update({
         where: { id: participation.id },
-        data: { status: "ATTENDED", attendedAt: new Date(), markedByMemberId: req.user.userId },
+        data: { status: "ATTENDED", attendedAt: new Date(), markedByMemberId: userId },
       }),
     ]);
+
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ATTENDANCE_MARKED,
+      actorId: userId,
+      actorEmail: req.user.email,
+      targetId: participation.id,
+      eventId,
+      source: "ONLINE",
+      metadata: { gate: gate || null, participantName: participation.student?.name || participation.externalName },
+    });
 
     return res.json({
       status: "VALID",
@@ -481,7 +634,6 @@ router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async 
       attendedAt: new Date(),
     });
   } catch (err) {
-    // Handle unique constraint violation (race condition)
     if (err.code === "P2002") {
       return res.status(409).json({
         status: "ALREADY_ATTENDED",
@@ -516,6 +668,34 @@ const syncSchema = z.object({
 router.post("/attendance/sync", verifyToken, validate(syncSchema), async (req, res) => {
   try {
     const { eventId, scannerSessionId, records } = req.body;
+    const { userId } = req.user;
+
+    // 1. Verify Event exists
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, clubId: true, organizerType: true, centralOrganizerId: true },
+    });
+    if (!event) return res.status(404).json({ message: "Event not found." });
+
+    // 2. Validate Scanner Session: must belong to authenticated user and match event
+    const session = await prisma.scannerSession.findUnique({ where: { id: scannerSessionId } });
+    if (!session) {
+      return res.status(403).json({ message: "Scanner session not found." });
+    }
+    if (session.eventId !== eventId) {
+      return res.status(403).json({ message: "Scanner session does not match the event." });
+    }
+    if (req.user.role !== "admin" && session.userId !== userId) {
+      return res.status(403).json({ message: "Scanner session does not belong to the authenticated user." });
+    }
+
+    // 3. Re-validate authorization at sync time (Mandatory security: if permission revoked while offline, reject sync!)
+    const isAuthorized = await verifyAttendancePermission(userId, eventId, event, req.user);
+    if (!isAuthorized) {
+      return res.status(403).json({
+        message: "Attendance operator access was revoked or expired. Offline records cannot be synchronized.",
+      });
+    }
 
     const results = [];
 
@@ -549,7 +729,7 @@ router.post("/attendance/sync", verifyToken, validate(syncSchema), async (req, r
           continue;
         }
 
-        // Verify participation exists
+        // Verify participation exists and belongs to this event
         const participation = await prisma.participation.findUnique({
           where: { id: record.participationId },
         });
@@ -589,7 +769,7 @@ router.post("/attendance/sync", verifyToken, validate(syncSchema), async (req, r
           }),
           prisma.participation.update({
             where: { id: record.participationId },
-            data: { status: "ATTENDED", attendedAt: new Date(record.scannedAt) },
+            data: { status: "ATTENDED", attendedAt: new Date(record.scannedAt), markedByMemberId: userId },
           }),
         ]);
 
@@ -615,6 +795,19 @@ router.post("/attendance/sync", verifyToken, validate(syncSchema), async (req, r
       }
     }
 
+    await createAuditLog({
+      action: AUDIT_ACTIONS.ATTENDANCE_SYNC,
+      actorId: userId,
+      actorEmail: req.user.email,
+      eventId,
+      source: "OFFLINE",
+      metadata: {
+        totalRecords: records.length,
+        acceptedCount: results.filter((r) => r.status === "ACCEPTED").length,
+        scannerSessionId,
+      },
+    });
+
     return res.json({
       eventId,
       syncedAt: new Date().toISOString(),
@@ -639,9 +832,14 @@ router.get("/events/:eventId/sync-state", verifyToken, async (req, res) => {
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      select: { id: true, registeredCount: true },
+      select: { id: true, registeredCount: true, clubId: true, organizerType: true, centralOrganizerId: true },
     });
     if (!event) return res.status(404).json({ message: "Event not found." });
+
+    const isAuthorized = await verifyAttendancePermission(req.user.userId, eventId, event, req.user);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Unauthorized for this event." });
+    }
 
     const attendedCount = await prisma.attendanceRecord.count({ where: { eventId } });
     const attendedIds = await prisma.attendanceRecord.findMany({
@@ -675,3 +873,4 @@ router.get(["/keys/public", "/keys"], async (req, res) => {
 });
 
 export default router;
+

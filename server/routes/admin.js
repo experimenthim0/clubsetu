@@ -316,11 +316,40 @@ router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDI
 router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), async (req, res) => {
   try {
     const { clubName, facultyName, facultyEmail, clubEmail } = req.body;
+
+    if (!clubName || !facultyName || !facultyEmail || !clubEmail) {
+      return res.status(400).json({ message: "All fields are required: clubName, facultyName, facultyEmail, clubEmail" });
+    }
+
+    const existingClub = await prisma.club.findUnique({ where: { clubName } });
+    if (existingClub) {
+      return res.status(400).json({ message: `A club named "${clubName}" already exists.` });
+    }
+
+    const existingStudent = await prisma.studentUser.findUnique({ where: { email: clubEmail } });
+    if (existingStudent) {
+      return res.status(400).json({ message: `A user account with email "${clubEmail}" already exists.` });
+    }
+
     const slug = await slugifyUnique(clubName, 'club', 'slug');
     const passwordHash = await bcrypt.hash(`${slug}@him0148`, 10);
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create the Club record
+      // 1. Check if an AdminRole user already exists with facultyEmail, or create one
+      let facultyUser = await tx.adminRole.findUnique({ where: { email: facultyEmail } });
+      if (!facultyUser) {
+        facultyUser = await tx.adminRole.create({
+          data: {
+            id: createObjectId(),
+            name: facultyName,
+            email: facultyEmail,
+            password: passwordHash,
+            role: "facultyCoordinator",
+          },
+        });
+      }
+
+      // 2. Create the Club record
       const club = await tx.club.create({
         data: {
           id: createObjectId(),
@@ -329,17 +358,7 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
           facultyName,
           facultyEmail,
           clubEmail,
-        },
-      });
-
-      // 2. Create AdminRole for the faculty coordinator
-      const facultyUser = await tx.adminRole.create({
-        data: {
-          id: createObjectId(),
-          name: facultyName,
-          email: facultyEmail,
-          password: passwordHash,
-          role: "facultyCoordinator",
+          facultyCoordinatorId: facultyUser.id,
         },
       });
 
@@ -365,13 +384,7 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
         },
       });
 
-      // 5. Update Club with FK references
-      return tx.club.update({
-        where: { id: club.id },
-        data: {
-          facultyCoordinatorId: facultyUser.id,
-        },
-      });
+      return club;
     });
 
     res.status(201).json({
@@ -379,6 +392,10 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
       club: { ...result, _id: result.id },
     });
   } catch (error) {
+    if (error.code === 'P2002') {
+      const target = error.meta?.target;
+      return res.status(400).json({ message: `A record with this ${Array.isArray(target) ? target.join(', ') : 'value'} already exists.` });
+    }
     res.status(500).json({ message: error.message || "Failed to create club" });
   }
 });
@@ -530,6 +547,155 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
     });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch manual payments overview", error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Central Organizer Management (Super Admin only)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { createAuditLog, AUDIT_ACTIONS } from "../utils/auditLog.js";
+
+// GET /admin/central-organizer — View current Central Organizer
+router.get("/central-organizer", verifyToken, allowRoles("admin"), async (req, res) => {
+  try {
+    const co = await prisma.studentUser.findFirst({
+      where: { accessLevel: "central_organizer" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profileImage: true,
+        branch: true,
+        year: true,
+        program: true,
+      },
+    });
+
+    res.json({ centralOrganizer: co || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /admin/central-organizer — Assign Central Organizer role
+// The partial unique index guarantees only ONE user can have accessLevel = "central_organizer"
+// Concurrent requests both trying to set it → one fails with P2002
+router.post("/central-organizer", verifyToken, allowRoles("admin"), async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) return res.status(400).json({ message: "studentId is required." });
+
+    // Verify target is an existing, unblocked StudentUser
+    const student = await prisma.studentUser.findUnique({
+      where: { id: studentId },
+      select: { id: true, name: true, email: true, isBlocked: true, accessLevel: true },
+    });
+
+    if (!student) return res.status(404).json({ message: "Student not found." });
+    if (student.isBlocked) return res.status(403).json({ message: "Cannot assign CO role to a blocked student." });
+    if (student.accessLevel === "central_organizer") {
+      return res.status(409).json({ message: "This student is already the Central Organizer." });
+    }
+
+    // Attempt to set accessLevel — partial unique index enforces single-CO constraint
+    try {
+      await prisma.studentUser.update({
+        where: { id: studentId },
+        data: { accessLevel: "central_organizer" },
+      });
+    } catch (updateErr) {
+      if (updateErr.code === "P2002") {
+        return res.status(409).json({
+          message: "A Central Organizer already exists. Revoke the current one first.",
+        });
+      }
+      throw updateErr;
+    }
+
+    await createAuditLog({
+      action: AUDIT_ACTIONS.CENTRAL_ORGANIZER_ASSIGNED,
+      actorId: req.user.userId,
+      actorEmail: req.user.email,
+      targetId: studentId,
+      metadata: { studentEmail: student.email, studentName: student.name },
+    });
+
+    res.status(201).json({
+      message: "Central Organizer assigned successfully.",
+      centralOrganizer: { id: student.id, name: student.name, email: student.email },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /admin/central-organizer/:id — Revoke Central Organizer role
+router.delete("/central-organizer/:id", verifyToken, allowRoles("admin"), async (req, res) => {
+  try {
+    const student = await prisma.studentUser.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, email: true, accessLevel: true },
+    });
+
+    if (!student) return res.status(404).json({ message: "Student not found." });
+    if (student.accessLevel !== "central_organizer") {
+      return res.status(400).json({ message: "This student is not the Central Organizer." });
+    }
+
+    await prisma.studentUser.update({
+      where: { id: req.params.id },
+      data: { accessLevel: "normal" },
+    });
+
+    await createAuditLog({
+      action: AUDIT_ACTIONS.CENTRAL_ORGANIZER_REVOKED,
+      actorId: req.user.userId,
+      actorEmail: req.user.email,
+      targetId: req.params.id,
+      metadata: { studentEmail: student.email },
+    });
+
+    res.json({ message: "Central Organizer role revoked." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /admin/students/search — Search students to assign as Central Organizer
+router.get("/students/search", verifyToken, allowRoles("admin"), async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim().length < 2) {
+      return res.json({ students: [] });
+    }
+
+    const query = q.trim();
+    const students = await prisma.studentUser.findMany({
+      where: {
+        isBlocked: false,
+        OR: [
+          { email: { contains: query, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
+          { rollNo: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        rollNo: true,
+        branch: true,
+        year: true,
+        program: true,
+        accessLevel: true,
+      },
+      take: 10,
+    });
+
+    res.json({ students });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

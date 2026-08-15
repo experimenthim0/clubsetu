@@ -53,6 +53,9 @@ const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
 // const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const CentralOrganizerDashboard = lazy(() => import('./pages/CentralOrganizerDashboard'));
+const EventStaffDashboard = lazy(() => import('./pages/EventStaffDashboard'));
+const StaffAttendanceView = lazy(() => import('./pages/StaffAttendanceView'));
 // const BusTracker = lazy(() => import('./pages/BusTracker'));
 // const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
 // const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
@@ -195,6 +198,9 @@ function App() {
                    
                     <Route path="/lost-found" element={<LostAndFound />} />
                     <Route path="/lost-found/guide" element={<LostFoundGuide />} />
+                    <Route path="/central-organizer" element={<CentralOrganizerDashboard />} />
+                    <Route path="/event-staff" element={<EventStaffDashboard />} />
+                    <Route path="/event-staff/:eventId/attendance" element={<StaffAttendanceView />} />
                     {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
               
                     <Route path="*" element={<NotFound />} />

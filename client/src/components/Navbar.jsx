@@ -13,7 +13,7 @@ import { LogoutIcon } from "./ui/logout";
 import { CalendarCogIcon } from "./ui/calendar-cog";
 import { LayoutGridIcon } from "./ui/layout-grid";
 import LogInIcon from "./ui/login";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Shield } from "lucide-react";
 import SearchBar from "./SearchBar";
 import { ArrowRightIcon } from "./ui/arrow-right";
 import { usePwaInstall } from "../hooks/usePwaInstall";
@@ -442,19 +442,43 @@ const Navbar = () => {
                             </svg>
                           </button>
                         ) : (
-                          <Link
-                            to={
-                              role === "lostFoundAdmin"
-                                ? "/admin/lost-found"
-                                : "/profile"
-                            }
-                            onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                            role="menuitem"
-                          >
-                            <LayoutDashboard size={18} className="text-neutral-500 dark:text-neutral-400" />
-                            Dashboard
-                          </Link>
+                          <>
+                            <Link
+                              to={
+                                role === "lostFoundAdmin"
+                                  ? "/admin/lost-found"
+                                  : "/profile"
+                              }
+                              onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                              role="menuitem"
+                            >
+                              <LayoutDashboard size={18} className="text-neutral-500 dark:text-neutral-400" />
+                              Dashboard
+                            </Link>
+
+                            {(user?.accessLevel === "central_organizer" || role === "central_organizer") && (
+                              <Link
+                                to="/central-organizer"
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors"
+                                role="menuitem"
+                              >
+                                <Shield size={18} />
+                                Central Organizer
+                              </Link>
+                            )}
+
+                            <Link
+                              to="/event-staff"
+                              onClick={() => setDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                              role="menuitem"
+                            >
+                              <Shield size={18} className="text-neutral-500 dark:text-neutral-400" />
+                              Event Staff Portal
+                            </Link>
+                          </>
                         )}
                       </div>
 

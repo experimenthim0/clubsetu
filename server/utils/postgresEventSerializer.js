@@ -12,6 +12,9 @@ export function serializeEvent(event) {
     reviewedBy: event.reviewedBy
       ? { ...event.reviewedBy, _id: event.reviewedBy.id }
       : event.reviewedBy,
+    centralOrganizer: event.centralOrganizer
+      ? { ...event.centralOrganizer, _id: event.centralOrganizer.id }
+      : event.centralOrganizer,
     clubId: event.clubId ?? event.club?.id ?? null,
     club: event.club
       ? { ...event.club, _id: event.club.id }

@@ -50,6 +50,8 @@ export const PERMISSIONS = {
 
   AUDIT_VIEW: "audit.view",
   AUDIT_EXPORT: "audit.export",
+
+  EVENT_STAFF_MANAGE: "event_staff.manage",
 };
 
 /**
@@ -236,6 +238,37 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.AUDIT_VIEW,
     PERMISSIONS.AUDIT_EXPORT,
   ],
+
+  CENTRAL_ORGANIZER: [
+    PERMISSIONS.EVENT_VIEW,
+    PERMISSIONS.EVENT_CREATE,
+    PERMISSIONS.EVENT_UPDATE,
+    PERMISSIONS.EVENT_DELETE,
+    PERMISSIONS.EVENT_ATTENDANCE,
+    PERMISSIONS.EVENT_CERTIFICATE,
+    PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.NOTIFICATION_VIEW,
+    PERMISSIONS.NOTIFICATION_CREATE,
+    PERMISSIONS.PAYMENT_VIEW,
+    PERMISSIONS.EVENT_STAFF_MANAGE,
+    PERMISSIONS.CLUB_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
+  central_organizer: [
+    PERMISSIONS.EVENT_VIEW,
+    PERMISSIONS.EVENT_CREATE,
+    PERMISSIONS.EVENT_UPDATE,
+    PERMISSIONS.EVENT_DELETE,
+    PERMISSIONS.EVENT_ATTENDANCE,
+    PERMISSIONS.EVENT_CERTIFICATE,
+    PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.NOTIFICATION_VIEW,
+    PERMISSIONS.NOTIFICATION_CREATE,
+    PERMISSIONS.PAYMENT_VIEW,
+    PERMISSIONS.EVENT_STAFF_MANAGE,
+    PERMISSIONS.CLUB_VIEW,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
 };
 
 /**
@@ -290,6 +323,14 @@ export function hasPermission(user, permission, resource = null) {
     case PERMISSIONS.REGISTRATION_VIEW:
     case PERMISSIONS.PAYMENT_VERIFY:
     case PERMISSIONS.PAYOUT_REQUEST:
+    case PERMISSIONS.EVENT_STAFF_MANAGE:
+      // Central Organizer: must own the central event
+      if (user.role === "central_organizer" || user.role === "CENTRAL_ORGANIZER") {
+        if (!resource) return false; // Resource context required for CO
+        const eventCentralOrganizerId = resource.centralOrganizerId;
+        if (!eventCentralOrganizerId) return false; // Not a central event
+        return String(eventCentralOrganizerId) === String(user.userId);
+      }
       if (user.role === "facultyCoordinator" || user.role === "club") {
         if (!user.clubId || !targetClubId) return false;
         return String(user.clubId) === String(targetClubId);

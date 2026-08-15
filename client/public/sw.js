@@ -319,20 +319,34 @@ self.addEventListener('fetch', (event) => {
   // ── Strategy 5: Other same-origin assets — Stale-while-revalidate ─────
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.open(CACHE_SHELL).then(async (cache) => {
+      (async () => {
+        const cache = await caches.open(CACHE_SHELL);
         const cached = await cache.match(event.request);
 
-        const fetchPromise = fetch(event.request)
-          .then((response) => {
-            if (response && response.status === 200 && response.type === 'basic') {
-              cache.put(event.request, response.clone()).catch(() => {});
-            }
-            return response;
-          })
-          .catch(() => undefined);
+        if (cached) {
+          // Serve stale from cache, revalidate in background
+          fetch(event.request)
+            .then((response) => {
+              if (response && response.status === 200 && response.type === 'basic') {
+                cache.put(event.request, response.clone()).catch(() => {});
+              }
+            })
+            .catch(() => {});
+          return cached;
+        }
 
-        return cached || fetchPromise;
-      })
+        try {
+          const response = await fetch(event.request);
+          if (response && response.status === 200 && response.type === 'basic') {
+            cache.put(event.request, response.clone()).catch(() => {});
+          }
+          return response;
+        } catch (err) {
+          const fallback = await cache.match('/index.html');
+          if (fallback) return fallback;
+          return new Response('Network error or offline', { status: 503, statusText: 'Service Unavailable' });
+        }
+      })()
     );
     return;
   }

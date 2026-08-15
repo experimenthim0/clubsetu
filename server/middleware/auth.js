@@ -98,7 +98,7 @@ export const verifyToken = async (req, res, next) => {
 
     const student = await prisma.studentUser.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, isBlocked: true },
+      select: { id: true, email: true, isBlocked: true, accessLevel: true },
     });
     if (!student || student.isBlocked) {
       return res.status(401).json({ message: "Invalid or expired token." });
@@ -111,6 +111,20 @@ export const verifyToken = async (req, res, next) => {
         role: "external",
         userType: "external",
         clubId: null,
+      };
+      return next();
+    }
+
+    // Central Organizer: uses existing student account with elevated accessLevel
+    if (student.accessLevel === "central_organizer") {
+      const membership = await getPrimaryStudentMembership(student.id);
+      req.user = {
+        userId: student.id,
+        email: student.email,
+        role: "central_organizer",
+        userType: "student",
+        accessLevel: "central_organizer",
+        clubId: membership?.clubId ?? null,
       };
       return next();
     }

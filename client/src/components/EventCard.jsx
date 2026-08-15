@@ -168,12 +168,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </span>
                     )}
                     {!isLive && status === 'UPCOMING' && (
-                        <span className="inline-flex items-center bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-900/60 shadow-sm">
+                        <span className="inline-flex items-center border border-gray-300 bg-white dark:bg-gray-200 text-black dark:text-white text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
                             Upcoming
                         </span>
                     )}
                     {isEnded && (
-                        <span className="inline-flex items-center bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-350 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                        <span className="inline-flex items-center  bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-350 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-sm">
                             Ended
                         </span>
                     )}
@@ -200,7 +200,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </span>
                     </div>
                 )}
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-white leading-tight mb-2 line-clamp-2">{title}</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white tracking-wide mb-2 line-clamp-2">{title}</h3>
 
                 {/* Info row */}
                 {isEnded && showWinner ? (
@@ -288,7 +288,7 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         <div className="flex items-center gap-1.5 col-span-2 min-w-0">
                             <i className="ri-group-line text-neutral-400 dark:text-neutral-500 text-sm shrink-0" />
                             <span className="truncate font-medium text-neutral-700 dark:text-neutral-300">
-                                {isUnlimited ? 'Unlimited Seats' : seatsText}
+                                {event.registrationType === 'none' ? 'Open Entry • No Registration' : (isUnlimited ? 'Unlimited Seats' : seatsText)}
                             </span>
                         </div>
                     </div>
@@ -320,12 +320,14 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                             to={`/event/${slug || _id}`}
                             className={`flex-1 block text-center py-2 rounded-full text-xs font-bold  tracking-wider border transition-all cursor-pointer shadow-sm ${(isEnded || isLive)
                                     ? 'bg-neutral-800 dark:bg-neutral-900 text-white border-neutral-800 dark:border-neutral-800 hover:bg-orange-600 hover:border-orange-600 dark:hover:bg-orange-600 dark:hover:border-orange-600'
-                                    : isFull
-                                        ? 'bg-amber-400 text-neutral-900 border-amber-400 hover:bg-amber-350'
-                                        : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
+                                    : event.registrationType === 'none'
+                                        ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                                        : isFull
+                                            ? 'bg-amber-400 text-neutral-900 border-amber-400 hover:bg-amber-350'
+                                            : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
                                 }`}
                         >
-                            {(isEnded || isLive) ? 'View Event' : isFull ? 'Join Waitlist' : 'Register Now'}
+                            {(isEnded || isLive) ? 'View Event' : event.registrationType === 'none' ? 'Open Event' : isFull ? 'Join Waitlist' : 'Register Now'}
                         </Link>
                     )}
 

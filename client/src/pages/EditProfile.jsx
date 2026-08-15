@@ -131,10 +131,10 @@ const EditProfile = () => {
                 </div>
                 
                 {/* Read Only Academic & Core Fields (Immutability enforced) */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-neutral-50/60 p-4 border border-neutral-200 rounded-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-neutral-50/60 dark:bg-neutral-900 p-4 border border-neutral-200 rounded-lg">
                     <div>
                         <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Roll No</label>
-                        <p className="font-mono text-neutral-800 font-semibold text-xs truncate">{user.rollNo || 'N/A'}</p>
+                        <p className="font-mono text-neutral-800 dark:text-neutral-100 font-semibold text-xs truncate">{user.rollNo || 'N/A'}</p>
                     </div>
                     <div>
                         <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">Email</label>

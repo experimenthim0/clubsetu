@@ -202,21 +202,21 @@ const Profile = () => {
             <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-4">Academic & Account Attributes</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {user.rollNo && (
-                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                <div className="bg-neutral-50/70 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700 rounded-xl p-4">
                   <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Roll No</p>
-                  <p className="text-sm font-bold text-neutral-900 font-mono">{user.rollNo}</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 font-mono">{user.rollNo}</p>
                 </div>
               )}
               {user.branch && (
-                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                <div className="bg-neutral-50/70 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700 rounded-xl p-4">
                   <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Branch</p>
-                  <p className="text-sm font-bold text-neutral-900">{user.branch}</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{user.branch}</p>
                 </div>
               )}
               {user.year && (
-                <div className="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-4">
+                <div className="bg-neutral-50/70 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700 rounded-xl p-4">
                   <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Academic Year</p>
-                  <p className="text-sm font-bold text-neutral-900">{user.year}</p>
+                  <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{user.year}</p>
                 </div>
               )}
             </div>

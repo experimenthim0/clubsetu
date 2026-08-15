@@ -20,6 +20,8 @@ import pushRoutes from "./routes/push.js";
 import venueRoutes from "./routes/venues.js";
 import blackoutRoutes, { ensureBlackoutTable } from "./routes/blackouts.js";
 import scannerRoutes from "./routes/scanner.js";
+import centralOrganizerRoutes from "./routes/centralOrganizer.js";
+import eventStaffRoutes from "./routes/eventStaff.js";
 import { getPublicKeyInfo } from "./services/qrSigningService.js";
 import prisma from "./lib/prisma.js";
 import compression from "compression";
@@ -140,6 +142,8 @@ app.use("/api/export-center", exportCenterRoutes);
 app.use("/api/venues/blackouts", blackoutRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/scanner", scannerRoutes);
+app.use("/api/central-organizer", centralOrganizerRoutes);
+app.use("/api/event-staff", eventStaffRoutes);
 
 // Public verification keys distribution for Android / offline scanners
 app.get(["/api/keys", "/api/keys/public"], (req, res) => {

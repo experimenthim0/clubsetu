@@ -4,6 +4,8 @@ import { verifyToken } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
 import { verifyTicket } from '../services/qrSigningService.js';
 import { createObjectId } from '../utils/objectId.js';
+import { verifyAttendancePermission } from '../middleware/eventStaffAuth.js';
+import { createAuditLog, AUDIT_ACTIONS } from '../utils/auditLog.js';
 
 const router = express.Router();
 
@@ -77,38 +79,14 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
       });
     }
 
-    // Step 2: Check caller has permission (Admin, Faculty Coordinator of the club, or Club Manager)
-    const { userId, role: userRole } = req.user;
-    const targetClubId = participation.event.clubId;
-
-    let isAuthorized = false;
-    let scannerId = userId;
-
-    if (userRole === 'admin') {
-      isAuthorized = true;
-    } else if (userRole === 'facultyCoordinator') {
-      const club = await prisma.club.findFirst({
-        where: { id: targetClubId, facultyCoordinatorId: userId },
-      });
-      if (club) isAuthorized = true;
-    } else {
-      // Check student membership
-      const membership = await prisma.clubMembership.findFirst({
-        where: { clubId: targetClubId, studentId: userId },
-      });
-
-      if (membership) {
-        if (membership.canTakeAttendance || ['CLUB_HEAD', 'COORDINATOR'].includes(membership.role)) {
-          isAuthorized = true;
-          scannerId = membership.id;
-        }
-      }
-    }
+    // Step 2: Check caller has permission (Admin, Faculty Coordinator, Club Manager, Central Organizer, or Event Staff with ATTENDANCE_OPERATOR)
+    const { userId } = req.user;
+    const isAuthorized = await verifyAttendancePermission(userId, participation.eventId, participation.event, req.user);
 
     if (!isAuthorized) {
       return res.status(403).json({
         status: 'UNAUTHORIZED',
-        message: "Unauthorized: You do not have attendance scanner permissions for this club's events.",
+        message: 'Unauthorized: You do not have attendance operator permissions for this event.',
       });
     }
 

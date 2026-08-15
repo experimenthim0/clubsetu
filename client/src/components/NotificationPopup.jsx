@@ -49,7 +49,7 @@ const NotificationPopup = ({ message, type = 'info', onClose, duration = 3000 })
   const theme = getTheme();
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] max-w-sm w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-2xl overflow-hidden transition-all duration-300 animate-slide-in-right">
+    <div className="fixed top-20 sm:top-auto sm:bottom-5 right-4 sm:right-5 z-[9999] max-w-[calc(100vw-2rem)] sm:max-w-sm w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-2xl overflow-hidden shadow-lg dark:shadow-2xl transition-all duration-300 animate-slide-in-right">
       <div className="p-2 flex items-center gap-3 justify-center">
         {/* Modern Icon instead of harsh text badge */}
         <div className="flex-shrink-0 mt-0.5">

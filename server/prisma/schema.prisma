@@ -62,6 +62,7 @@ model StudentUser {
   lastLostFoundPostDate   DateTime?
   memberships             ClubMembership[]
   createdEvents           Event[]          @relation("EventCreatedBy")
+  centralOrganizerEvents  Event[]          @relation("CentralOrganizerEvents")
   sentNotifications       Notification[]   @relation("NotificationSenderStudent")
   receivedNotifications   Notification[]   @relation("NotificationRecipientStudent")
   participations          Participation[]
@@ -70,6 +71,8 @@ model StudentUser {
   lostFoundReportsAgainst LostFoundReport[] @relation("ReportLiar")
   ledTeams                Team[]            @relation("TeamLeader")
   teamMemberships         TeamMember[]
+  eventStaffAssignments   EventStaff[]     @relation("EventStaffUser")
+  eventStaffInvitations   EventStaff[]     @relation("EventStaffInviter")
 }
 
 model Club {
@@ -98,6 +101,7 @@ model Club {
   events               Event[]
   media                Media[]
   sponsors             Sponsor[]
+  participatingEvents  EventClub[]
 }
 
 model ClubSocialLink {
@@ -145,7 +149,9 @@ model Event {
   requiredFields       String[]        @default([])
   customFields         Json?
   createdById          String          @db.VarChar(24)
-  clubId               String          @db.VarChar(24)
+  clubId               String?         @db.VarChar(24)
+  organizerType        EventOrganizerType @default(CLUB)
+  centralOrganizerId   String?         @db.VarChar(24)
   registrationDeadline DateTime?
   reviewStatus         ReviewStatus    @default(PENDING)
   reviewComment        String?
@@ -166,7 +172,8 @@ model Event {
   registrationType     String          @default("individual")
   minTeamSize          Int             @default(1)
   maxTeamSize          Int             @default(1)
-  club                 Club            @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  club                 Club?           @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  centralOrganizer     StudentUser?    @relation("CentralOrganizerEvents", fields: [centralOrganizerId], references: [id])
   createdBy            StudentUser     @relation("EventCreatedBy", fields: [createdById], references: [id])
   reviewedBy           AdminRole?      @relation("EventReviewedBy", fields: [reviewedById], references: [id])
   media                Media[]
@@ -175,16 +182,20 @@ model Event {
   teams                Team[]
   scannerSessions      ScannerSession[]
   attendanceRecords    AttendanceRecord[]
+  eventStaff           EventStaff[]
+  participatingClubs   EventClub[]
 
   @@index([clubId, startTime])
   @@index([reviewStatus, startTime])
   @@index([createdById, startTime])
+  @@index([centralOrganizerId])
+  @@index([organizerType])
 }
 
 model ScannerSession {
   id        String    @id @db.VarChar(24)
   eventId   String    @db.VarChar(24)
-  clubId    String    @db.VarChar(24)
+  clubId    String?   @db.VarChar(24)
   userId    String    @db.VarChar(24)
   deviceId  String
   mode      String    // "ONLINE" | "OFFLINE"
@@ -333,6 +344,19 @@ enum AdminRoleType {
   facultyCoordinator
   paymentAdmin
   lostFoundAdmin
+}
+
+enum EventOrganizerType {
+  CLUB
+  CENTRAL
+}
+
+enum EventStaffStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  REVOKED
+  EXPIRED
 }
 
 enum ClubMemberRole {
@@ -517,5 +541,55 @@ model VenueBlackout {
 
   @@index([venue, startTime])
   @@index([startTime, endTime])
+}
+
+model EventStaff {
+  id          String           @id @db.VarChar(24)
+  eventId     String           @db.VarChar(24)
+  userId      String           @db.VarChar(24)
+  invitedById String           @db.VarChar(24)
+  permissions String[]         @default([])
+  status      EventStaffStatus @default(PENDING)
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        StudentUser      @relation("EventStaffUser", fields: [userId], references: [id])
+  invitedBy   StudentUser      @relation("EventStaffInviter", fields: [invitedById], references: [id])
+
+  @@unique([eventId, userId])
+  @@index([userId, status])
+  @@index([eventId, status])
+}
+
+model EventClub {
+  id      String @id @db.VarChar(24)
+  eventId String @db.VarChar(24)
+  clubId  String @db.VarChar(24)
+
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  club    Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, clubId])
+  @@index([eventId])
+  @@index([clubId])
+}
+
+model AuditLog {
+  id         String   @id @db.VarChar(24)
+  action     String
+  actorId    String   @db.VarChar(24)
+  actorEmail String
+  targetId   String?  @db.VarChar(24)
+  eventId    String?  @db.VarChar(24)
+  metadata   Json?
+  source     String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([eventId, createdAt])
+  @@index([action, createdAt])
 }
 

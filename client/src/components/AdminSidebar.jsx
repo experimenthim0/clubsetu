@@ -280,6 +280,7 @@ const AdminSidebar = () => {
               items={[
                 { label: "Export Center", tab: "export-center" },
                 { label: "Venues", tab: "venues" },
+                { label: "Central Organizer", tab: "central-organizer" },
               ]}
             />
           </>
