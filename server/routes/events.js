@@ -856,7 +856,7 @@ router.get("/:id", async (req, res) => {
       const isAssignedFaculty =
         decoded?.role === "facultyCoordinator" && event.clubId === decoded.clubId;
       const isCO =
-        decoded && event.organizerType === "CENTRAL" && event.centralOrganizerId === decoded.userId;
+        decoded && event.organizerType === "CENTRAL" && (decoded.role === "central_organizer" || event.centralOrganizerId === decoded.userId);
 
       if (!isCreator && !isAdmin && !isAssignedFaculty && !isCO) {
         return res.status(403).json({ message: "This event is currently under review." });
@@ -1125,7 +1125,7 @@ router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), val
     if (!event) return res.status(404).json({ message: "Event not found" });
 
     const isCreator = event.createdById === req.user.userId;
-    const isCentralOrg = event.organizerType === "CENTRAL" && event.centralOrganizerId === req.user.userId;
+    const isCentralOrg = event.organizerType === "CENTRAL" && (req.user.role === "central_organizer" || event.centralOrganizerId === req.user.userId);
     const isClubOwner = (req.user.clubId && String(event.clubId) === String(req.user.clubId)) || (req.user.userId && String(event.clubId) === String(req.user.userId));
     const isAdminOrFaculty = req.user.role === "admin" || req.user.role === "facultyCoordinator";
 

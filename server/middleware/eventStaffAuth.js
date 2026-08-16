@@ -109,8 +109,7 @@ export async function verifyAttendancePermission(userId, eventId, event, user) {
   // Central Organizer owns the event
   if (
     user.role === "central_organizer" &&
-    event.organizerType === "CENTRAL" &&
-    event.centralOrganizerId === userId
+    event.organizerType === "CENTRAL"
   ) {
     return true;
   }

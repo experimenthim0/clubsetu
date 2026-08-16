@@ -362,6 +362,7 @@ export function hasPermission(user, permission, resource = null) {
     case PERMISSIONS.EVENT_STAFF_MANAGE:
       if (user.role === "central_organizer" || user.role === "CENTRAL_ORGANIZER") {
         if (!resource) return false; 
+        if (resource.organizerType === "CENTRAL") return true;
         const eventCentralOrganizerId = resource.centralOrganizerId;
         if (!eventCentralOrganizerId) return false;
         return String(eventCentralOrganizerId) === String(user.userId);

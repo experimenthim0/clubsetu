@@ -68,6 +68,9 @@ router.get(
               payoutStatus: true,
               registrationDeadline: true,
               startTime: true,
+              organizerType: true,
+              centralOrganizerId: true,
+              clubId: true,
               club: { select: { clubName: true } },
               createdBy: { select: { id: true } },
             },
@@ -99,10 +102,13 @@ router.get(
 
       const eventStats = events.map((event) => {
         const eventParts = participationsByEvent.get(event.id) ?? [];
+        const isCentral = event.organizerType === "CENTRAL" || !!event.centralOrganizerId || (!event.club && !event.clubId);
         return {
           eventId: event.id,
           title: event.title,
-          clubName: event.club?.clubName || "Unknown",
+          clubName: event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          organizerType: event.organizerType,
+          isCentral,
           creatorId: event.createdBy?.id || null,
           clubHeadId: event.createdBy?.id || null,
           registeredCount: event.registeredCount || 0,
@@ -252,7 +258,13 @@ router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDI
     const { month, year, clubId } = req.query;
     const where = {};
 
-    if (clubId && clubId !== "all") where.clubId = clubId;
+    if (clubId && clubId !== "all") {
+      if (clubId === "ODSW" || clubId === "CENTRAL" || clubId === "central") {
+        where.organizerType = "CENTRAL";
+      } else {
+        where.clubId = clubId;
+      }
+    }
     if (year && year !== "all") {
       const y = Number.parseInt(year, 10);
       where.startTime = {
@@ -293,12 +305,15 @@ router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDI
     res.json({
       events: events.map((event) => {
         const eventParts = participationsByEvent.get(event.id) ?? [];
+        const isCentral = event.organizerType === "CENTRAL" || !!event.centralOrganizerId || (!event.club && !event.clubId);
         return {
           id: event.id,
           eventId: event.id,
           slug: event.slug,
           eventName: event.title,
-          clubName: event.club?.clubName || "Unknown",
+          clubName: event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          organizerType: event.organizerType,
+          isCentral,
           totalRegistrations: event.registeredCount || eventParts.length,
           eventType: event.entryFee > 0 ? "Paid" : "Free",
           entryFee: event.entryFee || 0,
@@ -626,6 +641,9 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
         event: {
           select: {
             title: true,
+            organizerType: true,
+            centralOrganizerId: true,
+            clubId: true,
             club: { select: { clubName: true } },
             registrationFee: true,
             entryFee: true,
@@ -651,20 +669,25 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
     };
 
     res.json({
-      participations: participations.map((p) => ({
-        id: p.id,
-        eventName: p.event.title,
-        clubName: p.event.club?.clubName || "Unknown",
-        studentName: p.student?.name || p.externalName || "Unknown",
-        studentEmail: p.student?.email || p.externalEmail || "N/A",
-        studentRollNo: p.student?.rollNo || "N/A",
-        transactionId: p.transactionId || null,
-        payerName: p.payerName || null,
-        paymentRemarks: p.paymentRemarks || null,
-        paymentStatus: p.paymentStatus,
-        amountPaid: p.amountPaid || p.event.registrationFee || p.event.entryFee || 0,
-        createdAt: p.createdAt,
-      })),
+      participations: participations.map((p) => {
+        const isCentral = p.event?.organizerType === "CENTRAL" || !!p.event?.centralOrganizerId || (!p.event?.club && !p.event?.clubId);
+        return {
+          id: p.id,
+          eventName: p.event.title,
+          clubName: p.event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          organizerType: p.event?.organizerType,
+          isCentral,
+          studentName: p.student?.name || p.externalName || "Unknown",
+          studentEmail: p.student?.email || p.externalEmail || "N/A",
+          studentRollNo: p.student?.rollNo || "N/A",
+          transactionId: p.transactionId || null,
+          payerName: p.payerName || null,
+          paymentRemarks: p.paymentRemarks || null,
+          paymentStatus: p.paymentStatus,
+          amountPaid: p.amountPaid || p.event.registrationFee || p.event.entryFee || 0,
+          createdAt: p.createdAt,
+        };
+      }),
       summary,
     });
   } catch (err) {
@@ -734,6 +757,14 @@ router.post("/central-organizer", verifyToken, allowRoles("admin"), async (req, 
       }
       throw updateErr;
     }
+
+    // Reassign active Central Organizer management on all central events to the newly assigned student.
+    // This preserves all event information, media, registrations, sponsors, certificates,
+    // staff assignments, and attendance records, while keeping createdById intact for audit trail.
+    await prisma.event.updateMany({
+      where: { organizerType: "CENTRAL" },
+      data: { centralOrganizerId: studentId },
+    });
 
     await createAuditLog({
       action: AUDIT_ACTIONS.CENTRAL_ORGANIZER_ASSIGNED,

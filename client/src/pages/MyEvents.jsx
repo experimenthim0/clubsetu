@@ -7,6 +7,7 @@ import { DownloadIcon } from '@/components/ui/download';
 import QRCode from 'qrcode';
 import { invalidateCache } from '../lib/cacheManager';
 import WinnerModal from '../components/WinnerModal';
+import { ClubMemberRole } from '../types/index.js';
 
 const MyEvents = () => {
   const location = useLocation();
@@ -41,7 +42,13 @@ const MyEvents = () => {
 
   const [downloadingCert, setDownloadingCert] = useState(null);
   const [openMenuEventId, setOpenMenuEventId] = useState(null);
+  const [menuPlacement, setMenuPlacement] = useState({ openUpward: false, alignRight: true });
   const [winnerModalEvent, setWinnerModalEvent] = useState(null);
+
+  const [canEdit, setCanEdit] = useState(false);
+  const [canScan, setCanScan] = useState(false);
+  const [canCheckReg, setCanCheckReg] = useState(false);
+  const [userMemberships, setUserMemberships] = useState([]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -229,10 +236,49 @@ const MyEvents = () => {
       setUser(storedUser);
       setRole(storedRole);
 
+      // Initialize memberships from stored user if available
+      if (storedUser.memberships && Array.isArray(storedUser.memberships)) {
+        setUserMemberships(storedUser.memberships);
+        const defaultMem = storedUser.memberships.find(m => m.clubId === storedUser.clubId) || storedUser.memberships[0];
+        if (defaultMem) {
+          setCanEdit(defaultMem.canEditEvents ?? defaultMem.permissions?.canEditEvents ?? false);
+          setCanScan(defaultMem.canTakeAttendance ?? defaultMem.permissions?.canTakeAttendance ?? false);
+          setCanCheckReg(
+            defaultMem.role === ClubMemberRole.CLUB_HEAD ||
+            defaultMem.role === ClubMemberRole.COORDINATOR ||
+            defaultMem.role === 'CLUB_HEAD' ||
+            defaultMem.role === 'COORDINATOR' ||
+            defaultMem.canEditEvents === true ||
+            defaultMem.permissions?.canEditEvents === true
+          );
+        }
+      }
+
       if (storedRole === 'member') {
         fetchRegistrations(storedUser.id || storedUser._id);
         if (storedUser.clubId) {
           fetchCreatedEvents(storedUser.id || storedUser._id);
+          // Fetch live membership details from the club
+          axios.get(`${import.meta.env.VITE_API_URL}/api/club-members/${storedUser.clubId}/members`)
+            .then(res => {
+              const membership = res.data.find(
+                m => m.studentId === storedUser.id || m.student?.id === storedUser.id || m.studentId === storedUser._id || m.student?.id === storedUser._id
+              );
+              if (membership) {
+                setCanEdit(membership.canEditEvents ?? false);
+                setCanScan(membership.canTakeAttendance ?? false);
+                setCanCheckReg(
+                  membership.role === ClubMemberRole.CLUB_HEAD ||
+                  membership.role === ClubMemberRole.COORDINATOR ||
+                  membership.role === 'CLUB_HEAD' ||
+                  membership.role === 'COORDINATOR' ||
+                  membership.canEditEvents === true
+                );
+              }
+            })
+            .catch(() => {
+              // Silently handle if not member
+            });
         }
       } else if (storedRole === 'student') {
         fetchRegistrations(storedUser.id || storedUser._id);
@@ -827,11 +873,38 @@ const MyEvents = () => {
                 };
 
                 const eventIdStr = String(event.id || event._id);
+                const eventClubId = event.clubId || (event.club && (event.club.id || event.club._id)) || user?.clubId;
+                const membership = userMemberships.find(m => String(m.clubId) === String(eventClubId));
+
+                const currentCanEdit = membership ? Boolean(membership.canEditEvents ?? membership.permissions?.canEditEvents) : canEdit;
+                const currentCanScan = membership ? Boolean(membership.canTakeAttendance ?? membership.permissions?.canTakeAttendance) : canScan;
+                const isClubLeader = membership ? (
+                  membership.role === ClubMemberRole.CLUB_HEAD || 
+                  membership.role === ClubMemberRole.COORDINATOR || 
+                  membership.role === 'CLUB_HEAD' || 
+                  membership.role === 'COORDINATOR'
+                ) : false;
+                const currentCanCheckReg = isClubLeader || currentCanEdit || canCheckReg;
+
+                const userRole = (user?.role || role || localStorage.getItem('role') || '').toLowerCase();
+                const isCreator = Boolean(user && (event.createdById === user.id || event.createdById === user._id));
+                const isClubHeadOrAdmin = userRole === 'club' || userRole === 'admin' || currentCanEdit || isCreator;
+
+                const canViewReg = currentCanCheckReg || isClubHeadOrAdmin;
+                const canScanAttendance = (currentCanScan || isClubHeadOrAdmin) && !isPast;
+                const canManageWinners = currentCanEdit || currentCanCheckReg || isClubHeadOrAdmin;
+                const canEditEvent = currentCanEdit || isClubHeadOrAdmin;
+                const canDeleteEvent = currentCanEdit || isClubHeadOrAdmin;
+                const canCert = (currentCanEdit || isClubHeadOrAdmin) && event.provideCertificate;
+
+                const hasAnyMenuActions = canViewReg || canScanAttendance || (canManageWinners && (event.showWinner || isPast)) || canCert || canEditEvent || canDeleteEvent;
 
                 return (
                 <div
                   key={eventIdStr}
-                  className="bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative"
+                  className={`bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative ${
+                    openMenuEventId === eventIdStr ? 'z-30' : 'z-0'
+                  }`}
                 >
                   {/* Top stripe: title */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between px-5 md:px-6 pt-5 pb-3 border-b border-neutral-100 bg-neutral-50/30 gap-3">
@@ -911,92 +984,117 @@ const MyEvents = () => {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <Link
-                            to={`/event/${eventIdStr}/registrations`}
-                            className="px-3.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition font-semibold text-xs cursor-pointer shadow-sm whitespace-nowrap"
-                          >
-                            Registrations
-                          </Link>
-
-                          <div className="relative event-action-menu">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuEventId(openMenuEventId === eventIdStr ? null : eventIdStr);
-                              }}
-                              className="p-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition cursor-pointer"
-                              title="More options"
+                          {canViewReg && (
+                            <Link
+                              to={`/event/${eventIdStr}/registrations`}
+                              className="px-3.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition font-semibold text-xs cursor-pointer shadow-sm whitespace-nowrap"
                             >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
+                              Registrations
+                            </Link>
+                          )}
 
-                            {openMenuEventId === eventIdStr && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100">
-                                <Link
-                                  to={`/event/${eventIdStr}/registrations`}
-                                  onClick={() => setOpenMenuEventId(null)}
-                                  className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
-                                >
-                                  <FileText className="w-3.5 h-3.5 text-neutral-400" /> View Registrations
-                                </Link>
-
-                                {!isPast && (
-                                  <Link
-                                    to={`/event/${eventIdStr}/check-in`}
-                                    onClick={() => setOpenMenuEventId(null)}
-                                    className="flex items-center gap-2 px-3.5 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 font-medium transition"
-                                  >
-                                    <QrCode className="w-3.5 h-3.5" /> Scan Attendance
-                                  </Link>
-                                )}
-
-                                {(event.showWinner || isPast) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenMenuEventId(null);
-                                      setWinnerModalEvent(event);
-                                    }}
-                                    className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition cursor-pointer"
-                                  >
-                                    <Trophy className="w-3.5 h-3.5" /> Announce Winners
-                                  </button>
-                                )}
-
-                                {event.provideCertificate && (
-                                  <Link
-                                    to={`/event/${eventIdStr}/design-certificate`}
-                                    onClick={() => setOpenMenuEventId(null)}
-                                    className="flex items-center gap-2 px-3.5 py-2 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition"
-                                  >
-                                    <Award className="w-3.5 h-3.5" /> Design Certificate
-                                  </Link>
-                                )}
-
-                                <Link
-                                  to={`/events/edit/${eventIdStr}`}
-                                  onClick={() => setOpenMenuEventId(null)}
-                                  className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
-                                >
-                                  <Edit className="w-3.5 h-3.5 text-neutral-400" /> Edit Event
-                                </Link>
-
-                                <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
+                          {hasAnyMenuActions && (
+                            <div className={`relative event-action-menu ${openMenuEventId === eventIdStr ? 'z-50' : 'z-10'}`}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (openMenuEventId === eventIdStr) {
                                     setOpenMenuEventId(null);
-                                    handleDelete(eventIdStr);
-                                  }}
-                                  className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold transition cursor-pointer"
+                                  } else {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const spaceBelow = window.innerHeight - rect.bottom;
+                                    const spaceAbove = rect.top;
+                                    const openUpward = spaceBelow < 250 && spaceAbove > spaceBelow;
+                                    const alignRight = rect.right > 200;
+                                    setMenuPlacement({ openUpward, alignRight });
+                                    setOpenMenuEventId(eventIdStr);
+                                  }
+                                }}
+                                className="p-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition cursor-pointer"
+                                title="More options"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+
+                              {openMenuEventId === eventIdStr && (
+                                <div 
+                                  className={`absolute ${menuPlacement.alignRight ? 'right-0' : 'left-0'} ${
+                                    menuPlacement.openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+                                  } w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100vh-60px)] overflow-y-auto`}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete Event
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                                  {canViewReg && (
+                                    <Link
+                                      to={`/event/${eventIdStr}/registrations`}
+                                      onClick={() => setOpenMenuEventId(null)}
+                                      className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
+                                    >
+                                      <FileText className="w-3.5 h-3.5 text-neutral-400" /> View Registrations
+                                    </Link>
+                                  )}
+
+                                  {canScanAttendance && (
+                                    <Link
+                                      to={`/event/${eventIdStr}/check-in`}
+                                      onClick={() => setOpenMenuEventId(null)}
+                                      className="flex items-center gap-2 px-3.5 py-2 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 font-medium transition"
+                                    >
+                                      <QrCode className="w-3.5 h-3.5" /> Scan Attendance
+                                    </Link>
+                                  )}
+
+                                  {canManageWinners && (event.showWinner || isPast) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setOpenMenuEventId(null);
+                                        setWinnerModalEvent(event);
+                                      }}
+                                      className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition cursor-pointer"
+                                    >
+                                      <Trophy className="w-3.5 h-3.5" /> Announce Winners
+                                    </button>
+                                  )}
+
+                                  {canCert && (
+                                    <Link
+                                      to={`/event/${eventIdStr}/design-certificate`}
+                                      onClick={() => setOpenMenuEventId(null)}
+                                      className="flex items-center gap-2 px-3.5 py-2 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition"
+                                    >
+                                      <Award className="w-3.5 h-3.5" /> Design Certificate
+                                    </Link>
+                                  )}
+
+                                  {canEditEvent && (
+                                    <Link
+                                      to={`/events/edit/${eventIdStr}`}
+                                      onClick={() => setOpenMenuEventId(null)}
+                                      className="flex items-center gap-2 px-3.5 py-2 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition"
+                                    >
+                                      <Edit className="w-3.5 h-3.5 text-neutral-400" /> Edit Event
+                                    </Link>
+                                  )}
+
+                                  {canDeleteEvent && (
+                                    <>
+                                      <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenMenuEventId(null);
+                                          handleDelete(eventIdStr);
+                                        }}
+                                        className="w-full text-left flex items-center gap-2 px-3.5 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold transition cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" /> Delete Event
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>  {/* closes action buttons div */}

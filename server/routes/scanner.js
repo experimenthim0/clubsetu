@@ -242,11 +242,10 @@ router.get("/events", verifyToken, async (req, res) => {
       eventQueryOrs.push({ clubId: { in: memberships.map((m) => m.clubId) } });
     }
 
-    // Central Organizer: can scan their own central events
+    // Central Organizer: can scan central events
     if (role === "central_organizer") {
       eventQueryOrs.push({
         organizerType: "CENTRAL",
-        centralOrganizerId: userId,
       });
     }
 

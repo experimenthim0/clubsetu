@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Sparkles,
@@ -29,6 +29,7 @@ const CentralEventCard = ({
   onManageClubs,
 }) => {
   const isMenuOpen = activeMenuId === event.id;
+  const [menuPlacement, setMenuPlacement] = useState({ openUpward: false, alignRight: true });
 
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 rounded-2xl p-5 shadow-xs transition-all flex flex-col justify-between">
@@ -183,7 +184,17 @@ const CentralEventCard = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setActiveMenuId(isMenuOpen ? null : event.id);
+                if (isMenuOpen) {
+                  setActiveMenuId(null);
+                } else {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  const spaceAbove = rect.top;
+                  const openUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+                  const alignRight = rect.right > 180;
+                  setMenuPlacement({ openUpward, alignRight });
+                  setActiveMenuId(event.id);
+                }
               }}
               className="p-1.5 text-neutral-600 dark:text-neutral-400 hover:text-orange-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
               title="More actions"
@@ -192,7 +203,11 @@ const CentralEventCard = ({
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-20 py-1 text-xs">
+              <div 
+                className={`absolute ${menuPlacement.alignRight ? 'right-0' : 'left-0'} ${
+                  menuPlacement.openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+                } w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 py-1 text-xs max-h-[calc(100vh-60px)] overflow-y-auto`}
+              >
                 <button
                   onClick={() => {
                     setActiveMenuId(null);

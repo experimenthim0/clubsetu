@@ -186,15 +186,18 @@ export async function getEventsList(user, clubId = "all") {
 
   const events = await prisma.event.findMany({
     where,
-    select: { id: true, title: true, club: { select: { clubName: true } } },
+    select: { id: true, title: true, organizerType: true, centralOrganizerId: true, clubId: true, club: { select: { clubName: true } } },
     orderBy: { startTime: "desc" },
   });
 
-  return events.map((e) => ({
-    id: e.id,
-    title: e.title,
-    clubName: e.club?.clubName || "N/A",
-  }));
+  return events.map((e) => {
+    const isCentral = e.organizerType === "CENTRAL" || !!e.centralOrganizerId || (!e.club && !e.clubId);
+    return {
+      id: e.id,
+      title: e.title,
+      clubName: e.club?.clubName || (isCentral ? "ODSW" : "N/A"),
+    };
+  });
 }
 
 /**
@@ -251,22 +254,25 @@ export async function queryDatasetRecords({ datasetId, user, filters = {}, page 
         take: isExport ? undefined : take,
       });
 
-      records = rawEvents.map((e) => ({
-        id: e.id,
-        title: e.title,
-        clubName: e.club?.clubName || "N/A",
-        venue: e.venue || "N/A",
-        startTime: e.startTime ? new Date(e.startTime).toLocaleString() : "",
-        endTime: e.endTime ? new Date(e.endTime).toLocaleString() : "",
-        reviewStatus: e.reviewStatus,
-        entryFee: e.entryFee || 0,
-        eventType: e.entryFee > 0 ? "Paid" : "Free",
-        registeredCount: e.registeredCount || 0,
-        registrationType: e.registrationType || "individual",
-        payoutStatus: e.payoutStatus || "PENDING",
-        registrationDeadline: e.registrationDeadline ? new Date(e.registrationDeadline).toLocaleString() : "",
-        createdAt: e.createdAt ? new Date(e.createdAt).toLocaleDateString() : "",
-      }));
+      records = rawEvents.map((e) => {
+        const isCentral = e.organizerType === "CENTRAL" || !!e.centralOrganizerId || (!e.club && !e.clubId);
+        return {
+          id: e.id,
+          title: e.title,
+          clubName: e.club?.clubName || (isCentral ? "ODSW" : "N/A"),
+          venue: e.venue || "N/A",
+          startTime: e.startTime ? new Date(e.startTime).toLocaleString() : "",
+          endTime: e.endTime ? new Date(e.endTime).toLocaleString() : "",
+          reviewStatus: e.reviewStatus,
+          entryFee: e.entryFee || 0,
+          eventType: e.entryFee > 0 ? "Paid" : "Free",
+          registeredCount: e.registeredCount || 0,
+          registrationType: e.registrationType || "individual",
+          payoutStatus: e.payoutStatus || "PENDING",
+          registrationDeadline: e.registrationDeadline ? new Date(e.registrationDeadline).toLocaleString() : "",
+          createdAt: e.createdAt ? new Date(e.createdAt).toLocaleDateString() : "",
+        };
+      });
       break;
     }
 
@@ -293,19 +299,22 @@ export async function queryDatasetRecords({ datasetId, user, filters = {}, page 
         take: isExport ? undefined : take,
       });
 
-      records = rawParts.map((p) => ({
-        id: p.id,
-        studentName: p.student?.name || p.externalName || "N/A",
-        rollNo: p.student?.rollNo || "N/A",
-        email: p.student?.email || p.externalEmail || "N/A",
-        eventName: p.event?.title || "N/A",
-        clubName: p.event?.club?.clubName || "N/A",
-        status: p.status,
-        paymentStatus: p.paymentStatus,
-        amountPaid: p.amountPaid || 0,
-        transactionId: p.transactionId || "N/A",
-        createdAt: p.createdAt ? new Date(p.createdAt).toLocaleString() : "",
-      }));
+      records = rawParts.map((p) => {
+        const isCentral = p.event?.organizerType === "CENTRAL" || !!p.event?.centralOrganizerId || (!p.event?.club && !p.event?.clubId);
+        return {
+          id: p.id,
+          studentName: p.student?.name || p.externalName || "N/A",
+          rollNo: p.student?.rollNo || "N/A",
+          email: p.student?.email || p.externalEmail || "N/A",
+          eventName: p.event?.title || "N/A",
+          clubName: p.event?.club?.clubName || (isCentral ? "ODSW" : "N/A"),
+          status: p.status,
+          paymentStatus: p.paymentStatus,
+          amountPaid: p.amountPaid || 0,
+          transactionId: p.transactionId || "N/A",
+          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleString() : "",
+        };
+      });
       break;
     }
 
@@ -444,20 +453,23 @@ export async function queryDatasetRecords({ datasetId, user, filters = {}, page 
         take: isExport ? undefined : take,
       });
 
-      records = rawTxns.map((t) => ({
-        transactionId: t.transactionId || "N/A",
-        studentName: t.student?.name || t.externalName || "N/A",
-        rollNo: t.student?.rollNo || "N/A",
-        email: t.student?.email || t.externalEmail || "N/A",
-        eventName: t.event?.title || "N/A",
-        clubName: t.event?.club?.clubName || "N/A",
-        payerName: t.payerName || "N/A",
-        amountPaid: t.amountPaid || 0,
-        paymentStatus: t.paymentStatus || "N/A",
-        paymentRemarks: t.paymentRemarks || "",
-        paymentReviewedBy: t.paymentReviewedBy || "N/A",
-        createdAt: t.createdAt ? new Date(t.createdAt).toLocaleString() : "",
-      }));
+      records = rawTxns.map((t) => {
+        const isCentral = t.event?.organizerType === "CENTRAL" || !!t.event?.centralOrganizerId || (!t.event?.club && !t.event?.clubId);
+        return {
+          transactionId: t.transactionId || "N/A",
+          studentName: t.student?.name || t.externalName || "N/A",
+          rollNo: t.student?.rollNo || "N/A",
+          email: t.student?.email || t.externalEmail || "N/A",
+          eventName: t.event?.title || "N/A",
+          clubName: t.event?.club?.clubName || (isCentral ? "ODSW" : "N/A"),
+          payerName: t.payerName || "N/A",
+          amountPaid: t.amountPaid || 0,
+          paymentStatus: t.paymentStatus || "N/A",
+          paymentRemarks: t.paymentRemarks || "",
+          paymentReviewedBy: t.paymentReviewedBy || "N/A",
+          createdAt: t.createdAt ? new Date(t.createdAt).toLocaleString() : "",
+        };
+      });
       break;
     }
 
@@ -488,10 +500,11 @@ export async function queryDatasetRecords({ datasetId, user, filters = {}, page 
 
       records = rawPayoutEvents.map((e) => {
         const totalRevenue = (e.participations || []).reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+        const isCentral = e.organizerType === "CENTRAL" || !!e.centralOrganizerId || (!e.club && !e.clubId);
         return {
           id: e.id,
           title: e.title,
-          clubName: e.club?.clubName || "N/A",
+          clubName: e.club?.clubName || (isCentral ? "ODSW" : "N/A"),
           entryFee: e.entryFee || 0,
           registeredCount: e.registeredCount || 0,
           totalRevenue,

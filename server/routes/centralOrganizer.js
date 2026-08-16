@@ -46,8 +46,13 @@ async function verifyCentralEventOwnership(authenticatedUserId, eventId) {
   if (event.organizerType !== "CENTRAL") {
     return { error: 403, message: "This is not a central event." };
   }
+  // If centralOrganizerId is not set to current active CO, auto-sync it to preserve seamless ownership
   if (event.centralOrganizerId !== authenticatedUserId) {
-    return { error: 403, message: "You do not own this event." };
+    await prisma.event.update({
+      where: { id: eventId },
+      data: { centralOrganizerId: authenticatedUserId },
+    });
+    event.centralOrganizerId = authenticatedUserId;
   }
   return { event };
 }
@@ -64,7 +69,6 @@ router.get("/events", async (req, res) => {
     const events = await prisma.event.findMany({
       where: {
         organizerType: "CENTRAL",
-        centralOrganizerId: req.user.userId,
       },
       include: {
         participatingClubs: {
@@ -570,28 +574,27 @@ router.get("/dashboard-stats", async (req, res) => {
     const [eventCount, upcomingEvents, totalRegistrations, totalAttendance, activeStaff] =
       await Promise.all([
         prisma.event.count({
-          where: { organizerType: "CENTRAL", centralOrganizerId: req.user.userId },
+          where: { organizerType: "CENTRAL" },
         }),
         prisma.event.count({
           where: {
             organizerType: "CENTRAL",
-            centralOrganizerId: req.user.userId,
             startTime: { gte: new Date() },
           },
         }),
         prisma.participation.count({
           where: {
-            event: { organizerType: "CENTRAL", centralOrganizerId: req.user.userId },
+            event: { organizerType: "CENTRAL" },
           },
         }),
         prisma.attendanceRecord.count({
           where: {
-            event: { organizerType: "CENTRAL", centralOrganizerId: req.user.userId },
+            event: { organizerType: "CENTRAL" },
           },
         }),
         prisma.eventStaff.count({
           where: {
-            event: { organizerType: "CENTRAL", centralOrganizerId: req.user.userId },
+            event: { organizerType: "CENTRAL" },
             status: "ACTIVE",
           },
         }),
@@ -620,11 +623,10 @@ router.get("/audit-logs", async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
 
-    // Get all events owned by this central organizer
+    // Get all central events
     const coEvents = await prisma.event.findMany({
       where: {
         organizerType: "CENTRAL",
-        centralOrganizerId: req.user.userId,
       },
       select: { id: true, title: true },
     });

@@ -358,14 +358,20 @@ const AdminDashboard = () => {
     const handleDownloadCSV = () => {
         if (!eventData.length) return;
         const headers = ['Event Name', 'Organising Club', 'Total Registrations', 'Event Type', 'Event Date', 'Total Amount Received (₹)'];
-        const rows = eventData.map(e => [
-            `"${e.eventName}"`,
-            `"${e.clubName}"`,
-            e.totalRegistrations,
-            e.eventType,
-            new Date(e.eventDate).toLocaleDateString(),
-            e.totalAmountReceived,
-        ]);
+        const rows = eventData.map(e => {
+            const isCentral = e.organizerType === 'CENTRAL' || e.isCentral || (!e.club && !e.clubId);
+            const club = (isCentral || !e.clubName || e.clubName === 'Unknown' || e.clubName === 'Unknown Club' || e.clubName === 'ODSW')
+                ? (e.clubName && e.clubName !== 'Unknown' && e.clubName !== 'Unknown Club' && !isCentral ? e.clubName : 'ODSW')
+                : (e.clubName || 'ODSW');
+            return [
+                `"${e.eventName || e.title || ''}"`,
+                `"${club}"`,
+                e.totalRegistrations,
+                e.eventType,
+                new Date(e.eventDate || e.startTime).toLocaleDateString(),
+                e.totalAmountReceived || 0,
+            ];
+        });
         const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -590,7 +596,10 @@ const AdminDashboard = () => {
     /* ─── Filtered Event List for Event Data Table ───────────────────────────── */
     const filteredEventList = (eventData.length > 0 ? eventData : stats?.eventStats || []).filter(e => {
         const title = e.eventName || e.title || '';
-        const club = e.clubName || '';
+        const isCentral = e.organizerType === 'CENTRAL' || e.isCentral || (!e.club && !e.clubId);
+        const club = (isCentral || !e.clubName || e.clubName === 'Unknown' || e.clubName === 'Unknown Club' || e.clubName === 'ODSW')
+            ? (e.clubName && e.clubName !== 'Unknown' && e.clubName !== 'Unknown Club' && !isCentral ? e.clubName : 'ODSW')
+            : (e.clubName || 'ODSW');
         const matchesSearch = !searchQuery || 
             title.toLowerCase().includes(searchQuery.toLowerCase()) || 
             club.toLowerCase().includes(searchQuery.toLowerCase());
@@ -687,6 +696,7 @@ const AdminDashboard = () => {
                     {/* Club Filter */}
                     <FilterSelect value={filters.clubId} onChange={(val) => setFilters(prev => ({ ...prev, clubId: val }))}>
                         <option value="all">All Clubs</option>
+                        <option value="ODSW">ODSW (Central Events)</option>
                         {clubHeads.map(c => (
                             <option key={c._id || c.id} value={c._id || c.id}>{c.clubName}</option>
                         ))}
@@ -746,7 +756,10 @@ const AdminDashboard = () => {
                         const eventSlug = item.slug || eventId;
                         const eventUrl = `/events/${eventSlug}`;
                         const eventTitle = item.eventName || item.title || 'Untitled Event';
-                        const clubName = item.clubName || 'Unknown Club';
+                        const isCentral = item.organizerType === 'CENTRAL' || item.isCentral || (!item.club && !item.clubId);
+                        const clubName = (isCentral || !item.clubName || item.clubName === 'Unknown' || item.clubName === 'Unknown Club' || item.clubName === 'ODSW')
+                            ? (item.clubName && item.clubName !== 'Unknown' && item.clubName !== 'Unknown Club' && !isCentral ? item.clubName : 'ODSW')
+                            : (item.clubName || 'ODSW');
                         const regCount = item.totalRegistrations ?? item.registeredCount ?? item.regCount ?? 0;
                         const isPaid = item.eventType === 'Paid' || (item.entryFee && item.entryFee > 0);
                         const fee = item.entryFee || 0;
@@ -769,7 +782,7 @@ const AdminDashboard = () => {
                                 <Td className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
                                     {dateStr ? new Date(dateStr).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A'}
                                 </Td>
-                                <Td className="text-orange-600 dark:text-orange-400 font-semibold">{clubName}</Td>
+                                <Td className="text-orange-600 dark:text-orange-400 font-semibold" title={clubName === 'ODSW' ? 'Office of DSW' : clubName}>{clubName}</Td>
                                 <Td className="font-semibold text-black dark:text-white">{regCount} students</Td>
                                 <Td>
                                     <TypeBadge isPaid={isPaid} fee={fee} />
@@ -1257,12 +1270,17 @@ const AdminDashboard = () => {
                                         return <tr><td colSpan="7" className="px-5 py-16 text-center text-neutral-400 text-sm">No transaction registrations found.</td></tr>;
                                     }
 
-                                    return filtered.map((p, idx) => (
+                                    return filtered.map((p, idx) => {
+                                        const isCentral = p.organizerType === 'CENTRAL' || p.isCentral || (!p.clubId && (!p.clubName || p.clubName === 'Unknown'));
+                                        const displayClubName = (isCentral || !p.clubName || p.clubName === 'Unknown' || p.clubName === 'ODSW')
+                                            ? (p.clubName && p.clubName !== 'Unknown' && !isCentral ? p.clubName : 'ODSW')
+                                            : (p.clubName || 'ODSW');
+                                        return (
                                         <tr key={p.id || idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
                                             <Td className="text-neutral-300 dark:text-neutral-600">{idx + 1}</Td>
                                             <Td>
                                                 <p className="font-semibold text-black dark:text-white">{p.eventName}</p>
-                                                <p className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold">{p.clubName}</p>
+                                                <p className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold" title={displayClubName === 'ODSW' ? 'Office of DSW' : displayClubName}>{displayClubName}</p>
                                             </Td>
                                             <Td>
                                                 <p className="font-semibold text-black dark:text-white">{p.studentName}</p>
@@ -1294,7 +1312,8 @@ const AdminDashboard = () => {
                                                 {new Date(p.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
                                             </Td>
                                         </tr>
-                                    ));
+                                        );
+                                    });
                                 })()}
                             </tbody>
                         </DataTable>
@@ -1315,9 +1334,14 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {stats?.eventStats?.filter(item => item.entryFee > 0).map((item, idx) => (
+                            {stats?.eventStats?.filter(item => item.entryFee > 0).map((item, idx) => {
+                                const isCentral = item.organizerType === 'CENTRAL' || item.isCentral || (!item.club && !item.clubId);
+                                const displayClubName = (isCentral || !item.clubName || item.clubName === 'Unknown' || item.clubName === 'ODSW')
+                                    ? (item.clubName && item.clubName !== 'Unknown' && !isCentral ? item.clubName : 'ODSW')
+                                    : (item.clubName || 'ODSW');
+                                return (
                                 <tr key={idx} className="border-b border-neutral-100 dark:border-zinc-800/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors">
-                                    <Td className="font-semibold text-black dark:text-white">{item.clubName}</Td>
+                                    <Td className="font-semibold text-black dark:text-white" title={displayClubName === 'ODSW' ? 'Office of DSW' : displayClubName}>{displayClubName}</Td>
                                     <Td>{item.title}</Td>
                                     <Td className="font-mono font-black text-orange-600 dark:text-orange-400 text-base">₹{item.totalCollected}</Td>
                                     <Td>{item.regCount} students</Td>
@@ -1364,7 +1388,8 @@ const AdminDashboard = () => {
                                         })()}
                                     </Td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                             {(!stats?.eventStats || stats.eventStats.filter(item => item.entryFee > 0).length === 0) && (
                                 <tr><td colSpan="6" className="px-5 py-16 text-center text-neutral-400 text-sm">No paid events found for payout.</td></tr>
                             )}
@@ -1597,7 +1622,7 @@ const AdminDashboard = () => {
                                         <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 rounded-md">
                                             Single Seat Role
                                         </span>
-                                        <span className="text-xs text-neutral-400 font-medium">CampusNode System Security</span>
+                                        
                                     </div>
                                     <h2 className="text-base font-black text-black dark:text-white tracking-wide mt-1.5">
                                         Current Central Organizer
@@ -1614,7 +1639,14 @@ const AdminDashboard = () => {
                                 <div className="mt-5 p-5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-emerald-200 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-black text-lg flex items-center justify-center">
-                                            {centralOrganizer.name?.charAt(0).toUpperCase()}
+                                            {/* {centralOrganizer.name?.charAt(0).toUpperCase()} */}
+                                            {centralOrganizer.profileImage && (
+                                                <img 
+                                                    src={centralOrganizer.profileImage} 
+                                                    alt={centralOrganizer.name} 
+                                                    className="w-full h-full object-cover rounded-full"
+                                                />
+                                            )}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -1763,11 +1795,17 @@ const AdminDashboard = () => {
                                     className="w-full px-3 py-2.5 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-[13px] font-medium focus:border-orange-500 outline-none"
                                 >
                                     <option value="">-- Choose an Event --</option>
-                                    {(eventData.length > 0 ? eventData : stats?.eventStats || []).map(e => (
-                                        <option key={e.id || e.eventId} value={e.id || e.eventId}>
-                                            {e.eventName || e.title} ({e.clubName})
-                                        </option>
-                                    ))}
+                                    {(eventData.length > 0 ? eventData : stats?.eventStats || []).map(e => {
+                                        const isCentral = e.organizerType === 'CENTRAL' || e.isCentral || (!e.club && !e.clubId);
+                                        const club = (isCentral || !e.clubName || e.clubName === 'Unknown' || e.clubName === 'ODSW')
+                                            ? (e.clubName && e.clubName !== 'Unknown' && !isCentral ? e.clubName : 'ODSW')
+                                            : (e.clubName || 'ODSW');
+                                        return (
+                                            <option key={e.id || e.eventId} value={e.id || e.eventId}>
+                                                {e.eventName || e.title} ({club})
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                         )}
