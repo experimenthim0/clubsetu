@@ -842,41 +842,41 @@ const EventDetails = () => {
                 )}
               </div>
             </div>
-
+  <h1 className="font-black text-3xl md:text-4xl text-black dark:text-white leading-tight tracking-tight mb-4">
+              {title}
+            </h1>
             {/* ── Category & Status Badges ── */}
-            <div className="flex items-center gap-2 flex-wrap mb-3">
+            {/* <div className="flex items-center gap-2 flex-wrap mb-3">
               {isCentralEvent ? (
                 <>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[11px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[10px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
                     <i className="ri-sparkling-line" /> College-Wide Event
                   </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[10px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
                     <i className="ri-building-2-line text-orange-600" /> Office of DSW
                   </span>
                 </>
               ) : (
                 clubCategory && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[11px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/50 text-[10px] font-light uppercase tracking-wider text-orange-700 dark:text-orange-400">
                     {clubCategory}
                   </span>
                 )
               )}
               {entryFee === 0 && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/50 text-[11px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/50 text-[10px] font-light uppercase tracking-wider text-green-700 dark:text-green-400">
                    Free
                 </span>
               )}
               {event.provideCertificate && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-[10px] font-light uppercase tracking-wider text-blue-700 dark:text-blue-400">
                    Certificate
                 </span>
               )}
-            </div>
+            </div> */}
 
-            {/* ── Primary Heading (h1) ── */}
-            <h1 className="font-black text-3xl md:text-4xl text-black dark:text-white leading-tight tracking-tight mb-4">
-              {title}
-            </h1>
+     
+          
 
             {/* ── Quick-Scan Inline Metadata ── */}
             <div className="flex items-center gap-4 flex-wrap text-[13px] text-neutral-500 dark:text-neutral-400 mb-8 pb-6 border-b border-neutral-200 dark:border-neutral-800">

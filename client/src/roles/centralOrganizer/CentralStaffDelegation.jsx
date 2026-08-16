@@ -1,6 +1,6 @@
 import React from "react";
 import { Shield, PlusCircle } from "lucide-react";
-import EventStaffManager from "../EventStaffManager";
+import EventStaffManager from "../../components/EventStaffManager";
 
 const CentralStaffDelegation = ({
   events,

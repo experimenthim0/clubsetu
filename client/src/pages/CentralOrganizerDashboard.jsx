@@ -18,7 +18,7 @@ import {
   CentralStaffDelegation,
   CentralParticipatingClubs,
   CentralAuditLogs,
-} from "../components/centralOrganizer";
+} from "../roles/centralOrganizer";
 
 const API_URL = import.meta.env.VITE_API_URL;
 

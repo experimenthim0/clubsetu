@@ -316,7 +316,7 @@ const EventCalendarPage = () => {
                       {new Date(e.startTime).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="py-3 px-3 font-semibold text-neutral-800 dark:text-neutral-200">{e.venue}</td>
-                    <td className="py-3 px-3 text-orange-600 dark:text-orange-400 font-semibold">{e.club?.clubName}</td>
+                    <td className="py-3 px-3 text-orange-600 dark:text-orange-400 font-semibold">{e.club?.clubName || 'ODSW'}</td>
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 dark:bg-zinc-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-zinc-700">
                         {e.reviewStatus}

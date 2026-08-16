@@ -106,7 +106,7 @@ router.get(
         return {
           eventId: event.id,
           title: event.title,
-          clubName: event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          clubName: event.club?.clubName || "ODSW",
           organizerType: event.organizerType,
           isCentral,
           creatorId: event.createdBy?.id || null,
@@ -260,7 +260,11 @@ router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDI
 
     if (clubId && clubId !== "all") {
       if (clubId === "ODSW" || clubId === "CENTRAL" || clubId === "central") {
-        where.organizerType = "CENTRAL";
+        where.OR = [
+          { organizerType: "CENTRAL" },
+          { centralOrganizerId: { not: null } },
+          { clubId: null },
+        ];
       } else {
         where.clubId = clubId;
       }
@@ -311,7 +315,7 @@ router.get("/event-data-export", verifyToken, requirePermission(PERMISSIONS.AUDI
           eventId: event.id,
           slug: event.slug,
           eventName: event.title,
-          clubName: event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          clubName: event.club?.clubName || "ODSW",
           organizerType: event.organizerType,
           isCentral,
           totalRegistrations: event.registeredCount || eventParts.length,
@@ -647,6 +651,10 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
             club: { select: { clubName: true } },
             registrationFee: true,
             entryFee: true,
+            registrationType: true,
+            minTeamSize: true,
+            maxTeamSize: true,
+            paymentMethod: true,
           },
         },
         student: {
@@ -656,27 +664,50 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
             rollNo: true,
           },
         },
+        team: {
+          include: {
+            leader: { select: { id: true, name: true, email: true, rollNo: true } },
+            members: {
+              include: {
+                user: { select: { id: true, name: true, email: true, rollNo: true } },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    const summary = {
-      total: participations.length,
-      pending: participations.filter((p) => p.paymentStatus === "PENDING").length,
-      approved: participations.filter((p) => ["APPROVED", "SUCCESS"].includes(p.paymentStatus)).length,
-      rejected: participations.filter((p) => p.paymentStatus === "REJECTED").length,
-      needMoreDetails: participations.filter((p) => p.paymentStatus === "NEED_MORE_DETAILS").length,
-    };
+    // Group team participations into single payment rows by teamId
+    const processedMap = new Map();
+    const resultList = [];
 
-    res.json({
-      participations: participations.map((p) => {
+    for (const p of participations) {
+      if (p.teamId) {
+        if (!processedMap.has(p.teamId)) {
+          processedMap.set(p.teamId, [p]);
+        } else {
+          processedMap.get(p.teamId).push(p);
+        }
+      } else {
+        // Individual registration
         const isCentral = p.event?.organizerType === "CENTRAL" || !!p.event?.centralOrganizerId || (!p.event?.club && !p.event?.clubId);
-        return {
+        resultList.push({
           id: p.id,
+          eventId: p.eventId,
           eventName: p.event.title,
-          clubName: p.event.club?.clubName || (isCentral ? "ODSW" : "Unknown"),
+          clubName: p.event?.club?.clubName || "ODSW",
           organizerType: p.event?.organizerType,
           isCentral,
+          eventRegistrationType: p.event?.registrationType || "individual",
+          eventMinTeamSize: p.event?.minTeamSize || 1,
+          eventMaxTeamSize: p.event?.maxTeamSize || 1,
+          eventPaymentMethod: p.event?.paymentMethod || "MANUAL_TRANSACTION",
+          isTeam: (p.event?.registrationType === "team" || p.event?.registrationType === "both"),
+          teamId: null,
+          teamName: p.formResponses?.teamName || p.formResponses?.['Team Name'] || null,
+          teamMemberCount: 1,
+          teamMembers: [],
           studentName: p.student?.name || p.externalName || "Unknown",
           studentEmail: p.student?.email || p.externalEmail || "N/A",
           studentRollNo: p.student?.rollNo || "N/A",
@@ -686,8 +717,69 @@ router.get("/manual-payments", verifyToken, requirePermission(PERMISSIONS.PAYMEN
           paymentStatus: p.paymentStatus,
           amountPaid: p.amountPaid || p.event.registrationFee || p.event.entryFee || 0,
           createdAt: p.createdAt,
-        };
-      }),
+        });
+      }
+    }
+
+    // Process grouped team participations
+    for (const [teamId, teamParts] of processedMap.entries()) {
+      // Find the primary participation with the UTR or leader record
+      const primaryP = teamParts.find(tp => tp.transactionId) || 
+                       teamParts.find(tp => tp.studentId && tp.studentId === tp.team?.leaderId) || 
+                       teamParts[0];
+
+      const team = primaryP.team;
+      const isCentral = primaryP.event?.organizerType === "CENTRAL" || !!primaryP.event?.centralOrganizerId || (!primaryP.event?.club && !primaryP.event?.clubId);
+      
+      const teamMembers = (team?.members || []).map(m => ({
+        name: m.user?.name || "Unknown",
+        email: m.user?.email || "N/A",
+        rollNo: m.user?.rollNo || "N/A",
+        role: m.role || "member"
+      }));
+
+      resultList.push({
+        id: primaryP.id,
+        eventId: primaryP.eventId,
+        eventName: primaryP.event.title,
+        clubName: primaryP.event?.club?.clubName || "ODSW",
+        organizerType: primaryP.event?.organizerType,
+        isCentral,
+        eventRegistrationType: primaryP.event?.registrationType || "team",
+        eventMinTeamSize: primaryP.event?.minTeamSize || 2,
+        eventMaxTeamSize: primaryP.event?.maxTeamSize || 4,
+        eventPaymentMethod: primaryP.event?.paymentMethod || "MANUAL_TRANSACTION",
+        isTeam: true,
+        teamId: teamId,
+        teamName: team?.teamName || primaryP.formResponses?.teamName || "Team",
+        teamMemberCount: teamMembers.length || teamParts.length,
+        teamMembers,
+        leaderName: team?.leader?.name || primaryP.student?.name || "Team Leader",
+        studentName: team?.leader?.name || primaryP.student?.name || primaryP.externalName || "Team Leader",
+        studentEmail: team?.leader?.email || primaryP.student?.email || primaryP.externalEmail || "N/A",
+        studentRollNo: team?.leader?.rollNo || primaryP.student?.rollNo || "N/A",
+        transactionId: primaryP.transactionId || null,
+        payerName: primaryP.payerName || null,
+        paymentRemarks: primaryP.paymentRemarks || null,
+        paymentStatus: primaryP.paymentStatus,
+        amountPaid: primaryP.amountPaid || primaryP.event.registrationFee || primaryP.event.entryFee || 0,
+        createdAt: primaryP.createdAt,
+      });
+    }
+
+    // Sort by createdAt descending
+    resultList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const summary = {
+      total: resultList.length,
+      pending: resultList.filter((p) => p.paymentStatus === "PENDING").length,
+      approved: resultList.filter((p) => ["APPROVED", "SUCCESS"].includes(p.paymentStatus)).length,
+      rejected: resultList.filter((p) => p.paymentStatus === "REJECTED").length,
+      needMoreDetails: resultList.filter((p) => p.paymentStatus === "NEED_MORE_DETAILS").length,
+    };
+
+    res.json({
+      participations: resultList,
       summary,
     });
   } catch (err) {

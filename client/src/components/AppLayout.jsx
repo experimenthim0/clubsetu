@@ -74,13 +74,13 @@ const AppLayout = () => {
       const showTimer = setTimeout(() => {
         setShowTooltip(true);
         sessionStorage.setItem("whatsapp_channel_tooltip_shown", "true");
-        
+
         // Autoclose after 5 seconds
         closeTimer = setTimeout(() => {
           setShowTooltip(false);
         }, 5000);
       }, 2500);
-      
+
       return () => {
         clearTimeout(showTimer);
         if (closeTimer) clearTimeout(closeTimer);
@@ -151,44 +151,6 @@ const AppLayout = () => {
     <>
       {layoutContent}
 
-      {/* WhatsApp Tooltip Popup */}
-      {/* {showTooltip && (
-        <div className="fixed bottom-40 right-6 md:bottom-22 md:right-6 z-50 max-w-[260px] bg-white dark:bg-neutral-900 text-black dark:text-white p-4.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border border-neutral-100 dark:border-neutral-800 animate-[bounce_1.5s_infinite] transition-all duration-300">
-          <div className="relative">
-            {/* Close Button 
-            <button
-              onClick={() => setShowTooltip(false)}
-              className="absolute -top-3 -right-3 w-6 h-6 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              aria-label="Close message"
-            >
-              <i className="ri-close-line text-lg" />
-            </button>
-           <p className="text-[12px] font-bold leading-relaxed pr-2">
-  Stay Ahead!
-</p>
-<p className="text-[12px] font-medium leading-relaxed text-neutral-800 dark:text-neutral-200 pr-2 mt-1">
-  Get instant campus updates on WhatsApp.
-</p>
-           
-            <div className="absolute -bottom-[26px] right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white dark:border-t-neutral-900" />
-            <div className="absolute -bottom-[27px] right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-neutral-100 dark:border-t-neutral-800 -z-10" />
-          </div>
-        </div>
-      )} */}
-
-      {/* Floating WhatsApp Channel Button */}
-      {/* <a
-        href="https://whatsapp.com/channel/0029VbAhXba7z4kgTBY3nS0Z"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-20 right-3 md:bottom-6 md:right-4 z-50 flex items-center justify-center w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(34,197,94,0.3)] transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
-        aria-label="Join our WhatsApp Channel"
-      >
-        <i className="ri-whatsapp-line text-2xl" />
-        <span className="absolute right-16 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-neutral-900 dark:bg-neutral-800 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md pointer-events-none border border-neutral-800/20 translate-x-2 group-hover:translate-x-0">
-          Join WhatsApp Channel
-        </span>
-      </a> */}
       <InstallPwaBanner />
     </>
   );
