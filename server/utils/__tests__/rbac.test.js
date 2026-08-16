@@ -14,11 +14,20 @@ describe("Granular RBAC Engine Tests", () => {
     it("STUDENT / member should have student capabilities and lack admin permissions", () => {
       expect(roleHasPermission("member", PERMISSIONS.EVENT_VIEW)).toBe(true);
       expect(roleHasPermission("member", PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(roleHasPermission("member", PERMISSIONS.REGISTRATION_CANCEL)).toBe(true);
       expect(roleHasPermission("member", PERMISSIONS.LOST_FOUND_CREATE)).toBe(true);
 
       expect(roleHasPermission("member", PERMISSIONS.EVENT_APPROVE)).toBe(false);
       expect(roleHasPermission("member", PERMISSIONS.CLUB_CREATE)).toBe(false);
       expect(roleHasPermission("member", PERMISSIONS.PAYOUT_APPROVE)).toBe(false);
+    });
+
+    it("external role should have event view, registration create, and registration cancel permissions", () => {
+      expect(roleHasPermission("external", PERMISSIONS.EVENT_VIEW)).toBe(true);
+      expect(roleHasPermission("external", PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(roleHasPermission("external", PERMISSIONS.REGISTRATION_CANCEL)).toBe(true);
+      expect(roleHasPermission("external", PERMISSIONS.EVENT_APPROVE)).toBe(false);
+      expect(roleHasPermission("external", PERMISSIONS.CLUB_CREATE)).toBe(false);
     });
 
     it("FACULTY / facultyCoordinator should have approval and club management capabilities", () => {
@@ -62,9 +71,20 @@ describe("Granular RBAC Engine Tests", () => {
       expect(hasPermission(clubUser, PERMISSIONS.EVENT_UPDATE, { clubId: "club_coding" })).toBe(false);
     });
 
-    it("Regular student cannot approve or edit events", () => {
+    it("Club users, Central Organizers, and Faculty should all be able to register for events", () => {
+      expect(roleHasPermission("club", PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(roleHasPermission("club", PERMISSIONS.REGISTRATION_CANCEL)).toBe(true);
+      expect(roleHasPermission("central_organizer", PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(roleHasPermission("central_organizer", PERMISSIONS.REGISTRATION_CANCEL)).toBe(true);
+      expect(roleHasPermission("facultyCoordinator", PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(roleHasPermission("facultyCoordinator", PERMISSIONS.REGISTRATION_CANCEL)).toBe(true);
+    });
+
+    it("Regular student cannot approve or edit events but can register", () => {
       expect(hasPermission(studentUser, PERMISSIONS.EVENT_APPROVE, { clubId: "club_robotics" })).toBe(false);
       expect(hasPermission(studentUser, PERMISSIONS.EVENT_UPDATE, { clubId: "club_robotics" })).toBe(false);
+      expect(hasPermission(studentUser, PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
+      expect(hasPermission(clubUser, PERMISSIONS.REGISTRATION_CREATE)).toBe(true);
     });
   });
 });

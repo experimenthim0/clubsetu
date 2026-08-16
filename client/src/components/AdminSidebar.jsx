@@ -76,8 +76,8 @@ const AdminSidebarDropdown = ({ icon: Icon, label, items, collapsed }) => {
         type="button"
         onClick={() => !collapsed && setIsOpen((prev) => !prev)}
         className={`w-full flex items-center justify-between rounded-xl px-2 py-2 transition-all duration-200 cursor-pointer ${isAnyChildActive
-            ? "bg-neutral-100 dark:bg-zinc-800/90 text-black dark:text-white font-bold"
-            : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100/70 dark:hover:bg-zinc-800/50 hover:text-black dark:hover:text-white"
+          ? "bg-neutral-100 dark:bg-zinc-800/90 text-black dark:text-white font-bold"
+          : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100/70 dark:hover:bg-zinc-800/50 hover:text-black dark:hover:text-white"
           }`}
         title={collapsed ? label : undefined}
       >
@@ -113,8 +113,8 @@ const AdminSidebarDropdown = ({ icon: Icon, label, items, collapsed }) => {
                 key={idx}
                 to={linkTo}
                 className={`flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${isActive
-                    ? "bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm"
-                    : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800/60 hover:text-black dark:hover:text-white"
+                  ? "bg-black dark:bg-white text-white dark:text-black font-bold shadow-sm"
+                  : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800/60 hover:text-black dark:hover:text-white"
                   }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 ${isActive ? "bg-orange-500" : "bg-neutral-300 dark:bg-zinc-700"
@@ -184,7 +184,7 @@ const AdminSidebar = () => {
       {/* ── Top: Brand + Toggle ────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 pt-5 pb-1 relative min-h-[44px]">
         <div className="flex items-center gap-2.5 min-w-0 sidebar-brand-container">
-          
+
           <div className="min-w-0 sidebar-brand-text">
             <p className="text-[13px] font-bold text-black dark:text-white truncate leading-tight">
               {adminName}

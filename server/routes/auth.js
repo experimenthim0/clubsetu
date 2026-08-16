@@ -202,13 +202,24 @@ router.post("/login/student", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (!student.isVerified) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      if (student.createdAt < twentyFourHoursAgo || (student.verificationTokenExpire && new Date(student.verificationTokenExpire) < new Date())) {
-        await prisma.studentUser.delete({ where: { id: student.id } });
-        return res.status(401).json({ message: "Verification link expired (24 hours passed). Please register again." });
+    if (!student.isVerified && process.env.SKIP_VERIFICATION !== "true") {
+      const hasClubRole = await prisma.clubMembership.findFirst({
+        where: { studentId: student.id, role: { in: ["CLUB_HEAD", "COORDINATOR"] } },
+      });
+      if (hasClubRole) {
+        await prisma.studentUser.update({
+          where: { id: student.id },
+          data: { isVerified: true },
+        });
+        student.isVerified = true;
+      } else {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        if (student.createdAt < twentyFourHoursAgo || (student.verificationTokenExpire && new Date(student.verificationTokenExpire) < new Date())) {
+          await prisma.studentUser.delete({ where: { id: student.id } });
+          return res.status(401).json({ message: "Verification link expired (24 hours passed). Please register again." });
+        }
+        return res.status(401).json({ message: "Please verify your email to login." });
       }
-      return res.status(401).json({ message: "Please verify your email to login." });
     }
 
     const isMatch = await bcrypt.compare(password, student.password);

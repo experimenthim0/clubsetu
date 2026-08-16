@@ -270,6 +270,49 @@ const Profile = () => {
         </div>
       </div>
 
+    {/* Portals & Delegated Tools Section */}
+    <div className="mb-12 p-6 md:p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm">
+      <h2 className="text-lg font-bold text-neutral-900 dark:text-white tracking-wider mb-4 flex items-center gap-2">
+        <i className="ri-shield-keyhole-line text-orange-600 dark:text-orange-500" /> Campus Portals & Management
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {(user?.accessLevel === "central_organizer" || role === "central_organizer" || role === "admin" || role === "facultyCoordinator" || role === "club") && (
+          <Link
+            to="/central-organizer"
+            className="group p-4 bg-orange-50/60 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-xl hover:border-orange-500 transition-all flex items-start gap-3.5"
+          >
+            <div className="w-10 h-10 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <i className="ri-shield-star-line text-xl" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                Central Organizer Portal
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
+                Create college-wide events, coordinate participating clubs, and delegate staff.
+              </p>
+            </div>
+          </Link>
+        )}
+        <Link
+          to="/event-staff"
+          className="group p-4 bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700/60 rounded-xl hover:border-neutral-400 dark:hover:border-neutral-600 transition-all flex items-start gap-3.5"
+        >
+          <div className="w-10 h-10 rounded-lg bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black flex items-center justify-center shrink-0 shadow-sm">
+            <i className="ri-qr-scan-2-line text-xl" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Event Staff Portal
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
+              Verify attendee tickets, scan QR attendance codes, and track registrations live.
+            </p>
+          </div>
+        </Link>
+      </div>
+    </div>
+
     {/* Enrolled Clubs Section */}
     {isStudentAccount && (
       <div className="mb-12 p-6 md:p-8 bg-white border border-neutral-200 rounded-xl shadow-sm">

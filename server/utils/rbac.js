@@ -73,6 +73,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.CLUB_UPDATE,
     PERMISSIONS.CLUB_MANAGE_MEMBERS,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.PAYMENT_VIEW,
     PERMISSIONS.PAYMENT_VERIFY,
     PERMISSIONS.PAYOUT_VIEW,
@@ -93,6 +95,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.CLUB_UPDATE,
     PERMISSIONS.CLUB_MANAGE_MEMBERS,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.PAYMENT_VIEW,
     PERMISSIONS.PAYMENT_VERIFY,
     PERMISSIONS.PAYOUT_VIEW,
@@ -114,6 +118,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.CLUB_UPDATE,
     PERMISSIONS.CLUB_MANAGE_MEMBERS,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.PAYMENT_VIEW,
     PERMISSIONS.PAYMENT_VERIFY,
     PERMISSIONS.PAYOUT_VIEW,
@@ -135,6 +141,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.CLUB_UPDATE,
     PERMISSIONS.CLUB_MANAGE_MEMBERS,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.PAYMENT_VIEW,
     PERMISSIONS.PAYMENT_VERIFY,
     PERMISSIONS.PAYOUT_VIEW,
@@ -153,6 +161,7 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.EVENT_ATTENDANCE,
     PERMISSIONS.REGISTRATION_VIEW,
     PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.TEAM_CREATE,
     PERMISSIONS.TEAM_MANAGE,
     PERMISSIONS.NOTIFICATION_VIEW,
@@ -209,10 +218,15 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.EVENT_VIEW,
     PERMISSIONS.REGISTRATION_CREATE,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.NOTIFICATION_VIEW,
   ],
 
   LOST_FOUND_ADMIN: [
+    PERMISSIONS.EVENT_VIEW,
+    PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.LOST_FOUND_VIEW,
     PERMISSIONS.LOST_FOUND_CREATE,
     PERMISSIONS.LOST_FOUND_UPDATE,
@@ -221,6 +235,10 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.LOST_FOUND_MODERATE,
   ],
   lostFoundAdmin: [
+    PERMISSIONS.EVENT_VIEW,
+    PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.LOST_FOUND_VIEW,
     PERMISSIONS.LOST_FOUND_CREATE,
     PERMISSIONS.LOST_FOUND_UPDATE,
@@ -230,6 +248,10 @@ export const ROLE_PERMISSIONS_MAP = {
   ],
 
   paymentAdmin: [
+    PERMISSIONS.EVENT_VIEW,
+    PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.PAYMENT_VIEW,
     PERMISSIONS.PAYMENT_VERIFY,
     PERMISSIONS.PAYMENT_REFUND,
@@ -247,6 +269,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.EVENT_ATTENDANCE,
     PERMISSIONS.EVENT_CERTIFICATE,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.NOTIFICATION_VIEW,
     PERMISSIONS.NOTIFICATION_CREATE,
     PERMISSIONS.PAYMENT_VIEW,
@@ -262,6 +286,8 @@ export const ROLE_PERMISSIONS_MAP = {
     PERMISSIONS.EVENT_ATTENDANCE,
     PERMISSIONS.EVENT_CERTIFICATE,
     PERMISSIONS.REGISTRATION_VIEW,
+    PERMISSIONS.REGISTRATION_CREATE,
+    PERMISSIONS.REGISTRATION_CANCEL,
     PERMISSIONS.NOTIFICATION_VIEW,
     PERMISSIONS.NOTIFICATION_CREATE,
     PERMISSIONS.PAYMENT_VIEW,
@@ -280,7 +306,11 @@ export const ROLE_PERMISSIONS_MAP = {
 export function roleHasPermission(role, permission) {
   if (!role || !permission) return false;
   if (role === "admin" || role === "SUPER_ADMIN") return true;
-  const permissions = ROLE_PERMISSIONS_MAP[role] ?? [];
+  const permissions =
+    ROLE_PERMISSIONS_MAP[role] ??
+    ROLE_PERMISSIONS_MAP[role.toLowerCase()] ??
+    ROLE_PERMISSIONS_MAP[role.toUpperCase()] ??
+    [];
   return permissions.includes(permission);
 }
 
@@ -301,7 +331,13 @@ export function hasPermission(user, permission, resource = null) {
   }
 
   // 2. Base role permission check
-  const baseAllowed = roleHasPermission(user.role, permission);
+  let baseAllowed = roleHasPermission(user.role, permission);
+
+  // 3. Fallback: Any student user always retains standard student permissions
+  if (!baseAllowed && user.userType === "student") {
+    baseAllowed = roleHasPermission("member", permission);
+  }
+
   if (!baseAllowed) {
     return false;
   }
@@ -324,11 +360,10 @@ export function hasPermission(user, permission, resource = null) {
     case PERMISSIONS.PAYMENT_VERIFY:
     case PERMISSIONS.PAYOUT_REQUEST:
     case PERMISSIONS.EVENT_STAFF_MANAGE:
-      // Central Organizer: must own the central event
       if (user.role === "central_organizer" || user.role === "CENTRAL_ORGANIZER") {
-        if (!resource) return false; // Resource context required for CO
+        if (!resource) return false; 
         const eventCentralOrganizerId = resource.centralOrganizerId;
-        if (!eventCentralOrganizerId) return false; // Not a central event
+        if (!eventCentralOrganizerId) return false;
         return String(eventCentralOrganizerId) === String(user.userId);
       }
       if (user.role === "facultyCoordinator" || user.role === "club") {

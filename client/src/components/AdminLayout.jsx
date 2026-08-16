@@ -16,21 +16,21 @@ const AdminLayout = () => {
   // ── Read admin from localStorage ────
   let user = null;
 
-try {
+  try {
     const storedUser = localStorage.getItem("user");
 
     if (storedUser && storedUser !== "undefined") {
-        user = JSON.parse(storedUser);
+      user = JSON.parse(storedUser);
     }
-} catch (err) {
+  } catch (err) {
     localStorage.removeItem("user");
-}
+  }
 
-const role = localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
-if (!user || (role !== "admin" && role !== "paymentAdmin" && role !== "lostFoundAdmin")) {
+  if (!user || (role !== "admin" && role !== "paymentAdmin" && role !== "lostFoundAdmin")) {
     return <Navigate to="/admin-secret-login" replace />;
-}
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a]">

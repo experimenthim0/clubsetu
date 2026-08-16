@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, User, ShieldCheck, X, Sun, Moon, Package, Monitor, Download, Smartphone } from "lucide-react";
+import { Home, Users, Calendar, User, Shield, ShieldCheck, X, Sun, Moon, Package, Monitor, Download, Smartphone } from "lucide-react";
 import { usePwaInstall } from "../hooks/usePwaInstall";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
@@ -117,8 +117,7 @@ const BottomNav = () => {
     navItems.push({
       label: "Admin",
       icon: ShieldCheck,
-      action: () => window.open("/admin-dashboard", "_blank"),
-      isActiveCheck: isActive("/admin-dashboard"),
+      path: "/admin-dashboard",
     });
   } else if (user && role === "lostFoundAdmin") {
     navItems.push({
@@ -249,32 +248,49 @@ const BottomNav = () => {
                 </Link>
               )}
               {role === "lostFoundAdmin" && (
-                <Link to="/admin/lost-found" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                   <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-black">
+                <Link to="/admin/lost-found" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                   <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-600">
                      <LostFoundIcon size={18} />
                    </div>
                    Moderation Panel
                 </Link>
               )}
 
-              {(role === "admin" || role === "paymentAdmin") && (
-                <button
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    window.open("/admin-dashboard", "_blank");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors text-left"
+              {(user?.accessLevel === "central_organizer" || role === "central_organizer" || role === "admin" || role === "facultyCoordinator" || role === "club") && (
+                <Link
+                  to="/central-organizer"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                  <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                    <Shield size={18} />
+                  </div>
+                  Central Organizer Portal
+                </Link>
+              )}
+
+              <Link
+                to="/event-staff"
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
+                  <ShieldCheck size={18} />
+                </div>
+                Event Staff Portal
+              </Link>
+
+              {(role === "admin" || role === "paymentAdmin") && (
+                <Link
+                  to="/admin-dashboard"
+                  onClick={() => setDrawerOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-orange-600">
                     <ShieldCheck size={18} />
                   </div>
                   Admin Dashboard
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto text-neutral-400">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </button>
+                </Link>
               )}
 
               {((user.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (
@@ -363,16 +379,8 @@ const BottomNav = () => {
             </div>
 
             <div className="px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
-              {isInstallable && (
-                <button
-                  onClick={installApp}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 mb-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm rounded-xl transition-all shadow-sm active:scale-98"
-                >
-                  <Smartphone size={18} />
-                  Install CampusNode App
-                </button>
-              )}
-              {/* Dark mode toggle */}
+             
+            
              <div className="rounded-2xl mb-2">
   
 

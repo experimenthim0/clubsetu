@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronRight,
   ChevronLeft,
+  Shield,
   ShieldCheck,
   Plus,
 } from "lucide-react";
@@ -177,6 +178,12 @@ const DynamicSidebar = ({ user }) => {
         {role === "member" && (
           <SidebarLink to="/my-events" icon={CalendarDays} label="My Events" isActive={isActive("/my-events")} isCollapsed={isCollapsed} />
         )}
+
+        {/* ── Portals ── */}
+        {(user?.accessLevel === "central_organizer" || role === "central_organizer") && (
+          <SidebarLink to="/central-organizer" icon={Shield} label="Central Organizer" isActive={isActive("/central-organizer")} isCollapsed={isCollapsed} />
+        )}
+        <SidebarLink to="/event-staff" icon={ShieldCheck} label="Event Staff Portal" isActive={isActive("/event-staff")} isCollapsed={isCollapsed} />
 
         {/* ── Management: membership-based club links ── */}
         {((user?.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (

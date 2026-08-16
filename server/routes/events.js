@@ -891,7 +891,7 @@ const registerParamSchema = z.object({
 router.post(
   "/:id/register",
   verifyToken,
-  requirePermission(PERMISSIONS.REGISTRATION_CANCEL),
+  requirePermission(PERMISSIONS.REGISTRATION_CREATE),
   validate(registerParamSchema),
   async (req, res) => {
     try {
@@ -1290,7 +1290,7 @@ async function notifyMemberDeregistered(io, recipientId, title, message) {
 router.delete(
   "/:id/register",
   verifyToken,
-  requirePermission(PERMISSIONS.REGISTRATION_VIEW),
+  requirePermission(PERMISSIONS.REGISTRATION_CANCEL),
   async (req, res) => {
     try {
       const eventId = req.params.id;

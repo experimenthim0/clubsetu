@@ -21,7 +21,13 @@ import {
     MoreVertical,
     Edit2,
     Trash2,
-    Building2
+    Building2,
+    CheckCircle2,
+    Key,
+    Shield,
+    GraduationCap,
+    Mail,
+    Users
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -45,6 +51,7 @@ const AdminDashboard = () => {
     const [isCoordModalOpen, setIsCoordModalOpen] = useState(false);
     const [isAddCoordModalOpen, setIsAddCoordModalOpen] = useState(false);
     const [editingCoord, setEditingCoord] = useState(null);
+    const [createdClubCredentials, setCreatedClubCredentials] = useState(null);
 
     // Payments Management States
     const [manualPayments, setManualPayments] = useState([]);
@@ -375,10 +382,19 @@ const AdminDashboard = () => {
         const data = Object.fromEntries(formData.entries());
         
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/clubs`, data);
-            showNotification('Club and users created successfully', 'success');
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/clubs`, data);
+            showNotification('Club and users created successfully!', 'success');
             e.target.reset();
             setIsCreateClubModalOpen(false);
+            const slug = res.data?.club?.slug || data.clubName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            setCreatedClubCredentials({
+                clubName: data.clubName,
+                slug,
+                clubEmail: data.clubEmail,
+                facultyEmail: data.facultyEmail,
+                facultyName: data.facultyName,
+                defaultPassword: `${slug}@him0148`,
+            });
             const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
             setClubHeads(clubsRes.data);
             refreshStats();
@@ -1846,10 +1862,30 @@ const AdminDashboard = () => {
                         <ModalFormField label="Faculty Coordinator Email" name="facultyEmail" type="email" placeholder="Faculty Email" required />
                         <ModalFormField label="Club Email Account" name="clubEmail" type="email" placeholder="Club Email" required />
 
-                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-600 dark:text-amber-400 space-y-1">
-                            <p className="font-semibold">🔑 Auto-generated Credentials:</p>
-                            <p>Default password: <code className="px-1.5 py-0.5 bg-black/10 dark:bg-white/10 rounded font-mono font-bold">&lt;club-slug&gt;@him0148</code></p>
-                            <p className="text-[11px] opacity-80">(e.g., for "CodeX" the password will be <code className="font-mono font-bold">codex@him0148</code>)</p>
+                        <div className="p-3.5  border border-orange-500/20 rounded-xl text-xs text-neutral-800 dark:text-neutral-200 space-y-2">
+                            <p className="font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+                                <Key size={14} className="shrink-0" /> Automated Provisioning & Credentials
+                            </p>
+                            <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+                                <div className="flex items-start gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0 mt-1.5" />
+                                    <p>
+                                        <strong className="text-neutral-900 dark:text-neutral-100">Club Organizer:</strong> Logs in at <span className="font-mono font-semibold text-orange-600 dark:text-orange-400">/login</span> using <code className="px-1 py-0.5 bg-black/5 dark:bg-white/10 rounded font-mono font-bold">&lt;clubEmail&gt;</code> &amp; password <code className="px-1 py-0.5 bg-black/5 dark:bg-white/10 rounded font-mono font-bold">&lt;slug&gt;@him0148</code>. Account is auto-verified.
+                                    </p>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-400 shrink-0 mt-1.5" />
+                                    <p>
+                                        <strong className="text-neutral-900 dark:text-neutral-100">Faculty Coordinator:</strong> Logs in at <span className="font-mono font-semibold text-neutral-900 dark:text-neutral-100">/login</span> using <code className="px-1 py-0.5 bg-black/5 dark:bg-white/10 rounded font-mono font-bold">&lt;facultyEmail&gt;</code> &amp; password <code className="px-1 py-0.5 bg-black/5 dark:bg-white/10 rounded font-mono font-bold">&lt;slug&gt;@him0148</code> (or existing password).
+                                    </p>
+                                </div>
+                                <div className="flex items-start gap-2 pt-0.5">
+                                    <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                    <p className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                        Welcome &amp; credential emails will be dispatched to both email addresses automatically.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="pt-4 flex justify-end gap-3 border-t border-neutral-100 dark:border-zinc-800">
@@ -1868,6 +1904,61 @@ const AdminDashboard = () => {
                             </button>
                         </div>
                     </form>
+                </Modal>
+            )}
+
+            {/* Modal: Created Club Credentials Summary */}
+            {createdClubCredentials && (
+                <Modal
+                    onClose={() => setCreatedClubCredentials(null)}
+                    title="Club Created & Accounts Provisioned"
+                    subtitle="Account credentials and portal URLs for both roles are ready."
+                >
+                    <div className="space-y-4 pt-2">
+                        {/* Club Head Account */}
+                        <div className="p-4 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 rounded-xl space-y-2">
+                            <p className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+                                <Shield size={14} className="shrink-0" /> 1. Official Club Organizer Account (Auto-Verified)
+                            </p>
+                            <div className="text-xs space-y-1.5 text-neutral-700 dark:text-neutral-300">
+                                <p><strong>Login Portal:</strong> <span className="font-mono text-orange-600 font-bold">/login</span></p>
+                                <p><strong>Login Email:</strong> <code className="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono font-bold">{createdClubCredentials.clubEmail}</code></p>
+                                <p><strong>Default Password:</strong> <code className="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono font-bold">{createdClubCredentials.defaultPassword}</code></p>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                    <CheckCircle2 size={12} className="shrink-0" /> Status: Pre-verified (no email verification barrier on login)
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Faculty Coordinator Account */}
+                        <div className="p-4 bg-neutral-100 dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-xl space-y-2">
+                            <p className="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+                                <GraduationCap size={14} className="shrink-0" /> 2. Faculty Coordinator Account
+                            </p>
+                            <div className="text-xs space-y-1.5 text-neutral-700 dark:text-neutral-300">
+                                <p><strong>Login Portal:</strong> <span className="font-mono text-neutral-900 dark:text-neutral-100 font-bold">/admin-secret-login</span></p>
+                                <p><strong>Coordinator Name:</strong> {createdClubCredentials.facultyName}</p>
+                                <p><strong>Coordinator Email:</strong> <code className="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono font-bold">{createdClubCredentials.facultyEmail}</code></p>
+                                <p><strong>Default Password:</strong> <code className="bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono font-bold">{createdClubCredentials.defaultPassword}</code> <span className="text-neutral-400">(or existing password if already registered)</span></p>
+                            </div>
+                        </div>
+
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl flex items-start gap-2.5">
+                            <Mail size={15} className="text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                                Onboarding emails with direct login buttons have been dispatched to both <span className="font-bold">{createdClubCredentials.clubEmail}</span> and <span className="font-bold">{createdClubCredentials.facultyEmail}</span>.
+                            </p>
+                        </div>
+
+                        <div className="pt-2 flex justify-end">
+                            <button
+                                onClick={() => setCreatedClubCredentials(null)}
+                                className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-bold rounded-xl hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-colors cursor-pointer"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
                 </Modal>
             )}
 

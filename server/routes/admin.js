@@ -7,6 +7,7 @@ import { slugifyUnique } from "../utils/slugifyUnique.js";
 import { createObjectId } from "../utils/objectId.js";
 import { sanitizeUser } from "../utils/sanitizeUser.js";
 import { generateToken } from "../middleware/auth.js";
+import sendEmail from "../utils/sendEmail.js";
 
 const router = express.Router();
 
@@ -332,12 +333,15 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
     }
 
     const slug = await slugifyUnique(clubName, 'club', 'slug');
-    const passwordHash = await bcrypt.hash(`${slug}@him0148`, 10);
+    const defaultPassword = `${slug}@him0148`;
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+    let isNewFaculty = false;
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Check if an AdminRole user already exists with facultyEmail, or create one
       let facultyUser = await tx.adminRole.findUnique({ where: { email: facultyEmail } });
       if (!facultyUser) {
+        isNewFaculty = true;
         facultyUser = await tx.adminRole.create({
           data: {
             id: createObjectId(),
@@ -369,6 +373,7 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
           name: clubName.toUpperCase(),
           email: clubEmail,
           password: passwordHash,
+          isVerified: true,
         },
       });
 
@@ -387,8 +392,87 @@ router.post("/clubs", verifyToken, requirePermission(PERMISSIONS.CLUB_CREATE), a
       return club;
     });
 
+    const clientUrl = process.env.CLIENT_URL || "https://campusnode.vercel.app";
+
+    // 1. Send Welcome & Credentials Email to Club Head (clubEmail)
+    try {
+      await sendEmail({
+        email: clubEmail,
+        subject: `Welcome to CampusNode - ${clubName} Account Credentials`,
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; color: #1f2937;">
+            <div style="margin-bottom: 20px;">
+              <h2 style="color: #ea580c; margin: 0; font-size: 22px;">Welcome to CampusNode</h2>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Official Club Management Account</p>
+            </div>
+            <p>Hello <strong>${clubName} Team</strong>,</p>
+            <p>Your official club organizer account for <strong>${clubName}</strong> has been created and verified by the administrator.</p>
+            
+            <div style="background-color: #f9fafb; padding: 18px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Assigned Role:</strong> Club Head / Organizer</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Login Email:</strong> <span style="color: #ea580c; font-weight: bold;">${clubEmail}</span></p>
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Default Password:</strong> <code style="background: #e5e7eb; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold;">${defaultPassword}</code></p>
+              <p style="margin: 0; font-size: 14px;"><strong>Account Status:</strong> <span style="color: #16a34a; font-weight: bold;">Verified & Active</span></p>
+            </div>
+
+            <p style="font-size: 14px;">With this account you can create and manage events, oversee registrations, scan attendee QR passes, and manage club members.</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${clientUrl}/login" style="background-color: #ea580c; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Log In to Club Account</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 25px;">
+              For security, please change your default password after logging in from your Profile settings.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send club credentials email:", emailErr?.message || emailErr);
+    }
+
+    // 2. Send Notification & Credentials Email to Faculty Coordinator (facultyEmail)
+    try {
+      await sendEmail({
+        email: facultyEmail,
+        subject: `CampusNode - Assigned as Faculty Coordinator for ${clubName}`,
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; color: #1f2937;">
+            <div style="margin-bottom: 20px;">
+              <h2 style="color: #ea580c; margin: 0; font-size: 22px;">Faculty Coordinator Portal</h2>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Club Oversight & Governance</p>
+            </div>
+            <p>Dear <strong>${facultyName}</strong>,</p>
+            <p>You have been assigned as the <strong>Faculty Coordinator</strong> for <strong>${clubName}</strong> on CampusNode.</p>
+            
+            <div style="background-color: #f9fafb; padding: 18px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Assigned Role:</strong> Faculty Coordinator</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Coordinator Email:</strong> <span style="color: #ea580c; font-weight: bold;">${facultyEmail}</span></p>
+              ${isNewFaculty
+                ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Default Password:</strong> <code style="background: #e5e7eb; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold;">${defaultPassword}</code></p>`
+                : `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Password:</strong> Use your existing Faculty Coordinator password.</p>`
+              }
+              <p style="margin: 0; font-size: 14px;"><strong>Assigned Club:</strong> ${clubName}</p>
+            </div>
+
+            <p style="font-size: 14px;">As Faculty Coordinator, you can review and approve club events, supervise team members, verify payments, and oversee compliance.</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${clientUrl}/admin-secret-login" style="background-color: #171717; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Access Faculty Portal</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 25px;">
+              You can access your coordinator portal anytime via the secure faculty login link above.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send faculty notification email:", emailErr?.message || emailErr);
+    }
+
     res.status(201).json({
-      message: "Club and associated users created successfully",
+      message: "Club and associated users created successfully. Notification emails sent.",
       club: { ...result, _id: result.id },
     });
   } catch (error) {
@@ -433,8 +517,46 @@ router.post("/coordinators", verifyToken, requirePermission(PERMISSIONS.USER_ASS
       },
     });
 
+    const clientUrl = process.env.CLIENT_URL || "https://campusnode.vercel.app";
+    const plainPassword = password || "coordinator123";
+
+    try {
+      await sendEmail({
+        email,
+        subject: "Welcome to CampusNode - Faculty Coordinator Account Created",
+        message: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; color: #1f2937;">
+            <div style="margin-bottom: 20px;">
+              <h2 style="color: #ea580c; margin: 0; font-size: 22px;">Welcome to CampusNode</h2>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Faculty Coordinator Portal</p>
+            </div>
+            <p>Dear <strong>${name}</strong>,</p>
+            <p>Your <strong>Faculty Coordinator</strong> account has been created on CampusNode.</p>
+            
+            <div style="background-color: #f9fafb; padding: 18px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Assigned Role:</strong> Faculty Coordinator</p>
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Coordinator Email:</strong> <span style="color: #ea580c; font-weight: bold;">${email}</span></p>
+              <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Default Password:</strong> <code style="background: #e5e7eb; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold;">${plainPassword}</code></p>
+            </div>
+
+            <p style="font-size: 14px;">As Faculty Coordinator, you can review and approve club events, verify receipts, and oversee student club operations.</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${clientUrl}/admin-secret-login" style="background-color: #171717; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Log In to Coordinator Portal</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 25px;">
+              Please change your password after your initial login for account security.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send coordinator welcome email:", emailErr?.message || emailErr);
+    }
+
     res.status(201).json({
-      message: "Coordinator created successfully",
+      message: "Coordinator created successfully and welcome email sent",
       coordinator: { ...coordinator, _id: coordinator.id },
     });
   } catch (err) {

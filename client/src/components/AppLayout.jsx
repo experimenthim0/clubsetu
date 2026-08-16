@@ -22,6 +22,8 @@ const SIDEBAR_ROUTE_PREFIXES = [
   "/dashboard",
   "/create",
   "/events/edit",
+  "/central-organizer",
+  "/event-staff",
 ];
 
 /**
