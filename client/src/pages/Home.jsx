@@ -591,21 +591,21 @@ const Home = () => {
                 </div>
 
                 {/* Quick Actions Grid */}
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-3">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3">
                   {quickActions.map((action, idx) => {
                     const IconComponent = action.icon;
                     return (
                       <Link
                         key={idx}
                         to={action.to}
-                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm ${
+                        className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-semibold tracking-wider transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm min-w-0 ${
                           action.primary 
                             ? "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-600/10 border-0" 
                             : "bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
                         }`}
                       >
-                        <IconComponent className={action.primary ? "w-4 h-4 text-white" : "w-4 h-4 text-orange-500"} />
-                        {action.label}
+                        <IconComponent className={action.primary ? "w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" : "w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0"} />
+                        <span className="truncate">{action.label}</span>
                       </Link>
                     );
                   })}
@@ -1083,11 +1083,11 @@ const Home = () => {
                     </h2>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     {clubFeatures.map((f, i) => (
                       <div
                         key={i}
-                        className="p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
+                        className="p-4 sm:p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
                       >
                         <div className="w-9 h-9 bg-orange-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:bg-orange-700 transition-colors">
                           {f.icon}
@@ -1122,18 +1122,18 @@ const Home = () => {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-neutral-200">
-                      <div>
-                        <div className="text-4xl font-black text-black">25+</div>
-                        <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-8 mt-12 pt-8 border-t border-neutral-200">
+                      <div className="min-w-0">
+                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">25+</div>
+                        <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
                       </div>
-                      <div>
-                        <div className="text-4xl font-black text-black">5k+</div>
-                        <div className="text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
+                      <div className="min-w-0">
+                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">5k+</div>
+                        <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
                       </div>
-                      <div>
-                        <div className="text-4xl font-black text-black">100%</div>
-                        <div className="text-[11px] font-bold  tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
+                      <div className="min-w-0">
+                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">100%</div>
+                        <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
                       </div>
                     </div>
                   </div>
@@ -1272,9 +1272,9 @@ const Home = () => {
       {/* ── Celebration Winner Modal ── */}
       {celebrationEvent && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-lg px-4 py-6 overflow-y-auto ticket-backdrop-animate">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full relative overflow-hidden flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
-            <div className="relative">
-              <img src="/Trophy.svg" alt="Trophy" className="w-36 h-36 mx-auto animate-bounce-slow" />
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full max-h-[85dvh] overflow-y-auto relative flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
+            <div className="relative shrink-0">
+              <img src="/Trophy.svg" alt="Trophy" className="w-28 h-28 sm:w-36 sm:h-36 mx-auto animate-bounce-slow" />
               <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
             </div>
             

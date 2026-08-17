@@ -42,6 +42,7 @@ const CreateEvent = () => {
         collegePaymentUrl: '',
         upiId: '',
         accountHolderName: '',
+        postRegistrationMessage: '',
     });
     const [sponsors, setSponsors] = useState([]);
     const [media, setMedia] = useState([]);
@@ -412,6 +413,7 @@ const CreateEvent = () => {
             collegePaymentUrl: formData.paymentMethod === 'COLLEGE_PAYMENT' ? formData.collegePaymentUrl : null,
             upiId: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.upiId : null,
             accountHolderName: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.accountHolderName : null,
+            postRegistrationMessage: formData.postRegistrationMessage || null,
         };
 
         try {
@@ -851,6 +853,22 @@ const CreateEvent = () => {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+
+                            {/* Post-Registration Message */}
+                            <div>
+                                <label className={labelCls}>
+                                    Post-Registration Message <span className="text-neutral-400 font-normal">(optional)</span>
+                                </label>
+                                <p className="text-xs text-neutral-500 mb-2">Show a WhatsApp group link, Discord invite, or any instructions after successful registration.</p>
+                                <textarea
+                                    name="postRegistrationMessage"
+                                    rows="3"
+                                    className={`${inputCls} resize-y`}
+                                    placeholder="e.g. Join our WhatsApp group: https://chat.whatsapp.com/... or Follow the next steps at..."
+                                    value={formData.postRegistrationMessage}
+                                    onChange={handleChange}
+                                />
                             </div>
 
                             {/* Required Student Information */}

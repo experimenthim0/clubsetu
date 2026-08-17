@@ -271,7 +271,7 @@ return (
         placeholder="Search by title, club, or category..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full pl-9 pr-9 py-2.5 bg-neutral-50 border-2 border-neutral-100 rounded-xl focus:bg-white focus:border-orange-600 transition-all outline-none text-sm font-medium"
+        className="w-full pl-9 pr-9 py-2.5 bg-neutral-50 border-2 border-neutral-100 rounded-xl focus:bg-white focus:border-orange-600 transition-all outline-none text-base sm:text-sm font-medium"
       />
       {searchQuery && (
         <button
@@ -284,77 +284,77 @@ return (
     </div>
 
     {/* Row 2: Status + Selects */}
-    <div className="flex flex-wrap items-center gap-2 mt-2.5">
+    <div className="flex flex-col md:flex-row md:items-center gap-2.5 mt-2.5">
       
       {/* Status buttons */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 shrink-0">
         {statusButtons.map(btn => (
           <button
             key={btn.key}
             onClick={() => setFilterStatus(btn.key)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border-2 transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded-lg border-2 whitespace-nowrap transition-all duration-150 shrink-0 ${
               filterStatus === btn.key
                 ? btn.key === 'LIVE'
-                  ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-100'
+                  ? 'bg-red-500 text-white border-red-500 shadow-sm'
                   : btn.key === 'UPCOMING'
-                    ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100'
+                    ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
                     : btn.key === 'ENDED'
                       ? 'bg-neutral-800 text-white border-neutral-800'
                       : 'bg-black text-white border-black'
-                : 'bg-white text-neutral-500 border-neutral-100 hover:border-orange-600 hover:text-orange-600'
+                : 'bg-white dark:bg-neutral-900 text-neutral-500 border-neutral-100 dark:border-neutral-800 hover:border-orange-600 hover:text-orange-600'
             }`}
           >
-            <i className={`${btn.icon} text-xs font-light`} />
+            <i className={`${btn.icon} text-xs`} />
             {btn.label}
           </button>
         ))}
       </div>
 
-      {/* Vertical divider — hidden on small screens */}
-      <div className="hidden sm:block h-6 w-px bg-neutral-100 mx-0.5" />
+      {/* Vertical divider — desktop */}
+      <div className="hidden md:block h-6 w-px bg-neutral-200 dark:bg-neutral-800 mx-0.5 shrink-0" />
 
       {/* Selects */}
-      <div className="flex flex-wrap gap-1.5 flex-1">
+      <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 flex-1 min-w-0">
         {/* Year */}
-        <div className="relative group flex-1 min-w-[100px] max-w-[130px]">
-          <i className="ri-calendar-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+        <div className="relative group min-w-0">
+          <i className="ri-calendar-line absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
           <select
             value={filterYear}
             onChange={(e) => setFilterYear(e.target.value)}
-            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+            className="w-full pl-6 pr-5 py-1.5 text-[11px] font-semibold tracking-wide border-2 border-neutral-100 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-none focus:border-orange-600 focus:bg-white dark:focus:bg-neutral-800 transition-all cursor-pointer appearance-none truncate"
           >
             <option value="ALL">All Years</option>
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
+          <i className="ri-arrow-down-s-line absolute right-1.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs pointer-events-none" />
         </div>
 
         {/* Month */}
-        <div className="relative group flex-1 min-w-[110px] max-w-[140px]">
-          <i className="ri-time-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+        <div className="relative group min-w-0">
+          <i className="ri-time-line absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
           <select
             value={filterMonth}
             onChange={(e) => setFilterMonth(e.target.value)}
-            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+            className="w-full pl-6 pr-5 py-1.5 text-[11px] font-semibold tracking-wide border-2 border-neutral-100 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-none focus:border-orange-600 focus:bg-white dark:focus:bg-neutral-800 transition-all cursor-pointer appearance-none truncate"
           >
             <option value="ALL">All Months</option>
             {monthNames.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
-          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
+          <i className="ri-arrow-down-s-line absolute right-1.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs pointer-events-none" />
         </div>
 
         {/* Club */}
-        <div className="relative group flex-1 min-w-[130px] max-w-[180px]">
-          <i className="ri-building-line absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
+        <div className="relative group min-w-0">
+          <i className="ri-building-line absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
           <select
             value={filterClub}
             onChange={(e) => setFilterClub(e.target.value)}
-            className="w-full pl-7 pr-6 py-1.5 text-[11px] font-bold uppercase tracking-wide border-2 border-neutral-100 rounded-lg bg-neutral-50 text-black focus:outline-none focus:border-orange-600 focus:bg-white transition-all cursor-pointer appearance-none"
+            className="w-full pl-6 pr-5 py-1.5 text-[11px] font-semibold tracking-wide border-2 border-neutral-100 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-none focus:border-orange-600 focus:bg-white dark:focus:bg-neutral-800 transition-all cursor-pointer appearance-none truncate"
           >
             <option value="ALL">All Clubs</option>
             {clubNames.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
-          <i className="ri-arrow-down-s-line absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 text-sm pointer-events-none" />
+          <i className="ri-arrow-down-s-line absolute right-1.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs pointer-events-none" />
         </div>
       </div>
     </div>

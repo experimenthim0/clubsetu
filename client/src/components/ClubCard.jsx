@@ -133,11 +133,11 @@ const ClubCard = ({ club }) => {
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0 flex-1">
             <span className="inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded">
               {club.category || "Student Club"}
             </span>
-            <h2 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white leading-tight">
+            <h2 className="text-xl font-bold tracking-wide text-neutral-900 dark:text-white leading-tight break-words">
               {club.clubName}
             </h2>
           </div>

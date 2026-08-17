@@ -136,9 +136,9 @@ function App() {
     return <Maintainance />;
   }
   return (
-    <NotificationProvider>
-      <SocketProvider>
-        <Router>
+    <Router>
+      <NotificationProvider>
+        <SocketProvider>
           <NetworkGuard>
             <RouteLoader>
               <Suspense fallback={<PageLoader />}>
@@ -213,9 +213,9 @@ function App() {
               </Suspense>
             </RouteLoader>
           </NetworkGuard>
-        </Router>
-      </SocketProvider>
-    </NotificationProvider>
+        </SocketProvider>
+      </NotificationProvider>
+    </Router>
   );
 }
 

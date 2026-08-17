@@ -88,6 +88,8 @@ const EventDetails = () => {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [registrationId, setRegistrationId] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registrationPaymentStatus, setRegistrationPaymentStatus] = useState(null);
+  const [postRegMessage, setPostRegMessage] = useState(null);
   const [openFAQ, setOpenFAQ] = useState(null);
 
   // Team Registration States
@@ -218,7 +220,9 @@ const EventDetails = () => {
           showNotification(`Successfully registered team ${paymentPayload.teamName}!`, 'success');
         }
         setPaymentModalOpen(false);
-        setTimeout(() => navigate('/my-events'), 1500);
+        setRegistrationPaymentStatus(res.data.paymentStatus || 'PENDING');
+        setPostRegMessage(res.data.postRegistrationMessage || event.postRegistrationMessage || null);
+        setShowSuccessModal(true);
       } else {
         // Individual registration
         const registerBody = {
@@ -240,6 +244,8 @@ const EventDetails = () => {
           showNotification('You have been added to the waitlist.', 'info');
         } else if (res.data.status === 'REGISTERED') {
           setRegistrationId(res.data.qrCode);
+          setRegistrationPaymentStatus(res.data.paymentStatus || 'SUCCESS');
+          setPostRegMessage(res.data.postRegistrationMessage || event.postRegistrationMessage || null);
           setShowSuccessModal(true);
           showNotification('Successfully registered!', 'success');
         } else {
@@ -283,6 +289,8 @@ const EventDetails = () => {
         showNotification('You have been added to the waitlist.', 'info');
       } else if (res.data.status === 'REGISTERED') {
         setRegistrationId(res.data.qrCode);
+        setRegistrationPaymentStatus(res.data.paymentStatus || 'SUCCESS');
+        setPostRegMessage(res.data.postRegistrationMessage || event.postRegistrationMessage || null);
         setShowSuccessModal(true);
         showNotification('Successfully registered!', 'success');
       } else {
@@ -443,7 +451,9 @@ const EventDetails = () => {
         showNotification(`Successfully registered team ${teamName}!`, 'success');
       }
       setTeamModalOpen(false);
-      setTimeout(() => navigate('/my-events'), 1500);
+      setRegistrationPaymentStatus('SUCCESS');
+      setPostRegMessage(res.data.postRegistrationMessage || event.postRegistrationMessage || null);
+      setShowSuccessModal(true);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Team registration failed', 'error');
     } finally {
@@ -596,7 +606,7 @@ const EventDetails = () => {
   const isOpenEvent = event.registrationType === 'none';
 
   const btnConfig = isOpenEvent
-    ? { label: 'Open Entry • No Registration Needed', cls: 'bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 dark:border-emerald-500 cursor-default', disabled: true }
+    ? { label: 'Open Entry', cls: 'bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 dark:border-emerald-500 cursor-default', disabled: true }
     : isEnded
     ? { label: showWinners ? 'View Results' : 'Event Ended', cls: showWinners ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-white border-neutral-300 dark:border-white hover:bg-neutral-300 dark:hover:bg-neutral-700 cursor-pointer' : 'bg-neutral-300 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700 opacity-80 cursor-not-allowed', disabled: !showWinners }
     : isLive
@@ -626,9 +636,19 @@ const EventDetails = () => {
     })() },
     ...(event.provideCertificate ? [{ icon: 'ri-award-line', label: 'Certificate', value: 'Provided' }] : []),
     ...(event.showWinner ? [{ icon: 'ri-trophy-line', label: 'Competition', value: 'Winners Announced' }] : []),
-    ...(event.allowedPrograms && event.allowedPrograms.length > 0 && event.allowedPrograms.length < 3
+    ...(event.allowedPrograms && event.allowedPrograms.length > 0 && event.allowedPrograms.length <= 3
       ? [{ icon: 'ri-graduation-cap-line', label: 'Open To', value: event.allowedPrograms.join(', ') }]
+      : event.allowedPrograms && event.allowedPrograms.length > 3
+      ? [{ icon: 'ri-graduation-cap-line', label: 'Open To', value: `${event.allowedPrograms.length} Programs` }]
       : [{ icon: 'ri-graduation-cap-line', label: 'Open To', value: 'All Programs' }]),
+    ...(event.allowedBranches && event.allowedBranches.length > 0 && event.allowedBranches.length <= 3
+      ? [{ icon: 'ri-git-branch-line', label: 'Branches', value: event.allowedBranches.join(', ') }]
+      : event.allowedBranches && event.allowedBranches.length > 3
+      ? [{ icon: 'ri-git-branch-line', label: 'Branches', value: `${event.allowedBranches.length} Branches Allowed` }]
+      : []),
+    ...(event.allowedYears && event.allowedYears.length > 0 && event.allowedYears.length < 4
+      ? [{ icon: 'ri-calendar-check-line', label: 'Eligible Year', value: `${event.allowedYears.join(', ')}` }]
+      : []),
   ];
 
   // ── Auto-generated FAQ with bold dynamic event information ──────────────────
@@ -725,13 +745,29 @@ const EventDetails = () => {
           )}
           {event.allowedPrograms && event.allowedPrograms.length > 0 ? (
             <>
-              Eligibility is open to:{' '}
+              Eligibility is open to programs:{' '}
               <strong className="font-bold text-black dark:text-white">
                 {event.allowedPrograms.join(', ')}
               </strong>.{' '}
             </>
           ) : (
-            <>All academic programs are welcome to register. </>
+            <>All academic programs are welcome to register.{' '}</>
+          )}
+          {event.allowedBranches && event.allowedBranches.length > 0 && (
+            <>
+              Allowed branches:{' '}
+              <strong className="font-bold text-black dark:text-white">
+                {event.allowedBranches.join(', ')}
+              </strong>.{' '}
+            </>
+          )}
+          {event.allowedYears && event.allowedYears.length > 0 && (
+            <>
+              Eligible batches:{' '}
+              <strong className="font-bold text-black dark:text-white">
+                Year {event.allowedYears.join(', ')}
+              </strong>.{' '}
+            </>
           )}
           {event.provideCertificate ? (
             <>
@@ -1588,37 +1624,104 @@ const EventDetails = () => {
         </div>
       )}
       {/* ── Registration Success Modal ── */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto ticket-backdrop-animate">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full relative overflow-hidden flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
-            <div className="relative">
-              <img src="/Success popup.svg" alt="Registration Successful" className="w-48 h-48 mx-auto animate-bounce-slow" />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
-            </div>
-            
-            <h3 className="text-xl font-black text-neutral-900 dark:text-white mt-4">Registration Successful!</h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
-              You are in! Your ticket has been confirmed. You can show the QR code below at the venue entry.
-            </p>
-            
-            {registrationId && (
-              <div className="my-5 p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-850 rounded-2xl">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1.5">Your Registration ID</p>
-                <p className="text-lg font-black text-neutral-900 dark:text-neutral-100 tracking-wider font-mono select-all">
-                  {registrationId}
-                </p>
-              </div>
-            )}
+      {showSuccessModal && (() => {
+        const isPendingPayment = registrationPaymentStatus === 'PENDING';
+        const isPaymentSuccess = !isPendingPayment;
 
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-full transition shadow-sm border-0 outline-none text-xs uppercase tracking-wider cursor-pointer"
-            >
-              Acknowledge & Close
-            </button>
+        // Helper to auto-link URLs in text
+        const renderWithLinks = (text) => {
+          if (!text) return null;
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const parts = text.split(urlRegex);
+          return parts.map((part, i) => {
+            if (urlRegex.test(part)) {
+              const isWhatsApp = part.includes('chat.whatsapp.com') || part.includes('wa.me');
+              return (
+                <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-500 font-semibold underline underline-offset-2 hover:text-orange-700 dark:hover:text-orange-400 break-all"
+                >
+                  {isWhatsApp && <i className="ri-whatsapp-line text-green-500" />}
+                  {isWhatsApp ? 'Join WhatsApp Group' : 'Open Link'}
+                  <i className="ri-external-link-line text-[10px]" />
+                </a>
+              );
+            }
+            return <span key={i}>{part}</span>;
+          });
+        };
+
+        return (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto ticket-backdrop-animate">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-sm w-full relative overflow-hidden flex flex-col p-6 text-center shadow-2xl ticket-card-animate">
+              <div className="relative">
+                <img src={isPendingPayment ? "/Success popup.svg" : "/Success popup.svg"} alt="Registration Successful" className="w-48 h-48 mx-auto animate-bounce-slow" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
+              </div>
+              
+              <h3 className="text-xl font-black text-neutral-900 dark:text-white mt-4">
+                {isPendingPayment ? 'Registration Received!' : 'Registration Successful!'}
+              </h3>
+
+              {isPendingPayment ? (
+                <>
+                  <div className="my-4 p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                      <i className="ri-time-line text-orange-600 dark:text-orange-500 text-base" />
+                      <p className="text-sm font-bold text-neutral-900 dark:text-white">Payment Under Review</p>
+                    </div>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                      The club is verifying your payment details. Once verified, your ticket will appear in your <strong className="text-neutral-800 dark:text-neutral-200 font-semibold">My Events</strong> section.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
+                    You are in! Your ticket has been confirmed. You can view your ticket in the My Events section.
+                  </p>
+                  
+                  {registrationId && (
+                    <div className="my-5 p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-1.5">Your Registration ID</p>
+                      <p className="text-lg font-black text-neutral-900 dark:text-neutral-100 tracking-wider font-mono select-all">
+                        {registrationId}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Post-Registration Message from Club */}
+              {postRegMessage && (
+                <div className="my-3 p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-left">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2 flex items-center gap-1.5">
+                    <i className="ri-information-line text-orange-600 dark:text-orange-500 text-xs" />
+                    Next Steps from Club
+                  </p>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
+                    {renderWithLinks(postRegMessage)}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 mt-2">
+                <button
+                  onClick={() => { setShowSuccessModal(false); navigate('/my-events'); }}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-full transition shadow-sm border-0 outline-none text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  Go to My Events
+                </button>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 py-2 transition-colors border-0 bg-transparent outline-none cursor-pointer"
+                >
+                  Stay on this page
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Team Registration Choice Modal ── */}
       {teamChoiceModalOpen && (

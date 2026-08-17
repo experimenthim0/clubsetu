@@ -122,7 +122,7 @@ const AppLayout = () => {
         {/* Main content area — scrollable */}
         <main
           className="flex-1 overflow-y-auto pb-20 md:pb-0 relative"
-          style={{ height: "calc(100vh - 4rem)" }}
+          style={{ height: "calc(100dvh - 4rem)" }}
         >
           <div className="min-h-full flex flex-col">
             <div className="flex-grow">
@@ -137,7 +137,7 @@ const AppLayout = () => {
       <BottomNav />
     </div>
   ) : (
-    <div className="min-h-screen flex flex-col  dark:bg-[#0a0a0a] pb-10 md:pb-0">
+    <div className="min-h-screen flex flex-col dark:bg-[#0a0a0a] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <Navbar />
       <div className="flex-1">
         <Outlet />

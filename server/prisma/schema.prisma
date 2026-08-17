@@ -167,6 +167,7 @@ model Event {
   collegePaymentUrl    String?
   upiId                String?
   accountHolderName    String?
+  postRegistrationMessage String?
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @default(now()) @updatedAt
   registrationType     String          @default("individual")

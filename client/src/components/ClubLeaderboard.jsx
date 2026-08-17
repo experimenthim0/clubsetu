@@ -171,23 +171,23 @@ const ClubLeaderboard = () => {
                   </div>
 
                   {/* Counter */}
-                  <div className="text-right pr-2">
-  <div className="text-2xl font-black text-black leading-none tabular-nums tracking-tighter">
-    {club.score}
-  </div>
+                  <div className="text-right pr-1 sm:pr-2 shrink-0">
+                    <div className="text-xl sm:text-2xl font-black text-black leading-none tabular-nums tracking-tighter">
+                      {club.score}
+                    </div>
 
-  <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
-    Leaderboard Score
-  </div>
+                    <div className="text-[8px] sm:text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-0.5">
+                      Score
+                    </div>
 
-  <div className="mt-2 text-[11px] text-neutral-500 font-semibold">
-     Events: {club.eventCount}
-  </div>
+                    <div className="mt-1 text-[10px] sm:text-[11px] text-neutral-500 font-semibold">
+                       Events: {club.eventCount}
+                    </div>
 
-  <div className="text-[11px] text-neutral-500 font-semibold">
-     Participants:  {club.participantCount} 
-  </div>
-</div>
+                    <div className="text-[10px] sm:text-[11px] text-neutral-500 font-semibold">
+                       Parts: {club.participantCount} 
+                    </div>
+                  </div>
                 </div>
 
                 {/* Quick View - Reveals on Hover */}

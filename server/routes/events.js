@@ -93,6 +93,7 @@ const eventSchema = z.object({
     paymentInstructions: z.string().optional().nullable(),
     collegePaymentUrl: z.string().url().optional().nullable().or(z.literal("")),
     upiId: z.string().optional().nullable(),
+    postRegistrationMessage: z.string().optional().nullable(),
     accountHolderName: z.string().optional().nullable(),
     sponsors: z.array(z.object({
       name: z.string().min(1),
@@ -723,6 +724,7 @@ router.post("/", verifyToken, requirePermission(PERMISSIONS.EVENT_CREATE), valid
       collegePaymentUrl,
       upiId,
       accountHolderName,
+      postRegistrationMessage,
     } = req.body;
 
     if (!req.user.clubId && req.user.role !== "admin") {
@@ -781,6 +783,7 @@ router.post("/", verifyToken, requirePermission(PERMISSIONS.EVENT_CREATE), valid
         collegePaymentUrl: collegePaymentUrl || null,
         upiId: upiId || null,
         accountHolderName: accountHolderName || null,
+        postRegistrationMessage: postRegistrationMessage || null,
         slug: await slugifyUnique(title, 'event', 'slug'),
         reviewStatus: "PENDING",
         sponsors: { createMany: { data: (sponsors || []).map(s => ({ id: createObjectId(), ...s })) } },
@@ -924,7 +927,11 @@ router.post(
           student.program &&
           !event.allowedPrograms.includes(student.program)
         ) {
-          return res.status(403).json({ message: "Ineligible program." });
+          return res.status(403).json({
+            message: `Ineligible program. This event is open only to [${event.allowedPrograms.join(", ")}] students (your program: ${student.program}).`,
+            allowedPrograms: event.allowedPrograms,
+            userProgram: student.program,
+          });
         }
 
         if (
@@ -932,7 +939,11 @@ router.post(
           student.year &&
           !event.allowedYears.includes(student.year)
         ) {
-          return res.status(403).json({ message: "Ineligible year." });
+          return res.status(403).json({
+            message: `Ineligible year. This event is open only to Year [${event.allowedYears.join(", ")}] students (your year: ${student.year}).`,
+            allowedYears: event.allowedYears,
+            userYear: student.year,
+          });
         }
 
         if (
@@ -940,7 +951,11 @@ router.post(
           student.branch &&
           !event.allowedBranches.includes(student.branch)
         ) {
-          return res.status(403).json({ message: "Ineligible branch." });
+          return res.status(403).json({
+            message: `Ineligible branch. This event is open only to [${event.allowedBranches.join(", ")}] branch students (your branch: ${student.branch}).`,
+            allowedBranches: event.allowedBranches,
+            userBranch: student.branch,
+          });
         }
 
         const existing = await prisma.participation.findFirst({
@@ -1019,7 +1034,13 @@ router.post(
         return created;
       });
 
-      res.status(201).json({ message: "Registration successful", status: participation.status, qrCode: participation.qrCode });
+      res.status(201).json({
+        message: "Registration successful",
+        status: participation.status,
+        qrCode: participation.qrCode,
+        paymentStatus: participation.paymentStatus,
+        postRegistrationMessage: event.postRegistrationMessage || null
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -1157,6 +1178,7 @@ router.put("/:id", verifyToken, requirePermission(PERMISSIONS.EVENT_UPDATE), val
       "showWinner",
       "provideCertificate",
       "certificateTemplate",
+      "postRegistrationMessage",
     ];
 
     const updates = {};

@@ -724,22 +724,50 @@ const MyEvents = () => {
                             <i className="ri-edit-2-line mr-1" /> Edit Payment Info
                           </button>
                         )}
-                        <button
-                          onClick={async () => { 
-                            setSelectedTicket(reg); 
-                            setTicketModalOpen(true);
-                            try {
-                              const payloadToEncode = reg.qrPayload || reg.qrCode;
-                              const url = await QRCode.toDataURL(payloadToEncode, { width: 400, margin: 2 });
-                              setQrDataUrl(url);
-                            } catch (err) {
-                              console.error(err);
-                            }
-                          }}
-                          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm cursor-pointer border-0 outline-none"
-                        >
-                          Show Ticket
-                        </button>
+                        {(() => {
+                          const isPaidEvent = event.paymentMethod && event.paymentMethod !== 'FREE';
+                          const isTeamMember = reg.team && reg.team.leaderId !== (user?.id || user?._id);
+                          const canShowTicket = !isPaidEvent || isTeamMember || ['APPROVED', 'SUCCESS'].includes(reg.paymentStatus);
+
+                          if (canShowTicket) {
+                            return (
+                              <button
+                                onClick={async () => { 
+                                  setSelectedTicket(reg); 
+                                  setTicketModalOpen(true);
+                                  try {
+                                    const payloadToEncode = reg.qrPayload || reg.qrCode;
+                                    const url = await QRCode.toDataURL(payloadToEncode, { width: 400, margin: 2 });
+                                    setQrDataUrl(url);
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm cursor-pointer border-0 outline-none"
+                              >
+                                Show Ticket
+                              </button>
+                            );
+                          }
+
+                          if (isPaidEvent && reg.paymentStatus === 'PENDING') {
+                            return (
+                              <span className="px-3 py-1.5 text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 whitespace-nowrap">
+                                <i className="ri-time-line mr-1" />Ticket after payment approval
+                              </span>
+                            );
+                          }
+
+                          if (isPaidEvent && reg.paymentStatus === 'REJECTED') {
+                            return (
+                              <span className="px-3 py-1.5 text-[10px] font-semibold rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 whitespace-nowrap">
+                                <i className="ri-close-circle-line mr-1" />Payment rejected — update details
+                              </span>
+                            );
+                          }
+
+                          return null;
+                        })()}
  
                         {!isPast && (
                           (event.paymentMethod && event.paymentMethod !== 'FREE') ? (

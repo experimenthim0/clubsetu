@@ -235,11 +235,9 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
     );
   };
 
-  // Mobile: results inside the container (no overflow issue)
-  // Desktop: results OUTSIDE the overflow-hidden container as a sibling
   return (
     <div
-      className={`search-bar-wrapper ${isMobile ? "search-bar-mobile" : "search-bar-desktop"} ${
+      className={`search-bar-wrapper ${
         isOpen ? "search-bar-open" : "search-bar-closed"
       }`}
     >
@@ -266,23 +264,25 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
               <i className="ri-close-line" />
             </button>
           )}
-          {!isMobile && (
-            <button
-              onClick={onClose}
-              className="search-close-btn"
-              aria-label="Close search"
-            >
-              <kbd className="search-kbd">ESC</kbd>
-            </button>
-          )}
+          <button
+            onClick={onClose}
+            className="search-close-btn hidden sm:flex"
+            aria-label="Close search"
+          >
+            <kbd className="search-kbd">ESC</kbd>
+          </button>
+          <button
+            onClick={onClose}
+            className="search-close-btn sm:hidden flex p-0.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+            aria-label="Close search"
+          >
+            <i className="ri-close-line text-lg" />
+          </button>
         </div>
 
-        {/* Mobile: render results inside container */}
-        {isMobile && renderResults()}
+        {/* Render Results */}
+        {renderResults()}
       </div>
-
-      {/* Desktop: render results OUTSIDE the overflow-hidden container */}
-      {!isMobile && renderResults()}
     </div>
   );
 };

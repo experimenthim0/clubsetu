@@ -271,7 +271,7 @@ const Profile = () => {
       </div>
 
     {/* Portals & Delegated Tools Section */}
-    <div className="mb-12 p-6 md:p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm">
+    {/* <div className="mb-12 p-6 md:p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-sm">
       <h2 className="text-lg font-bold text-neutral-900 dark:text-white tracking-wider mb-4 flex items-center gap-2">
         <i className="ri-shield-keyhole-line text-orange-600 dark:text-orange-500" /> Campus Portals & Management
       </h2>
@@ -311,7 +311,7 @@ const Profile = () => {
           </div>
         </Link>
       </div>
-    </div>
+    </div> */}
 
     {/* Enrolled Clubs Section */}
     {isStudentAccount && (

@@ -157,6 +157,7 @@ router.post(
 
       const teamId = createObjectId();
       let leaderRegStatus = "REGISTERED";
+      let paymentStatusValue = "SUCCESS";
 
       await prisma.$transaction(async (tx) => {
         // Lock event row for safe registration counts
@@ -193,7 +194,7 @@ router.post(
         });
 
         const isPaid = latestEvent.entryFee > 0 || (latestEvent.registrationFee > 0 && latestEvent.paymentMethod !== 'FREE');
-        const paymentStatusValue = latestEvent.paymentMethod === 'MANUAL_TRANSACTION' ? 'PENDING' : (latestEvent.paymentMethod === 'COLLEGE_PAYMENT' ? 'PENDING' : 'SUCCESS');
+        paymentStatusValue = latestEvent.paymentMethod === 'MANUAL_TRANSACTION' ? 'PENDING' : (latestEvent.paymentMethod === 'COLLEGE_PAYMENT' ? 'PENDING' : 'SUCCESS');
         await tx.participation.create({
           data: {
             id: createObjectId(),
@@ -291,6 +292,8 @@ router.post(
         message: "Team registration successful. Invitations sent to teammates.",
         teamId,
         status: leaderRegStatus,
+        paymentStatus: paymentStatusValue,
+        postRegistrationMessage: event.postRegistrationMessage || null,
       });
     } catch (err) {
       console.error("Team registration error:", err);

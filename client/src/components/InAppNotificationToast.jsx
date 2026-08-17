@@ -43,7 +43,11 @@ const InAppNotificationToast = ({ toast, onClose }) => {
 
   const handleNavigate = () => {
     if (toast?.url) {
-      navigate(toast.url);
+      try {
+        navigate(toast.url);
+      } catch (err) {
+        window.location.href = toast.url;
+      }
     }
     handleClose();
   };

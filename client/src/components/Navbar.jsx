@@ -21,20 +21,20 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 const LostFoundIcon = ({ size = 24, ...props }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    fill="none" 
-    viewBox="0 0 14 14" 
-    height={size} 
-    width={size} 
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 14 14"
+    height={size}
+    width={size}
     {...props}
   >
     <g id="lost-and-found">
-      <path 
-        fill="currentColor" 
-        fillRule="evenodd" 
-        d="M5.763 2.263A1.75 1.75 0 0 1 8.75 3.5h-3.5c0 -0.464 0.184 -0.91 0.513 -1.237ZM3.75 3.5a3.25 3.25 0 0 1 6.5 0h1.25A2.5 2.5 0 0 1 14 6v5.5a2.5 2.5 0 0 1 -2.5 2.5h-9A2.5 2.5 0 0 1 0 11.5V6a2.5 2.5 0 0 1 2.5 -2.5h1.25Zm2.915 3.067A0.875 0.875 0 1 1 7 8.25a0.625 0.625 0 0 0 -0.625 0.625v1a0.625 0.625 0 1 0 1.25 0v-0.469a2.125 2.125 0 1 0 -2.75 -2.031 0.625 0.625 0 1 0 1.25 0 0.875 0.875 0 0 1 0.54 -0.808Zm0.337 6.308a0.75 0.75 0 1 1 0 -1.5 0.75 0.75 0 0 1 0 1.5Z" 
-        clipRule="evenodd" 
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M5.763 2.263A1.75 1.75 0 0 1 8.75 3.5h-3.5c0 -0.464 0.184 -0.91 0.513 -1.237ZM3.75 3.5a3.25 3.25 0 0 1 6.5 0h1.25A2.5 2.5 0 0 1 14 6v5.5a2.5 2.5 0 0 1 -2.5 2.5h-9A2.5 2.5 0 0 1 0 11.5V6a2.5 2.5 0 0 1 2.5 -2.5h1.25Zm2.915 3.067A0.875 0.875 0 1 1 7 8.25a0.625 0.625 0 0 0 -0.625 0.625v1a0.625 0.625 0 1 0 1.25 0v-0.469a2.125 2.125 0 1 0 -2.75 -2.031 0.625 0.625 0 1 0 1.25 0 0.875 0.875 0 0 1 0.54 -0.808Zm0.337 6.308a0.75 0.75 0 1 1 0 -1.5 0.75 0.75 0 0 1 0 1.5Z"
+        clipRule="evenodd"
       />
     </g>
   </svg>
@@ -62,8 +62,6 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const searchWrapperRef = useRef(null);
 
   const { notifications, unreadCount, setUnreadCount, setNotifications } = useSocket() || {};
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
@@ -85,7 +83,6 @@ const Navbar = () => {
     setMobileOpen(false);
     setDropdownOpen(false);
     setSearchOpen(false);
-    setMobileSearchOpen(false);
   }, [location.pathname]);
 
   // ── Click-outside → close dropdown ───────────────────────────────────────
@@ -95,17 +92,11 @@ const Navbar = () => {
         setDropdownOpen(false);
       }
       if (
-        notifDropdownRef.current && 
+        notifDropdownRef.current &&
         !notifDropdownRef.current.contains(e.target) &&
         (!notifMobileDropdownRef.current || !notifMobileDropdownRef.current.contains(e.target))
       ) {
         setNotifDropdownOpen(false);
-      }
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(e.target)
-      ) {
-        setSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -118,7 +109,7 @@ const Navbar = () => {
       try {
         await axios.put(`${API_URL}/api/notifications/read-all`);
         setUnreadCount(0);
-        setNotifications((prev) => prev.map(n => ({...n, readBy: [...(n.readBy || []), user._id || user.id]})));
+        setNotifications((prev) => prev.map(n => ({ ...n, readBy: [...(n.readBy || []), user._id || user.id] })));
       } catch (err) {
         console.error(err);
       }
@@ -131,7 +122,6 @@ const Navbar = () => {
       if (e.key === "Escape") {
         setDropdownOpen(false);
         setSearchOpen(false);
-        setMobileSearchOpen(false);
       }
     };
     document.addEventListener("keydown", handler);
@@ -164,7 +154,7 @@ const Navbar = () => {
     localStorage.removeItem("role");
     localStorage.removeItem("token");
     // Clear the server-set httpOnly cookie by calling logout endpoint
-    axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
+    axios.post(`${API_URL}/api/auth/logout`).catch(() => { });
     // Also clear cookie client-side as fallback
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "/";
@@ -185,44 +175,42 @@ const Navbar = () => {
 
   // ── Shared nav link style ─────────────────────────────────────────────────
   const navLinkCls = (path) =>
-    `relative py-1 text-[14px] font-medium tracking-widest transition-all duration-300 group ${
-      isActive(path)
-        ? "text-orange-600 dark:text-orange-500"
-        : "text-neutral-850 dark:text-neutral-200 hover:text-orange-600 dark:hover:text-orange-500"
+    `relative py-1 text-[14px] font-medium tracking-widest transition-all duration-300 group ${isActive(path)
+      ? "text-orange-600 dark:text-orange-500"
+      : "text-neutral-850 dark:text-neutral-200 hover:text-orange-600 dark:hover:text-orange-500"
     }`;
 
 
-    // format date and time
-    const formatDate = (dateString) => {
-  const date = new Date(dateString);
+  // format date and time
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
 
-  if (isNaN(date.getTime())) {
-    return "Invalid Date";
-  }
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
 
-  const day = date.getDate();
+    const day = date.getDate();
 
-  const month = date.toLocaleString('default', { month: 'short' });
+    const month = date.toLocaleString('default', { month: 'short' });
 
-  const year = date.getFullYear();
+    const year = date.getFullYear();
 
-  const time = date.toLocaleString('default', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+    const time = date.toLocaleString('default', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
 
-  return `${time}, ${day} ${month} ${year} `;
-};
+    return `${time}, ${day} ${month} ${year} `;
+  };
 
 
   return (
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white/30 dark:bg-[#0a0a0a]/75 border-b border-transparent backdrop-blur-md transition-all duration-300 myfont ${
-          scrolled ? "shadow-sm border-neutral-100/80 dark:border-white/10" : ""
-        }`}
+        className={`sticky top-0 z-50 bg-white/30 dark:bg-[#0a0a0a]/75 border-b border-transparent backdrop-blur-md transition-all duration-300 myfont ${scrolled ? "shadow-sm border-neutral-100/80 dark:border-white/10" : ""
+          }`}
       >
         {/* Orange top accent on scroll */}
         {/* {scrolled && (
@@ -232,20 +220,20 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-5 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* ── Logo ─────────────────────────────────────────────────────── */}
           <div className="flex items-center sm:gap-5 gap-auto">
-          <img src="nitjlogo.png" alt="" className="w-11 h-12"/>
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 shrink-0 group logofont hidden sm:block " 
-          >
-            <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none">
-              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
-            </span>
-          </Link>
+            <img src="nitjlogo.png" alt="" className="w-11 h-12" />
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 shrink-0 group logofont hidden sm:block "
+            >
+              <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none">
+                Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+              </span>
+            </Link>
           </div>
 
-           <Link
+          <Link
             to="/"
-            className="flex items-center gap-2.5 shrink-0 group logofont sm:hidden block" 
+            className="flex items-center gap-2.5 shrink-0 group logofont sm:hidden block"
           >
             <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none">
               Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
@@ -267,35 +255,32 @@ const Navbar = () => {
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/events") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
             <Link to="/lost-found" className={navLinkCls("/lost-found")}>
-              Lost & Found
+              L&F
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 dark:bg-orange-500 transform transition-transform duration-300 origin-left ${isActive("/lost-found") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
             </Link>
-            <Link to="/team" className={navLinkCls("/team")}>
+            {/* <Link to="/team" className={navLinkCls("/team")}>
               Team
               <span className={`absolute bottom-0 left-0 w-full h-[2px] bg-orange-600 transform transition-transform duration-300 origin-left ${isActive("/team") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
-            </Link>
+            </Link> */}
           </div>
 
           {/* ── Desktop right actions ─────────────────────────────────────── */}
           <div className="hidden md:flex items-center gap-2">
             <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-800" />
 
-            {/* Search */}
-            <div className="flex items-center" ref={searchWrapperRef}>
-              <button
-                onClick={() => setSearchOpen((prev) => !prev)}
-                className="search-trigger-btn text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                aria-label="Search"
-                title="Search (Ctrl+K)"
-              >
-                <i className={searchOpen ? "ri-close-line" : "ri-search-line"} />
-              </button>
-              <SearchBar
-                isOpen={searchOpen}
-                onClose={() => setSearchOpen(false)}
-                isMobile={false}
-              />
-            </div>
+            {/* Search Trigger */}
+            <button
+              onClick={() => {
+                setSearchOpen((prev) => !prev);
+                setDropdownOpen(false);
+                setNotifDropdownOpen(false);
+              }}
+              className="p-2 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
+              aria-label="Search"
+              title="Search (Ctrl+K)"
+            >
+              <i className={`${searchOpen ? "ri-close-line" : "ri-search-line"} text-lg`} />
+            </button>
 
             {/* Theme toggle */}
             <button
@@ -309,9 +294,9 @@ const Navbar = () => {
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
               )}
             </button>
 
@@ -335,8 +320,8 @@ const Navbar = () => {
                       onClick={handleNotificationClick}
                       className="relative p-2 rounded-sm text-neutral-700 dark:text-neutral-300 border-transparent  transition-colors duration-150 cursor-pointer"
                     >
-                     {/* <i className="ri-notification-3-line text-lg" /> */}
-                     <BellIcon />
+                      {/* <i className="ri-notification-3-line text-lg" /> */}
+                      <BellIcon />
                       {unreadCount > 0 && (
                         <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border border-white dark:border-[#0a0a0a]"></span>
                       )}
@@ -348,13 +333,13 @@ const Navbar = () => {
                         <div className="px-4 py-2 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
                           <h3 className="text-[12px] font-black tracking-widest text-neutral-800 dark:text-neutral-200">Notifications</h3>
                           <Link
-                          to="/notifications"
-                          onClick={() => setNotifDropdownOpen(false)}
-                          className="flex items-center gap-1 text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 transition-colors text-[12px]"
-                        >
-                          See All
-                          <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
-                        </Link>
+                            to="/notifications"
+                            onClick={() => setNotifDropdownOpen(false)}
+                            className="flex items-center gap-1 text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 transition-colors text-[12px]"
+                          >
+                            See All
+                            <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
+                          </Link>
                         </div>
                         <div className="divide-y divide-neutral-100 dark:divide-neutral-850">
                           {notifications?.length > 0 ? (
@@ -379,7 +364,7 @@ const Navbar = () => {
                             </div>
                           )}
                         </div>
-                        
+
                       </div>
                     )}
                   </div>
@@ -397,9 +382,8 @@ const Navbar = () => {
                       {user.name?.split(" ")[0]}
                     </span>
                     <i
-                      className={`ri-arrow-down-s-line text-base text-neutral-500 dark:text-neutral-400 transition-transform duration-200 ${
-                        dropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`ri-arrow-down-s-line text-base text-neutral-500 dark:text-neutral-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -462,7 +446,7 @@ const Navbar = () => {
                               </Link>
                             )}
 
-                            <Link
+                            {/* <Link
                               to="/event-staff"
                               onClick={() => setDropdownOpen(false)}
                               className="flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-bold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
@@ -470,7 +454,7 @@ const Navbar = () => {
                             >
                               <Shield size={18} className="text-neutral-500 dark:text-neutral-400" />
                               Event Staff Portal
-                            </Link>
+                            </Link> */}
                           </>
                         )}
                       </div>
@@ -486,7 +470,7 @@ const Navbar = () => {
                           <LogoutIcon size={18} >
                             Logout
                           </LogoutIcon>
-                           
+
                         </button>
                       </div>
                     </div>
@@ -507,11 +491,11 @@ const Navbar = () => {
                   className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-orange-600 dark:border-neutral-100 text-[13px] font-bold tracking-widest rounded-full hover:bg-black dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
                 >
                   <ArrowRightIcon size={18}>
-                  <p className="font-semibold">
+                    <p className="font-semibold">
 
-                  Register
-                  </p>
-                    </ArrowRightIcon>
+                      Register
+                    </p>
+                  </ArrowRightIcon>
                 </Link>
               </>
             )}
@@ -522,13 +506,13 @@ const Navbar = () => {
             {/* Mobile Search Icon */}
             <button
               onClick={() => {
-                setMobileSearchOpen((prev) => !prev);
+                setSearchOpen((prev) => !prev);
                 setNotifDropdownOpen(false);
               }}
               className="relative p-1.5 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
               aria-label="Search"
             >
-              <i className={`${mobileSearchOpen ? 'ri-close-line' : 'ri-search-line'} text-[20px]`} />
+              <i className={`${searchOpen ? 'ri-close-line' : 'ri-search-line'} text-[20px]`} />
             </button>
 
             {user ? (
@@ -537,7 +521,7 @@ const Navbar = () => {
                   <button
                     onClick={() => {
                       handleNotificationClick();
-                      setMobileSearchOpen(false);
+                      setSearchOpen(false);
                     }}
                     className="relative p-1.5 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
                   >
@@ -549,9 +533,21 @@ const Navbar = () => {
 
                   {/* Mobile Notification Dropdown */}
                   {notifDropdownOpen && (
-                    <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800 rounded-sm z-50 shadow-lg">
+                    <div className="fixed top-16 left-5 right-5 max-h-96 overflow-y-auto bg-white dark:bg-neutral-900 border-2 border-gray-200 dark:border-neutral-800 rounded-t-4xl rounded-sm z-50 shadow-lg">
                       <div className="px-4 py-3 border-b-2 border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-neutral-100 dark:bg-neutral-950 sticky top-0 z-10">
                         <h3 className="text-[14px] font-black tracking-widest text-black dark:text-neutral-200">Notifications</h3>
+                        <Link
+                          to="/notifications"
+                          onClick={() => {
+                            setNotifDropdownOpen(false);
+                            setMobileOpen(false);
+                          }}
+                          className="text-xs font-medium tracking-widest text-orange-600 dark:text-orange-500 
+                        hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
+                        >
+                          See all
+                          <i className="ri-arrow-right-line text-sm text-orange-600 dark:text-orange-500 transition-transform duration-200" />
+                        </Link>
                       </div>
                       <div className="divide-y divide-neutral-100 dark:divide-neutral-850">
                         {notifications?.length > 0 ? (
@@ -559,7 +555,7 @@ const Navbar = () => {
                             <div key={idx} className={`p-4 transition-colors ${!notif.readBy?.includes(user?._id || user?.id) ? 'bg-orange-50 dark:bg-orange-500/10' : 'bg-transparent'}`}>
                               <div className="flex justify-between items-start mb-1">
                                 <span className="text-[10px] font-medium text-orange-600 dark:text-orange-500 tracking-widest">{notif.sender?.clubName || "CampusNode"}</span>
-                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(notif.createdAt) } </span>
+                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{formatDate(notif.createdAt)} </span>
                               </div>
                               <h4 className="text-[13px] font-bold text-black dark:text-neutral-100 mb-1">{notif.title}</h4>
                               <p className="text-[12px] text-neutral-600 dark:text-neutral-400">{notif.message}</p>
@@ -571,38 +567,28 @@ const Navbar = () => {
                           </div>
                         )}
                       </div>
-                      <Link
-                        to="/notifications"
-                        onClick={() => {
-                          setNotifDropdownOpen(false);
-                          setMobileOpen(false);
-                        }}
-                        className="block w-full py-2 text-center flex items-center justify-center gap-1 text-[13px] font-medium tracking-widest text-orange-600 dark:text-orange-500 border-t-2 border-gray-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-950 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
-                      >
-                        See all notifications
-                        <i className="ri-arrow-right-line text-base text-orange-600 dark:text-orange-500 transition-transform duration-200" />
-                      </Link>
+
                     </div>
                   )}
                 </div>
               )
             ) : (
               <button
-              onClick={() => {
-                document.documentElement.classList.add('dark-transition');
-                toggleTheme();
-                setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
-              }}
-              className="p-2 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
-              aria-label="Toggle dark mode"
-              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {isDark ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-              )}
-            </button>
+                onClick={() => {
+                  document.documentElement.classList.add('dark-transition');
+                  toggleTheme();
+                  setTimeout(() => document.documentElement.classList.remove('dark-transition'), 400);
+                }}
+                className="p-2 rounded-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer"
+                aria-label="Toggle dark mode"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+                )}
+              </button>
             )}
 
             {/* Hamburger (Removed for BottomNav PWA style) */}
@@ -612,17 +598,16 @@ const Navbar = () => {
 
       </nav>
 
-      {/* ── Mobile Search Bar (below navbar with dropdown animation) ──── */}
+      {/* ── Search Bar (below navbar with dropdown animation) ──── */}
       <SearchBar
-        isOpen={mobileSearchOpen}
-        onClose={() => setMobileSearchOpen(false)}
-        isMobile={true}
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
       />
 
-      {/* ── Mobile Search Overlay ──────────────────────────────────────── */}
+      {/* ── Search Overlay ──────────────────────────────────────── */}
       <div
-        className={`search-overlay ${mobileSearchOpen ? 'search-overlay-visible' : ''} md:hidden`}
-        onClick={() => setMobileSearchOpen(false)}
+        className={`search-overlay ${searchOpen ? 'search-overlay-visible' : ''}`}
+        onClick={() => setSearchOpen(false)}
       />
     </>
   );

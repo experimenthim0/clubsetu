@@ -136,7 +136,7 @@ const BottomNav = () => {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 z-50 w-full pb-[env(safe-area-inset-bottom)] bg-white/90 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden fixed bottom-0 left-0 z-50 w-full pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-t border-gray-200 dark:border-neutral-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item, index) => {
             const Icon = item.icon;
@@ -149,14 +149,14 @@ const BottomNav = () => {
                 )}
                 <div
                   className={`p-1.5 rounded-full transition-transform duration-300 ${
-                    active ? "scale-110 text-orange-600 bg-orange-50" : "text-neutral-500 hover:text-orange-500"
+                    active ? "scale-110 text-orange-600 bg-orange-50 dark:bg-orange-950/40" : "text-neutral-500 hover:text-orange-500"
                   }`}
                 >
                   <Icon size={24} strokeWidth={active ? 2.5 : 2} />
                 </div>
                 <span
                   className={`text-[10px] font-medium tracking-wide transition-colors duration-300 ${
-                    active ? "text-orange-600" : "text-neutral-500"
+                    active ? "text-orange-600 dark:text-orange-500" : "text-neutral-500 dark:text-neutral-400"
                   }`}
                 >
                   {item.label}
@@ -203,20 +203,20 @@ const BottomNav = () => {
           {/* Drawer Content */}
           <div
             ref={drawerRef}
-            className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-gray-200 transition-transform duration-300 ease-in-out md:hidden pb-[env(safe-area-inset-bottom)] max-h-[85vh] flex flex-col ${
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-neutral-900 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-neutral-800 transition-transform duration-300 ease-in-out md:hidden pb-[env(safe-area-inset-bottom)] max-h-[85dvh] flex flex-col ${
               drawerOpen ? "translate-y-0" : "translate-y-full"
             }`}
           >
             {/* Drawer Handle */}
             <div className="w-full flex justify-center pt-3 pb-2" onClick={() => setDrawerOpen(false)}>
-              <div className="w-12 h-1.5 bg-neutral-300 rounded-full" />
+              <div className="w-12 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full" />
             </div>
 
-            <div className="flex justify-between items-center px-6 pb-4 border-b border-neutral-100">
+            <div className="flex justify-between items-center px-6 pb-4 border-b border-neutral-100 dark:border-neutral-800">
               <div>
                 <p className="text-[11px] font-bold tracking-widest text-neutral-400 mb-0.5">Logged in as</p>
-                <p className="text-base font-black text-black">{user.name}</p>
-                <p className="text-[11px] tracking-widest text-orange-600 font-bold mt-0.5">
+                <p className="text-base font-black text-black dark:text-white">{user.name}</p>
+                <p className="text-[11px] tracking-widest text-orange-600 dark:text-orange-500 font-bold mt-0.5">
                   {role === "club"
                     ? "Club Account"
                     : role === "facultyCoordinator"
@@ -226,14 +226,14 @@ const BottomNav = () => {
                     : "Student"}
                 </p>
               </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-2 text-neutral-500 hover:text-black rounded-full hover:bg-neutral-100 transition-colors">
+              <button onClick={() => setDrawerOpen(false)} className="p-2 text-neutral-500 hover:text-black dark:hover:text-white rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                 <X size={20} />
               </button>
             </div>
 
             <div className="overflow-y-auto px-2 py-1 flex-1">
-              <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                   <User size={18} />
                 </div>
                 My Profile
@@ -306,8 +306,8 @@ const BottomNav = () => {
                       </p>
 
                       {(m.role === "CLUB_HEAD" || m.role === "COORDINATOR" || m.role === "facultyCoordinator" || m.canEditEvents || m.canCheckRegistration || m.canTakeAttendance || m.permissions?.canEditEvents || m.permissions?.canCheckRegistration || m.permissions?.canTakeAttendance) && (
-                        <Link to={`/club-events/${m.clubId}`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
+                        <Link to={`/club-events/${m.clubId}`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                             <CalendarCogIcon size={18} />
                           </div>
                           Club Events
@@ -315,8 +315,8 @@ const BottomNav = () => {
                       )}
 
                       {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
-                        <Link to={`/club/${m.clubId}/team`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
+                        <Link to={`/club/${m.clubId}/team`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                             <User size={18} />
                           </div>
                           Team Management
@@ -325,20 +325,20 @@ const BottomNav = () => {
 
                       {(m.role === "CLUB_HEAD" || m.role === "facultyCoordinator") && (
                         <>
-                          <Link to="/payments" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
+                          <Link to="/payments" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-black dark:text-neutral-200">
                               <IndianRupeeIcon size={18} />
                             </div>
                             Payments
                           </Link>
-                          <Link to="/send-notification" className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
+                          <Link to="/send-notification" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-black dark:text-neutral-200">
                               <ConciergeBellIcon size={18} />
                             </div>
                             Notifications
                           </Link>
-                          <Link to={`/club/edit/${m.clubId}`} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-100 rounded-lg transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-black">
+                          <Link to={`/club/edit/${m.clubId}`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center text-black dark:text-neutral-200">
                               <LayoutGridIcon size={18} />
                             </div>
                             Club Page
@@ -351,23 +351,23 @@ const BottomNav = () => {
                   {/* Faculty Coordinator specific links */}
                   {role === "facultyCoordinator" && user.clubId && (!user.memberships || !user.memberships.find((m) => m.clubId === user.clubId)) && (
                     <div className="mb-4">
-                      <p className="px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/50 mb-2">
+                      <p className="px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-orange-600 bg-orange-50/50 dark:bg-orange-950/20 mb-2">
                         Faculty Review
                       </p>
-                      <Link to="/my-events" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
+                      <Link to="/my-events" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                           <CalendarCogIcon size={18} />
                         </div>
                         Review Events
                       </Link>
-                      <Link to={`/club/${user.clubId}/team`} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
+                      <Link to={`/club/${user.clubId}/team`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                           <User size={18} />
                         </div>
                         Team Management
                       </Link>
-                      <Link to={`/club/edit/${user.clubId}`} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black hover:bg-neutral-50 rounded-lg transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600">
+                      <Link to={`/club/edit/${user.clubId}`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
                           <LayoutGridIcon size={18} />
                         </div>
                         Club Page

@@ -44,6 +44,7 @@ const EditEvent = () => {
         collegePaymentUrl: '',
         upiId: '',
         accountHolderName: '',
+        postRegistrationMessage: '',
     });
     const isEventCompleted = formData.endTime && new Date(formData.endTime) < new Date();
     const [sponsors, setSponsors] = useState([]);
@@ -134,6 +135,7 @@ const EditEvent = () => {
                         collegePaymentUrl: event.collegePaymentUrl || '',
                         upiId: event.upiId || '',
                         accountHolderName: event.accountHolderName || '',
+                        postRegistrationMessage: event.postRegistrationMessage || '',
                     });
                     setIsFree(!event.paymentMethod || event.paymentMethod === 'FREE');
                     setIsUnlimited(unlimited);
@@ -580,6 +582,7 @@ const EditEvent = () => {
             collegePaymentUrl: formData.paymentMethod === 'COLLEGE_PAYMENT' ? formData.collegePaymentUrl : null,
             upiId: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.upiId : null,
             accountHolderName: formData.paymentMethod === 'MANUAL_TRANSACTION' ? formData.accountHolderName : null,
+            postRegistrationMessage: formData.postRegistrationMessage || null,
         };
 
         setIsSaving(true);
@@ -1030,6 +1033,22 @@ const EditEvent = () => {
                                 )}
                             </div>
 
+                            {/* Post-Registration Message */}
+                            <div>
+                                <label className={labelCls}>
+                                    Post-Registration Message <span className="text-neutral-400 font-normal">(optional)</span>
+                                </label>
+                                <p className="text-xs text-neutral-500 mb-2">Show a WhatsApp group link, Discord invite, or any instructions after successful registration.</p>
+                                <textarea
+                                    name="postRegistrationMessage"
+                                    rows="3"
+                                    className={`${inputCls} resize-y`}
+                                    placeholder="e.g. Join our WhatsApp group: https://chat.whatsapp.com/... or Follow the next steps at..."
+                                    value={formData.postRegistrationMessage}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
                             {/* Required Student Information */}
                             <div>
                                 <label className={labelCls}>Required Student Information</label>
@@ -1315,13 +1334,13 @@ const EditEvent = () => {
                             </div>
 
                             {/* Winners Section Note */}
-                            <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-5 rounded-2xl flex items-center justify-between gap-4">
+                            <div className="mt-6  dark:bg-amber-950/20  p-5 rounded-2xl flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-orange-600 text-white rounded-xl shadow-sm">
+                                    <div className="p-2.5 text-orange-600">
                                         <i className="ri-trophy-line text-xl" />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
+                                        <h4 className="text-sm font-bold text-neutral-900 ">
                                             Winner Announcement Tool
                                         </h4>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">

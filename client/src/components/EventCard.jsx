@@ -223,15 +223,15 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                                 </div>
                                 {/* Winner Rows */}
                                 {event.winners.map((winner, index) => (
-                                    <div key={index} className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/40 p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${winner.rank === 1 ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60' :
+                                    <div key={index} className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/40 p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md ${winner.rank === 1 ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60' :
                                                     winner.rank === 2 ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700' :
                                                         'bg-orange-100 dark:bg-orange-950/40 text-orange-855 dark:text-orange-400 border border-orange-200 dark:border-orange-900/60'
                                                 }`}>
                                                 #{winner.rank}
                                             </span>
-                                            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">{winner.name}</span>
+                                            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">{winner.name}</span>
                                         </div>
                                         {winner.rank === 1 && <i className="ri-medal-fill text-amber-500" />}
                                         {winner.rank === 2 && <i className="ri-medal-fill text-neutral-400" />}

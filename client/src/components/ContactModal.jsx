@@ -142,10 +142,10 @@ const ContactModal = ({
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl overflow-hidden my-8"
+          className="relative w-full max-w-md max-h-[85dvh] flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl overflow-hidden my-auto"
         >
           {/* Header Bar Accent */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 shrink-0" />
 
           {/* Close Button */}
           <button
@@ -158,7 +158,7 @@ const ContactModal = ({
           </button>
 
           {/* Body Content */}
-          <div className="p-6 sm:p-8">
+          <div className="p-6 sm:p-8 overflow-y-auto">
             {status === 'success' ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -239,7 +239,7 @@ const ContactModal = ({
                           formErrors.name 
                             ? 'border-red-500 focus:ring-red-500' 
                             : 'border-neutral-200 dark:border-neutral-700 focus:border-orange-500 focus:ring-orange-500'
-                        } rounded-xl text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all`}
+                        } rounded-xl text-base sm:text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all`}
                       />
                     </div>
                     {formErrors.name && (
@@ -265,7 +265,7 @@ const ContactModal = ({
                           formErrors.email 
                             ? 'border-red-500 focus:ring-red-500' 
                             : 'border-neutral-200 dark:border-neutral-700 focus:border-orange-500 focus:ring-orange-500'
-                        } rounded-xl text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all`}
+                        } rounded-xl text-base sm:text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all`}
                       />
                     </div>
                     {formErrors.email && (
@@ -297,7 +297,7 @@ const ContactModal = ({
                           formErrors.suggestion 
                             ? 'border-red-500 focus:ring-red-500' 
                             : 'border-neutral-200 dark:border-neutral-700 focus:border-orange-500 focus:ring-orange-500'
-                        } rounded-xl text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all resize-none`}
+                        } rounded-xl text-base sm:text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all resize-none`}
                       />
                     </div>
                     {formErrors.suggestion && (
