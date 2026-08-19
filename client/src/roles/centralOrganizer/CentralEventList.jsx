@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Calendar, Search, PlusCircle, Filter } from "lucide-react";
 import CentralEventCard from "./CentralEventCard";
+import ShimmerText from "../../components/ShimmerText";
 
 const CentralEventList = ({
   events,
@@ -33,9 +34,8 @@ const CentralEventList = ({
 
   if (loading) {
     return (
-      <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
-        <div className="w-8 h-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium text-neutral-500">Loading central events...</p>
+      <div className="py-20 text-center flex flex-col items-center justify-center">
+        <ShimmerText text="Loading central events..." className="text-sm font-medium" />
       </div>
     );
   }

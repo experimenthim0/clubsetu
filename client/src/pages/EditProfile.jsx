@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { invalidateCache } from '../lib/cacheManager';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload';
+import ShimmerText from '../components/ShimmerText';
 
 import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/academicYear';
 
@@ -104,7 +105,11 @@ const EditProfile = () => {
         }
     };
 
-    if (!user) return <div className="text-center mt-10">Loading...</div>;
+    if (!user) return (
+        <div className="text-center py-20">
+            <ShimmerText text="Loading profile..." className="text-sm font-semibold tracking-wide" />
+        </div>
+    );
 
     return (
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">

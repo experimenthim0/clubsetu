@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import ShimmerText from '../components/ShimmerText';
 
 /* ─────────────────────────────────────────────
    DESIGN TOKENS  (mirrors Tailwind + CSS vars)
@@ -448,11 +449,8 @@ const LostAndFound = () => {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {fetching ? (
-            <div className="col-span-full py-20 px-6 flex flex-col items-center gap-3.5">
-              <div className="w-9 h-9 border-3 border-[#E5E4E0] dark:border-[#2A2A27] border-t-[#E8500A] rounded-full animate-spin" />
-              <span className="text-xs text-[#A8A49D] dark:text-[#5C5A55] font-mono">
-                Loading posts…
-              </span>
+            <div className="col-span-full py-20 px-6 flex flex-col items-center justify-center">
+              <ShimmerText text="Loading posts…" className="text-xs font-mono" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="col-span-full py-20 px-6 text-center">

@@ -10,6 +10,7 @@ import HomeFooter from '../components/HomeFooter';
 import Maintainance from './Maintainance';
 import ScrollReveal from '../components/ScrollReveal';
 import {ArrowRightIcon} from '../components/ui/arrow-right';
+import ShimmerText from '../components/ShimmerText';
 import { InstagramIcon } from '@/components/ui/instagram';
 import { GithubIcon } from '@/components/ui/github';
 import { LinkedinIcon } from '@/components/ui/linkedin';
@@ -636,9 +637,8 @@ const Home = () => {
 
               {isStudent ? (
                 timelineLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-neutral-500 dark:text-neutral-400">
-                    <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs font-semibold tracking-wider uppercase">Loading your timeline...</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-neutral-500 dark:text-neutral-400">
+                    <ShimmerText text="Loading your timeline..." className="text-xs font-semibold tracking-wider uppercase" />
                   </div>
                 ) : registrations.length === 0 ? (
                   <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 text-center shadow-sm max-w-xl mx-auto">

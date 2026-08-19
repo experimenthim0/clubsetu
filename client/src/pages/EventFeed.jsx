@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import EventCard from '../components/EventCard';
 import { useNotification } from '../context/NotificationContext';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import EventCardSkeleton from '../components/skeletons/EventCardSkeleton';
 import { Skeleton } from '../components/ui/Skeleton';
 import { getPublicJson } from '../lib/publicDataCache';
@@ -10,6 +10,7 @@ import { registerUpdateCallback, unregisterUpdateCallback } from '../lib/cacheMa
 
 const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive = false }) => {
   const { showNotification } = useNotification();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
@@ -17,18 +18,40 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
       document.title = "Events - CampusNode";
     }
   }, [hideHeader]);
+
+  const initialClub = searchParams.get('club') || searchParams.get('clubName') || searchParams.get('filterClub') || 'ALL';
+  const initialStatus = searchParams.get('status') || searchParams.get('filterStatus') || 'ALL';
+  const initialMonth = searchParams.get('month') || searchParams.get('filterMonth') || 'ALL';
+  const initialYear = searchParams.get('year') || searchParams.get('filterYear') || 'ALL';
+  const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
+
   const [loading, setLoading] = useState(true);
   const [registeredEvents, setRegisteredEvents] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [filterClub, setFilterClub] = useState('ALL');
-  const [filterMonth, setFilterMonth] = useState('ALL');
-  const [filterYear, setFilterYear] = useState('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState(initialStatus);
+  const [filterClub, setFilterClub] = useState(initialClub);
+  const [filterMonth, setFilterMonth] = useState(initialMonth);
+  const [filterYear, setFilterYear] = useState(initialYear);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const user = JSON.parse(localStorage.getItem('user'));
   
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const eventsUrl = import.meta.env.VITE_API_URL + '/api/events';
+
+  // Sync state if URL query params change
+  useEffect(() => {
+    const c = searchParams.get('club') || searchParams.get('clubName') || searchParams.get('filterClub');
+    const s = searchParams.get('status') || searchParams.get('filterStatus');
+    const m = searchParams.get('month') || searchParams.get('filterMonth');
+    const y = searchParams.get('year') || searchParams.get('filterYear');
+    const q = searchParams.get('search') || searchParams.get('q');
+
+    if (c !== null && c !== undefined) setFilterClub(c);
+    if (s !== null && s !== undefined) setFilterStatus(s);
+    if (m !== null && m !== undefined) setFilterMonth(m);
+    if (y !== null && y !== undefined) setFilterYear(y);
+    if (q !== null && q !== undefined) setSearchQuery(q);
+  }, [searchParams]);
 
   const fetchEvents = async () => {
     try {
@@ -159,7 +182,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   if (filterClub !== 'ALL') {
     filtered = filtered.filter(e => {
       const cName = e.club?.clubName || e.createdBy?.clubName;
-      return cName === filterClub;
+      return cName && cName.trim().toLowerCase() === filterClub.trim().toLowerCase();
     });
   }
 
@@ -347,7 +370,7 @@ return (
         <div className="relative group min-w-0">
           <i className="ri-building-line absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-orange-600 text-xs transition-colors pointer-events-none" />
           <select
-            value={filterClub}
+            value={clubNames.find(c => c.toLowerCase() === filterClub.toLowerCase()) || filterClub}
             onChange={(e) => setFilterClub(e.target.value)}
             className="w-full pl-6 pr-5 py-1.5 text-[11px] font-semibold tracking-wide border-2 border-neutral-100 dark:border-neutral-800 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-none focus:border-orange-600 focus:bg-white dark:focus:bg-neutral-800 transition-all cursor-pointer appearance-none truncate"
           >
@@ -373,6 +396,7 @@ return (
             setFilterMonth('ALL');
             setFilterYear('ALL');
             setSearchQuery('');
+            setSearchParams({});
           }}
           className="text-[10px] font-bold uppercase tracking-wider text-orange-600 hover:text-black transition-colors flex items-center gap-1"
         >
@@ -412,6 +436,7 @@ return (
              setFilterMonth('ALL');
              setFilterYear('ALL');
              setSearchQuery('');
+             setSearchParams({});
            }}
            className="text-orange-600 font-bold uppercase tracking-widest text-[10px] hover:underline"
          >

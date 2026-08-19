@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Sparkles
 } from "lucide-react";
+import ShimmerText from "../components/ShimmerText";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -110,7 +111,9 @@ const EventStaffDashboard = () => {
         )}
 
         {loading ? (
-          <div className="py-16 text-center text-neutral-500">Loading your event staff assignments...</div>
+          <div className="py-16 text-center">
+            <ShimmerText text="Loading your event staff assignments..." className="text-sm font-medium" />
+          </div>
         ) : (
           <div className="space-y-8">
             {/* ── Pending Invitations ── */}

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { CheckCircle, XCircle, Loader, ArrowLeftIcon } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowLeftIcon } from 'lucide-react';
+import ShimmerText from '../components/ShimmerText';
 
 const VerifyEmail = () => {
     const { token } = useParams();
@@ -32,10 +33,9 @@ const VerifyEmail = () => {
             <div className="max-w-md w-full space-y-8 p-7 bg-white rounded-xl shadow-lg">
                 <div className="text-center">
                     {status === 'loading' && (
-                        <div className="flex flex-col items-center">
-                            <Loader className="h-16 w-16 text-orange-600 animate-spin" />
-                            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Verifying...</h2>
-                            <p className="mt-2 text-sm text-gray-600">Please wait while we verify your email.</p>
+                        <div className="flex flex-col items-center py-6">
+                            <ShimmerText text="Verifying your email..." className="text-xl font-bold" />
+                            <p className="mt-3 text-sm text-gray-500">Please wait while we confirm your account.</p>
                         </div>
                     )}
 

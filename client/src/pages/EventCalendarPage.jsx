@@ -11,6 +11,7 @@ import RescheduleConfirmModal from "../components/calendar/RescheduleConfirmModa
 import BlackoutModal from "../components/calendar/BlackoutModal";
 import ConflictCenter from "../components/calendar/ConflictCenter";
 import { useNotification } from "../context/NotificationContext";
+import ShimmerText from "../components/ShimmerText";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -288,8 +289,8 @@ const EventCalendarPage = () => {
 
       {/* Calendar Views Render Switch */}
       {loading ? (
-        <div className="p-16 border border-neutral-200 dark:border-zinc-800 rounded-2xl text-center text-neutral-400 text-sm">
-          Loading CampusNode calendar schedule...
+        <div className="p-16 border border-neutral-200 dark:border-zinc-800 rounded-2xl text-center">
+          <ShimmerText text="Loading CampusNode calendar schedule..." className="text-sm font-medium" />
         </div>
       ) : activeView === "list" ? (
         <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-zinc-800 rounded-2xl p-4">

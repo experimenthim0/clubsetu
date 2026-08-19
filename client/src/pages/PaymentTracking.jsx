@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ShimmerText from '../components/ShimmerText';
 
 const PaymentTracking = () => {
   const [user, setUser] = useState(null);
@@ -55,7 +56,7 @@ const PaymentTracking = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-        <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-650 rounded-full animate-spin" />
+        <ShimmerText text="Loading payment tracking..." className="text-sm font-semibold tracking-wide" />
       </div>
     );
   }

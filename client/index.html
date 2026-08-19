@@ -81,42 +81,56 @@
   </head>
   <body>
     <div id="root">
-      <!-- Pre-React Lissajous loader — replaced when React mounts -->
-      <div id="pre-loader" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background 0.3s ease;">
+      <!-- Pre-React Modern AI Shimmer Loader — replaced when React mounts -->
+      <div id="pre-loader" role="status" aria-label="Loading" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background 0.3s ease;">
+        <style>
+          @keyframes preShimmerSweep {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+          }
+          .pre-shimmer {
+            display: inline-block;
+            background-image: linear-gradient(90deg, rgba(15,23,42,0.35) 0%, rgba(15,23,42,0.35) 30%, rgba(15,23,42,0.98) 50%, rgba(15,23,42,0.35) 70%, rgba(15,23,42,0.35) 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            animation: preShimmerSweep 1.8s ease-in-out infinite;
+            user-select: none;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+          }
+          html.dark .pre-shimmer {
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.32) 30%, rgba(255,255,255,0.98) 50%, rgba(255,255,255,0.32) 70%, rgba(255,255,255,0.32) 100%);
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .pre-shimmer {
+              animation: none !important;
+              background-image: none !important;
+              -webkit-text-fill-color: currentColor !important;
+              color: #4b5563 !important;
+            }
+            html.dark .pre-shimmer {
+              color: #9ca3af !important;
+            }
+          }
+        </style>
         <script>document.getElementById('pre-loader').style.background=document.documentElement.classList.contains('dark')?'#0a0a0a':'#ffffff';</script>
-        <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,0.12) 0%,transparent 70%);filter:blur(40px);pointer-events:none;"></div>
-        <div style="width:min(56vmin,320px);aspect-ratio:1;">
-          <svg id="pre-svg" viewBox="0 0 100 100" fill="none" style="width:100%;height:100%;overflow:visible;">
-            <g id="pre-group">
-              <path id="pre-path" stroke="#ea580c" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.7" opacity="0.12"></path>
-            </g>
-          </svg>
-        </div>
-        <div style="margin-top:28px;text-align:center;">
-          <div id="pre-brand" style="font-family:'logofont',serif;font-size:28px;font-weight:300;letter-spacing:0.04em;">Campus<span style="color:#ea580c;">Node</span></div>
-          <div id="pre-loading" style="margin-top:8px;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;font-family:Inter,system-ui,sans-serif;">Loading…</div>
+        <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,0.08) 0%,transparent 70%);filter:blur(50px);pointer-events:none;"></div>
+        <div style="text-align:center;position:relative;z-index:1;">
+          <div id="pre-brand" style="font-family:'logofont',serif;font-size:28px;font-weight:700;letter-spacing:0.04em;margin-bottom:12px;">Campus<span style="color:#ea580c;font-weight:300;">Node</span></div>
+          <span class="pre-shimmer">Loading...</span>
           <script>
             (function(){
               var dk=document.documentElement.classList.contains('dark');
               document.getElementById('pre-brand').style.color=dk?'#ffffff':'#0a0a0a';
-              document.getElementById('pre-loading').style.color=dk?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.35)';
             })();
           </script>
         </div>
       </div>
-      <script>
-        (function(){
-          var c={particleCount:68,trailSpan:0.34,durationMs:6000,pulseDurationMs:5400,strokeWidth:4.7,amp:24,boost:6,ax:3,by:4,phase:1.57,ys:0.92};
-          var g=document.getElementById('pre-group'),p=document.getElementById('pre-path');
-          var dots=[];for(var i=0;i<c.particleCount;i++){var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.setAttribute('fill','#ea580c');g.appendChild(ci);dots.push(ci);}
-          function pt(pr,ds){var t=pr*Math.PI*2,a=c.amp+ds*c.boost;return{x:50+Math.sin(c.ax*t+c.phase)*a,y:50+Math.sin(c.by*t)*(a*c.ys)};}
-          var s=performance.now();
-          function r(n){if(!document.getElementById('pre-loader'))return;var t=n-s,pr=(t%c.durationMs)/c.durationMs;var pp=(t%c.pulseDurationMs)/c.pulseDurationMs;var ds=0.52+((Math.sin(pp*Math.PI*2+0.55)+1)/2)*0.48;
-          var d='';for(var i=0;i<=480;i++){var pt2=pt(i/480,ds);d+=(i===0?'M':'L')+' '+pt2.x.toFixed(2)+' '+pt2.y.toFixed(2)+' ';}p.setAttribute('d',d);
-          dots.forEach(function(nd,idx){var to=idx/(c.particleCount-1);var pp2=((pr-to*c.trailSpan)%1+1)%1;var pt3=pt(pp2,ds);var f=Math.pow(1-to,0.56);nd.setAttribute('cx',pt3.x.toFixed(2));nd.setAttribute('cy',pt3.y.toFixed(2));nd.setAttribute('r',(0.9+f*2.7).toFixed(2));nd.setAttribute('opacity',(0.04+f*0.96).toFixed(3));});
-          requestAnimationFrame(r);}requestAnimationFrame(r);
-        })();
-      </script>
     </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext";
 import { Link } from "react-router-dom";
+import ShimmerText from "../components/ShimmerText";
 const slugifyClubName = (value = "") =>
   value
     .toLowerCase()
@@ -224,7 +225,11 @@ const EditClub = () => {
   const inputCls =
     "w-full p-3 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 text-black dark:text-white font-medium text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all placeholder:text-neutral-400";
 
-  if (loading) return <div className="text-center py-20">Loading...</div>;
+  if (loading) return (
+    <div className="text-center py-20">
+      <ShimmerText text="Loading club details..." className="text-sm font-semibold tracking-wide" />
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">

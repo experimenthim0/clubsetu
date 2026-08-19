@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { useNotification } from "../../context/NotificationContext";
+import ShimmerText from "../../components/ShimmerText";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -188,9 +189,8 @@ const CentralAuditLogs = ({ events = [] }) => {
       {/* ── Tabular Server Log ── */}
       <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xs overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center flex flex-col items-center justify-center gap-2">
-            <div className="w-6 h-6 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-mono text-neutral-500">QUERYING AUDIT STREAM...</p>
+          <div className="py-20 text-center flex flex-col items-center justify-center">
+            <ShimmerText text="QUERYING AUDIT STREAM..." className="text-xs font-mono tracking-wider" />
           </div>
         ) : logs.length === 0 ? (
           <div className="py-16 text-center px-4 font-mono">

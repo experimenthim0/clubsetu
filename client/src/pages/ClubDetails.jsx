@@ -11,30 +11,37 @@ import EventCard from "../components/EventCard";
 import { useTheme } from '../context/ThemeContext';
 import { getPublicJson } from "../lib/publicDataCache";
 import { registerUpdateCallback, unregisterUpdateCallback } from "../lib/cacheManager";
+import ShimmerText from "../components/ShimmerText";
 
 import { ClubMemberRole } from "../types/index.js";
 
 const MemberSocials = ({ student }) => {
   if (!student) return null;
   const links = [];
-  if (student.githubProfile) links.push({ url: student.githubProfile, icon: <GithubIcon className="w-3.5 h-3.5" />, title: "GitHub" });
-  if (student.linkedinProfile) links.push({ url: student.linkedinProfile, icon: <LinkedinIcon className="w-3.5 h-3.5" />, title: "LinkedIn" });
-  if (student.xProfile) links.push({ url: student.xProfile, icon: <TwitterIcon className="w-3.5 h-3.5" />, title: "X" });
-  if (student.instagramProfile) links.push({ url: student.instagramProfile, icon: <InstagramIcon className="w-3.5 h-3.5" />, title: "Instagram" });
-  if (student.whatsappNumber) links.push({ url: `https://wa.me/${student.whatsappNumber.replace(/\s+/g, '')}`, icon: <MessageCircleIcon className="w-3.5 h-3.5" />, title: "WhatsApp" });
-  if (student.portfolioUrl) links.push({ url: student.portfolioUrl, icon: <EarthIcon className="w-3.5 h-3.5" />, title: "Portfolio" });
+
+  const formatUrl = (url) => {
+    if (!url) return "";
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  };
+
+  if (student.githubProfile) links.push({ url: formatUrl(student.githubProfile), icon: <GithubIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "GitHub" });
+  if (student.linkedinProfile) links.push({ url: formatUrl(student.linkedinProfile), icon: <LinkedinIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "LinkedIn" });
+  if (student.xProfile) links.push({ url: formatUrl(student.xProfile), icon: <TwitterIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "X" });
+  if (student.instagramProfile) links.push({ url: formatUrl(student.instagramProfile), icon: <InstagramIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "Instagram" });
+  if (student.whatsappNumber) links.push({ url: `https://wa.me/${student.whatsappNumber.replace(/[^\d+]/g, '')}`, icon: <MessageCircleIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "WhatsApp" });
+  if (student.portfolioUrl) links.push({ url: formatUrl(student.portfolioUrl), icon: <EarthIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />, title: "Portfolio" });
 
   if (links.length === 0) return null;
 
   return (
-    <div className="flex items-center justify-center gap-1.5 mt-3 pt-3 border-t border-neutral-100 w-full">
+    <div className="flex items-center justify-center flex-wrap gap-1 sm:gap-1.5 mt-auto pt-2.5 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800 w-full">
       {links.map((l, idx) => (
         <a
           key={idx}
           href={l.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-7 h-7 rounded-lg bg-neutral-50 hover:bg-orange-50 hover:text-orange-600 text-neutral-500 border border-neutral-200/60 flex items-center justify-center transition-colors shadow-2xs"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-neutral-50 dark:bg-neutral-800 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 dark:hover:text-white text-neutral-500 dark:text-neutral-400 border border-neutral-200/70 dark:border-neutral-700/70 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-105"
           title={l.title}
         >
           {l.icon}
@@ -135,12 +142,7 @@ const ClubDetails = () => {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-neutral-400 uppercase tracking-widest">
-            Loading...
-          </p>
-        </div>
+        <ShimmerText text="Loading..." className="text-sm font-semibold uppercase tracking-widest" />
       </div>
     );
 
@@ -472,14 +474,28 @@ const ClubDetails = () => {
         {/* ── Past Events ── */}
         {pastEvents.length > 0 && (
           <section>
-            <div className="flex items-center gap-4 my-6">
-              <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap opacity-60">
-                Past Events
-              </h2>
-              <div className="h-[1px] flex-1 bg-neutral-200" />
+            <div className="flex items-center justify-between gap-3 my-6">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap opacity-60">
+                  Past Events
+                </h2>
+                <span className="text-xs font-semibold text-neutral-400 bg-neutral-100 px-2.5 py-0.5 rounded-full">
+                  {pastEvents.length}
+                </span>
+                <div className="h-[1px] flex-1 bg-neutral-200" />
+              </div>
+              {pastEvents.length > 6 && (
+                <Link
+                  to={`/events?club=${encodeURIComponent(club.clubName)}&status=ENDED`}
+                  className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 shrink-0 transition-colors"
+                >
+                  <span>View All ({pastEvents.length})</span>
+                  <i className="ri-arrow-right-line" />
+                </Link>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pastEvents.map((e) => (
+              {pastEvents.slice(0, 6).map((e) => (
                 <EventCard
                   key={e._id || e.id}
                   event={getFullEvent(e)}
@@ -487,6 +503,17 @@ const ClubDetails = () => {
                 />
               ))}
             </div>
+            {pastEvents.length > 6 && (
+              <div className="mt-8 text-center">
+                <Link
+                  to={`/events?club=${encodeURIComponent(club.clubName)}&status=ENDED`}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-orange-50 text-neutral-800 hover:text-orange-600 border border-neutral-200 hover:border-orange-300 rounded-xl font-bold text-xs uppercase tracking-wider shadow-xs hover:shadow-sm transition-all duration-200 group cursor-pointer"
+                >
+                  <span>View All {pastEvents.length} Past Events</span>
+                  <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform text-sm" />
+                </Link>
+              </div>
+            )}
           </section>
         )}
 
@@ -538,6 +565,22 @@ const ClubDetails = () => {
               return true;
             });
 
+            const rolePriority = {
+              [ClubMemberRole.CLUB_HEAD]: 1,
+              CLUB_HEAD: 1,
+              [ClubMemberRole.COORDINATOR]: 2,
+              COORDINATOR: 2,
+              [ClubMemberRole.MEMBER]: 3,
+              MEMBER: 3,
+            };
+
+            const sortedMembers = [...studentMembers].sort((a, b) => {
+              const pA = rolePriority[a.role] || 99;
+              const pB = rolePriority[b.role] || 99;
+              if (pA !== pB) return pA - pB;
+              return (a.student?.name || "").localeCompare(b.student?.name || "");
+            });
+
             return (
               <>
                 <div className="flex items-center gap-4 my-6">
@@ -545,16 +588,16 @@ const ClubDetails = () => {
                     Team & Members
                   </h2>
                   <div className="h-[1px] flex-1 bg-neutral-200" />
-                  {studentMembers.length > 0 && (
+                  {sortedMembers.length > 0 && (
                     <span className="text-xs font-semibold text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-full">
-                      {studentMembers.length} {studentMembers.length === 1 ? "Member" : "Members"}
+                      {sortedMembers.length} {sortedMembers.length === 1 ? "Member" : "Members"}
                     </span>
                   )}
                 </div>
 
-                {studentMembers.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {studentMembers.map((m) => {
+                {sortedMembers.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+                    {sortedMembers.map((m) => {
                       const s = m.student;
                       const name = s.name;
                       const initials = name
@@ -564,61 +607,78 @@ const ClubDetails = () => {
                         .join("")
                         .toUpperCase();
 
-                      const roleTitle =
-                        m.role === "CLUB_HEAD"
-                          ? "Club Head"
-                          : m.role === "COORDINATOR"
-                          ? "Coordinator"
-                          : "Member";
+                      const isClubHead = m.role === ClubMemberRole.CLUB_HEAD || m.role === "CLUB_HEAD";
+                      const isCoordinator = m.role === ClubMemberRole.COORDINATOR || m.role === "COORDINATOR";
 
-                      const roleBadgeStyle =
-                        m.role === "CLUB_HEAD"
-                          ? "bg-orange-50 border-orange-200 text-orange-600"
-                          : m.role === "COORDINATOR"
-                          ? "bg-amber-50 border-amber-200 text-amber-600"
-                          : "bg-neutral-50 border-neutral-200 text-neutral-600";
+                      const roleTitle = isClubHead
+                        ? "Club Head"
+                        : isCoordinator
+                        ? "Coordinator"
+                        : "Member";
+
+                      const roleBadgeStyle = isClubHead
+                        ? "bg-orange-50 border-orange-200/80 text-orange-600"
+                        : isCoordinator
+                        ? "bg-sky-50 border-sky-200/80 text-sky-600"
+                        : "bg-neutral-50 border-neutral-200/70 text-neutral-600";
+
+                      const roleIcon = isClubHead ? (
+                        <i className="ri-vip-crown-2-fill text-amber-500 mr-1 text-[9px] sm:text-[10px]" />
+                      ) : isCoordinator ? (
+                        <i className="ri-shield-star-line text-sky-500 mr-1 text-[9px] sm:text-[10px]" />
+                      ) : (
+                        <i className="ri-user-3-line text-neutral-400 mr-1 text-[9px] sm:text-[10px]" />
+                      );
 
                       return (
                         <div
                           key={m._id || m.id}
-                          className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm hover:border-orange-500/50 hover:shadow-md transition-all duration-300 flex flex-col items-center text-center group"
+                          className="bg-white border border-neutral-200 rounded-2xl p-3.5 sm:p-4 md:p-5 shadow-xs hover:border-orange-500/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col items-center text-center group justify-between"
                         >
-                          {/* Photo / Avatar */}
-                          <div className="w-20 h-20 rounded-full border-2 border-neutral-200 overflow-hidden shrink-0 bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xl mb-3 shadow-xs">
-                            {s.profileImage ? (
-                              <img
-                                src={s.profileImage}
-                                alt={name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  e.target.style.display = "none";
-                                }}
-                              />
-                            ) : (
-                              <span>{initials}</span>
+                          <div className="flex flex-col items-center text-center w-full">
+                            {/* Photo / Avatar */}
+                            <div className="relative mb-2.5 sm:mb-3">
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-neutral-200 overflow-hidden shrink-0 bg-gradient-to-br from-orange-500 via-amber-500 to-orange-400 flex items-center justify-center text-white font-bold text-base sm:text-xl shadow-xs group-hover:border-orange-500/60 transition-colors duration-300">
+                                {s.profileImage ? (
+                                  <img
+                                    src={s.profileImage}
+                                    alt={name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      e.target.style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <span>{initials}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Name */}
+                            <h3
+                              className="font-bold text-neutral-900 text-xs sm:text-sm md:text-base leading-snug line-clamp-1 group-hover:text-orange-600 transition-colors"
+                              title={name}
+                            >
+                              {name}
+                            </h3>
+
+                            {/* Role Badge */}
+                            <span
+                              className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border rounded-full mt-1.5 ${roleBadgeStyle}`}
+                            >
+                              {roleIcon}
+                              {roleTitle}
+                            </span>
+
+                            {/* Branch & Year */}
+                            {(s.branch || s.year) && (
+                              <p className="text-[10px] sm:text-xs font-semibold text-neutral-500 mt-1.5 line-clamp-1">
+                                {s.branch ? `${s.branch}` : ""}
+                                {s.branch && s.year ? " • " : ""}
+                                {s.year ? `${s.year}` : ""}
+                              </p>
                             )}
                           </div>
-
-                          {/* Name */}
-                          <h3 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-1">
-                            {name}
-                          </h3>
-
-                          {/* Role Badge */}
-                          <span
-                            className={`inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-full mt-1.5 ${roleBadgeStyle}`}
-                          >
-                            {roleTitle}
-                          </span>
-
-                          {/* Branch & Year */}
-                          {(s.branch || s.year) && (
-                            <p className="text-xs font-semibold text-neutral-500 mt-2">
-                              {s.branch ? `${s.branch}` : ""}
-                              {s.branch && s.year ? " • " : ""}
-                              {s.year ? `${s.year}` : ""}
-                            </p>
-                          )}
 
                           {/* Social Profiles */}
                           <MemberSocials student={s} />

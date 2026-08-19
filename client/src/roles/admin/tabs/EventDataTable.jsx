@@ -144,7 +144,7 @@ const EventDataTable = ({
                     {filteredEventList.map((item, idx) => {
                         const eventId = item.id || item.eventId;
                         const eventSlug = item.slug || eventId;
-                        const eventUrl = `/events/${eventSlug}`;
+                        const eventUrl = `/event/${eventSlug}`;
                         const eventTitle = item.eventName || item.title || 'Untitled Event';
                         const clubName = (item.clubName && item.clubName !== 'Unknown' && item.clubName !== 'Unknown Club')
                             ? item.clubName

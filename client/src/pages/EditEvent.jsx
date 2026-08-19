@@ -8,6 +8,7 @@ import { EVENT_VENUES } from '../constants/eventVenues';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS, ALL_BRANCH_CODES } from '../constants/academicConstants';
 import { MediaType } from '../types/index';
 import EventFormStepper from '../components/EventFormStepper';
+import ShimmerText from '../components/ShimmerText';
 
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
 const BRANCHES = ALL_BRANCH_CODES;
@@ -599,11 +600,8 @@ const EditEvent = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-black border-t-orange-600 rounded-full animate-spin" />
-                    <p className="text-[13px] font-bold uppercase tracking-widest text-neutral-400">Loading event...</p>
-                </div>
+            <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
+                <ShimmerText text="Loading event..." className="text-[13px] font-bold uppercase tracking-widest" />
             </div>
         );
     }

@@ -5,6 +5,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { useNotification } from '../context/NotificationContext';
 import { CheckCircle, XCircle, AlertTriangle, Users, BadgeCheck, Clock, ArrowLeft, Wifi, ScanLine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ShimmerText from '../components/ShimmerText';
 
 const formatTimeAgo = (date) => {
   const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -236,9 +237,8 @@ const CheckIn = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-[#0a0a0a] font-medium">
-        <div className="flex flex-col items-center gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 md:px-12 shadow-sm">
-          <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
-          <p className="m-0 font-bold text-sm text-neutral-800 dark:text-neutral-200">Initializing Scanner</p>
+        <div className="flex flex-col items-center gap-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 md:px-12 shadow-sm text-center">
+          <ShimmerText text="Initializing Scanner..." className="font-bold text-sm" />
           <p className="m-0 text-xs text-neutral-400 font-medium">Please wait a moment</p>
         </div>
       </div>
@@ -566,9 +566,8 @@ function ScanOverlay({ scanState, scanResult }) {
       className="absolute inset-0 flex items-center justify-center z-20 backdrop-blur-[3px] bg-black/75"
     >
       {scanState === 'processing' && (
-        <div className="flex flex-col items-center gap-3 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-xl border border-neutral-200 dark:border-neutral-800 w-[280px]">
-          <div className="w-8 h-8 border-3 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin"></div>
-          <p className="m-0 text-xs font-semibold text-neutral-800 dark:text-neutral-200">Validating registration...</p>
+        <div className="flex flex-col items-center justify-center bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-xl border border-neutral-200 dark:border-neutral-800 w-[280px] text-center">
+          <ShimmerText text="Validating registration..." className="text-xs font-semibold" />
         </div>
       )}
 

@@ -16,6 +16,7 @@ import { GithubIcon } from "@/components/ui/github";
 import { MessageCircleIcon } from "@/components/ui/message-circle";
 import { EarthIcon } from "@/components/ui/earth";
 import { hasPermission, PERMISSIONS } from '../utils/rbac';
+import ShimmerText from '../components/ShimmerText';
 
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&h=600&fit=crop";
 
@@ -555,10 +556,7 @@ const EventDetails = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-[3px] border-black dark:border-white border-t-orange-600 rounded-full animate-spin" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">Loading event…</p>
-        </div>
+        <ShimmerText text="Loading event..." className="text-sm font-bold uppercase tracking-[0.2em]" />
       </div>
     );
   }

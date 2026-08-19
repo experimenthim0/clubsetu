@@ -66,6 +66,8 @@ const StaffAttendanceView = lazy(() => import('./pages/StaffAttendanceView'));
 
 
 
+
+
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
 // import { EventTimerProvider } from './context/EventTimerContext';
@@ -202,6 +204,8 @@ function App() {
                     <Route path="/event-staff" element={<EventStaffDashboard />} />
                     <Route path="/event-staff/:eventId/attendance" element={<StaffAttendanceView />} />
                     {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
+
+                
               
                     <Route path="*" element={<NotFound />} />
 

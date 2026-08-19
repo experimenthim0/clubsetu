@@ -17,6 +17,7 @@ import {
   QrCode
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ShimmerText from "../components/ShimmerText";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -204,10 +205,7 @@ const StaffAttendanceView = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-neutral-300 border-t-orange-600 rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-neutral-500">Authorizing Staff Access...</p>
-        </div>
+        <ShimmerText text="Authorizing Staff Access..." className="text-sm font-semibold tracking-wide" />
       </div>
     );
   }

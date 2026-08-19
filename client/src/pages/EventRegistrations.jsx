@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { ParticipationStatus } from '../types/index';
+import ShimmerText from '../components/ShimmerText';
 
 const EventRegistrations = () => {
     const { id } = useParams();
@@ -283,7 +284,7 @@ const EventRegistrations = () => {
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a]">
-            <div className="w-10 h-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-orange-600 rounded-full animate-spin" />
+            <ShimmerText text="Loading registrations..." className="text-sm font-semibold tracking-wide" />
         </div>
     );
     if (error) return (
