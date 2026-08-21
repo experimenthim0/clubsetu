@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
-import axios from "axios";
 import { setAppIconBadge } from "../utils/pushNotifications";
 import { processNotification, normalizeNotification } from "../utils/notificationManager";
 import { registerPushSubscription } from "../utils/pushSubscription";
 import { useNotification } from "./NotificationContext";
+import { useAuth } from "./AuthContext";
+import { getNotifications } from "../services/notificationService";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 
 const SocketContext = createContext();
 
@@ -18,6 +20,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user, role: userRole } = useAuth();
 
   const { showRealtimeToast } = useNotification() || {};
   const mountTimeRef = useRef(new Date());
@@ -29,19 +32,13 @@ export const SocketProvider = ({ children }) => {
 
   // Sync notifications from backend API (Polling / Recovery)
   const syncNotifications = useCallback(async (isInitialSync = false) => {
-    const userRole = localStorage.getItem("role");
-    const storedUser = localStorage.getItem("user");
-    const storedAdmin = localStorage.getItem("admin");
-    const userString = storedUser || storedAdmin;
-
-    if (!userString || userString === "undefined") return;
-    const user = JSON.parse(userString);
+    if (!user) return;
     const currentUserId = String(user._id || user.id);
 
     if (!["member", "club", "facultyCoordinator", "admin", "student"].includes(userRole)) return;
 
     try {
-      const res = await axios.get(`${API_URL}/api/notifications`);
+      const res = await getNotifications();
       const fetched = res.data || [];
       const normalizedList = fetched.map((n) => normalizeNotification(n)).filter(Boolean);
 
@@ -70,16 +67,11 @@ export const SocketProvider = ({ children }) => {
     } catch (err) {
       console.error("[SocketContext] Could not sync notifications:", err.message);
     }
-  }, [showRealtimeToast]);
+  }, [user, userRole, showRealtimeToast]);
 
   useEffect(() => {
-    const userRole = localStorage.getItem("role");
-    const storedUser = localStorage.getItem("user");
-    const storedAdmin = localStorage.getItem("admin");
-    const userString = storedUser || storedAdmin;
+    if (!user) return;
 
-    if (!userString || userString === "undefined") return;
-    const user = JSON.parse(userString);
 
     // Try registering/syncing Web Push subscription if permission is granted
     registerPushSubscription().catch(() => {});
@@ -162,7 +154,7 @@ export const SocketProvider = ({ children }) => {
       newSocket.off("new-notification", handleNewNotification);
       newSocket.disconnect();
     };
-  }, [syncNotifications, showRealtimeToast]);
+  }, [user, syncNotifications, showRealtimeToast]);
 
   const value = {
     socket,

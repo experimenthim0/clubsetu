@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import api from '../services/api';
+import { updateEvent, getEventById } from '../services/eventService';
 import { useNotification } from '../context/NotificationContext';
 import { EVENT_VENUES } from '../constants/eventVenues';
 import { PROGRAM_LABELS, PROGRAM_OPTIONS, ALL_BRANCH_CODES } from '../constants/academicConstants';
@@ -64,14 +65,15 @@ const EditEvent = () => {
     useEffect(() => {
         const fetchOpenVenues = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/venues?openOnly=true`);
+                const res = await api.get('/api/venues?openOnly=true');
                 if (res.data && Array.isArray(res.data) && res.data.length > 0) {
                     const fetchedNames = res.data.map(v => typeof v === 'string' ? v : v.name);
                     setAvailableVenues(prev => {
-                        if (formData.venue && !fetchedNames.includes(formData.venue)) {
-                            return [...fetchedNames, formData.venue];
+                        const venues = [...fetchedNames, 'Online'];
+                        if (formData.venue && !venues.includes(formData.venue)) {
+                            venues.push(formData.venue);
                         }
-                        return fetchedNames;
+                        return [...new Set(venues)];
                     });
                 }
             } catch (err) {
@@ -101,7 +103,7 @@ const EditEvent = () => {
     useEffect(() => {
         const fetchEvent = async () => {
              try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
+                const res = await getEventById(id);
                 const event = res.data;
                 if (event) {
                     const start = toLocalISOString(event.startTime);
@@ -174,7 +176,7 @@ const EditEvent = () => {
         try {
             const formDataUpload = new FormData();
             formDataUpload.append('image', file);
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formDataUpload, {
+            const { data } = await api.post('/api/events/upload', formDataUpload, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
@@ -492,9 +494,8 @@ const EditEvent = () => {
 
         if (isTeamEvent) {
             try {
-                const res = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/api/teams/event/${id}/lookup-leader?query=${encodeURIComponent(queryVal.trim())}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
+                const res = await api.get(
+                    `/api/teams/event/${id}/lookup-leader?query=${encodeURIComponent(queryVal.trim())}`
                 );
                 const { teamName, members, leaderName } = res.data;
 
@@ -516,9 +517,8 @@ const EditEvent = () => {
         }
 
         try {
-            const res = await axios.get(
-                `${import.meta.env.VITE_API_URL}/api/users/lookup/${encodeURIComponent(queryVal.trim())}`,
-                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            const res = await api.get(
+                `/api/users/lookup/${encodeURIComponent(queryVal.trim())}`
             );
             const { name, branch } = res.data;
             const displayName = branch ? `${name}(${branch})` : name;
@@ -588,7 +588,7 @@ const EditEvent = () => {
 
         setIsSaving(true);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${id}`, payload);
+            await updateEvent(id, payload);
             showNotification('Event updated successfully!', 'success');
             navigate('/my-events');
         } catch (err) {

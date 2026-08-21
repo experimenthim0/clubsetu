@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { cachedFetch } from '../lib/cacheManager';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { getMe } from '../services/userService';
+import { getUserEvents } from '../services/eventService';
 
 const ClubLogoImage = ({ clubLogo, clubName }) => {
   const { isDark } = useTheme();
@@ -32,15 +34,16 @@ const ClubLogoImage = ({ clubLogo, clubName }) => {
 };
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const { user: authUser, role: authRole, setSession } = useAuth();
+  const [user, setUser] = useState(authUser);
+  const [role, setRole] = useState(authRole);
   const [loading, setLoading] = useState(true);
   const [isClubAdded, setIsClubAdded] = useState(false);
   const [winnings, setWinnings] = useState([]);
   const [clubsMap, setClubsMap] = useState({});
 
   useEffect(() => {
-    cachedFetch(`${import.meta.env.VITE_API_URL}/api/clubs`, { ttlMs: 15 * 60 * 1000 })
+    cachedFetch('/api/clubs', { ttlMs: 15 * 60 * 1000 })
       .then(resData => {
         const clubsList = Array.isArray(resData) ? resData : (resData?.clubs || []);
         const map = {};
@@ -57,27 +60,25 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    const storedRole = localStorage.getItem('role');
-    if (storedUser) {
-      setUser(storedUser);
-      setRole(storedRole);
+    if (authUser) {
+      setUser(authUser);
+      setRole(authRole);
 
       // Fetch fresh profile from /api/users/me to ensure updated memberships, clubLogo, and role
-      axios.get(`${import.meta.env.VITE_API_URL}/api/users/me`)
+      getMe()
         .then(res => {
           if (res.data?.user) {
             setUser(res.data.user);
             if (res.data.role) setRole(res.data.role);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            setSession(res.data.user, res.data.role || authRole);
           }
         })
         .catch(err => {
           console.debug("Could not refresh user profile in Profile.jsx:", err?.message);
         });
 
-      if (storedRole === 'club' && storedUser.clubId) {
-        cachedFetch(`${import.meta.env.VITE_API_URL}/api/clubs/${storedUser.clubId}`, { ttlMs: 30 * 60 * 1000 })
+      if (authRole === 'club' && authUser.clubId) {
+        cachedFetch(`/api/clubs/${authUser.clubId}`, { ttlMs: 30 * 60 * 1000 })
           .then(resData => {
             const club = resData?.club || resData;
             if (club && (club.description || club.clubLogo || club.category)) {
@@ -90,9 +91,9 @@ const Profile = () => {
       }
 
       // Fetch events/winnings for student user
-      const isStudentUser = Boolean(storedUser?.rollNo || storedUser?.branch || storedRole === 'member' || storedRole === 'student' || storedRole !== 'club');
+      const isStudentUser = Boolean(authUser?.rollNo || authUser?.branch || authRole === 'member' || authRole === 'student' || authRole !== 'club');
       if (isStudentUser) {
-        axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${storedUser.id || storedUser._id}`)
+        getUserEvents(authUser.id || authUser._id)
           .then(res => {
             const participations = res.data || [];
             const winningsList = [];

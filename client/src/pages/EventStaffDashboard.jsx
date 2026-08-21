@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import {
   Shield,
   Clock,
@@ -16,8 +16,6 @@ import {
 } from "lucide-react";
 import ShimmerText from "../components/ShimmerText";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 const EventStaffDashboard = () => {
   const [activeStaff, setActiveStaff] = useState([]);
   const [pendingInvitations, setPendingInvitations] = useState([]);
@@ -31,7 +29,7 @@ const EventStaffDashboard = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await axios.get(`${API_URL}/api/event-staff/my-assignments`);
+      const res = await api.get('/api/event-staff/my-assignments');
       setActiveStaff(res.data.active || []);
       setPendingInvitations(res.data.pending || []);
       setPastStaff(res.data.past || []);
@@ -51,7 +49,7 @@ const EventStaffDashboard = () => {
       setProcessingId(staffId);
       setError("");
       setSuccess("");
-      const res = await axios.post(`${API_URL}/api/event-staff/invitations/${staffId}/accept`);
+      const res = await api.post(`/api/event-staff/invitations/${staffId}/accept`);
       setSuccess(res.data.message || "Invitation accepted! Your staff role is now active.");
       fetchAssignments();
     } catch (err) {
@@ -70,7 +68,7 @@ const EventStaffDashboard = () => {
       setProcessingId(staffId);
       setError("");
       setSuccess("");
-      await axios.post(`${API_URL}/api/event-staff/invitations/${staffId}/reject`);
+      await api.post(`/api/event-staff/invitations/${staffId}/reject`);
       setSuccess("Invitation rejected.");
       fetchAssignments();
     } catch (err) {

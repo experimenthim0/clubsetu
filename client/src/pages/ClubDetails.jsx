@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { deleteClub, getClubMembers } from "../services/clubService";
+import { getUserEvents } from "../services/eventService";
 import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
 import { TwitterIcon } from "@/components/ui/twitter";
@@ -34,7 +36,7 @@ const MemberSocials = ({ student }) => {
   if (links.length === 0) return null;
 
   return (
-    <div className="flex items-center justify-center flex-wrap gap-1 sm:gap-1.5 mt-auto pt-2.5 sm:pt-3 border-t border-neutral-100 dark:border-neutral-800 w-full">
+    <div className="flex items-center justify-center flex-wrap gap-1 sm:gap-1.5 pt-2.5 sm:pt-3 mt-2 border-t border-neutral-100 dark:border-neutral-800 w-full">
       {links.map((l, idx) => (
         <a
           key={idx}
@@ -59,7 +61,7 @@ const ClubDetails = () => {
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+
   const [canEdit, setCanEdit] = useState(false);
   const [isHead, setIsHead] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -78,24 +80,24 @@ const ClubDetails = () => {
     img.onerror = () => setHeroLogoSrc(fallbackLogo);
   }, [club?.clubLogo, fallbackLogo]);
 
+  const navigate = useNavigate();
+  const { user: authUser, role: authRole } = useAuth();
+  const [user, setUser] = useState(authUser);
+
   useEffect(() => {
     const fetchClubDetails = async () => {
       try {
         const clubData = await getPublicJson(
-          `${import.meta.env.VITE_API_URL}/api/clubs/${slug}`
+          `/api/clubs/${slug}`
         );
         setClub(clubData.club);
         setEvents(clubData.events);
 
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const role = localStorage.getItem("role");
-        setUser(storedUser);
+        setUser(authUser);
 
-        if (storedUser && (role === "member" || role === "student")) {
+        if (authUser && (authRole === "member" || authRole === "student")) {
           try {
-            const regRes = await axios.get(
-              `${import.meta.env.VITE_API_URL}/api/events/user/${storedUser.id || storedUser._id}`
-            );
+            const regRes = await getUserEvents(authUser.id || authUser._id);
             setRegisteredEvents(
               regRes.data.filter((r) => r.eventId).map((r) => r.eventId.id || r.eventId._id)
             );
@@ -108,14 +110,12 @@ const ClubDetails = () => {
         if (clubData?.club) {
           const clubId = clubData.club._id || clubData.club.id;
           try {
-            const membersRes = await axios.get(
-              `${import.meta.env.VITE_API_URL}/api/club-members/${clubId}/members`
-            );
+            const membersRes = await getClubMembers(clubId);
             const memberList = membersRes.data || [];
             setMembers(memberList);
-            if (storedUser) {
+            if (authUser) {
               const membership = memberList.find(
-                (m) => m.studentId === storedUser.id || m.student?.id === storedUser.id
+                (m) => m.studentId === authUser.id || m.student?.id === authUser.id
               );
               setCanEdit(membership?.canEditEvents ?? false);
               setIsHead(membership?.role === ClubMemberRole.CLUB_HEAD);
@@ -131,7 +131,7 @@ const ClubDetails = () => {
       }
     };
     fetchClubDetails();
-  }, [slug]);
+  }, [slug, authUser, authRole]);
 
   useEffect(() => {
     if (club) {
@@ -165,8 +165,8 @@ const ClubDetails = () => {
   const handleDeleteClub = async () => {
     if (!window.confirm(`Are you sure you want to delete "${club.clubName}"? This action cannot be undone.`)) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/clubs/${club._id || club.id}`);
-      window.location.href = '/clubs';
+      await deleteClub(club._id || club.id);
+      navigate('/clubs');
     } catch (err) {
       console.error("Failed to delete club:", err);
       alert(err.response?.data?.message || "Failed to delete club.");
@@ -353,7 +353,7 @@ const ClubDetails = () => {
             <div className="flex flex-wrap gap-1.5 min-h-[32px] sm:mb-0 mb-2">
               {club.socialLinks.map((link, i) => {
                 const platform = link.platform?.toLowerCase() || "website";
-                const iconProps = { className: "w-4 h-4" };
+                const iconProps = { className: "w-6 h-6" };
 
                 const getIcon = () => {
                   if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
@@ -587,7 +587,7 @@ const ClubDetails = () => {
                   <h2 className="text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap">
                     Team & Members
                   </h2>
-                  <div className="h-[1px] flex-1 bg-neutral-200" />
+                  <div className="h-[1px] flex-1 bg-neutral-200 " />
                   {sortedMembers.length > 0 && (
                     <span className="text-xs font-semibold text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-full">
                       {sortedMembers.length} {sortedMembers.length === 1 ? "Member" : "Members"}
@@ -617,18 +617,12 @@ const ClubDetails = () => {
                         : "Member";
 
                       const roleBadgeStyle = isClubHead
-                        ? "bg-orange-50 border-orange-200/80 text-orange-600"
+                        ? " text-orange-600"
                         : isCoordinator
-                        ? "bg-sky-50 border-sky-200/80 text-sky-600"
-                        : "bg-neutral-50 border-neutral-200/70 text-neutral-600";
+                        ? " text-sky-600"
+                        : " text-neutral-600";
 
-                      const roleIcon = isClubHead ? (
-                        <i className="ri-vip-crown-2-fill text-amber-500 mr-1 text-[9px] sm:text-[10px]" />
-                      ) : isCoordinator ? (
-                        <i className="ri-shield-star-line text-sky-500 mr-1 text-[9px] sm:text-[10px]" />
-                      ) : (
-                        <i className="ri-user-3-line text-neutral-400 mr-1 text-[9px] sm:text-[10px]" />
-                      );
+                     
 
                       return (
                         <div
@@ -666,7 +660,7 @@ const ClubDetails = () => {
                             <span
                               className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border rounded-full mt-1.5 ${roleBadgeStyle}`}
                             >
-                              {roleIcon}
+                             
                               {roleTitle}
                             </span>
 

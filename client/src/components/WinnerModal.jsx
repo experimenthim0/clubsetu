@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
+import { updateEvent } from '../services/eventService';
 import { useNotification } from '../context/NotificationContext';
 import { Trophy, Plus, Trash2, X, Check, Loader2, Award, Users } from 'lucide-react';
 
@@ -60,13 +61,10 @@ const WinnerModal = ({ isOpen, onClose, event, onWinnersUpdated }) => {
 
   const handleWinnerLookup = async (index, queryVal) => {
     if (!queryVal || !queryVal.trim()) return;
-    const token = localStorage.getItem('token');
-
     if (isTeamEvent) {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/teams/event/${eventId}/lookup-leader?query=${encodeURIComponent(queryVal.trim())}`,
-          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        const res = await api.get(
+          `/api/teams/event/${eventId}/lookup-leader?query=${encodeURIComponent(queryVal.trim())}`
         );
         const { teamName, members, leaderName } = res.data;
 
@@ -88,9 +86,8 @@ const WinnerModal = ({ isOpen, onClose, event, onWinnersUpdated }) => {
     }
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/users/lookup/${encodeURIComponent(queryVal.trim())}`,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      const res = await api.get(
+        `/api/users/lookup/${encodeURIComponent(queryVal.trim())}`
       );
       const { name, branch } = res.data;
       const displayName = branch ? `${name} (${branch})` : name;
@@ -124,17 +121,12 @@ const WinnerModal = ({ isOpen, onClose, event, onWinnersUpdated }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
       const sanitizedWinners = winners.map(({ error, ...rest }) => rest);
 
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/events/${eventId}`,
-        {
-          winners: sanitizedWinners,
-          showWinner
-        },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-      );
+      const res = await updateEvent(eventId, {
+        winners: sanitizedWinners,
+        showWinner
+      });
 
       showNotification('Winners updated successfully!', 'success');
       if (onWinnersUpdated) onWinnersUpdated(res.data);

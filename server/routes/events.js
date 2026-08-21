@@ -11,11 +11,32 @@ import { validate, objectIdSchema } from "../middleware/validate.js";
 import multer from "multer";
 import crypto from "crypto";
 import { uploadImage } from "../utils/cloudinary.js";
-import { getPublicResponse, setPublicResponse } from "../utils/publicResponseCache.js";
+import { getPublicResponse, setPublicResponse, invalidatePublicResponses } from "../utils/publicResponseCache.js";
 import { validateBooking, checkEventConflict } from "../services/conflictService.js";
 import { signTicket } from "../services/qrSigningService.js";
 
 const router = express.Router();
+
+// Older registrations may predate signed QR payloads. Repair them when they
+// are read so every ticket returned to the web app or scanner is usable and
+// the generated payload is persisted for future requests.
+const ensureParticipationTicket = async (participation) => {
+  if (participation?.qrCode && participation?.qrPayload) return participation;
+
+  const ticketId = participation?.qrCode || crypto.randomBytes(12).toString("base64url");
+  const signed = signTicket(participation.eventId, ticketId);
+  const updated = await prisma.participation.update({
+    where: { id: participation.id },
+    data: {
+      qrCode: ticketId,
+      qrPayload: signed.qrPayload,
+      qrVersion: signed.qrVersion,
+      qrKeyId: signed.qrKeyId,
+    },
+  });
+
+  return { ...participation, ...updated };
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -237,7 +258,7 @@ router.get("/", async (req, res) => {
       take: limit,
     });
 
-    const response = events.map(serializeEvent);
+      const response = events.map(serializeEvent);
     setPublicResponse(cacheKey, response);
     res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
     res.set("X-Public-Cache", "MISS");
@@ -639,16 +660,68 @@ router.get(
 
       const participations = await prisma.participation.findMany({
         where: isExternal ? { externalEmail: userId } : { studentId: userId },
-        include: {
-          event: { include: eventInclude },
-          student: true,
+        select: {
+          id: true,
+          eventId: true,
+          studentId: true,
+          externalEmail: true,
+          externalName: true,
+          status: true,
+          qrCode: true,
+          qrVersion: true,
+          qrPayload: true,
+          qrKeyId: true,
+          attendedAt: true,
+          paymentStatus: true,
+          amountPaid: true,
+          paymentId: true,
+          orderId: true,
+          paymentTimestamp: true,
+          transactionId: true,
+          payerName: true,
+          paymentRemarks: true,
+          paymentReviewedBy: true,
+          paymentReviewedAt: true,
+          paymentReviewMessage: true,
+          formResponses: true,
+          createdAt: true,
+          updatedAt: true,
+          // The old query loaded the complete event graph and every student
+          // column. This projection contains what My Events/tickets need.
+          event: {
+            select: {
+              ...publicEventSelect,
+              customFields: true,
+              postRegistrationMessage: true,
+              paymentInstructions: true,
+              collegePaymentUrl: true,
+              upiId: true,
+              accountHolderName: true,
+            },
+          },
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              rollNo: true,
+              profileImage: true,
+              branch: true,
+              program: true,
+              year: true,
+            },
+          },
           team: {
-            include: {
+            select: {
+              id: true,
+              teamName: true,
+              leaderId: true,
               leader: { select: { id: true, name: true, email: true, rollNo: true } },
               members: {
-                include: {
-                  user: { select: { id: true, name: true, email: true, rollNo: true } }
-                }
+                select: {
+                  userId: true,
+                  user: { select: { id: true, name: true, email: true, rollNo: true } },
+                },
               }
             }
           }
@@ -656,28 +729,14 @@ router.get(
         orderBy: { createdAt: "desc" },
       });
 
+      const hydratedParticipations = await Promise.all(
+        participations.map((participation) => ensureParticipationTicket(participation)),
+      );
+
       res.json(
-        participations.map((p) => {
-          let qrPayload = p.qrPayload;
-          let qrVersion = p.qrVersion;
-          let qrKeyId = p.qrKeyId;
-
-          if (!qrPayload && p.qrCode && p.eventId) {
-            try {
-              const signed = signTicket(p.eventId, p.qrCode);
-              qrPayload = signed.qrPayload;
-              qrVersion = signed.qrVersion;
-              qrKeyId = signed.qrKeyId;
-            } catch (e) {
-              console.error("Lazy signTicket error:", e);
-            }
-          }
-
+        hydratedParticipations.map((p) => {
           const serialized = serializeParticipation({
             ...p,
-            qrPayload,
-            qrVersion,
-            qrKeyId,
           });
           return {
             ...serialized,
@@ -791,6 +850,8 @@ router.post("/", verifyToken, requirePermission(PERMISSIONS.EVENT_CREATE), valid
       },
       include: eventInclude,
     });
+
+    invalidatePublicResponses(["events:public:*"]);
 
     res.status(201).json(serializeEvent(savedEvent));
   } catch (err) {
@@ -1033,6 +1094,8 @@ router.post(
 
         return created;
       });
+
+      invalidatePublicResponses(["events:public:*"]);
 
       res.status(201).json({
         message: "Registration successful",
@@ -1339,6 +1402,8 @@ router.delete(
           }
         });
 
+        invalidatePublicResponses(["events:public:*"]);
+
         return res.json({ message: "Deregistered successfully." });
       }
 
@@ -1392,6 +1457,8 @@ router.delete(
             await tx.team.delete({ where: { id: participation.teamId } });
           });
 
+          invalidatePublicResponses(["events:public:*"]);
+
           // Send notifications to all team members (except the leader)
           for (const tp of teamParticipations) {
             if (tp.studentId && tp.studentId !== team.leaderId) {
@@ -1434,6 +1501,8 @@ router.delete(
             }
           });
 
+          invalidatePublicResponses(["events:public:*"]);
+
           // Notify the leader that a teammate left
           const student = await prisma.studentUser.findUnique({ where: { id: studentId } });
           await notifyMemberDeregistered(
@@ -1468,6 +1537,8 @@ router.delete(
           });
         }
       });
+
+      invalidatePublicResponses(["events:public:*"]);
 
       res.json({ message: "Deregistered successfully." });
     } catch (err) {

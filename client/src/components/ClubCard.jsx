@@ -191,7 +191,7 @@ const ClubCard = ({ club }) => {
               <div className="flex flex-wrap gap-1.5 min-h-[32px]">
                 {club.socialLinks.map((link, i) => {
                   const platform = link.platform?.toLowerCase() || "website";
-                  const iconProps = { className: "w-4 h-4" };
+                  const iconProps = { className: "w-6 h-6" };
 
                   const getIcon = () => {
                     if (platform.includes("instagram")) return <InstagramIcon {...iconProps} size={28} />;
@@ -225,7 +225,7 @@ const ClubCard = ({ club }) => {
             <Link
               to={`/club/${club.slug || club._id}`}
               style={buttonStyle}
-              className="flex items-center justify-center gap-1 w-full py-2.5 border border-neutral-300 dark:border-neutral-850 rounded-xl text-[11px] font-black  tracking-wider text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-all duration-300 shadow-sm"
+              className="flex items-center justify-center gap-1 w-full py-2.5 border border-neutral-200 dark:border-neutral-800 rounded-xl text-[11px] font-bold tracking-wider text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-300 shadow-xs"
             >
               <ArrowUpRightIcon size={16}>
                 View Page

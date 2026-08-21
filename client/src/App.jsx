@@ -1,12 +1,11 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import axios from 'axios';
+import { Routes, Route } from 'react-router-dom';
 import AppLayout from './components/AppLayout';
 import AdminLayout from './components/AdminLayout';
 import RouteLoader from './components/RouteLoader';
 import PageLoader from './components/PageLoader';
 import NetworkGuard from './components/NetworkGuard';
-import { setupAxiosNetworkInterceptor } from './utils/network';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy loaded page components
 const EventFeed = lazy(() => import('./pages/EventFeed'));
@@ -50,86 +49,15 @@ const LostAndFound = lazy(() => import('./pages/LostAndFound'));
 const LostFoundAdminDashboard = lazy(() => import('./pages/LostFoundAdminDashboard'));
 const ExportCenter = lazy(() => import('./pages/ExportCenter'));
 const LostFoundGuide = lazy(() => import('./pages/LostFoundGuide'));
-// const ColorExtractorDemo = lazy(() => import('./pages/ColorExtractorDemo'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const CentralOrganizerDashboard = lazy(() => import('./pages/CentralOrganizerDashboard'));
 const EventStaffDashboard = lazy(() => import('./pages/EventStaffDashboard'));
 const StaffAttendanceView = lazy(() => import('./pages/StaffAttendanceView'));
-// const BusTracker = lazy(() => import('./pages/BusTracker'));
-// const EventTimerBuilder = lazy(() => import('./pages/EventTimerBuilder'));
-// const EventTimerLive = lazy(() => import('./pages/EventTimerLive'));
-
-
-
-
-
-
-
-
+const EventCalendarPage = lazy(() => import('./pages/EventCalendarPage'));
 
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketProvider } from './context/SocketContext';
-// import { EventTimerProvider } from './context/EventTimerContext';
-
-// Global axios config - enable cookies
-axios.defaults.withCredentials = true;
-
-// Attach Axios network error interceptor
-setupAxiosNetworkInterceptor(axios);
-
-// Global axios interceptor — attach Bearer token if present in localStorage, alongside httpOnly cookies
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Global axios interceptor — handle 401 responses (expired token)
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 503 && error.response?.data?.code === 'MAINTENANCE_OVERLOAD') {
-      window.location.href = '/maintenance';
-      return Promise.reject(error);
-    }
-
-    if (error.response?.status === 401) {
-      const path = window.location.pathname;
-      
-      // Don't redirect if already on any login/register pages
-      if (path.includes('/login') || path.includes('/register') || path.includes('/admin-secret-login')) {
-        return Promise.reject(error);
-      }
-
-      // Clear all auth data
-      localStorage.removeItem('user');
-      localStorage.removeItem('admin');
-      localStorage.removeItem('role');
-      localStorage.removeItem('token');
-      // Clear cookie client-side
-      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-      // Handle Admin routes
-      if (path.includes('/admin')) {
-        window.location.href = '/admin-secret-login';
-        return Promise.reject(error);
-      }
-
-      // Handle regular User routes
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-
-
 
 function App() {
 
@@ -138,91 +66,78 @@ function App() {
     return <Maintainance />;
   }
   return (
-    <Router>
-      <NotificationProvider>
-        <SocketProvider>
-          <NetworkGuard>
-            <RouteLoader>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* ── Admin Layout — separate window, custom navbar/sidebar ── */}
-                  <Route element={<AdminLayout />}>
-                    <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                    <Route path="/admin/export-center" element={<ExportCenter />} />
-                    <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} />
-                  </Route>
+    <NotificationProvider>
+      <SocketProvider>
+        <NetworkGuard>
+          <RouteLoader>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* ── Admin Layout — separate window, custom navbar/sidebar ── */}
+                <Route element={
+                  <ProtectedRoute roles={['admin', 'paymentAdmin', 'lostFoundAdmin']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/export-center" element={<ExportCenter />} />
+                  <Route path="/admin/lost-found" element={<LostFoundAdminDashboard />} />
+                </Route>
 
-                  {/* Standalone Full-Screen Stage Display (No Site Navbar/Footer) */}
-                  {/* <Route path="/event-timer/live" element={<EventTimerProvider><EventTimerLive /></EventTimerProvider>} /> */}
+                {/* ── Public Layout — standard navbar/footer ── */}
+                <Route element={<AppLayout />}>
+                  {/* Public routes */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/clubs" element={<ClubsPage />} />
+                  <Route path="/club/:slug" element={<ClubDetails />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/:token" element={<ResetPassword />} />
+                  <Route path="/events" element={<EventFeed />} />
+                  <Route path="/event/:slug" element={<EventDetails />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<RegisterStudent />} />
+                  <Route path="/admin-secret-login" element={<AdminLogin />} />
+                  <Route path="/maintenance" element={<Maintenance />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsAndConditions />} />
+                  <Route path="/payment-policy" element={<PaymentPolicy />} />
+                  <Route path="/data-privacy" element={<DataPrivacy />} />
+                  <Route path="/event-guide" element={<EventGuide />} />
+                  <Route path="/contribute" element={<Contribute />} />
+                  <Route path="/verify-email/:token" element={<VerifyEmail />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/lost-found" element={<LostAndFound />} />
+                  <Route path="/lost-found/guide" element={<LostFoundGuide />} />
 
-                  {/* ── Public Layout — standard navbar/footer ── */}
-                  <Route element={<AppLayout />}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/clubs" element={<ClubsPage />} />
-                    {/* <Route path="/event-timer" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} /> */}
-                    {/* <Route path="/event-timer/builder" element={<EventTimerProvider><EventTimerBuilder /></EventTimerProvider>} /> */}
-                    <Route path="/club/:slug" element={<ClubDetails />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password/:token" element={<ResetPassword />} />
-                  
-                    {/* Protected Routes */}
-                    <Route path="/club/edit/:id" element={<EditClub />} />
-                    <Route path="/club/:clubId/team" element={<ClubMembers />} />
+                  {/* Protected routes (require login) */}
+                  <Route path="/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/my-events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
+                  <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                  <Route path="/events/edit/:id" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
+                  <Route path="/club/edit/:id" element={<ProtectedRoute><EditClub /></ProtectedRoute>} />
+                  <Route path="/club/:clubId/team" element={<ProtectedRoute><ClubMembers /></ProtectedRoute>} />
+                  <Route path="/club-events/:clubId" element={<ProtectedRoute><ClubEvents /></ProtectedRoute>} />
+                  <Route path="/send-notification" element={<ProtectedRoute><SendNotification /></ProtectedRoute>} />
+                  <Route path="/event/:id/registrations" element={<ProtectedRoute><EventRegistrations /></ProtectedRoute>} />
+                  <Route path="/event/:id/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
+                  <Route path="/event/:id/design-certificate" element={<ProtectedRoute><CertificateDesigner /></ProtectedRoute>} />
+                  <Route path="/payments" element={<ProtectedRoute><PaymentTracking /></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                  <Route path="/central-organizer" element={<ProtectedRoute><CentralOrganizerDashboard /></ProtectedRoute>} />
+                  <Route path="/event-staff" element={<ProtectedRoute><EventStaffDashboard /></ProtectedRoute>} />
+                  <Route path="/event-staff/:eventId/attendance" element={<ProtectedRoute><StaffAttendanceView /></ProtectedRoute>} />
+                  <Route path="/event-calendar" element={<ProtectedRoute><EventCalendarPage readOnly /></ProtectedRoute>} />
 
-                    <Route path="/events" element={<EventFeed />} />
-                    <Route path="/event/:slug" element={<EventDetails />} />
-                    <Route path="/login" element={<Login />} />
-                   
-                    <Route path="/register" element={<RegisterStudent />} />
-                    <Route path="/create" element={<CreateEvent />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/my-events" element={<MyEvents />} />
-                    <Route path="/club-events/:clubId" element={<ClubEvents />} />
-                    <Route path="/profile/edit" element={<EditProfile />} />
-                    <Route path="/events/edit/:id" element={<EditEvent />} />
-                    <Route path="/send-notification" element={<SendNotification />} />
-                    <Route path="/event/:id/registrations" element={<EventRegistrations />} />
-                    <Route path="/event/:id/check-in" element={<CheckIn />} />
-                    <Route path="/event/:id/design-certificate" element={<CertificateDesigner />} />
-                    <Route path="/admin-secret-login" element={<AdminLogin />} />
-                    <Route path="/maintenance" element={<Maintenance />} />
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsAndConditions />} />
-                    <Route path="/payment-policy" element={<PaymentPolicy />} />
-                    <Route path="/data-privacy" element={<DataPrivacy />} />
-                    <Route path="/payments" element={<PaymentTracking />} />
-                    <Route path="/event-guide" element={<EventGuide />} />
-                    <Route path="/contribute" element={<Contribute />} />
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/verify-email/:token" element={<VerifyEmail />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/team" element={<Team />} />
-                   
-                    <Route path="/lost-found" element={<LostAndFound />} />
-                    <Route path="/lost-found/guide" element={<LostFoundGuide />} />
-                    <Route path="/central-organizer" element={<CentralOrganizerDashboard />} />
-                    <Route path="/event-staff" element={<EventStaffDashboard />} />
-                    <Route path="/event-staff/:eventId/attendance" element={<StaffAttendanceView />} />
-                    {/* <Route path="/bus-tracker" element={<BusTracker />} /> */}
-
-                
-              
-                    <Route path="*" element={<NotFound />} />
-
-              
-
-
-                  </Route>
-                </Routes>
-              </Suspense>
-            </RouteLoader>
-          </NetworkGuard>
-        </SocketProvider>
-      </NotificationProvider>
-    </Router>
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </RouteLoader>
+        </NetworkGuard>
+      </SocketProvider>
+    </NotificationProvider>
   );
 }
 
 export default App;
-
-

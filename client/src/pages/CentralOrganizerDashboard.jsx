@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../services/api";
 import {
   Calendar,
   Users,
@@ -19,8 +19,6 @@ import {
   CentralParticipatingClubs,
   CentralAuditLogs,
 } from "../roles/centralOrganizer";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const initialFormData = {
   title: "",
@@ -89,7 +87,7 @@ const CentralOrganizerDashboard = () => {
   useEffect(() => {
     const fetchOpenVenues = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/venues?openOnly=true`);
+        const res = await api.get('/api/venues?openOnly=true');
         if (res.data && Array.isArray(res.data) && res.data.length > 0) {
           setAvailableVenues(res.data.map((v) => (typeof v === "string" ? v : v.name)));
         }
@@ -114,9 +112,9 @@ const CentralOrganizerDashboard = () => {
     try {
       setLoading(true);
       const [statsRes, eventsRes, clubsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/central-organizer/dashboard-stats`),
-        axios.get(`${API_URL}/api/central-organizer/events`),
-        axios.get(`${API_URL}/api/clubs`),
+        api.get('/api/central-organizer/dashboard-stats'),
+        api.get('/api/central-organizer/events'),
+        api.get('/api/clubs'),
       ]);
 
       setStats(statsRes.data);
@@ -159,7 +157,7 @@ const CentralOrganizerDashboard = () => {
       setUploadingPoster(true);
       const formDataUpload = new FormData();
       formDataUpload.append("image", file);
-      const { data } = await axios.post(`${API_URL}/api/events/upload`, formDataUpload, {
+      const { data } = await api.post('/api/events/upload', formDataUpload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       if (data.secure_url) {
@@ -241,11 +239,11 @@ const CentralOrganizerDashboard = () => {
       };
 
       if (editingEventId) {
-        const res = await axios.put(`${API_URL}/api/central-organizer/events/${editingEventId}`, payload);
-        showNotification(`College-wide event "${res.data.event?.title || formData.title}" updated successfully!`, "success");
+        const res = await api.put(`/api/central-organizer/events/${editingEventId}`, payload);
+        showNotification("Central event updated successfully!", "success");
       } else {
-        const res = await axios.post(`${API_URL}/api/central-organizer/events`, payload);
-        showNotification(`College-wide event "${res.data.event?.title || formData.title}" created successfully!`, "success");
+        const res = await api.post('/api/central-organizer/events', payload);
+        showNotification("Central event published successfully!", "success");
       }
 
       setEditingEventId(null);
@@ -264,7 +262,7 @@ const CentralOrganizerDashboard = () => {
   const handleTogglePublish = async (eventId, currentStatus) => {
     const newStatus = currentStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
     try {
-      await axios.put(`${API_URL}/api/central-organizer/events/${eventId}`, {
+      await api.put(`/api/central-organizer/events/${eventId}`, {
         reviewStatus: newStatus,
       });
       showNotification(`Event is now ${newStatus === "PUBLISHED" ? "Live / Published" : "saved as Draft"}.`, "success");
@@ -280,7 +278,7 @@ const CentralOrganizerDashboard = () => {
     }
 
     try {
-      await axios.delete(`${API_URL}/api/central-organizer/events/${eventId}`);
+      await api.delete(`/api/central-organizer/events/${eventId}`);
       showNotification("Event deleted successfully.", "success");
       fetchDashboardData();
     } catch (err) {
@@ -294,7 +292,7 @@ const CentralOrganizerDashboard = () => {
 
     try {
       setAddingClub(true);
-      await axios.post(`${API_URL}/api/central-organizer/events/${selectedEvent.id}/clubs`, {
+      await api.post(`/api/central-organizer/events/${selectedEvent.id}/clubs`, {
         clubId: selectedClubId,
       });
       showNotification("Participating club added successfully.", "success");
@@ -309,7 +307,7 @@ const CentralOrganizerDashboard = () => {
 
   const handleRemoveClub = async (eventId, clubId) => {
     try {
-      await axios.delete(`${API_URL}/api/central-organizer/events/${eventId}/clubs/${clubId}`);
+      await api.delete(`/api/central-organizer/events/${eventId}/clubs/${clubId}`);
       showNotification("Participating club removed.", "success");
       fetchDashboardData();
     } catch (err) {

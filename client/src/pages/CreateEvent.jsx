@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import { createEvent } from '../services/eventService';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { EVENT_VENUES } from '../constants/eventVenues';
@@ -60,9 +63,12 @@ const CreateEvent = () => {
     useEffect(() => {
         const fetchOpenVenues = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/venues?openOnly=true`);
+                const res = await api.get('/api/venues?openOnly=true');
                 if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-                    setAvailableVenues(res.data.map(v => typeof v === 'string' ? v : v.name));
+                    const fetchedVenues = res.data.map(v => typeof v === 'string' ? v : v.name);
+                    // Online events do not consume a physical venue and must remain
+                    // selectable even when the venue API only returns open rooms.
+                    setAvailableVenues([...new Set([...fetchedVenues, 'Online'])]);
                 }
             } catch (err) {
                 console.error("Failed to load open venues, falling back to static list:", err);
@@ -97,7 +103,7 @@ const CreateEvent = () => {
         const formDataUpload = new FormData();
         formDataUpload.append('image', file);
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/upload`, formDataUpload, {
+            const { data } = await api.post('/api/events/upload', formDataUpload, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
@@ -417,7 +423,7 @@ const CreateEvent = () => {
         };
 
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events`, payload);
+            const res = await createEvent(payload);
             navigate(`/event/${res.data.slug}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create event');

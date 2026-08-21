@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { invalidateCache } from '../lib/cacheManager';
+import { useAuth } from '../context/AuthContext';
+import { changePassword } from '../services/authService';
+import { updateProfile } from '../services/userService';
 import ProfilePhotoUpload from '../components/ProfilePhotoUpload';
 import ShimmerText from '../components/ShimmerText';
 
@@ -12,8 +14,9 @@ import { getGraduationYearOptions, calculateYearFromGraduation } from '../utils/
 const EditProfile = () => {
     const { showNotification } = useNotification();
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [role, setRole] = useState(null);
+    const { user: authUser, role: authRole, setSession } = useAuth();
+    const [user, setUser] = useState(authUser);
+    const [role, setRole] = useState(authRole);
     const [isSaving, setIsSaving] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -37,30 +40,28 @@ const EditProfile = () => {
     });
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem('user'));
-        const storedRole = localStorage.getItem('role');
-        if (storedUser) {
-            setUser(storedUser);
-            setRole(storedRole);
+        if (authUser) {
+            setUser(authUser);
+            setRole(authRole);
             setFormData({
-                name: storedUser.name || '',
-                year: storedUser.year || '',
-                githubProfile: storedUser.githubProfile || '',
-                linkedinProfile: storedUser.linkedinProfile || '',
-                xProfile: storedUser.xProfile || '',
-                portfolioUrl: storedUser.portfolioUrl || '',
-                instagramProfile: storedUser.instagramProfile || '',
-                whatsappNumber: storedUser.whatsappNumber || '',
-                isTwoStepEnabled: storedUser.isTwoStepEnabled || false,
-                bankName: storedUser.bankName || '',
-                accountHolderName: storedUser.accountHolderName || '',
-                accountNumber: storedUser.accountNumber || '',
-                ifscCode: storedUser.ifscCode || '',
-                upiId: storedUser.upiId || '',
-                bankPhone: storedUser.bankPhone || ''
+                name: authUser.name || '',
+                year: authUser.year || '',
+                githubProfile: authUser.githubProfile || '',
+                linkedinProfile: authUser.linkedinProfile || '',
+                xProfile: authUser.xProfile || '',
+                portfolioUrl: authUser.portfolioUrl || '',
+                instagramProfile: authUser.instagramProfile || '',
+                whatsappNumber: authUser.whatsappNumber || '',
+                isTwoStepEnabled: authUser.isTwoStepEnabled || false,
+                bankName: authUser.bankName || '',
+                accountHolderName: authUser.accountHolderName || '',
+                accountNumber: authUser.accountNumber || '',
+                ifscCode: authUser.ifscCode || '',
+                upiId: authUser.upiId || '',
+                bankPhone: authUser.bankPhone || ''
             });
         }
-    }, []);
+    }, [authUser, authRole]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -79,10 +80,7 @@ const EditProfile = () => {
                 if (!formData.currentPassword) {
                     return showNotification('Current password is required to set a new password', 'error');
                 }
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
-                    currentPassword: formData.currentPassword,
-                    newPassword: formData.newPassword
-                });
+                await changePassword(formData.currentPassword, formData.newPassword);
                 showNotification('Password updated successfully', 'success');
             }
 
@@ -90,8 +88,8 @@ const EditProfile = () => {
             delete updateData.currentPassword;
             delete updateData.newPassword;
 
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user.id}`, updateData);
-            localStorage.setItem('user', JSON.stringify(res.data.user)); // Update local storage
+            const res = await updateProfile(role, user.id || user._id, updateData);
+            setSession(res.data.user, role);
             
             // Invalidate user profile caches locally & broadcast to other tabs
             await invalidateCache(['/api/users/*', '/api/auth/me']);

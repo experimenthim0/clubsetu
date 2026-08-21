@@ -14,8 +14,8 @@
  * - Manual refresh bypass & page-specific invalidation
  * - Never-cache list for auth, registration, QR verification
  */
-
-import axios from 'axios';
+import api from '../services/api';
+import axios from 'axios'; // for isCancel or other utilities if needed
 import {
   getEntry,
   setEntry,
@@ -37,8 +37,8 @@ import {
 
 /** Default TTL values by resource type */
 const TTL = {
-  EVENTS_LIST: 10 * 60 * 1000,       // 10 minutes
-  EVENT_DETAIL_UPCOMING: 10 * 60 * 1000, // 10 minutes
+  EVENTS_LIST: 15 * 1000,             // Event counts/status are mutable
+  EVENT_DETAIL_UPCOMING: 15 * 1000,  // Event counts/status are mutable
   EVENT_DETAIL_LIVE: 30 * 1000,       // 30 seconds
   EVENT_DETAIL_ENDED: 24 * 60 * 60 * 1000, // 24 hours
   CLUBS_LIST: 6 * 60 * 60 * 1000,    // 6 hours
@@ -46,7 +46,7 @@ const TTL = {
   USER_PROFILE: 30 * 60 * 1000,      // 30 minutes
   NOTIFICATIONS: 1 * 60 * 1000,      // 1 minute
   ADMIN_DASHBOARD: 2 * 60 * 1000,    // 2 minutes
-  REGISTRATION_STATUS: 30 * 1000,    // 30 seconds
+  REGISTRATION_STATUS: 0,             // Always fetch current membership state
   DEFAULT: 5 * 60 * 1000,            // 5 minutes fallback
 };
 
@@ -59,6 +59,7 @@ const NEVER_CACHE_PATTERNS = [
   '/check-in',
   '/register',
   '/api/payment/',
+  '/api/events/user/',
   '/verify-2fa',
   '/forgot-password',
   '/reset-password',
@@ -262,7 +263,7 @@ export async function cachedFetch(url, options = {}) {
 
   // Never cache certain routes
   if (shouldNeverCache(path)) {
-    const res = await axios.get(url, options.axiosConfig);
+    const res = await api.get(url, options.axiosConfig);
     return res.data;
   }
 
@@ -311,7 +312,7 @@ async function fetchAndCache(url, path, options = {}) {
   }
 
   try {
-    const res = await axios.get(url, {
+    const res = await api.get(url, {
       ...options.axiosConfig,
       headers: { ...options.axiosConfig?.headers, ...headers },
       validateStatus: (status) => status < 400 || status === 304,
@@ -367,7 +368,7 @@ async function fetchAndCacheBackground(url, path, ttlMs, cached, options) {
   if (cached?.lastModified) headers['If-Modified-Since'] = cached.lastModified;
 
   try {
-    const res = await axios.get(url, {
+    const res = await api.get(url, {
       ...options.axiosConfig,
       headers: { ...options.axiosConfig?.headers, ...headers },
       validateStatus: (status) => status < 400 || status === 304,

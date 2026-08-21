@@ -1,7 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import {
+    getDashboardStats,
+    getClubsList,
+    getCoordinators,
+    getCentralOrganizers,
+    getUserInfo,
+    completePayout,
+    getVenues
+} from '../services/adminService';
+import {
+    getSentNotifications,
+    getNotifications,
+    sendNotification,
+    markAllAsRead
+} from '../services/notificationService';
 import ExportCenter from './ExportCenter';
 import EventCalendarPage from './EventCalendarPage';
 import { Plus, CheckCheck } from 'lucide-react';
@@ -95,50 +111,47 @@ const AdminDashboard = () => {
         }
     }, [tabParam, role]);
 
+    const { user: adminUser, role: authRole } = useAuth();
+
     useEffect(() => {
-        const adminDataString = localStorage.getItem('admin');
-        if (!adminDataString) {
-            navigate('/admin-secret-login');
-            return;
-        }
-        
-        const adminData = JSON.parse(adminDataString);
-        setRole(adminData.role);
-        setProfileName(adminData.name || '');
-        setProfileEmail(adminData.email || '');
-        setProfile2FA(adminData.isTwoStepEnabled || false);
+        if (adminUser) {
+            setRole(authRole);
+            setProfileName(adminUser.name || '');
+            setProfileEmail(adminUser.email || '');
+            setProfile2FA(adminUser.isTwoStepEnabled || false);
 
-        if (adminData.role === 'lostFoundAdmin') {
-            navigate('/admin/lost-found');
-            return;
-        }
-        if (adminData.role === 'facultyCoordinator') {
-            navigate('/');
-            return;
-        }
-
-        const fetchData = async () => {
-            try {
-                const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
-                setStats(statsRes.data);
-
-                const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
-                setClubHeads(clubsRes.data);
-
-                const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
-                setCoordinators(coordsRes.data);
-
-                await fetchManualPayments();
-
-                fetchFilteredEventData();
-                setLoading(false);
-            } catch (err) {
-                showNotification('Failed to fetch admin data', 'error');
-                setLoading(false);
+            if (authRole === 'lostFoundAdmin') {
+                navigate('/admin/lost-found');
+                return;
             }
-        };
-        fetchData();
-    }, [navigate, showNotification]);
+            if (authRole === 'facultyCoordinator') {
+                navigate('/');
+                return;
+            }
+
+            const fetchData = async () => {
+                try {
+                    const statsRes = await getDashboardStats();
+                    setStats(statsRes.data);
+
+                    const clubsRes = await getClubsList();
+                    setClubHeads(clubsRes.data);
+
+                    const coordsRes = await getCoordinators();
+                    setCoordinators(coordsRes.data);
+
+                    await fetchManualPayments();
+
+                    fetchFilteredEventData();
+                    setLoading(false);
+                } catch (err) {
+                    showNotification('Failed to fetch admin data', 'error');
+                    setLoading(false);
+                }
+            };
+            fetchData();
+        }
+    }, [adminUser, authRole, navigate, showNotification]);
 
     // Fetch tab-specific data on tab changes
     useEffect(() => {
@@ -151,7 +164,7 @@ const AdminDashboard = () => {
     const fetchCentralOrganizer = async () => {
         setLoadingCO(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/central-organizer`);
+            const res = await getCentralOrganizers();
             setCentralOrganizer(res.data.centralOrganizer || null);
         } catch (err) {
             console.error('Failed to fetch central organizer:', err);
@@ -163,7 +176,7 @@ const AdminDashboard = () => {
     const fetchBroadcasts = async () => {
         setLoadingBroadcasts(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/notifications/sent`);
+            const res = await getSentNotifications();
             setBroadcasts(res.data || []);
         } catch (err) {
             console.error('Failed to fetch sent broadcasts:', err);
@@ -175,7 +188,7 @@ const AdminDashboard = () => {
     const fetchAdminNotifications = async () => {
         setLoadingNotifications(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`);
+            const res = await getNotifications();
             setAdminNotifications(res.data || []);
         } catch (err) {
             console.error('Failed to fetch admin notifications:', err);
@@ -196,7 +209,7 @@ const AdminDashboard = () => {
         }
         setSendingBroadcast(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+            await sendNotification({
                 targetType: broadcastForm.targetType,
                 eventId: broadcastForm.targetType === 'REGISTERED_STUDENTS' ? broadcastForm.eventId : undefined,
                 title: broadcastForm.title,
@@ -215,7 +228,7 @@ const AdminDashboard = () => {
 
     const handleMarkAllAsRead = async () => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/notifications/read-all`);
+            await markAllAsRead();
             showNotification('All notifications marked as read', 'success');
             fetchAdminNotifications();
         } catch (err) {
@@ -225,7 +238,7 @@ const AdminDashboard = () => {
 
     const fetchManualPayments = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/manual-payments`);
+            const res = await api.get('/api/admin/manual-payments');
             setManualPayments(res.data.participations || []);
             setManualPaymentsSummary(res.data.summary || null);
         } catch (err) {
@@ -236,7 +249,7 @@ const AdminDashboard = () => {
     const fetchFilteredEventData = async () => {
         try {
             const query = new URLSearchParams(filters).toString();
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/event-data-export?${query}`);
+            const res = await api.get(`/api/admin/event-data-export?${query}`);
             setEventData(res.data.events || []);
         } catch (err) {
             console.error('Failed to fetch filtered event data');
@@ -249,7 +262,7 @@ const AdminDashboard = () => {
 
     const refreshStats = async () => {
         try {
-            const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`);
+            const statsRes = await getDashboardStats();
             setStats(statsRes.data);
             await fetchManualPayments();
         } catch (err) {
@@ -259,7 +272,7 @@ const AdminDashboard = () => {
 
     const handleFetchPayoutInfo = async (clubHeadId, eventId) => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/user-info/${clubHeadId}`);
+            const res = await getUserInfo(clubHeadId);
             setSelectedClub(res.data);
             setSelectedEventId(eventId);
             setModalOpen(true);
@@ -270,7 +283,7 @@ const AdminDashboard = () => {
 
     const handleConfirmPayout = async () => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/complete-payout/${selectedEventId}`);
+            const res = await completePayout(selectedEventId);
             if (res.data.success) {
                 showNotification('Payout marked as complete!', 'success');
                 setModalOpen(false);
@@ -284,7 +297,7 @@ const AdminDashboard = () => {
     const fetchVenues = async () => {
         setVenuesLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/venues`);
+            const res = await getVenues();
             setVenues(res.data || []);
         } catch (err) {
             console.error('Failed to fetch venues');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import {
   Search,
   RefreshCw,
@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import { useNotification } from "../../context/NotificationContext";
 import ShimmerText from "../../components/ShimmerText";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 // Determine if action is a critical/destructive/revocation alert
 const isAlertAction = (action) => {
@@ -68,7 +66,7 @@ const CentralAuditLogs = ({ events = [] }) => {
         if (selectedEventId !== "ALL") params.eventId = selectedEventId;
         if (search.trim()) params.search = search.trim();
 
-        const res = await axios.get(`${API_URL}/api/central-organizer/audit-logs`, { params });
+        const res = await api.get('/api/central-organizer/audit-logs', { params });
         setLogs(res.data.logs || []);
         if (res.data.pagination) setPagination(res.data.pagination);
         if (res.data.availableActions) setAvailableActions(res.data.availableActions);

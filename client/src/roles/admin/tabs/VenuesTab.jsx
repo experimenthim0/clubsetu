@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { createVenue, toggleVenueStatus, updateVenue, deleteVenue } from '../../../services/adminService';
 import { Search, Building2, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { DataTable, Th, Td, FilterSelect, Modal } from '../components/AdminUI';
 import { useNotification } from '../../../context/NotificationContext';
@@ -34,7 +34,7 @@ const VenuesTab = ({
         }
         setIsCreatingVenue(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/venues`, {
+            const res = await createVenue({
                 name: newVenueName.trim(),
                 isOpen: newVenueIsOpen,
             });
@@ -52,7 +52,7 @@ const VenuesTab = ({
 
     const handleToggleVenueStatus = async (venue) => {
         try {
-            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/venues/${venue.id}/toggle-status`);
+            const res = await toggleVenueStatus(venue.id);
             const statusStr = res.data.isOpen ? 'Open for Event' : 'Closed / Unavailable';
             showNotification(`Venue "${venue.name}" is now ${statusStr}`, 'success');
             setVenues(prev => prev.map(v => v.id === venue.id ? res.data : v));
@@ -65,7 +65,7 @@ const VenuesTab = ({
         e.preventDefault();
         if (!editingVenue || !editingVenue.name.trim()) return;
         try {
-            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/venues/${editingVenue.id}`, {
+            const res = await updateVenue(editingVenue.id, {
                 name: editingVenue.name.trim(),
                 isOpen: editingVenue.isOpen,
             });
@@ -81,7 +81,7 @@ const VenuesTab = ({
     const handleDeleteVenue = async (venue) => {
         if (!window.confirm(`Are you sure you want to delete venue "${venue.name}"?`)) return;
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/venues/${venue.id}`);
+            await deleteVenue(venue.id);
             showNotification(`Venue "${venue.name}" deleted successfully`, 'success');
             setVenues(prev => prev.filter(v => v.id !== venue.id));
         } catch (err) {

@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle, Building2, Clock, Users, RefreshCw, CheckCircle2 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 
 const ConflictCenter = ({ isOpen, onClose, onSelectEvent }) => {
   const [loading, setLoading] = useState(true);
   const [issues, setIssues] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
   const fetchConflicts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/events/conflicts`);
+      const res = await api.get('/api/events/conflicts');
       setIssues(res.data.issues || []);
       setTotalCount(res.data.totalIssues || 0);
     } catch (err) {

@@ -124,7 +124,7 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
         data: {
           status: 'ATTENDED',
           attendedAt: now,
-          markedByMemberId: scannerId,
+          markedByMemberId: userId,
         },
       }),
       prisma.attendanceRecord.create({
@@ -152,7 +152,7 @@ async function handleVerify(req, res, qrCodeInput, eventIdFromRequest) {
       rollNo,
       externalEmail,
       attendedAt: now,
-      markedByMemberId: scannerId,
+      markedByMemberId: userId,
     });
   } catch (err) {
     if (err.code === 'P2002') {

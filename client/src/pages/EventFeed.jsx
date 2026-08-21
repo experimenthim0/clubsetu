@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import axios from 'axios';
 import EventCard from '../components/EventCard';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import { getUserEvents, registerForEvent } from '../services/eventService';
 import { Link, useSearchParams } from 'react-router-dom';
 import EventCardSkeleton from '../components/skeletons/EventCardSkeleton';
 import { Skeleton } from '../components/ui/Skeleton';
 import { getPublicJson } from '../lib/publicDataCache';
-import { registerUpdateCallback, unregisterUpdateCallback } from '../lib/cacheManager';
+import { registerUpdateCallback, unregisterUpdateCallback, invalidateCache } from '../lib/cacheManager';
 
 const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive = false }) => {
   const { showNotification } = useNotification();
@@ -25,6 +26,7 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   const initialYear = searchParams.get('year') || searchParams.get('filterYear') || 'ALL';
   const initialSearch = searchParams.get('search') || searchParams.get('q') || '';
 
+  const { user, role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [filterStatus, setFilterStatus] = useState(initialStatus);
@@ -32,11 +34,10 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   const [filterMonth, setFilterMonth] = useState(initialMonth);
   const [filterYear, setFilterYear] = useState(initialYear);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const user = JSON.parse(localStorage.getItem('user'));
   
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  const eventsUrl = import.meta.env.VITE_API_URL + '/api/events';
+  const eventsUrl = '/api/events';
 
   // Sync state if URL query params change
   useEffect(() => {
@@ -58,10 +59,9 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
       // Uses cacheManager: 10-minute TTL, SWR pattern, IndexedDB persistence
       const eventData = await getPublicJson(eventsUrl);
        setEvents(Array.isArray(eventData) ? eventData : []);
-      const role = localStorage.getItem('role');
-      if (user && role === 'member') {
-          const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user.id || user._id}`);
-          setRegisteredEvents(regRes.data.filter(r => r.eventId).map(r => r.eventId.id || r.eventId._id));
+      if (user) {
+        const regRes = await getUserEvents(user.id || user._id);
+        setRegisteredEvents(regRes.data.map(item => item.eventId?._id || item.eventId));
       }
       setLoading(false);
     } catch (err) {
@@ -142,20 +142,18 @@ const EventFeed = ({ limit, hideHeader = false, showFilters = false, onlyActive 
   }, [events]);
 
   const handleRegister = async (eventId) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const role = localStorage.getItem('role');
-
     if (!user || (role !== 'member' && role !== 'student')) {
         showNotification('Please login as a student to register.', 'warning');
         return;
     }
 
     try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/register`, {
+        const res = await registerForEvent(eventId, {
             userId: user.id || user._id
         });
         showNotification(res.data.message, 'success');
-        fetchEvents();
+        await invalidateCache(['/api/events', `/api/events/user/${user.id || user._id}`]);
+        await fetchEvents();
     } catch (err) {
         showNotification(err.response?.data?.message || 'Registration failed', 'error');
     }

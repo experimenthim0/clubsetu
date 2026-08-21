@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../../services/api';
+import { createClub, getClubsList } from '../../../services/adminService';
 import { Plus, Key, CheckCircle2, Shield, GraduationCap, Mail } from 'lucide-react';
 import { DataTable, Th, Td, Modal, ModalFormField } from '../components/AdminUI';
 import { useNotification } from '../../../context/NotificationContext';
@@ -22,7 +23,7 @@ const ClubsTab = ({
         const data = Object.fromEntries(formData.entries());
         
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/clubs`, data);
+            const res = await createClub(data);
             showNotification('Club and users created successfully!', 'success');
             e.target.reset();
             setIsCreateClubModalOpen(false);
@@ -35,7 +36,7 @@ const ClubsTab = ({
                 facultyName: data.facultyName,
                 defaultPassword: `${slug}@him0148`,
             });
-            const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
+            const clubsRes = await getClubsList();
             setClubHeads(clubsRes.data);
             if (refreshStats) refreshStats();
         } catch (err) {
@@ -49,11 +50,11 @@ const ClubsTab = ({
         const data = Object.fromEntries(formData.entries());
         
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/clubs/${editingClub._id || editingClub.id}`, data);
+            await api.put(`/api/admin/clubs/${editingClub._id || editingClub.id}`, data);
             showNotification('Club updated successfully', 'success');
             setIsEditModalOpen(false);
             setEditingClub(null);
-            const clubsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/clubs-list`);
+            const clubsRes = await getClubsList();
             setClubHeads(clubsRes.data);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to update club', 'error');

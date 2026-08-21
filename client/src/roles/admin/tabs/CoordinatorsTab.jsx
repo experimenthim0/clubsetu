@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../../services/api';
+import { assignCoordinator, getCoordinators } from '../../../services/adminService';
 import { Plus } from 'lucide-react';
 import { DataTable, Th, Td, Modal, ModalFormField } from '../components/AdminUI';
 import { useNotification } from '../../../context/NotificationContext';
@@ -20,11 +21,11 @@ const CoordinatorsTab = ({
         const data = Object.fromEntries(formData.entries());
         
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`, data);
+            await assignCoordinator(data);
             showNotification('Coordinator created successfully', 'success');
             e.target.reset();
             setIsAddCoordModalOpen(false);
-            const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
+            const coordsRes = await getCoordinators();
             setCoordinators(coordsRes.data);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to create coordinator', 'error');
@@ -37,11 +38,11 @@ const CoordinatorsTab = ({
         const data = Object.fromEntries(formData.entries());
         
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/coordinators/${editingCoord._id || editingCoord.id}`, data);
+            await api.put(`/api/admin/coordinators/${editingCoord._id || editingCoord.id}`, data);
             showNotification('Coordinator updated successfully', 'success');
             setIsCoordModalOpen(false);
             setEditingCoord(null);
-            const coordsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coordinators`);
+            const coordsRes = await getCoordinators();
             setCoordinators(coordsRes.data);
         } catch (err) {
             showNotification(err.response?.data?.message || 'Failed to update coordinator', 'error');

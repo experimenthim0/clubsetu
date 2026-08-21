@@ -32,9 +32,9 @@ const HomeFooter = () => {
   ];
 
   return (
-    <footer className="bg-[#fefce8]/30 dark:bg-neutral-900/30 text-black dark:text-white transition-colors">
+    <footer className="bg-[#fafafa] dark:bg-[#0c0c0c] text-neutral-900 dark:text-white border-t border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
       {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x border-gray-300 dark:border-neutral-800">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14 border-x border-neutral-200 dark:border-neutral-800">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
           {/* Brand column */}

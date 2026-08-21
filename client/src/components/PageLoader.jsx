@@ -91,7 +91,7 @@ export default function PageLoader({
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 select-none">
         {showBrand && (
           <div
-            className="mb-4 text-2xl sm:text-3xl font-bold tracking-tight"
+            className="mb-4 text-2xl sm:text-3xl font-medium tracking-wider"
             style={{
               fontFamily: "'logofont', serif",
               color: isDark ? '#ffffff' : '#0a0a0a',

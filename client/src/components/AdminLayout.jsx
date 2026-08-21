@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import AdminNavbar from "./AdminNavbar";
 import AdminSidebar from "./AdminSidebar";
 import DashboardFooter from "./DashboardFooter";
@@ -10,42 +10,24 @@ import DashboardFooter from "./DashboardFooter";
  * Renders a custom AdminNavbar + collapsible AdminSidebar + main content.
  * Completely separate from the public AppLayout — no public Navbar, Footer, or BottomNav.
  *
- * Auth gate: unauthenticated admins are redirected to /admin-secret-login.
+ * Auth gating is handled by <ProtectedRoute> in App.jsx.
  */
 const AdminLayout = () => {
-  // ── Read admin from localStorage ────
-  let user = null;
-
-  try {
-    const storedUser = localStorage.getItem("user");
-
-    if (storedUser && storedUser !== "undefined") {
-      user = JSON.parse(storedUser);
-    }
-  } catch (err) {
-    localStorage.removeItem("user");
-  }
-
-  const role = localStorage.getItem("role");
-
-  if (!user || (role !== "admin" && role !== "paymentAdmin" && role !== "lostFoundAdmin")) {
-    return <Navigate to="/admin-secret-login" replace />;
-  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0a0a]">
+    <div className="cn-app-height flex min-w-0 flex-col bg-[#fafafa] dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
       {/* Admin Navbar — always pinned at top, full width */}
       <AdminNavbar />
 
       {/* Dashboard body: sidebar + content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 overflow-hidden">
         {/* Admin Sidebar — desktop only (hidden below md) */}
         <AdminSidebar />
 
         {/* Main content area — scrollable */}
         <main
-          className="flex-1 overflow-y-auto relative"
-          style={{ height: "calc(100vh - 4rem)" }}
+          className="min-w-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] relative"
+          style={{ height: "calc(100dvh - 3.5rem - env(safe-area-inset-top))" }}
         >
           <div className="min-h-full flex flex-col">
             <div className="flex-grow">

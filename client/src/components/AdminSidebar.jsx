@@ -1,7 +1,7 @@
 import React, { useState, useEffect} from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Wallet,
@@ -158,20 +158,12 @@ const AdminSidebar = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get("tab");
-  const role = localStorage.getItem("role");
+  const { user, role, logout } = useAuth();
 const {
   theme,
   setTheme,
   isDark,
 } = useTheme();
-  // Read admin info
-  let user = null;
-  try {
-    const stored = localStorage.getItem("admin") || localStorage.getItem("user");
-    if (stored && stored !== "undefined") user = JSON.parse(stored);
-  } catch (err) {
-    console.error("Error parsing admin from local storage", err);
-  }
 
   // Collapse state — persisted
   const [collapsed, setCollapsed] = useState(() => {
@@ -191,13 +183,7 @@ const {
   const initialLetter = (adminName.charAt(0) || "A").toUpperCase();
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("admin");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    axios.post(`${import.meta.env.VITE_API_URL}/api/auth/logout`).catch(() => { });
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/admin-secret-login";
+    logout('/admin-secret-login');
   };
 
   return (
@@ -205,7 +191,7 @@ const {
       className={`hidden md:flex flex-col shrink-0 bg-white dark:bg-[#0a0a0a] border-r border-neutral-100 dark:border-zinc-800/80 overflow-hidden admin-sidebar-transition ${
         collapsed ? "admin-sidebar-collapsed" : "admin-sidebar-expanded"
       }`}
-      style={{ height: "calc(100vh - 3.5rem)" }}
+      style={{ height: "calc(100dvh - 3.5rem - env(safe-area-inset-top))" }}
       aria-label="Admin sidebar"
     >
       {/* ── Top Header: Workspace Brand & Collapse Toggle ───────────────── */}

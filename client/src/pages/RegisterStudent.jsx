@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import { registerStudent } from '../services/authService';
 import {
   PROGRAM_LABELS,
   PROGRAM_OPTIONS,
@@ -14,6 +15,7 @@ import { Eye, EyeOff } from 'lucide-react';
 const RegisterStudent = () => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { setSession } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     rollNo: '',
@@ -65,13 +67,9 @@ const RegisterStudent = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/student`, formData);
+      const res = await registerStudent(formData);
       if (res.data.user) {
-        if (res.data.token) {
-          localStorage.setItem('token', res.data.token);
-        }
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-        localStorage.setItem('role', res.data.role);
+        setSession(res.data.user, res.data.role, res.data.token);
         navigate('/');
       } else {
         // Verification required - Redirect to Home with notification

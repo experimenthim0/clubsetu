@@ -168,12 +168,12 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                         </span>
                     )}
                     {!isLive && status === 'UPCOMING' && (
-                        <span className="inline-flex items-center border border-gray-300 bg-white dark:bg-gray-200 text-black dark:text-white text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+                        <span className="inline-flex items-center border border-neutral-200 dark:border-neutral-700 bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-neutral-100 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md shadow-xs backdrop-blur-xs">
                             Upcoming
                         </span>
                     )}
                     {isEnded && (
-                        <span className="inline-flex items-center  bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-350 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                        <span className="inline-flex items-center bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-xs">
                             Ended
                         </span>
                     )}
@@ -318,13 +318,13 @@ const EventCard = ({ event, onRegister, isRegistered }) => {
                     ) : (
                         <Link
                             to={`/event/${slug || _id}`}
-                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold  tracking-wider border transition-all cursor-pointer shadow-sm ${(isEnded || isLive)
-                                    ? 'bg-neutral-800 dark:bg-neutral-900 text-white border-neutral-800 dark:border-neutral-800 hover:bg-orange-600 hover:border-orange-600 dark:hover:bg-orange-600 dark:hover:border-orange-600'
+                            className={`flex-1 block text-center py-2 rounded-full text-xs font-bold tracking-wider border transition-all cursor-pointer shadow-xs ${(isEnded || isLive)
+                                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                                     : event.registrationType === 'none'
                                         ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
                                         : isFull
-                                            ? 'bg-amber-400 text-neutral-900 border-amber-400 hover:bg-amber-350'
-                                            : 'border-orange-600 bg-orange-600 text-white hover:bg-orange-700 hover:border-orange-700'
+                                            ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+                                            : 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:border-neutral-800 dark:hover:border-neutral-200'
                                 }`}
                         >
                             {(isEnded || isLive) ? 'View Event' : event.registrationType === 'none' ? 'Open Event' : isFull ? 'Join Waitlist' : 'Register Now'}

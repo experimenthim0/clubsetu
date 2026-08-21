@@ -206,7 +206,7 @@ const CentralEventCard = ({
               <div 
                 className={`absolute ${menuPlacement.alignRight ? 'right-0' : 'left-0'} ${
                   menuPlacement.openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-                } w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 py-1 text-xs max-h-[calc(100vh-60px)] overflow-y-auto`}
+                } w-44 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 py-1 text-xs max-h-[calc(100dvh-60px)] overflow-y-auto`}
               >
                 <button
                   onClick={() => {

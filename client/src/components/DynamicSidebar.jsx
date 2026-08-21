@@ -111,7 +111,7 @@ const DynamicSidebar = ({ user }) => {
   return (
     <aside
       className={`hidden md:flex flex-col shrink-0 bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-slate-300 border-r border-gray-200 dark:border-zinc-800 transition-all duration-300 overflow-y-auto ${isCollapsed ? "w-16" : "w-64"}`}
-      style={{ height: "calc(100vh - 4rem)" }}
+      style={{ height: "calc(100dvh - 4rem - env(safe-area-inset-top))" }}
       aria-label="Dashboard sidebar"
     >
       {/* ── User Info & Collapse Toggle Row ── */}
@@ -159,9 +159,9 @@ const DynamicSidebar = ({ user }) => {
           <Link
             to="/create"
             title={isCollapsed ? "Create Event" : undefined}
-            className="flex items-center justify-center gap-2.5 px-3 py-3 bg-orange-500 hover:bg-orange-600 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-white dark:text-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:-translate-y-px transition-all font-bold text-[12px] uppercase tracking-wider w-full cursor-pointer border-0 outline-none"
+            className="flex items-center justify-center gap-2.5 px-3 py-3 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-full shadow-sm hover:shadow-md hover:-translate-y-px transition-all font-bold text-[12px] uppercase tracking-wider w-full cursor-pointer border-0 outline-none"
           >
-            <Plus size={16} className="text-white dark:text-white" strokeWidth={2.8} />
+            <Plus size={16} strokeWidth={2.8} />
             {!isCollapsed && <span>Create Event</span>}
           </Link>
         </div>
@@ -184,6 +184,9 @@ const DynamicSidebar = ({ user }) => {
           <SidebarLink to="/central-organizer" icon={Shield} label="Central Organizer" isActive={isActive("/central-organizer")} isCollapsed={isCollapsed} />
         )}
         <SidebarLink to="/event-staff" icon={ShieldCheck} label="Event Staff Portal" isActive={isActive("/event-staff")} isCollapsed={isCollapsed} />
+        {role === "club" && (
+          <SidebarLink to="/event-calendar" icon={CalendarDays} label="Calendar/Venues" isActive={isActive("/event-calendar")} isCollapsed={isCollapsed} />
+        )}
 
         {/* ── Management: membership-based club links ── */}
         {((user?.memberships && user.memberships.length > 0) || role === "facultyCoordinator") && (

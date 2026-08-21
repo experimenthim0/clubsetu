@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { UserPlus, Trash2, Shield, Clock, AlertCircle, CheckCircle, XCircle } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const AVAILABLE_PERMISSIONS = [
   { id: "ATTENDANCE_OPERATOR", label: "Attendance Operator", desc: "Scan QR codes & manage check-ins" },
@@ -30,7 +28,7 @@ const EventStaffManager = ({ eventId, eventTitle }) => {
     try {
       setLoading(true);
       setError("");
-      const res = await axios.get(`${API_URL}/api/central-organizer/events/${eventId}/staff`);
+      const res = await api.get(`/api/central-organizer/events/${eventId}/staff`);
       setStaffList(res.data.staff || []);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load event staff.");
@@ -65,10 +63,10 @@ const EventStaffManager = ({ eventId, eventTitle }) => {
       setError("");
       setSuccess("");
 
-      const res = await axios.post(`${API_URL}/api/central-organizer/events/${eventId}/staff`, {
+      const res = await api.post(`/api/central-organizer/events/${eventId}/staff`, {
         email: email.trim(),
         permissions: selectedPermissions,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        expiresAt: expiresAt || null,
       });
 
       setSuccess(`Invitation sent to ${res.data.student?.name || email}. Status is PENDING until accepted.`);
@@ -91,7 +89,7 @@ const EventStaffManager = ({ eventId, eventTitle }) => {
 
     try {
       setError("");
-      await axios.delete(`${API_URL}/api/central-organizer/events/${eventId}/staff/${staffId}`);
+      await api.delete(`/api/central-organizer/events/${eventId}/staff/${staffId}`);
       setSuccess(`Revoked event staff access for ${studentName}.`);
       fetchStaff();
     } catch (err) {

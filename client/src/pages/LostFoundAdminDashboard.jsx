@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { changePassword } from '../services/authService';
+import {
+  getLostFoundStats,
+  getAllLostFoundAdmin,
+  toggleFraud,
+  deleteLostFoundItem,
+  blockLostFoundUser
+} from '../services/adminService';
 import { hasPermission, PERMISSIONS } from '../utils/rbac';
 
 const LostFoundAdminDashboard = () => {
@@ -19,8 +27,7 @@ const LostFoundAdminDashboard = () => {
     });
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    const role = localStorage.getItem('role');
+    const { user, role } = useAuth();
 
     const handlePasswordChange = (e) => {
         setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
@@ -38,10 +45,7 @@ const LostFoundAdminDashboard = () => {
         }
         setIsChangingPassword(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
-                currentPassword: passwordForm.currentPassword,
-                newPassword: passwordForm.newPassword
-            });
+            const res = await changePassword(passwordForm.currentPassword, passwordForm.newPassword);
             toast.success(res.data.message || "Password changed successfully!");
             setShowPasswordModal(false);
             setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -66,8 +70,8 @@ const LostFoundAdminDashboard = () => {
         setLoading(true);
         try {
             const [statsRes, itemsRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/lost-found/stats`),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/lost-found/all`)
+                getLostFoundStats(),
+                getAllLostFoundAdmin()
             ]);
             setStats(statsRes.data);
             setItems(itemsRes.data);
@@ -80,7 +84,7 @@ const LostFoundAdminDashboard = () => {
 
     const handleToggleFraud = async (id) => {
         try {
-            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/lost-found/${id}/toggle-fraud`);
+            const res = await toggleFraud(id);
             toast.success(res.data.message);
             fetchDashboardData();
         } catch (error) {
@@ -91,7 +95,7 @@ const LostFoundAdminDashboard = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to PERMANENTLY delete this item?')) return;
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/lost-found/${id}`);
+            await deleteLostFoundItem(id);
             toast.success('Item deleted');
             fetchDashboardData();
         } catch (error) {
@@ -102,7 +106,7 @@ const LostFoundAdminDashboard = () => {
     const handleToggleBlock = async (userId) => {
         if (!window.confirm('Toggle block status for this user?')) return;
         try {
-            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/lost-found/user/${userId}/block`);
+            const res = await blockLostFoundUser(userId);
             toast.success(res.data.message);
             fetchDashboardData();
         } catch (error) {

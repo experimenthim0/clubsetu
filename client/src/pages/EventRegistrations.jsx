@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { getEventRegistrations, getEventById } from '../services/eventService';
+import { getPaymentStats, reviewPayment } from '../services/paymentService';
 import { toast } from 'react-hot-toast';
 import { ParticipationStatus } from '../types/index';
 import ShimmerText from '../components/ShimmerText';
@@ -15,6 +16,11 @@ const EventRegistrations = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('individual');
     const [expandedTeams, setExpandedTeams] = useState({});
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+    const [selectedExportColumns, setSelectedExportColumns] = useState([]);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState('');
+    const exportModalRef = useRef(null);
 
     // Review Payment States
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -34,14 +40,14 @@ const EventRegistrations = () => {
         if (!selectedReg) return;
         setSubmittingReview(true);
         try {
-            await axios.put(
-                `${import.meta.env.VITE_API_URL}/api/payment/${selectedReg.id || selectedReg._id}/review`,
+            await reviewPayment(
+                selectedReg.id || selectedReg._id,
                 { status: reviewStatus, message: reviewComment }
             );
             toast.success(`Payment ${reviewStatus.toLowerCase()} successfully!`);
             setReviewModalOpen(false);
             // Refresh registrations list
-            const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`);
+            const regRes = await getEventRegistrations(id);
             const data = regRes.data;
             setRegistrations(data.participations || (Array.isArray(data) ? data : []));
         } catch (err) {
@@ -55,9 +61,9 @@ const EventRegistrations = () => {
         const fetchData = async () => {
             try {
                 const [regRes, statsRes, eventRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}/registrations`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${id}/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`),
+                    getEventRegistrations(id),
+                    getPaymentStats(id),
+                    getEventById(id),
                 ]);
                 const data = regRes.data;
                 setRegistrations(data.participations || (Array.isArray(data) ? data : []));
@@ -74,6 +80,55 @@ const EventRegistrations = () => {
     }, [id]);
 
     const customFields = eventData?.customFields || [];
+
+    const isTeamEvent = eventData?.registrationType === 'team' || eventData?.registrationType === 'both';
+    const exportColumns = [
+        { key: 'registrationId', label: 'Registration ID', description: 'Unique participation record ID', getValue: row => row.reg.id || row.reg._id },
+        ...(isTeamEvent ? [
+            { key: 'registrationType', label: 'Registration Type', getValue: row => row.type },
+            { key: 'teamName', label: 'Team Name', getValue: row => row.team?.teamName },
+            { key: 'teamRole', label: 'Role in Team', getValue: row => row.role },
+        ] : []),
+        { key: 'name', label: 'Name', getValue: row => row.reg.student?.name || row.reg.externalName },
+        { key: 'rollNo', label: 'Roll Number', getValue: row => row.reg.student?.rollNo },
+        { key: 'email', label: 'Email', getValue: row => row.reg.student?.email || row.reg.externalEmail },
+        { key: 'branch', label: 'Branch', getValue: row => row.reg.student?.branch },
+        { key: 'year', label: 'Year', getValue: row => row.reg.student?.year },
+        { key: 'program', label: 'Program', getValue: row => row.reg.student?.program },
+        { key: 'externalName', label: 'External Name', getValue: row => row.reg.externalName },
+        { key: 'externalEmail', label: 'External Email', getValue: row => row.reg.externalEmail },
+        { key: 'eventName', label: 'Event Name', getValue: () => eventData?.title },
+        { key: 'status', label: 'Registration Status', getValue: row => row.reg.status },
+        { key: 'attendanceStatus', label: 'Attendance Status', getValue: row => row.reg.attendedAt || row.reg.status === 'ATTENDED' ? 'Attended' : 'Not attended' },
+        { key: 'registeredAt', label: 'Registration Date', getValue: row => row.reg.createdAt || row.reg.timestamp },
+        { key: 'amountPaid', label: 'Amount Paid (₹)', getValue: row => row.reg.amountPaid },
+        { key: 'paymentStatus', label: 'Payment Status', getValue: row => row.reg.paymentStatus },
+        { key: 'transactionId', label: 'UTR / Transaction ID', getValue: row => row.reg.transactionId },
+        { key: 'payerName', label: 'Payer Name', getValue: row => row.reg.payerName },
+        { key: 'paymentRemarks', label: 'Payment Remarks', getValue: row => row.reg.paymentRemarks },
+        { key: 'paymentReviewMessage', label: 'Payment Review Message', getValue: row => row.reg.paymentReviewMessage },
+        { key: 'attendedAt', label: 'Attended At', getValue: row => row.reg.attendedAt },
+        ...customFields.map(field => ({
+            key: `custom:${field.label}`,
+            label: field.label,
+            description: 'Custom registration response',
+            getValue: row => getFormResponse(row.reg, field.label),
+        })),
+    ];
+
+    const defaultExportColumns = exportColumns
+        .filter(column => ['registrationId', 'registrationType', 'teamName', 'teamRole', 'name', 'rollNo', 'email', 'branch', 'year', 'eventName', 'status', 'registeredAt', 'paymentStatus'].includes(column.key))
+        .map(column => column.key);
+
+    useEffect(() => {
+        if (!exportModalOpen) return undefined;
+        const closeOnEscape = (event) => {
+            if (event.key === 'Escape' && !isExporting) setExportModalOpen(false);
+        };
+        document.addEventListener('keydown', closeOnEscape);
+        exportModalRef.current?.focus();
+        return () => document.removeEventListener('keydown', closeOnEscape);
+    }, [exportModalOpen, isExporting]);
 
     // ── Helpers ────────────────────────────────────────────────────────────
     const getFormResponse = (reg, label) => {
@@ -139,147 +194,70 @@ const EventRegistrations = () => {
         setExpandedTeams(prev => ({ ...prev, [teamId]: !prev[teamId] }));
     };
 
-    // ── Export to Excel (CSV) ─────────────────────────────────────────────
+    // ── Selective registration export (CSV, Excel-compatible) ─────────────
     const handleExportExcel = () => {
-        const isTeamEvent = eventData?.registrationType === 'team' || eventData?.registrationType === 'both';
-        const allRegsForExport = Array.isArray(registrations) ? registrations : [];
+        if (!registrations.length) return;
+        setExportError('');
+        setSelectedExportColumns(defaultExportColumns);
+        setExportModalOpen(true);
+    };
 
-        const escapeCell = (cell) => {
-            const str = String(cell ?? '').replace(/"/g, '""');
-            return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
-        };
-
-        let csvContent = '';
-        const BOM = '\uFEFF';
-
-        if (isTeamEvent) {
-            const headers = [
-                'S.No',
-                'Registration Type',
-                'Team Name',
-                'Role in Team',
-                'Name',
-                'Roll No',
-                'Email',
-                'Branch',
-                'Year',
-                'Program',
-                'Status',
-                'Registered At',
-                'Amount Paid',
-                'GitHub',
-                'LinkedIn',
-                'X (Twitter)',
-                'Portfolio',
-                ...customFields.map(cf => cf.label),
-            ];
-
-            const rows = [];
-            let serialNo = 1;
-
-            // 1. Individual registrations
-            const indivRegs = allRegsForExport.filter(r => !r.teamId);
-            indivRegs.forEach((reg) => {
-                rows.push([
-                    serialNo++,
-                    'Individual',
-                    '',
-                    'N/A',
-                    reg.student?.name || reg.externalName || '',
-                    reg.student?.rollNo || '',
-                    reg.student?.email || reg.externalEmail || '',
-                    reg.student?.branch || '',
-                    reg.student?.year || '',
-                    reg.student?.program || '',
-                    reg.status || '',
-                    reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
-                    reg.amountPaid || 0,
-                    reg.student?.githubProfile || '',
-                    reg.student?.linkedinProfile || '',
-                    reg.student?.xProfile || '',
-                    reg.student?.portfolioUrl || '',
-                    ...customFields.map(cf => getFormResponse(reg, cf.label) || ''),
-                ]);
-            });
-
-            // 2. Team registrations
-            const allTeams = Object.values(fullTeamMap);
-            allTeams.forEach((team) => {
-                team.members.forEach((m) => {
-                    const isLeader = m.studentId === team.leader?.id;
-                    rows.push([
-                        serialNo++,
-                        'Team',
-                        team.teamName || '',
-                        isLeader ? 'Leader' : 'Member',
-                        m.student?.name || m.externalName || '',
-                        m.student?.rollNo || '',
-                        m.student?.email || m.externalEmail || '',
-                        m.student?.branch || '',
-                        m.student?.year || '',
-                        m.student?.program || '',
-                        team.status || '',
-                        team.createdAt ? new Date(team.createdAt).toLocaleString() : '',
-                        m.amountPaid || 0,
-                        m.student?.githubProfile || '',
-                        m.student?.linkedinProfile || '',
-                        m.student?.xProfile || '',
-                        m.student?.portfolioUrl || '',
-                        ...customFields.map(cf => getFormResponse(m, cf.label) || ''),
-                    ]);
-                });
-            });
-
-            csvContent = [
-                headers.map(escapeCell).join(','),
-                ...rows.map(row => row.map(escapeCell).join(',')),
-            ].join('\n');
-        } else {
-            // Pure individual event
-            const headers = [
-                'S.No', 'Name', 'Roll No', 'Email', 'Branch', 'Year', 'Program',
-                'External Name', 'External Email',
-                'Status', 'Registered At', 'Amount Paid',
-                'GitHub', 'LinkedIn', 'X (Twitter)', 'Portfolio',
-                ...customFields.map(cf => cf.label),
-            ];
-
-            const rows = allRegsForExport.map((reg, idx) => [
-                idx + 1,
-                reg.student?.name || reg.externalName || '',
-                reg.student?.rollNo || '',
-                reg.student?.email || reg.externalEmail || '',
-                reg.student?.branch || '',
-                reg.student?.year || '',
-                reg.student?.program || '',
-                reg.externalName || '',
-                reg.externalEmail || '',
-                reg.status || '',
-                reg.timestamp ? new Date(reg.timestamp).toLocaleString() : '',
-                reg.amountPaid || 0,
-                reg.student?.githubProfile || '',
-                reg.student?.linkedinProfile || '',
-                reg.student?.xProfile || '',
-                reg.student?.portfolioUrl || '',
-                ...customFields.map(cf => getFormResponse(reg, cf.label) || ''),
-            ]);
-
-            csvContent = [
-                headers.map(escapeCell).join(','),
-                ...rows.map(row => row.map(escapeCell).join(',')),
-            ].join('\n');
+    const exportSelectedRegistrations = async () => {
+        if (!selectedExportColumns.length) {
+            setExportError('Select at least one column to export.');
+            return;
         }
+        setIsExporting(true);
+        setExportError('');
+        try {
+            const rows = [];
+            const allRegsForExport = Array.isArray(registrations) ? registrations : [];
+            allRegsForExport.filter(reg => !reg.teamId).forEach(reg => rows.push({ reg, type: 'Individual', team: null, role: 'N/A' }));
+            if (isTeamEvent) {
+                Object.values(fullTeamMap).forEach(team => team.members.forEach(reg => rows.push({
+                    reg,
+                    type: 'Team',
+                    team,
+                    role: reg.studentId === team.leader?.id ? 'Leader' : 'Member',
+                })));
+            }
 
-        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const eventTitle = (eventData?.title || 'event').replace(/[^a-zA-Z0-9]/g, '_');
-        link.download = `${eventTitle}_registrations.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+            const selectedColumns = exportColumns.filter(column => selectedExportColumns.includes(column.key));
+            const formatCell = (value, key) => {
+                if (value === null || value === undefined || value === '') return '';
+                if (key === 'registeredAt' || key === 'attendedAt') {
+                    const date = new Date(value);
+                    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+                }
+                if (Array.isArray(value)) return value.map(item => formatCell(item, key)).join(', ');
+                if (typeof value === 'object') return Object.entries(value).map(([k, v]) => `${k}: ${formatCell(v, key)}`).join('; ');
+                return String(value);
+            };
+            const escapeCell = value => {
+                const str = formatCell(value.value, value.key).replace(/"/g, '""');
+                return /[,"\n]/.test(str) ? `"${str}"` : str;
+            };
+            const csvContent = [
+                selectedColumns.map(column => escapeCell({ value: column.label, key: column.key })).join(','),
+                ...rows.map(row => selectedColumns.map(column => escapeCell({ value: column.getValue(row), key: column.key })).join(',')),
+            ].join('\n');
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const eventTitle = (eventData?.title || 'event').replace(/[^a-zA-Z0-9]/g, '_');
+            link.download = `${eventTitle}_registrations.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            setExportModalOpen(false);
+        } catch (err) {
+            console.error('Registration export failed:', err);
+            setExportError('Unable to generate the export. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     if (loading) return (
@@ -470,7 +448,7 @@ const EventRegistrations = () => {
                     </div>
                                 ) : activeTab === 'team' && (eventData?.registrationType === 'team' || eventData?.registrationType === 'both') ? (
                     <div className="space-y-4">
-                        {teamRegs.map((team, idx) => {
+                        {teamRegs.map((team) => {
                             const isExpanded = !!expandedTeams[team.id];
                             return (
                                 <div key={team.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
@@ -585,7 +563,7 @@ const EventRegistrations = () => {
                                                     {team.members.map((m) => {
                                                         const isLeader = m.studentId === team.leader?.id;
                                                         return (
-                                                            <tr key={m.id} className="hover:bg-neutral-100/30 dark:hover:bg-neutral-850/20 transition-colors">
+                                                            <tr key={m.id} className="hover:bg-neutral-100/30 dark:hover:bg-neutral-800/50 transition-colors">
                                                                 <td className="px-5 py-3 font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider text-[10px] text-left">
                                                                     {isLeader ? (
                                                                         <span className="text-orange-600 font-extrabold bg-orange-50 dark:bg-orange-950/20 border border-orange-200/50 rounded px-1.5 py-0.5">Leader</span>
@@ -665,7 +643,7 @@ const EventRegistrations = () => {
                                             : 'External Participant';
 
                                         return (
-                                            <tr key={reg.id || reg._id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/40 transition-colors">
+                                            <tr key={reg.id || reg._id} className="hover:bg-neutral-100/80 dark:hover:bg-neutral-900/40 transition-colors">
                                                 <td className="px-5 py-4 whitespace-nowrap text-xs font-bold text-neutral-400">
                                                     {idx + 1}
                                                 </td>
@@ -774,6 +752,46 @@ const EventRegistrations = () => {
                                     })}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Export Registrations Modal ── */}
+                {exportModalOpen && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-3 py-4 backdrop-blur-sm sm:px-4" role="presentation">
+                        <div ref={exportModalRef} tabIndex="-1" role="dialog" aria-modal="true" aria-labelledby="export-registrations-title" className="flex max-h-[min(720px,calc(100dvh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl outline-none dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4 dark:border-neutral-800 sm:px-6">
+                                <div>
+                                    <h2 id="export-registrations-title" className="text-lg font-black text-neutral-900 dark:text-white">Export Registrations</h2>
+                                    <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Choose the information you want to include in your Excel file.</p>
+                                </div>
+                                <button type="button" aria-label="Close export dialog" onClick={() => !isExporting && setExportModalOpen(false)} disabled={isExporting} className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-white"><i className="ri-close-line text-lg" /></button>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 dark:border-neutral-800 sm:px-6">
+                                <div className="flex gap-2">
+                                    <button type="button" onClick={() => setSelectedExportColumns(exportColumns.map(column => column.key))} className="rounded-lg border border-neutral-300 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800">Select All</button>
+                                    <button type="button" onClick={() => setSelectedExportColumns([])} className="rounded-lg border border-neutral-300 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800">Clear All</button>
+                                </div>
+                                <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">{selectedExportColumns.length} of {exportColumns.length} columns selected</span>
+                            </div>
+                            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 sm:px-6">
+                                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                                    {exportColumns.map(column => {
+                                        const checked = selectedExportColumns.includes(column.key);
+                                        return (
+                                            <label key={column.key} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-transparent px-3 py-2.5 hover:border-orange-200 hover:bg-orange-50/60 dark:hover:border-orange-900/50 dark:hover:bg-orange-950/20">
+                                                <input type="checkbox" checked={checked} onChange={() => setSelectedExportColumns(current => checked ? current.filter(key => key !== column.key) : [...current, column.key])} className="mt-1 h-4 w-4 accent-orange-600" />
+                                                <span><span className="block text-sm font-semibold text-neutral-800 dark:text-neutral-100">{column.label}</span>{column.description && <span className="mt-0.5 block text-[11px] text-neutral-500 dark:text-neutral-400">{column.description}</span>}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {exportError && <p role="alert" className="px-5 pb-2 text-xs font-semibold text-rose-600 sm:px-6">{exportError}</p>}
+                            <div className="flex flex-col-reverse gap-2 border-t border-neutral-200 px-5 py-4 sm:flex-row sm:justify-end sm:px-6 dark:border-neutral-800">
+                                <button type="button" onClick={() => setExportModalOpen(false)} disabled={isExporting} className="rounded-xl border border-neutral-300 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800">Cancel</button>
+                                <button type="button" onClick={exportSelectedRegistrations} disabled={isExporting || selectedExportColumns.length === 0} className="rounded-xl bg-green-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"><i className={`${isExporting ? 'ri-loader-4-line animate-spin' : 'ri-file-excel-2-line'} mr-1`} />{isExporting ? 'Exporting...' : 'Export Excel'}</button>
+                            </div>
                         </div>
                     </div>
                 )}

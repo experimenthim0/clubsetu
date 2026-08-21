@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import ScrollReveal from "../components/ScrollReveal";
 import ClubCard from "../components/ClubCard";
 import ClubCardSkeleton from "../components/skeletons/ClubCardSkeleton";
@@ -18,7 +17,7 @@ const ClubsPage = ({ isHome = false }) => {
     }
   }, [isHome]);
 
-  const clubsUrl = import.meta.env.VITE_API_URL + '/api/clubs';
+  const clubsUrl = '/api/clubs';
 
   useEffect(() => {
     const fetchClubs = async () => {

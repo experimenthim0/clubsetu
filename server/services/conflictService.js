@@ -1,12 +1,17 @@
 import prisma from "../lib/prisma.js";
 
+// Online events do not reserve a physical campus venue and may overlap freely.
+export function isVirtualVenue(venue) {
+  return typeof venue === "string" && venue.trim().toLowerCase() === "online";
+}
+
 /**
  * Check if a venue is already booked by a PUBLISHED event during [startTime, endTime].
  * Preserves the exact existing conflict rules:
  * venue == venue AND reviewStatus == "PUBLISHED" AND startTime < end AND endTime > start.
  */
 export async function checkEventConflict({ venue, startTime, endTime, excludeEventId = null }) {
-  if (!venue || !startTime || !endTime) return null;
+  if (!venue || isVirtualVenue(venue) || !startTime || !endTime) return null;
 
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -34,7 +39,7 @@ export async function checkEventConflict({ venue, startTime, endTime, excludeEve
  * Check if a venue has an active blackout period during [startTime, endTime].
  */
 export async function checkBlackoutConflict({ venue, startTime, endTime, excludeBlackoutId = null }) {
-  if (!venue || !startTime || !endTime) return null;
+  if (!venue || isVirtualVenue(venue) || !startTime || !endTime) return null;
 
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -73,6 +78,15 @@ export async function checkBlackoutConflict({ venue, startTime, endTime, exclude
  * Validates both event venue conflicts and blackout windows.
  */
 export async function validateBooking({ venue, startTime, endTime, excludeEventId = null, excludeBlackoutId = null }) {
+  if (isVirtualVenue(venue)) {
+    return {
+      hasConflict: false,
+      type: null,
+      message: null,
+      conflictDetails: null,
+    };
+  }
+
   const blackoutConflict = await checkBlackoutConflict({ venue, startTime, endTime, excludeBlackoutId });
   if (blackoutConflict) {
     return {

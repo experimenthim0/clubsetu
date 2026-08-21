@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { getEventById } from '../services/eventService';
+import api from '../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useNotification } from '../context/NotificationContext';
 import { CheckCircle, XCircle, AlertTriangle, Users, BadgeCheck, Clock, ArrowLeft, Wifi, ScanLine } from 'lucide-react';
@@ -45,23 +47,17 @@ const CheckIn = () => {
   const lastScannedCodeRef = useRef(null);
 
   // RBAC guard + event load
+  const { user: authUser, role: authRole } = useAuth();
+
   useEffect(() => {
-    const storedUserData = localStorage.getItem('user');
-    const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
-    const storedRole = localStorage.getItem('role');
-
-    if (!storedUser) {
-      showNotification('Access Denied', 'error');
-      navigate('/my-events');
-      return;
+    if (authUser) {
+      fetchEventDetails(authUser, authRole);
     }
-
-    fetchEventDetails(storedUser, storedRole);
-  }, [id]);
+  }, [id, authUser, authRole]);
 
   const fetchEventDetails = async (storedUser, storedRole) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/${id}`);
+      const res = await getEventById(id);
       const eventData = res.data;
       setEvent(eventData);
       setAttendedCount(eventData.attendedCount ?? 0);
@@ -156,17 +152,13 @@ const CheckIn = () => {
     setScanState('processing');
     setScanResult(null);
 
-    const token = localStorage.getItem('token');
-    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/participation/verify`,
+      const res = await api.post(
+        '/api/participation/verify',
         {
           qrCode,
           eventId: id,
-        },
-        { headers: authHeaders }
+        }
       );
 
       const data = res.data || {};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { assignCentralOrganizer, removeCentralOrganizer, searchStudentsForCO } from '../../../services/adminService';
 import { Search } from 'lucide-react';
 import { useNotification } from '../../../context/NotificationContext';
 
@@ -22,7 +22,7 @@ const CentralOrganizerTab = ({
         }
         setSearchingStudents(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/students/search?q=${encodeURIComponent(q.trim())}`);
+            const res = await searchStudentsForCO(q.trim());
             setStudentSearchResults(res.data.students || []);
         } catch (err) {
             console.error('Student search failed:', err);
@@ -37,7 +37,7 @@ const CentralOrganizerTab = ({
         }
         setAssigningCO(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/central-organizer`, { studentId });
+            const res = await assignCentralOrganizer({ studentId });
             showNotification(res.data.message || 'Central Organizer assigned successfully!', 'success');
             setStudentQuery('');
             setStudentSearchResults([]);
@@ -54,7 +54,7 @@ const CentralOrganizerTab = ({
             return;
         }
         try {
-            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/central-organizer/${studentId}`);
+            const res = await removeCentralOrganizer(studentId);
             showNotification(res.data.message || 'Central Organizer role revoked', 'success');
             fetchCentralOrganizer();
         } catch (err) {

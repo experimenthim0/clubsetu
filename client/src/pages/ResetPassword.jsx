@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { resetPassword as resetPasswordApi } from '../services/authService';
 import { Eye, EyeOff } from 'lucide-react';
 
 const ResetPassword = () => {
@@ -27,12 +27,10 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/reset-password/${token}`, {
-        newPassword: password,
-        role
-      });
+      const res = await resetPasswordApi(token, password, role);
       showNotification(res.data.message, 'success');
       navigate('/login');
+
     } catch (err) {
       showNotification(err.response?.data?.message || 'Reset failed', 'error');
     } finally {

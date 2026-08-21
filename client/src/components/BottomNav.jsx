@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Users, Calendar, User, Shield, ShieldCheck, X, Sun, Moon, Package, Monitor, Download, Smartphone } from "lucide-react";
 import { usePwaInstall } from "../hooks/usePwaInstall";
 import { useTheme } from "../context/ThemeContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import { CalendarDaysIcon } from "./ui/calendar-days";
 import { IndianRupeeIcon } from "./ui/indian-rupee";
 import { ConciergeBellIcon } from "./ui/concierge-bell";
@@ -44,19 +44,7 @@ const BottomNav = () => {
   isDark,
 } = useTheme();
 
-  // Parse user from local storage
-  let user = null;
-  try {
-    const storedUser = localStorage.getItem("user");
-    const storedAdmin = localStorage.getItem("admin");
-    const raw = storedUser || storedAdmin;
-    if (raw && raw !== "undefined") {
-      user = JSON.parse(raw);
-    }
-  } catch (err) {
-    console.error("Error parsing user from local storage", err);
-  }
-  const role = localStorage.getItem("role");
+  const { user, role, logout } = useAuth();
 
   // Close drawer on route change
   useEffect(() => {
@@ -88,17 +76,8 @@ const BottomNav = () => {
     };
   }, [drawerOpen]);
 
-  const API_URL = import.meta.env.VITE_API_URL;
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("admin");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    // Clear the server-set httpOnly cookie by calling logout endpoint
-    axios.post(`${API_URL}/api/auth/logout`).catch(() => {});
-    // Also clear cookie client-side as fallback
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/";
+    logout('/');
   };
 
   const isActive = (path) => {
@@ -136,7 +115,7 @@ const BottomNav = () => {
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 z-50 w-full pb-[env(safe-area-inset-bottom)] bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-t border-gray-200 dark:border-neutral-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <nav className="md:hidden fixed bottom-0 left-0 z-50 w-full cn-safe-bottom bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border-t border-gray-200 dark:border-neutral-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item, index) => {
             const Icon = item.icon;
@@ -280,6 +259,15 @@ const BottomNav = () => {
                 Event Staff Portal
               </Link>
 
+              {role === "club" && (
+                <Link to="/event-calendar" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-black dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300">
+                    <CalendarCogIcon size={18} />
+                  </div>
+                  Event Schedule
+                </Link>
+              )}
+
               {(role === "admin" || role === "paymentAdmin") && (
                 <Link
                   to="/admin-dashboard"
@@ -378,50 +366,48 @@ const BottomNav = () => {
               )}
             </div>
 
-            <div className="px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
+            <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
              
-            
              <div className="rounded-2xl mb-2">
   
-
-  <div className="grid grid-cols-3 gap-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 p-1">
+  <div className="grid grid-cols-3 gap-2 rounded-xl bg-neutral-200/80 dark:bg-neutral-800 p-1">
 
     {/* Light */}
     <button
       onClick={() => setTheme("light")}
-      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1.5 transition-all duration-200 ${
         theme === "light"
-          ? "bg-orange-500 text-white shadow"
+          ? "bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold"
           : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
       }`}
     >
-      <Sun size={20} strokeWidth={2.2} />
+      <Sun size={18} strokeWidth={2} />
       <span className="text-xs font-medium">Light</span>
     </button>
 
     {/* Dark */}
     <button
       onClick={() => setTheme("dark")}
-      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1.5 transition-all duration-200 ${
         theme === "dark"
-          ? "bg-orange-500 text-white shadow"
+          ? "bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold"
           : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
       }`}
     >
-      <Moon size={20} strokeWidth={2.2} />
+      <Moon size={18} strokeWidth={2} />
       <span className="text-xs font-medium">Dark</span>
     </button>
 
     {/* Auto */}
     <button
       onClick={() => setTheme("system")}
-      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1 transition-all duration-200 ${
+      className={`flex flex-row items-center justify-center gap-1 rounded-lg py-1.5 transition-all duration-200 ${
         theme === "system"
-          ? "bg-orange-500 text-white shadow"
+          ? "bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold"
           : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
       }`}
     >
-      <Monitor size={20} strokeWidth={2.2} />
+      <Monitor size={18} strokeWidth={2} />
       <span className="text-xs font-medium">Auto</span>
     </button>
 
@@ -429,7 +415,7 @@ const BottomNav = () => {
 </div>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 dark:bg-red-950/25 text-red-600 dark:text-red-400 font-bold text-sm rounded-xl hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
               >
                 <LogoutIcon size={18} />
                 Logout

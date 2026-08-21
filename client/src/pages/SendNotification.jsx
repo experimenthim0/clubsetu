@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAuth } from "../context/AuthContext";
+import { sendNotification, getSentNotifications } from "../services/notificationService";
+import { getClubManagedEvents } from "../services/eventService";
 
 const formatRelativeTime = (dateStr) => {
   const now = new Date();
@@ -20,6 +20,7 @@ const formatRelativeTime = (dateStr) => {
 };
 
 const SendNotification = () => {
+  const { user } = useAuth();
   const [targetType, setTargetType] = useState("ALL_STUDENTS");
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -30,27 +31,22 @@ const SendNotification = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [history, setHistory] = useState([]);
 
-  const userString = localStorage.getItem("user");
-  const user = userString && userString !== "undefined" ? JSON.parse(userString) : null;
-
   useEffect(() => {
     if (user && (user.id || user.clubId)) {
-      // Use clubId for fetching all events for the managed club
       const targetClubId = user.clubId;
       if (targetClubId) {
-        axios
-          .get(`${API_URL}/api/events/club-manage/${targetClubId}`)
+        getClubManagedEvents(targetClubId)
           .then((res) => {
-          setEvents(res.data);
-        })
-        .catch((err) => console.error("Could not fetch events", err));
+            setEvents(res.data);
+          })
+          .catch((err) => console.error("Could not fetch events", err));
 
-      axios
-        .get(`${API_URL}/api/notifications/sent`)
-        .then((res) => setHistory(res.data))
-        .catch((err) => console.error("Could not fetch history", err));
+        getSentNotifications()
+          .then((res) => setHistory(res.data))
+          .catch((err) => console.error("Could not fetch history", err));
+      }
     }
-  }}, []);
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,11 +55,11 @@ const SendNotification = () => {
     setErrorMsg("");
 
     try {
-      const res = await axios.post(`${API_URL}/api/notifications`, {
-        targetType,
-        eventId: targetType === "REGISTERED_STUDENTS" ? selectedEventId : undefined,
+      const res = await sendNotification({
         title,
         message,
+        targetType,
+        eventId: targetType === "EVENT_PARTICIPANTS" ? selectedEventId : undefined,
       });
 
       setSuccessMsg("Notification sent successfully!");

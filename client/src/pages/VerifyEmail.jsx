@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { verifyEmail as verifyEmailApi } from '../services/authService';
 import { CheckCircle, XCircle, ArrowLeftIcon } from 'lucide-react';
 import ShimmerText from '../components/ShimmerText';
 
@@ -10,11 +10,10 @@ const VerifyEmail = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        const verifyEmail = async () => {
+        const doVerify = async () => {
             try {
-                // In production, you might want to use an environment variable for the API URL
-                // Assuming proxy is set up or relative path works
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`);
+                const res = await verifyEmailApi(token);
+
                 setStatus('success');
                 setMessage(res.data.message);
             } catch (error) {
@@ -24,7 +23,7 @@ const VerifyEmail = () => {
         };
 
         if (token) {
-            verifyEmail();
+            doVerify();
         }
     }, [token]);
 

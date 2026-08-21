@@ -122,15 +122,19 @@ clubsetu/
 │   ├── vite.config.js          # Vite build configuration
 │   └── package.json
 │
-├── server/                     # Backend Node.js / Express API Server
-│   ├── prisma/                 # Prisma schema definitions & migrations
-│   │   └── schema.prisma
-│   ├── routes/                 # Express API routes (auth, events, admin, teams, lost-found, etc.)
-│   ├── controllers/            # Request handlers & business logic
-│   ├── middleware/             # Auth checks, RBAC verification, rate limiters, multer
-│   ├── scripts/                # Database seeding & administrative scripts
-│   ├── utils/                  # PDF generators, email templates, Cloudinary client
-│   ├── index.js                # Express app & Socket.io server entry point
+├── server/                     # Backend Node.js / Express API Server (see server/README.md)
+│   ├── assets/fonts/           # Custom calligraphy TTF fonts for PDF certificates
+│   ├── constants/              # NITJ academic departments, branches & batch constants
+│   ├── controllers/            # Controller handlers (certificates, club memberships)
+│   ├── lib/                    # Database client singleton (prisma.js)
+│   ├── middleware/             # Auth JWT, RBAC, error handlers, performance & rate limiters
+│   ├── prisma/                 # PostgreSQL relational schema (schema.prisma) & migrations
+│   ├── routes/                 # Express API route modules (auth, events, scanner, teams, etc.)
+│   ├── scripts/                # Database seeders, keypair generators & migration utilities
+│   ├── services/               # Conflict detection, export streaming, QR signing services
+│   ├── utils/                  # RBAC matrix, email/push dispatchers, Cloudinary, sanitizers
+│   ├── index.js                # Express app & Socket.io real-time server entry point
+│   ├── Dockerfile              # Docker container deployment definition
 │   └── package.json
 │
 ├── API_ENDPOINTS.md            # Detailed API documentation

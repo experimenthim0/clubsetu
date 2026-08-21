@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
 const AdminLogin = () => {
@@ -9,31 +8,16 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const { adminLogin } = useAuth();
   const { showNotification } = useNotification();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, { email, password });
-      if (res.data.success) {
-        if (res.data.token) {
-          localStorage.setItem('token', res.data.token);
-        }
-        localStorage.setItem('admin', JSON.stringify(res.data.admin));
-        localStorage.setItem('user', JSON.stringify(res.data.admin)); // Set user for standard UI components
-        localStorage.setItem('role', res.data.admin.role);
-        showNotification('Welcome back, Admin!', 'success');
-        
-        if (res.data.admin.role === 'lostFoundAdmin') {
-          navigate('/admin/lost-found');
-        } else if (res.data.admin.role === 'facultyCoordinator') {
-          navigate('/');
-        } else {
-          navigate('/admin-dashboard');
-        }
-      }
+      await adminLogin(email, password);
+      showNotification('Welcome back, Admin!', 'success');
+      // Navigation is handled by AuthContext
     } catch (err) {
       showNotification(err.response?.data?.message || 'Login failed', 'error');
     } finally {
@@ -44,14 +28,13 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-6 py-12">
       <div className="max-w-md w-full">
-        <div className="bg-white border-2 border-gray-300 p-8 rounded-sm">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gray-300 text-black rounded-sm flex items-center justify-center text-3xl mx-auto mb-4">
-              <i className="ri-shield-user-line" />
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm flex flex-col">
+          <div className="text-center mb-8 ">
+            <div className="rounded-sm flex items-center justify-center mx-auto mb-4">
+              <i className="ri-shield-user-line text-4xl" />
             </div>
             <h1 className="text-2xl font-medium text-black  tracking-tight">Admin Portal</h1>
-            <p className="text-neutral-500 text-xs font-medium  tracking-widest mt-2">Restricted Access only</p>
-          </div>
+              </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -74,7 +57,7 @@ const AdminLogin = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter admin password"
                   required
-                  className="w-full px-4 py-3 pr-10 border-2 border-black rounded-sm focus:border-orange-600 outline-none transition-colors font-bold"
+                  className="w-full px-4 py-3 pr-10 border-2 rounded-sm focus:border-orange-600 outline-none transition-colors font-bold"
                 />
                 <button
                   type="button"
@@ -89,7 +72,7 @@ const AdminLogin = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3.5 bg-black text-white font-black uppercase tracking-widest border-2 border-black rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all  active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50 cursor-pointer"
+                className="px-8 py-3.5 bg-black text-white font-black uppercase tracking-widest border-2 border-black rounded-full hover:bg-orange-600 hover:border-orange-600 transition-all  active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? 'Authenticating...' : 'Go to Dashboard'}
               </button>

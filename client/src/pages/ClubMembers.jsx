@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
+import { useParams, Link } from "react-router-dom";
+import { getClubMembers, addClubMember, updateClubMember, removeClubMember } from "../services/clubService";
 import { toast } from "react-hot-toast";
 import { ClubMemberRole } from "../types/index.js";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 // ── Avatar ─────────────────────────────────────────────────────────────────────
 const Avatar = ({ name }) => {
@@ -127,7 +125,7 @@ const ClubMembers = () => {
   const fetchMembers = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const res = await axios.get(`${API_URL}/api/club-members/${clubId}/members`);
+      const res = await getClubMembers(clubId);
       setMembers(res.data);
     } catch {
       if (!silent) toast.error("Failed to fetch members");
@@ -145,7 +143,7 @@ const ClubMembers = () => {
     const toastId = toast.loading("Adding member...");
     try {
       setInviting(true);
-      await axios.post(`${API_URL}/api/club-members/${clubId}/members`, {
+      await addClubMember(clubId, {
         email: inviteEmail,
         role: selectedRole,
       });
@@ -186,7 +184,7 @@ const ClubMembers = () => {
     );
 
     try {
-      const res = await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { permissions });
+      const res = await updateClubMember(membershipId, { permissions });
       toast.success(
         res.data.message || `'${fieldLabel}' permission ${newPermValue ? "granted to" : "revoked from"} ${member.student?.name || "member"}!`,
         { id: toastId }
@@ -233,7 +231,7 @@ const ClubMembers = () => {
     );
 
     try {
-      const res = await axios.put(`${API_URL}/api/club-members/members/${membershipId}`, { role: newRole });
+      const res = await updateClubMember(membershipId, { role: newRole });
       toast.success(
         res.data.message || `Role updated to ${targetRoleLabel} for ${member.student?.name || "member"}!`,
         { id: toastId }
@@ -266,7 +264,7 @@ const ClubMembers = () => {
     setMembers((prev) => prev.filter((m) => (m.id || m._id) !== membershipId));
 
     try {
-      await axios.delete(`${API_URL}/api/club-members/members/${membershipId}`);
+      await removeClubMember(membershipId);
       toast.success(`Member ${member.student?.name || ""} removed successfully`, { id: toastId });
       fetchMembers(true);
     } catch (err) {

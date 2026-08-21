@@ -135,7 +135,7 @@ const VenueTimelineView = ({
               Venue Timeline Grid — {currentDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
             </h3>
             <p className="text-[11px] text-neutral-400 font-medium">
-              {venueList.length} venues mapped • Drag blocks or handles to reschedule
+              {venueList.length} venues mapped • {canEdit ? "Drag blocks or handles to reschedule" : "View-only schedule"}
             </p>
           </div>
         </div>

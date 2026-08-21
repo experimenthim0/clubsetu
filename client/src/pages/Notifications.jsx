@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useSocket } from "../context/SocketContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
+import { markAsRead, markAllAsRead } from "../services/notificationService";
 import { Link } from "react-router-dom";
 import { useNotification } from "../context/NotificationContext";
 import {
@@ -13,7 +15,6 @@ import {
   isPushSubscribed,
 } from "../utils/pushSubscription";
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 const formatRelativeTime = (dateStr) => {
   const now = new Date();
@@ -51,9 +52,7 @@ const Notifications = () => {
     isPushSubscribed().then((sub) => setIsSubscribed(sub));
   }, []);
 
-  const userString = localStorage.getItem("user");
-  const user =
-    userString && userString !== "undefined" ? JSON.parse(userString) : null;
+  const { user } = useAuth();
   const currentUserId = String(user?._id || user?.id || "");
 
   const handleEnablePush = async () => {
@@ -97,7 +96,7 @@ const Notifications = () => {
     if (actionLoading[notifId]) return;
     setActionLoading((prev) => ({ ...prev, [notifId]: "accept" }));
     try {
-      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/accept`);
+      const res = await api.post(`/api/teams/invitations/${notifId}/accept`);
       if (showNotification) showNotification(res.data.message || "Invitation accepted successfully!", "success");
       if (syncNotifications) await syncNotifications(true);
     } catch (err) {
@@ -111,7 +110,7 @@ const Notifications = () => {
     if (actionLoading[notifId]) return;
     setActionLoading((prev) => ({ ...prev, [notifId]: "decline" }));
     try {
-      const res = await axios.post(`${API_URL}/api/teams/invitations/${notifId}/decline`);
+      const res = await api.post(`/api/teams/invitations/${notifId}/decline`);
       if (showNotification) showNotification(res.data.message || "Invitation declined.", "success");
       if (syncNotifications) await syncNotifications(true);
     } catch (err) {
@@ -125,7 +124,7 @@ const Notifications = () => {
     if (unreadCount === 0) return;
     setLoading(true);
     try {
-      await axios.put(`${API_URL}/api/notifications/read-all`);
+      await markAllAsRead();
       setUnreadCount(0);
       setNotifications((prev) =>
         prev.map((n) => ({
@@ -142,7 +141,7 @@ const Notifications = () => {
 
   const handleMarkAsRead = async (id) => {
     try {
-      await axios.put(`${API_URL}/api/notifications/${id}/read`);
+      await markAsRead(id);
       setNotifications((prev) =>
         prev.map((n) =>
           (n.id === id || n._id === id)

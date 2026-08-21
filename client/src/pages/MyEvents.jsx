@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import {
+  getUserEvents,
+  getClubManagedEvents,
+  reviewEvent,
+  cancelRegistration,
+  deleteEvent
+} from '../services/eventService';
+import { searchUsers } from '../services/userService';
 import { Clock, MapPin, Users, QrCode, MoreVertical, Trophy, FileText, Edit, Trash2, Award } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { DownloadIcon } from '@/components/ui/download';
@@ -8,13 +17,16 @@ import QRCode from 'qrcode';
 import { invalidateCache } from '../lib/cacheManager';
 import WinnerModal from '../components/WinnerModal';
 import { ClubMemberRole } from '../types/index.js';
+import { CLUB_EVENT_EXPORT_COLUMNS, downloadClubEventExport } from '../utils/clubEventExport';
+import ColumnExportModal from '../components/ColumnExportModal';
 
 const MyEvents = () => {
   const location = useLocation();
   const targetEventId = new URLSearchParams(location.search).get('eventId');
   const { showNotification } = useNotification();
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const { user: authUser, role: authRole } = useAuth();
+  const [user, setUser] = useState(authUser);
+  const [role, setRole] = useState(authRole);
   const [registrations, setRegistrations] = useState([]);
   const [createdEvents, setCreatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +56,10 @@ const MyEvents = () => {
   const [openMenuEventId, setOpenMenuEventId] = useState(null);
   const [menuPlacement, setMenuPlacement] = useState({ openUpward: false, alignRight: true });
   const [winnerModalEvent, setWinnerModalEvent] = useState(null);
+  const [eventExportModalOpen, setEventExportModalOpen] = useState(false);
+  const [selectedEventExportColumns, setSelectedEventExportColumns] = useState(CLUB_EVENT_EXPORT_COLUMNS.map(column => column.key));
+  const [eventExporting, setEventExporting] = useState(false);
+  const [eventExportError, setEventExportError] = useState('');
 
   const [canEdit, setCanEdit] = useState(false);
   const [canScan, setCanScan] = useState(false);
@@ -190,7 +206,8 @@ const MyEvents = () => {
   const handleDownloadCertificate = async (eventId) => {
     try {
       setDownloadingCert(eventId);
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/certificates/${eventId}/download`, {
+      const res = await api.get(`/api/certificates/${eventId}/download`, {
+        params: { studentId: user.id || user._id },
         responseType: 'blob'
       });
       
@@ -228,69 +245,52 @@ const MyEvents = () => {
   };
 
   useEffect(() => {
-    const storedUserData = localStorage.getItem('user');
-    const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
-    const storedRole = localStorage.getItem('role');
+    if (authUser) {
+      setUser(authUser);
+      setRole(authRole);
 
-    if (storedUser) {
-      setUser(storedUser);
-      setRole(storedRole);
-
-      // Initialize memberships from stored user if available
-      if (storedUser.memberships && Array.isArray(storedUser.memberships)) {
-        setUserMemberships(storedUser.memberships);
-        const defaultMem = storedUser.memberships.find(m => m.clubId === storedUser.clubId) || storedUser.memberships[0];
-        if (defaultMem) {
-          setCanEdit(defaultMem.canEditEvents ?? defaultMem.permissions?.canEditEvents ?? false);
-          setCanScan(defaultMem.canTakeAttendance ?? defaultMem.permissions?.canTakeAttendance ?? false);
-          setCanCheckReg(
-            defaultMem.role === ClubMemberRole.CLUB_HEAD ||
-            defaultMem.role === ClubMemberRole.COORDINATOR ||
-            defaultMem.role === 'CLUB_HEAD' ||
-            defaultMem.role === 'COORDINATOR' ||
-            defaultMem.canEditEvents === true ||
-            defaultMem.permissions?.canEditEvents === true
-          );
-        }
-      }
-
-      if (storedRole === 'member') {
-        fetchRegistrations(storedUser.id || storedUser._id);
-        if (storedUser.clubId) {
-          fetchCreatedEvents(storedUser.id || storedUser._id);
-          // Fetch live membership details from the club
-          axios.get(`${import.meta.env.VITE_API_URL}/api/club-members/${storedUser.clubId}/members`)
+      if (authRole === 'facultyCoordinator') {
+        fetchFacultyEvents(authUser.clubId);
+      } else if (authRole === 'club') {
+        fetchCreatedEvents(authUser.clubId);
+        if (authUser.clubId) {
+          api.get(`/api/club-members/${authUser.clubId}/members`)
             .then(res => {
-              const membership = res.data.find(
-                m => m.studentId === storedUser.id || m.student?.id === storedUser.id || m.studentId === storedUser._id || m.student?.id === storedUser._id
-              );
-              if (membership) {
-                setCanEdit(membership.canEditEvents ?? false);
-                setCanScan(membership.canTakeAttendance ?? false);
-                setCanCheckReg(
-                  membership.role === ClubMemberRole.CLUB_HEAD ||
-                  membership.role === ClubMemberRole.COORDINATOR ||
-                  membership.role === 'CLUB_HEAD' ||
-                  membership.role === 'COORDINATOR' ||
-                  membership.canEditEvents === true
-                );
+              const members = res.data.members || [];
+              const myMembership = members.find(m => m.studentId?._id === authUser.id || m.studentId === authUser.id);
+              if (myMembership) {
+                const r = myMembership.role;
+                setCanEdit(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD);
+                setCanScan(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD || r === ClubMemberRole.EVENT_LEAD || r === ClubMemberRole.VOLUNTEER);
+                setCanCheckReg(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD || r === ClubMemberRole.EVENT_LEAD);
+              } else {
+                setCanEdit(true); setCanScan(true); setCanCheckReg(true);
               }
             })
-            .catch(() => {
-              // Silently handle if not member
-            });
+            .catch(() => { setCanEdit(true); setCanScan(true); setCanCheckReg(true); });
         }
-      } else if (storedRole === 'student') {
-        fetchRegistrations(storedUser.id || storedUser._id);
-      } else if (storedRole === 'club') {
-        fetchCreatedEvents(storedUser.id || storedUser._id);
-      } else if (storedRole === 'facultyCoordinator') {
-        fetchFacultyEvents(storedUser.clubId);
+      } else {
+        fetchRegistrations(authUser.id || authUser._id);
+        const memberships = authUser.clubMemberships || [];
+        setUserMemberships(memberships);
+        const canManageAny = memberships.some(m =>
+          m.role === ClubMemberRole.CLUB_LEAD ||
+          m.role === ClubMemberRole.VICE_LEAD ||
+          m.role === ClubMemberRole.MANAGEMENT_LEAD ||
+          m.role === ClubMemberRole.EVENT_LEAD ||
+          m.role === ClubMemberRole.VOLUNTEER
+        );
+        if (canManageAny) {
+          const clubIds = memberships.map(m => m.clubId?._id || m.clubId).filter(Boolean);
+          if (clubIds.length > 0) {
+            fetchCreatedEvents(clubIds[0]);
+          }
+        }
       }
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [authUser, authRole]);
 
   useEffect(() => {
     if (!targetEventId || registrations.length === 0) return;
@@ -319,7 +319,7 @@ const MyEvents = () => {
 
   const fetchRegistrations = async (userId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${userId}`);
+      const res = await getUserEvents(userId);
       setRegistrations(res.data);
       setLoading(false);
     } catch (err) {
@@ -329,17 +329,13 @@ const MyEvents = () => {
     }
   };
 
-  const fetchCreatedEvents = async (userId) => {
+  const fetchCreatedEvents = async (clubId) => {
     try {
-      const storedUserData = localStorage.getItem('user');
-      const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
-      
-      const clubId = storedUser?.clubId;
       if (!clubId) {
           setLoading(false);
           return;
       }
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}`);
+      const res = await getClubManagedEvents(clubId);
       setCreatedEvents(res.data);
       setLoading(false);
     } catch (err) {
@@ -355,7 +351,7 @@ const MyEvents = () => {
             setLoading(false);
             return;
         }
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}`);
+        const res = await getClubManagedEvents(clubId);
         setCreatedEvents(res.data);
         setLoading(false);
     } catch (err) {
@@ -367,16 +363,16 @@ const MyEvents = () => {
 
   const handleReview = async (eventId, status, comment = '') => {
     try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/review`, { status, comment });
+        await reviewEvent(eventId, { status, comment });
         showNotification(`Event ${status === 'PUBLISHED' ? 'Approved' : 'Rejected'} successfully`, 'success');
         
         await invalidateCache(['/api/events', '/api/admin/*']);
 
         // Refresh list
         if (role === 'facultyCoordinator') {
-            fetchFacultyEvents(user.clubId);
-        } else if (role === 'admin') {
-            window.location.reload(); 
+            fetchFacultyEvents(user?.clubId);
+        } else if (user?.clubId) {
+            fetchCreatedEvents(user.clubId);
         }
     } catch (err) {
         showNotification(err.response?.data?.message || 'Review failed', 'error');
@@ -393,11 +389,15 @@ const MyEvents = () => {
     if (!eventToDeregister) return;
 
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDeregister}/register`, {
-        data: { studentId: user.id }
+      await cancelRegistration(eventToDeregister, {
+        studentId: user.id || user._id,
+        registrationId: regToDeregister
       });
-
-      await invalidateCache(['/api/events', `/api/events/${eventToDeregister}`]);
+      await invalidateCache([
+        '/api/events',
+        `/api/events/${eventToDeregister}`,
+        `/api/events/user/${user.id || user._id}`,
+      ]);
 
       setRegistrations(registrations.filter(r => (r.eventId?.id || r.eventId?._id) !== eventToDeregister));
       showNotification('Successfully deregistered from the event', 'success');
@@ -421,7 +421,7 @@ const MyEvents = () => {
     const delayDebounce = setTimeout(async () => {
       setUpdateTeamSearching(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${updateTeamSearchQuery}`);
+        const res = await searchUsers(updateTeamSearchQuery);
         const currentMembers = teamToUpdate?.team?.members || [];
         const filtered = res.data.filter(
           s => s.id !== teamToUpdate?.team?.leaderId && !currentMembers.some(m => m.userId === s.id)
@@ -438,11 +438,12 @@ const MyEvents = () => {
 
   const handleInviteTeammate = async (student) => {
     if (!teamToUpdate?.team?.id) return;
+    const updatedMembers = [...(teamToUpdate.team.members || []), { userId: student.id, name: student.name }];
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/teams/${teamToUpdate.team.id}/invite`,
-        { studentId: student.id }
+      const res = await api.post(
+        `/api/teams/${teamToUpdate.id || teamToUpdate._id}/manage-members`,
+        { memberIds: updatedMembers.map(m => m.userId || m.id || m._id) }
       );
       showNotification(res.data.message || 'Invitation sent successfully!', 'success');
       setUpdateTeamModalOpen(false);
@@ -471,10 +472,10 @@ const MyEvents = () => {
     }
     setSubmittingEdit(true);
     try {
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/payment/${editingReg.id || editingReg._id}/update-details`, {
-        transactionId: editTxId,
-        payerName: editPayerName,
-        paymentRemarks: editRemarks
+      const res = await api.put(`/api/payment/${editingReg.id || editingReg._id}/update-details`, {
+        transactionId: editTxId.trim(),
+        payerName: editPayerName.trim(),
+        paymentRemarks: editRemarks.trim()
       });
       showNotification(res.data.message || 'Payment details updated successfully!', 'success');
       setEditPaymentModalOpen(false);
@@ -499,7 +500,7 @@ const MyEvents = () => {
     if (!eventToDelete) return;
 
     try {
-      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
+      const res = await deleteEvent(eventToDelete);
       if (res.data.message && (res.data.message.includes('submitted') || res.data.message.includes('request'))) {
         showNotification('Deletion request sent for faculty approval', 'success');
         setCreatedEvents(createdEvents.map(e => {
@@ -531,44 +532,32 @@ const MyEvents = () => {
     return mMatch && yMatch;
   });
 
-  const handleExportClubData = async () => {
+  const handleExportClubData = () => {
+    setEventExportError('');
+    setSelectedEventExportColumns(CLUB_EVENT_EXPORT_COLUMNS.map(column => column.key));
+    setEventExportModalOpen(true);
+  };
+
+  const performClubEventExport = async () => {
+    if (selectedEventExportColumns.length === 0) {
+      setEventExportError('Select at least one column to export.');
+      return;
+    }
+    setEventExporting(true);
+    setEventExportError('');
     try {
-      const storedUserData = localStorage.getItem('user');
-      const storedAdminData = localStorage.getItem('admin');
-      const storedUser = storedUserData ? JSON.parse(storedUserData) : (storedAdminData ? JSON.parse(storedAdminData) : null);
-      
-      const clubId = storedUser?.clubId;
-      if (!clubId) return;
-
-      const query = new URLSearchParams(exportFilters).toString();
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}/export?${query}`);
-      const exportData = res.data.events;
-
-      if (!exportData || exportData.length === 0) {
-        showNotification('No data to export', 'info');
+      const exported = await downloadClubEventExport(authUser?.clubId, exportFilters, selectedEventExportColumns);
+      if (!exported) {
+        setEventExportError('No data to export.');
         return;
       }
-
-      const headers = ['Event Name', 'Club Name', 'Registrations', 'Event Date', 'Amount Received (₹)'];
-      const rows = exportData.map(e => [
-        `"${e.eventName}"`,
-        `"${e.clubName}"`,
-        e.totalRegistrations,
-        new Date(e.eventDate).toLocaleDateString(),
-        e.totalAmountReceived
-      ]);
-
-      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `club_events_${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      setEventExportModalOpen(false);
       showNotification('Export successful!', 'success');
     } catch (err) {
-      showNotification('Failed to export data', 'error');
+      console.error('Club event export failed:', err);
+      setEventExportError('Failed to export data.');
+    } finally {
+      setEventExporting(false);
     }
   };
 
@@ -737,10 +726,17 @@ const MyEvents = () => {
                                   setTicketModalOpen(true);
                                   try {
                                     const payloadToEncode = reg.qrPayload || reg.qrCode;
+                                    if (!payloadToEncode) {
+                                      showNotification('Ticket data is unavailable. Please refresh your registrations and try again.', 'error');
+                                      setTicketModalOpen(false);
+                                      return;
+                                    }
                                     const url = await QRCode.toDataURL(payloadToEncode, { width: 400, margin: 2 });
                                     setQrDataUrl(url);
                                   } catch (err) {
                                     console.error(err);
+                                    setTicketModalOpen(false);
+                                    showNotification('Unable to generate this ticket. Please refresh and try again.', 'error');
                                   }
                                 }}
                                 className="px-3 py-1.5 text-xs font-semibold rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors shadow-sm cursor-pointer border-0 outline-none"
@@ -1049,7 +1045,7 @@ const MyEvents = () => {
                                 <div 
                                   className={`absolute ${menuPlacement.alignRight ? 'right-0' : 'left-0'} ${
                                     menuPlacement.openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-                                  } w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100vh-60px)] overflow-y-auto`}
+                                  } w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100dvh-60px)] overflow-y-auto`}
                                 >
                                   {canViewReg && (
                                     <Link
@@ -1486,6 +1482,16 @@ const MyEvents = () => {
         </div>
       )}
       {/* ── EDIT PAYMENT DETAILS MODAL ── */}
+      <ColumnExportModal
+        open={eventExportModalOpen}
+        columns={CLUB_EVENT_EXPORT_COLUMNS}
+        selectedColumns={selectedEventExportColumns}
+        onSelectedColumnsChange={setSelectedEventExportColumns}
+        onClose={() => setEventExportModalOpen(false)}
+        onExport={performClubEventExport}
+        isExporting={eventExporting}
+        error={eventExportError}
+      />
       {editPaymentModalOpen && editingReg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">

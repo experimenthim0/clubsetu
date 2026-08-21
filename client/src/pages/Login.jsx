@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [role, setRole] = useState('student');
+  const { login, verify2FA: authVerify2FA } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -26,29 +25,13 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, formData,{
-    withCredentials: true,
-  });
-      
-      if (res.data.needs2FA) {
+      const result = await login(formData.email, formData.password);
+
+      if (result.needs2FA) {
         setShowOTP(true);
         setError('');
-        return;
       }
-
-      // Store user, token, role
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
-      }
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('role', res.data.role);
-      
-      if (res.data.role === 'lostFoundAdmin') {
-        navigate('/admin/lost-found');
-      } else {
-        navigate('/');
-      }
-      window.location.reload();
+      // Navigation is handled by AuthContext
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
@@ -61,25 +44,8 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-2fa`, {
-        email: formData.email,
-        otp
-      },{
-    withCredentials: true,
-  });
-      
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
-      }
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('role', res.data.role);
-      
-      if (res.data.role === 'lostFoundAdmin') {
-        navigate('/admin/lost-found');
-      } else {
-        navigate('/');
-      }
-      window.location.reload();
+      await authVerify2FA(formData.email, otp);
+      // Navigation is handled by AuthContext
     } catch (err) {
       setError(err.response?.data?.message || 'OTP verification failed');
     } finally {
@@ -97,15 +63,15 @@ const Login = () => {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-         <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none logofont">
-              Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
-            </span>
+          <span className="font-light text-[24px] tracking-wider text-black dark:text-neutral-200 leading-none select-none logofont">
+            Campus<span className="text-orange-600 dark:text-orange-500">Node</span>
+          </span>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Sign in to your account
           </p>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 md:p-8 shadow-sm flex flex-col ">
 
           {!showOTP ? (
             <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -162,11 +128,10 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all mt-1 ${
-                  isLoading
+                className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all mt-1 ${isLoading
                     ? 'bg-neutral-400 cursor-not-allowed'
                     : 'bg-orange-600 hover:bg-orange-700 cursor-pointer hover:-translate-y-0.5'
-                }`}
+                  }`}
               >
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
@@ -177,7 +142,7 @@ const Login = () => {
                 <h3 className="text-lg font-bold text-black dark:text-white">2-Step Verification</h3>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Enter the 6-digit code sent to your email.</p>
               </div>
-              
+
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 text-sm font-medium text-center rounded-xl">
                   {error}
@@ -200,18 +165,17 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${
-                    isLoading
+                  className={`w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${isLoading
                       ? 'bg-neutral-400 cursor-not-allowed'
                       : 'bg-orange-600 hover:bg-orange-700 cursor-pointer'
-                  }`}
+                    }`}
                 >
                   {isLoading ? 'Verifying...' : 'Verify & Sign In'}
                 </button>
                 <button
-                   type="button"
-                   onClick={() => setShowOTP(false)}
-                   className="text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => setShowOTP(false)}
+                  className="text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
                   Back to Login
                 </button>
@@ -238,6 +202,14 @@ const Login = () => {
               Register as Student
             </Link>
           </div>
+
+          <Link
+            to="/admin-secret-login"
+            className="mt-6 text-sm text-center text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+          >
+            Login to Admin Portal
+          </Link>
+
         </div>
       </div>
     </div>

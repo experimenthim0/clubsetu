@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import { useNotification } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
+import { getVenues } from "../services/adminService";
+import { getClubs } from "../services/clubService";
+import { getCalendarEvents, getConflicts } from "../services/eventService";
 import CalendarViewSwitch from "../components/calendar/CalendarViewSwitch";
 import CalendarFilterBar from "../components/calendar/CalendarFilterBar";
 import MonthView from "../components/calendar/MonthView";
@@ -10,7 +14,6 @@ import EventQuickViewDrawer from "../components/calendar/EventQuickViewDrawer";
 import RescheduleConfirmModal from "../components/calendar/RescheduleConfirmModal";
 import BlackoutModal from "../components/calendar/BlackoutModal";
 import ConflictCenter from "../components/calendar/ConflictCenter";
-import { useNotification } from "../context/NotificationContext";
 import ShimmerText from "../components/ShimmerText";
 import {
   Calendar as CalendarIcon,
@@ -43,7 +46,7 @@ const StatCard = ({ label, value, accent, icon: Icon }) => (
   </div>
 );
 
-const EventCalendarPage = () => {
+const EventCalendarPage = ({ readOnly = false }) => {
   const { showNotification } = useNotification();
 
   // State
@@ -78,19 +81,17 @@ const EventCalendarPage = () => {
 
   const [conflictCenterOpen, setConflictCenterOpen] = useState(false);
 
-  // API Base URL
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
-  // Role info
-  const userRole = localStorage.getItem("role") || "admin";
+  const { role: authRole } = useAuth();
+  const userRole = authRole || "admin";
+  const canManageCalendar = !readOnly && (userRole === "admin" || userRole === "facultyCoordinator");
 
   // Fetch Venues & Clubs reference lists
   useEffect(() => {
     const fetchReferences = async () => {
       try {
         const [vRes, cRes] = await Promise.all([
-          axios.get(`${API_URL}/api/venues`).catch(() => ({ data: [] })),
-          axios.get(`${API_URL}/api/clubs`).catch(() => ({ data: [] }))
+          getVenues().catch(() => ({ data: [] })),
+          getClubs().catch(() => ({ data: [] }))
         ]);
 
         const venuesData = Array.isArray(vRes?.data)
@@ -117,7 +118,7 @@ const EventCalendarPage = () => {
       }
     };
     fetchReferences();
-  }, [API_URL]);
+  }, []);
 
   // Fetch Calendar Data (events & blackouts for date range)
   const fetchCalendarData = useCallback(async () => {
@@ -157,8 +158,8 @@ const EventCalendarPage = () => {
       if (filters.status !== "all") params.reviewStatus = filters.status;
 
       const [calRes, conflictRes] = await Promise.all([
-        axios.get(`${API_URL}/api/events/calendar`, { params }),
-        axios.get(`${API_URL}/api/events/conflicts`)
+        getCalendarEvents(params),
+        getConflicts()
       ]);
 
       const eventsData = Array.isArray(calRes?.data?.events)
@@ -180,7 +181,7 @@ const EventCalendarPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentDate, activeView, subView, filters, API_URL]);
+  }, [currentDate, activeView, subView, filters]);
 
   useEffect(() => {
     fetchCalendarData();
@@ -211,7 +212,7 @@ const EventCalendarPage = () => {
 
   const handleApproveEvent = async (eventItem) => {
     try {
-      await axios.put(`${API_URL}/api/events/${eventItem.id || eventItem._id}/review`, {
+      await reviewEvent(eventItem.id || eventItem._id, {
         status: "PUBLISHED",
         comment: "Approved from Event Calendar"
       });
@@ -225,7 +226,7 @@ const EventCalendarPage = () => {
 
   const handleRejectEvent = async (eventItem) => {
     try {
-      await axios.put(`${API_URL}/api/events/${eventItem.id || eventItem._id}/review`, {
+      await reviewEvent(eventItem.id || eventItem._id, {
         status: "REJECTED",
         comment: "Rejected from Event Calendar"
       });
@@ -249,15 +250,17 @@ const EventCalendarPage = () => {
   );
 
   return (
-    <div className="space-y-6 myfont">
-      {/* Metrics Header */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <StatCard label="Today's Events" value={todayEvents.length} icon={CalendarIcon} />
-        <StatCard label="Pending Approval" value={pendingEvents.length} icon={Clock} />
-        <StatCard label="Occupied Venues" value={occupiedVenueNames.size} icon={Building2} />
-        <StatCard label="Conflicts Detected" value={conflictCount} accent icon={AlertTriangle} />
-        <StatCard label="Active Blackouts" value={blackouts.length} icon={Layers} />
-      </div>
+    <div className="space-y-6 myfont px-5 py-3">
+      {/* Operational metrics are for administrators; club users get the schedule view only. */}
+      {!readOnly && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatCard label="Today's Events" value={todayEvents.length} icon={CalendarIcon} />
+          <StatCard label="Pending Approval" value={pendingEvents.length} icon={Clock} />
+          <StatCard label="Occupied Venues" value={occupiedVenueNames.size} icon={Building2} />
+          <StatCard label="Conflicts Detected" value={conflictCount} accent icon={AlertTriangle} />
+          <StatCard label="Active Blackouts" value={blackouts.length} icon={Layers} />
+        </div>
+      )}
 
       {/* Main View Switch & Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -279,10 +282,10 @@ const EventCalendarPage = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
-        onNewBlackout={() => {
+        onNewBlackout={canManageCalendar ? () => {
           setEditingBlackout(null);
           setBlackoutModalOpen(true);
-        }}
+        } : undefined}
         onOpenConflictCenter={() => setConflictCenterOpen(true)}
         conflictCount={conflictCount}
       />
@@ -370,8 +373,8 @@ const EventCalendarPage = () => {
           events={events}
           blackouts={blackouts}
           onSelectEvent={handleSelectEvent}
-          onInitiateReschedule={handleInitiateReschedule}
-          canEdit={userRole === "admin" || userRole === "facultyCoordinator"}
+          onInitiateReschedule={canManageCalendar ? handleInitiateReschedule : undefined}
+          canEdit={canManageCalendar}
         />
       )}
 
@@ -382,7 +385,7 @@ const EventCalendarPage = () => {
         onClose={() => setDrawerOpen(false)}
         onApprove={userRole === "facultyCoordinator" ? handleApproveEvent : null}
         onReject={userRole === "facultyCoordinator" ? handleRejectEvent : null}
-        onOpenReschedule={(ev) => {
+        onOpenReschedule={canManageCalendar ? (ev) => {
           setRescheduleData({
             event: ev,
             newStart: new Date(ev.startTime),
@@ -390,20 +393,20 @@ const EventCalendarPage = () => {
             newVenue: ev.venue
           });
           setRescheduleModalOpen(true);
-        }}
+        } : undefined}
         userRole={userRole}
       />
 
       {/* Reschedule Confirmation Modal */}
-      <RescheduleConfirmModal
+      {canManageCalendar && <RescheduleConfirmModal
         rescheduleData={rescheduleData}
         isOpen={rescheduleModalOpen}
         onClose={() => setRescheduleModalOpen(false)}
         onSuccess={() => fetchCalendarData()}
-      />
+      />}
 
       {/* Blackout Window Modal */}
-      <BlackoutModal
+      {canManageCalendar && <BlackoutModal
         isOpen={blackoutModalOpen}
         onClose={() => {
           setBlackoutModalOpen(false);
@@ -412,7 +415,7 @@ const EventCalendarPage = () => {
         venues={venues}
         editingBlackout={editingBlackout}
         onSuccess={() => fetchCalendarData()}
-      />
+      />}
 
       {/* Conflict Center Modal */}
       <ConflictCenter

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { Link, useLocation } from "react-router-dom";
 import { useSocket } from "../context/SocketContext";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import { BellIcon } from "./ui/bell";
 import { UserIcon } from "./ui/user";
 import { CalendarDaysIcon } from "./ui/calendar-days";
@@ -17,7 +17,6 @@ import { LayoutDashboard, Shield } from "lucide-react";
 import SearchBar from "./SearchBar";
 import { ArrowRightIcon } from "./ui/arrow-right";
 import { usePwaInstall } from "../hooks/usePwaInstall";
-const API_URL = import.meta.env.VITE_API_URL;
 
 
 const LostFoundIcon = ({ size = 24, ...props }) => (
@@ -43,20 +42,7 @@ const LostFoundIcon = ({ size = 24, ...props }) => (
 const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const { isInstallable, installApp } = usePwaInstall();
-  let user = null;
-  try {
-    const storedUser = localStorage.getItem("user");
-    const storedAdmin = localStorage.getItem("admin");
-    const raw = storedUser || storedAdmin;
-    if (raw && raw !== "undefined") {
-      user = JSON.parse(raw);
-    }
-  } catch (err) {
-    console.error("Error parsing user from local storage", err);
-    localStorage.removeItem("user");
-    localStorage.removeItem("admin");
-  }
-  const role = localStorage.getItem("role");
+  const { user, role, logout } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -149,15 +135,7 @@ const Navbar = () => {
   }, [mobileOpen]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("admin");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    // Clear the server-set httpOnly cookie by calling logout endpoint
-    axios.post(`${API_URL}/api/auth/logout`).catch(() => { });
-    // Also clear cookie client-side as fallback
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/";
+    logout('/');
   };
 
   const isActive = (path) =>
@@ -209,7 +187,7 @@ const Navbar = () => {
     <>
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav
-        className={`sticky top-0 z-50 bg-white/30 dark:bg-[#0a0a0a]/75 border-b border-transparent backdrop-blur-md transition-all duration-300 myfont ${scrolled ? "shadow-sm border-neutral-100/80 dark:border-white/10" : ""
+        className={`sticky top-0 z-50 pt-[env(safe-area-inset-top)] bg-white/30 dark:bg-[#0a0a0a]/75 border-b border-transparent backdrop-blur-md transition-all duration-300 myfont ${scrolled ? "shadow-sm border-neutral-100/80 dark:border-white/10" : ""
           }`}
       >
         {/* Orange top accent on scroll */}
@@ -488,11 +466,10 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-orange-600 dark:bg-neutral-100 text-white dark:text-neutral-900 border-2 border-orange-600 dark:border-neutral-100 text-[13px] font-bold tracking-widest rounded-full hover:bg-black dark:hover:bg-orange-500 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-150 hover:-translate-y-px"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-[13px] font-bold tracking-widest rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:border-neutral-800 dark:hover:border-neutral-200 transition-all duration-150 hover:-translate-y-px"
                 >
                   <ArrowRightIcon size={18}>
                     <p className="font-semibold">
-
                       Register
                     </p>
                   </ArrowRightIcon>

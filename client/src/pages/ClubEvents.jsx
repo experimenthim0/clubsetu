@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { getClubMembers } from '../services/clubService';
+import { CLUB_EVENT_EXPORT_COLUMNS, downloadClubEventExport } from '../utils/clubEventExport';
+import { getClubManagedEvents, reviewEvent, deleteEvent } from '../services/eventService';
 import { useNotification } from '../context/NotificationContext';
 import { Clock, MapPin, Users, QrCode, MoreVertical, Trophy, FileText, Edit, Trash2, Award } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
 import { DownloadIcon } from '@/components/ui/download';
 import { ClubMemberRole } from '../types/index.js';
 import WinnerModal from '../components/WinnerModal';
+import ColumnExportModal from '../components/ColumnExportModal';
 
 const ClubEvents = () => {
   const { clubId } = useParams();
   const { showNotification } = useNotification();
-  const [user, setUser] = useState(null);
+  const { user: authUser, role: authRole } = useAuth();
+  const [user, setUser] = useState(authUser);
+  const [role, setRole] = useState(authRole);
   const [createdEvents, setCreatedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exportFilters, setExportFilters] = useState({ month: 'all', year: 'all' });
@@ -24,6 +30,10 @@ const ClubEvents = () => {
   const [openMenuEventId, setOpenMenuEventId] = useState(null);
   const [menuPlacement, setMenuPlacement] = useState({ openUpward: false, alignRight: true });
   const [winnerModalEvent, setWinnerModalEvent] = useState(null);
+  const [eventExportModalOpen, setEventExportModalOpen] = useState(false);
+  const [selectedEventExportColumns, setSelectedEventExportColumns] = useState(CLUB_EVENT_EXPORT_COLUMNS.map(column => column.key));
+  const [eventExporting, setEventExporting] = useState(false);
+  const [eventExportError, setEventExportError] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -36,46 +46,34 @@ const ClubEvents = () => {
   }, []);
 
   useEffect(() => {
-    const storedUserData = localStorage.getItem('user');
-    const storedUser = storedUserData ? JSON.parse(storedUserData) : null;
-    const storedRole = localStorage.getItem('role');
-
-    if (storedUser) {
-      setUser(storedUser);
+    if (authUser) {
+      setUser(authUser);
+      setRole(authRole);
       fetchClubEvents(clubId);
 
-      // Only faculty coordinators can review events
-      setCanReview(storedRole === 'facultyCoordinator');
+      setCanReview(authRole === 'facultyCoordinator');
 
-      // Fetch membership to derive RBAC flags
-      axios.get(`${import.meta.env.VITE_API_URL}/api/club-members/${clubId}/members`)
+      getClubMembers(clubId)
         .then(res => {
-          const membership = res.data.find(
-            m => m.studentId === storedUser.id || m.student?.id === storedUser.id
-          );
-          if (membership) {
-            setClubName(membership.clubName || "");
-            setCanEdit(membership.canEditEvents ?? false);
-            setCanScan(membership.canTakeAttendance ?? false);
-            // Club head and coordinators can view registrations
-            setCanCheckReg(
-              membership.role === ClubMemberRole.CLUB_HEAD ||
-              membership.role === ClubMemberRole.COORDINATOR ||
-              membership.canEditEvents === true
-            );
+          const members = res.data.members || [];
+          const myMembership = members.find(m => m.studentId?._id === authUser.id || m.studentId === authUser.id);
+          if (myMembership) {
+            setClubName(myMembership.clubName || "");
+            const r = myMembership.role;
+            setCanEdit(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD);
+            setCanScan(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD || r === ClubMemberRole.EVENT_LEAD || r === ClubMemberRole.VOLUNTEER);
+            setCanCheckReg(r === ClubMemberRole.CLUB_LEAD || r === ClubMemberRole.VICE_LEAD || r === ClubMemberRole.MANAGEMENT_LEAD || r === ClubMemberRole.EVENT_LEAD);
           }
         })
-        .catch(() => {
-          // Not a member or fetch failed — no admin controls shown
-        });
+        .catch(() => {});
     } else {
       setLoading(false);
     }
-  }, [clubId]);
+  }, [clubId, authUser, authRole]);
 
   const fetchClubEvents = async (id) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${id}`);
+      const res = await getClubManagedEvents(id);
       setCreatedEvents(res.data);
       setLoading(false);
     } catch (err) {
@@ -87,7 +85,7 @@ const ClubEvents = () => {
 
   const handleReview = async (eventId, status, comment = '') => {
     try {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/events/${eventId}/review`, { status, comment });
+        await reviewEvent(eventId, { status, comment });
         showNotification(`Event ${status === 'PUBLISHED' ? 'Approved' : 'Rejected'} successfully`, 'success');
         fetchClubEvents(clubId);
     } catch (err) {
@@ -104,7 +102,7 @@ const ClubEvents = () => {
     if (!eventToDelete) return;
 
     try {
-      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/events/${eventToDelete}`);
+      const res = await deleteEvent(eventToDelete);
       if (res.data.message && (res.data.message.includes('submitted') || res.data.message.includes('request'))) {
         showNotification('Deletion request sent for faculty approval', 'success');
         setCreatedEvents(createdEvents.map(e => {
@@ -129,39 +127,32 @@ const ClubEvents = () => {
 
   const clearFilters = () => setExportFilters({ month: 'all', year: 'all' });
 
-  const handleExportClubData = async () => {
+  const handleExportClubData = () => {
+    setEventExportError('');
+    setSelectedEventExportColumns(CLUB_EVENT_EXPORT_COLUMNS.map(column => column.key));
+    setEventExportModalOpen(true);
+  };
+
+  const performClubEventExport = async () => {
+    if (selectedEventExportColumns.length === 0) {
+      setEventExportError('Select at least one column to export.');
+      return;
+    }
+    setEventExporting(true);
+    setEventExportError('');
     try {
-      if (!clubId) return;
-
-      const query = new URLSearchParams(exportFilters).toString();
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/club-manage/${clubId}/export?${query}`);
-      const exportData = res.data.events;
-
-      if (!exportData || exportData.length === 0) {
-        showNotification('No data to export', 'info');
+      const exported = await downloadClubEventExport(clubId, exportFilters, selectedEventExportColumns);
+      if (!exported) {
+        setEventExportError('No data to export.');
         return;
       }
-
-      const headers = ['Event Name', 'Club Name', 'Registrations', 'Event Date', 'Amount Received (₹)'];
-      const rows = exportData.map(e => [
-        `"${e.eventName}"`,
-        `"${e.clubName}"`,
-        e.totalRegistrations,
-        new Date(e.eventDate).toLocaleDateString(),
-        e.totalAmountReceived
-      ]);
-
-      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `club_events_${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      setEventExportModalOpen(false);
       showNotification('Export successful!', 'success');
     } catch (err) {
-      showNotification('Failed to export data', 'error');
+      console.error('Club event export failed:', err);
+      setEventExportError('Failed to export data.');
+    } finally {
+      setEventExporting(false);
     }
   };
 
@@ -386,7 +377,7 @@ const ClubEvents = () => {
                             <div 
                               className={`absolute ${menuPlacement.alignRight ? 'right-0' : 'left-0'} ${
                                 menuPlacement.openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-                              } w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100vh-60px)] overflow-y-auto`}
+                              } w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100dvh-60px)] overflow-y-auto`}
                             >
                               {canViewReg && (
                                 <Link
@@ -509,6 +500,16 @@ const ClubEvents = () => {
       )}
 
       {/* ── DELETE MODAL ── */}
+      <ColumnExportModal
+        open={eventExportModalOpen}
+        columns={CLUB_EVENT_EXPORT_COLUMNS}
+        selectedColumns={selectedEventExportColumns}
+        onSelectedColumnsChange={setSelectedEventExportColumns}
+        onClose={() => setEventExportModalOpen(false)}
+        onExport={performClubEventExport}
+        isExporting={eventExporting}
+        error={eventExportError}
+      />
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="bg-white border border-neutral-200 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">

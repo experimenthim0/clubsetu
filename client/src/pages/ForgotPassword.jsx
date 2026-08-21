@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { forgotPassword as forgotPasswordApi } from '../services/authService';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -15,12 +15,10 @@ const ForgotPassword = () => {
     setLoading(true);
     setMessage('');
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
-        { email, role }
-      );
+      const res = await forgotPasswordApi(email, role);
       setMessage(res.data.message);
       showNotification(res.data.message, 'success');
+
     } catch (err) {
       showNotification(err.response?.data?.message || 'Something went wrong', 'error');
     } finally {

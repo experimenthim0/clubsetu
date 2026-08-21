@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import { Html5Qrcode } from "html5-qrcode";
 import {
   CheckCircle,
@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShimmerText from "../components/ShimmerText";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const formatTimeAgo = (date) => {
   const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -59,7 +57,7 @@ const StaffAttendanceView = () => {
   const loadEventAndStaff = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/event-staff/events/${eventId}/overview`);
+      const res = await api.get(`/api/event-staff/events/${eventId}/overview`);
       setEventData(res.data.event);
       setAttendedCount(res.data.attendedCount || 0);
       setRegisteredCount(res.data.registeredCount || 0);
@@ -138,8 +136,8 @@ const StaffAttendanceView = () => {
     ]);
   };
 
-  const processAttendanceScan = async (qrPayload, isManual = false) => {
-    if (!isManual) {
+  const processAttendanceScan = async (qrPayload, manualEntry = false) => {
+    if (!manualEntry) {
       if (isProcessingRef.current || qrPayload === lastScannedCodeRef.current) return;
       isProcessingRef.current = true;
       lastScannedCodeRef.current = qrPayload;
@@ -150,10 +148,10 @@ const StaffAttendanceView = () => {
 
     try {
       // Use the standard scanner check-in endpoint with server-enforced event-staff validation
-      const res = await axios.post(`${API_URL}/api/scanner/attendance/check-in`, {
+      const res = await api.post('/api/scanner/attendance/check-in', {
         eventId,
-        qrPayload,
-        gate: "Staff Gate",
+        rollNo: qrPayload,
+        mode: manualEntry ? "MANUAL_STAFF" : "QR_STAFF",
       });
 
       const data = res.data;

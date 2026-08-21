@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { getUserEvents } from '../services/eventService';
 
 import { Clock, MapPin, Calendar, Bookmark, Compass, User, Plus, Wallet, Users, Bell, LayoutDashboard, Search } from 'lucide-react';
 import EventFeed from './EventFeed';
@@ -127,7 +128,7 @@ const CountdownTimer = ({ startTime, endTime }) => {
 
 // ── Reusable section label ──────────────────────────────────────────────────
 const SectionLabel = ({ children, light = false }) => (
-  <div className={`flex items-center gap-2 mb-5 ${light ? 'text-orange-600' : 'text-orange-600'}`}>
+  <div className="flex items-center gap-2 mb-5 text-orange-600 dark:text-orange-500">
     <span className="text-[11px] font-bold uppercase tracking-[0.15em]">{children}</span>
   </div>
 );
@@ -136,7 +137,7 @@ const SectionLabel = ({ children, light = false }) => (
 const BtnPrimary = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex items-center gap-2 px-8 py-3.5 bg-black text-white border-2 border-black text-[13px] font-bold uppercase tracking-widest rounded-sm hover:bg-orange-600 hover:border-orange-600 transition-all hover:-translate-y-px"
+    className="inline-flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-[13px] font-bold uppercase tracking-widest rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:border-neutral-800 dark:hover:border-neutral-200 transition-all hover:-translate-y-px shadow-sm"
   >
     {children}
   </Link>
@@ -146,7 +147,7 @@ const BtnPrimary = ({ to, children }) => (
 const BtnSecondary = ({ to, children }) => (
   <Link
     to={to}
-    className="text-[#0a0a0a] bg-transparent hover:bg-[#0f1419] hover:text-[#ffffff] border-[#0a0a0a] dark:hover:bg-[#f5f5f5] dark:text-white dark:border-[#f5f5f5] dark:bg-transparent dark:hover:text-black dark:hover:border-[#f5f5f5] transition-all duration-200 ease-in-out focus:ring-4 focus:outline-none focus:ring-[#0f1419]/50 box-border border font-medium leading-5 text-md px-4 py-2.5 inline-flex items-center rounded-4xl cursor-pointer"
+    className="text-neutral-900 bg-white hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 transition-all duration-200 ease-in-out font-semibold leading-5 text-sm px-5 py-2.5 inline-flex items-center rounded-full cursor-pointer shadow-xs hover:-translate-y-px"
   >
     {children}
   </Link>
@@ -408,8 +409,9 @@ const DomainSection = ({ domain, members }) => {
 };
 
 const Home = () => {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const { user: authUser, role: authRole } = useAuth();
+  const [user, setUser] = useState(authUser);
+  const [role, setRole] = useState(authRole);
   const [registrations, setRegistrations] = useState([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [openMapEventId, setOpenMapEventId] = useState(null);
@@ -419,19 +421,12 @@ const Home = () => {
 
   useEffect(() => {
     document.title = "CampusNode | NITJ Clubs & Events";
-    try {
-      const storedUser = localStorage.getItem("user");
-      const storedRole = localStorage.getItem("role");
-      if (storedUser && storedUser !== "undefined") {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        setRole(storedRole);
-        fetchTimelineEvents(parsed.id || parsed._id);
-      }
-    } catch (err) {
-      console.error("Error parsing user from local storage", err);
+    if (authUser) {
+      setUser(authUser);
+      setRole(authRole);
+      fetchTimelineEvents(authUser.id || authUser._id);
     }
-  }, []);
+  }, [authUser, authRole]);
 
   useEffect(() => {
     if (registrations.length > 0 && user) {
@@ -475,7 +470,7 @@ const Home = () => {
     if (!userId) return;
     setTimelineLoading(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${userId}`);
+      const res = await getUserEvents(userId);
       const sorted = (res.data || []).sort((a, b) => {
         const timeA = new Date(a.eventId?.startTime || 0).getTime();
         const timeB = new Date(b.eventId?.startTime || 0).getTime();
@@ -564,12 +559,12 @@ const Home = () => {
   }
 
   return (
-    <div className="myfont text-neutral-900 bg-white dark:text-neutral-100 dark:bg-[#0a0a0a] transition-colors duration-300">
+    <div className="myfont text-neutral-900 bg-[#fafafa] dark:text-neutral-100 dark:bg-[#0a0a0a] transition-colors duration-300">
 
       {user ? (
         <>
           {/* ── "MY NODE" CONTROL PANEL ─────────────────────────────────────── */}
-          <section className="relative pt-28 pb-12 bg-neutral-50 dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800/80 text-neutral-900 dark:text-white transition-colors duration-300 overflow-hidden">
+          <section className="relative pt-28 pb-12 bg-white dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800/80 text-neutral-900 dark:text-white transition-colors duration-300 overflow-hidden">
             {/* Glow Effects */}
             {/* <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-orange-500/[0.05] dark:bg-orange-600/[0.08] rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-yellow-500/[0.03] dark:bg-yellow-500/[0.05] rounded-full blur-[100px] pointer-events-none" /> */}
@@ -601,11 +596,11 @@ const Home = () => {
                         to={action.to}
                         className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-semibold tracking-wider transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm min-w-0 ${
                           action.primary 
-                            ? "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-600/10 border-0" 
+                            ? "bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black border border-black dark:border-white" 
                             : "bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
                         }`}
                       >
-                        <IconComponent className={action.primary ? "w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" : "w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0"} />
+                        <IconComponent className={action.primary ? "w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-black shrink-0" : "w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0"} />
                         <span className="truncate">{action.label}</span>
                       </Link>
                     );
@@ -616,7 +611,7 @@ const Home = () => {
           </section>
 
           {/* ── PERSONALIZED TIMELINE / MANAGEMENT PANEL ─────────────────────── */}
-          <section className="py-16 bg-[#fefce8]/20 dark:bg-neutral-950/20 border-b-2 border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
+          <section className="py-16 bg-[#fafafa] dark:bg-[#0a0a0a] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
               <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -628,9 +623,9 @@ const Home = () => {
                 {isStudent && (
                   <Link
                     to="/my-events"
-                    className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline transition-all"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 hover:underline transition-all"
                   >
-                    Manage Tickets & QR Codes <ArrowRightIcon className="w-4 h-4 text-orange-600 shrink-0" />
+                    Manage Tickets & QR Codes <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 shrink-0" />
                   </Link>
                 )}
               </div>
@@ -651,7 +646,7 @@ const Home = () => {
                     </p>
                     <Link
                       to="/events"
-                      className="inline-flex items-center justify-center px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
+                      className="inline-flex items-center justify-center px-5 py-2.5 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
                     >
                       Find Events to Join
                     </Link>
@@ -747,8 +742,8 @@ const Home = () => {
                             Organize campus fests, hackathons, and technical talks. Use the check-in scanner to verify QR code tickets and record live attendance.
                           </p>
                         </div>
-                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          Manage Club Events <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          Manage Club Events <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -761,8 +756,8 @@ const Home = () => {
                             Track event registrations fees, view verified receipts, update bank details, and monitor payout requests.
                           </p>
                         </div>
-                        <Link to="/payments" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          Track Financials & Payments <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/payments" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          Track Financials & Payments <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                     </>
@@ -779,8 +774,8 @@ const Home = () => {
                             Review detailed proposals for upcoming club events. Approve them for public release or send them back with coordinator comments.
                           </p>
                         </div>
-                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          Review Proposals <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/my-events" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          Review Proposals <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -793,8 +788,8 @@ const Home = () => {
                             Oversee active student memberships, coordinate schedules, and send urgent notifications or alerts to students.
                           </p>
                         </div>
-                        <Link to="/clubs" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          View Club Directory <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/clubs" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          View Club Directory <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                     </>
@@ -811,8 +806,8 @@ const Home = () => {
                             Access system statistics, register or block clubs, review payout requests, and maintain core platform configurations.
                           </p>
                         </div>
-                        <Link to="/admin-dashboard" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          Open Admin Control Panel <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/admin-dashboard" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          Open Admin Control Panel <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -825,8 +820,8 @@ const Home = () => {
                             Send direct push notifications and official announcements to all registered student accounts.
                           </p>
                         </div>
-                        <Link to="/send-notification" className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:text-orange-700 hover:underline mt-auto">
-                          Create System Broadcast <ArrowRightIcon className="w-4 h-4" />
+                        <Link to="/send-notification" className="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 transition-colors mt-auto group">
+                          Create System Broadcast <ArrowRightIcon className="w-4 h-4 text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                     </>
@@ -924,12 +919,12 @@ const Home = () => {
       )}
 
       {/* ── LATEST EVENTS (Shared) ────────────────────────────────────────── */}
-      <section className="pt-12 pb-16 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
+      <section className="pt-12 pb-16 bg-white dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
           <ScrollReveal direction="up">
             <div className="mb-12">
               <SectionLabel>Latest Happenings</SectionLabel>
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide">
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-neutral-900 dark:text-white leading-[1.1] tracking-wide">
                 What's Buzzing<br />on Campus
               </h2>
             </div>
@@ -951,11 +946,11 @@ const Home = () => {
       </section>
 
       {/* ── CLUBS (Shared) ─────────────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
+      <section className="py-24 bg-[#fafafa] dark:bg-[#0a0a0a] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4">
           <ScrollReveal direction="up">
             <div className="mb-12">
-              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide text-center">
+              <h2 className="font-black text-[clamp(28px,4vw,44px)] text-neutral-900 dark:text-white leading-[1.1] tracking-wide text-center">
                 NITJ Clubs & Societies
               </h2>
             </div>
@@ -976,14 +971,14 @@ const Home = () => {
       </section>
 
       {/* ── LEADERBOARD (Shared) ──────────────────────────────────────────── */}
-      <section className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b-2 border-neutral-300 dark:border-neutral-800 transition-colors duration-300">
+      <section className="py-24 bg-white dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <div className="lg:col-span-4">
               <ScrollReveal direction="left">
                 <SectionLabel>Campus Rankings</SectionLabel>
-                <h2 className="font-black text-[clamp(28px,4vw,44px)] text-black dark:text-white leading-[1.1] tracking-wide mb-6">
-                  Club<br /><span className="text-orange-600 text-6xl">Hall of Fame</span>
+                <h2 className="font-black text-[clamp(28px,4vw,44px)] text-neutral-900 dark:text-white leading-[1.1] tracking-wide mb-6">
+                  Club<br /><span className="text-orange-600 dark:text-orange-500 text-6xl">Hall of Fame</span>
                 </h2>
                 <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed mb-8">
                   Recognition for the most active student organizations at NITJ. Rankings are updated automatically based on successfully completed events organized through CampusNode.
@@ -1002,18 +997,18 @@ const Home = () => {
       {!user && (
         <>
           {/* ── FOR STUDENTS (Public Only) ─────────────────────────────────── */}
-          <section className="py-20 bg-[#fefce8]/30 border-b border-neutral-200">
+          <section className="py-20 bg-[#fafafa] dark:bg-[#0a0a0a] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-6">
               {/* Tab switcher */}
-              <div className="flex border-b border-neutral-200 mb-12">
+              <div className="flex border-b border-neutral-200 dark:border-neutral-800 mb-12">
                 {["students", "clubs"].map((t) => (
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px
+                    className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer
                       ${tab === t
-                        ? "border-orange-600 text-orange-600"
-                        : "border-transparent text-neutral-400 hover:text-neutral-600"
+                        ? "border-orange-600 text-orange-600 dark:border-orange-500 dark:text-orange-400"
+                        : "border-transparent text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                       }`}
                   >
                     {t === "students" ? "For Students" : "For Clubs & Societies"}
@@ -1026,32 +1021,32 @@ const Home = () => {
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                   {/* Left: text */}
                   <div>
-                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 dark:text-orange-500 mb-3">
                       Students
                     </p>
-                    <h2 className="text-4xl font-black leading-tight tracking-tight text-black mb-8">
+                    <h2 className="text-4xl font-black leading-tight tracking-tight text-neutral-900 dark:text-white mb-8">
                       Never miss a<br />campus beat{" "}
-                      <span className="text-orange-600">again.</span>
+                      <span className="text-orange-600 dark:text-orange-500">again.</span>
                     </h2>
 
                     <div className="flex flex-col gap-4">
                       {studentItems.map((item, i) => (
                         <div key={i} className="flex gap-3 items-start">
-                          <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
+                          <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/40 flex items-center justify-center text-orange-600 dark:text-orange-400">
                             {item.icon}
                           </div>
                           <div className="pt-0.5">
                             <p className="text-xs text-neutral-400 line-through mb-0.5">{item.problem}</p>
-                            <p className="text-sm font-semibold text-black leading-snug">{item.solution}</p>
+                            <p className="text-sm font-semibold text-neutral-900 dark:text-white leading-snug">{item.solution}</p>
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    <button className="mt-8 inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 transition-colors text-white text-sm font-semibold px-5 py-2.5 rounded-lg">
+                    <Link to="/register" className="mt-8 inline-flex items-center gap-2 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors text-white dark:text-black text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm">
                       Join now
                       <i className="ri-arrow-right-line" />
-                    </button>
+                    </Link>
                   </div>
 
                   {/* Right: image */}
@@ -1059,12 +1054,12 @@ const Home = () => {
                     <img
                       src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80"
                       alt="Student life"
-                      className="w-full h-[400px] object-cover rounded-xl border border-neutral-200"
+                      className="w-full h-[400px] object-cover rounded-xl border border-neutral-200 dark:border-neutral-800"
                       style={{ filter: "saturate(0.9)" }}
                     />
-                    <div className="absolute -bottom-4 -right-4 bg-yellow-400 border-2 border-gray-500 dark:border-gray-200 rounded-lg px-4 py-3">
+                    <div className="absolute -bottom-4 -right-4 bg-amber-400 border-2 border-neutral-800 dark:border-neutral-200 rounded-lg px-4 py-3 shadow-md">
                       <p className="text-lg font-black text-[#0d1422] leading-none">1-Click</p>
-                      <p className="text-[11px] text-[#0d1422] mt-0.5">Event Registration</p>
+                      <p className="text-[11px] text-[#0d1422] mt-0.5 font-bold">Event Registration</p>
                     </div>
                   </div>
                 </div>
@@ -1074,12 +1069,12 @@ const Home = () => {
               {tab === "clubs" && (
                 <div>
                   <div className="mb-10">
-                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 mb-3">
+                    <p className="text-xs font-semibold tracking-widest uppercase text-orange-600 dark:text-orange-500 mb-3">
                       Clubs & Societies
                     </p>
-                    <h2 className="text-4xl font-black leading-tight tracking-tight text-black">
+                    <h2 className="text-4xl font-black leading-tight tracking-tight text-neutral-900 dark:text-white">
                       Less logistics,{" "}
-                      <span className="text-orange-600">more impact.</span>
+                      <span className="text-orange-600 dark:text-orange-500">more impact.</span>
                     </h2>
                   </div>
 
@@ -1087,13 +1082,13 @@ const Home = () => {
                     {clubFeatures.map((f, i) => (
                       <div
                         key={i}
-                        className="p-4 sm:p-5 border border-neutral-200 rounded-xl hover:border-orange-400 transition-colors group"
+                        className="p-4 sm:p-5 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-xl hover:border-orange-400 dark:hover:border-orange-500 transition-colors group"
                       >
-                        <div className="w-9 h-9 bg-orange-600 rounded-lg flex items-center justify-center text-white mb-4 group-hover:bg-orange-700 transition-colors">
+                        <div className="w-9 h-9 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
                           {f.icon}
                         </div>
-                        <p className="text-sm font-semibold text-black mb-1">{f.title}</p>
-                        <p className="text-xs text-neutral-500 leading-relaxed">{f.desc}</p>
+                        <p className="text-sm font-semibold text-neutral-900 dark:text-white mb-1">{f.title}</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">{f.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -1103,14 +1098,14 @@ const Home = () => {
           </section>
 
           {/* ── ABOUT CAMPUSNODE ("Our Vision") (Public Only) ──────────────── */}
-          <section className="py-24 bg-[#fefce8]/30 border-b border-neutral-300">
+          <section className="py-24 bg-white dark:bg-[#0c0c0c] border-b border-neutral-200 dark:border-neutral-800 transition-colors duration-300">
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <ScrollReveal direction="left">
                   <div>
                     <SectionLabel>Our Vision</SectionLabel>
-                    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-black dark:text-white mb-8">
-                      Creating a Truly<br /><span className="text-orange-600">Connected Campus.</span>
+                    <h2 className="font-black text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-tight text-neutral-900 dark:text-white mb-8">
+                      Creating a Truly<br /><span className="text-orange-600 dark:text-orange-500">Connected Campus.</span>
                     </h2>
                     <div className="space-y-6 text-neutral-700 dark:text-neutral-300 leading-relaxed text-[17px]">
                       <p>
@@ -1122,17 +1117,17 @@ const Home = () => {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-3 sm:gap-8 mt-12 pt-8 border-t border-neutral-200">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-8 mt-12 pt-8 border-t border-neutral-200 dark:border-neutral-800">
                       <div className="min-w-0">
-                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">25+</div>
+                        <div className="text-2xl sm:text-4xl font-black text-neutral-900 dark:text-white">25+</div>
                         <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Active Clubs & Societies</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">5k+</div>
+                        <div className="text-2xl sm:text-4xl font-black text-neutral-900 dark:text-white">5k+</div>
                         <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">Student Base</div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-2xl sm:text-4xl font-black text-black dark:text-white">100%</div>
+                        <div className="text-2xl sm:text-4xl font-black text-neutral-900 dark:text-white">100%</div>
                         <div className="text-[10px] sm:text-[11px] font-bold tracking-widest text-neutral-400 mt-1">NITJ Focused</div>
                       </div>
                     </div>
@@ -1141,14 +1136,14 @@ const Home = () => {
 
                 <ScrollReveal direction="right" delay={0.2}>
                   <div className="flex gap-4 items-center justify-center lg:justify-end">
-                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-100 overflow-hidden translate-y-8 ">
+                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border border-neutral-200 dark:border-neutral-800 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden translate-y-8 shadow-sm">
                       <div className="w-full h-full flex items-center justify-center text-neutral-300">
-                        <img src="mainbuilding.jpeg" alt="oh not found" className="w-full h-full object-cover"/>
+                        <img src="mainbuilding.jpeg" alt="NITJ Main Building" className="w-full h-full object-cover"/>
                       </div>
                     </div>
-                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border-2 border-gray-200 rounded-sm bg-neutral-200 overflow-hidden -translate-y-4 ">
+                    <div className="w-1/2 max-w-[280px] aspect-[3/4] border border-neutral-200 dark:border-neutral-800 rounded-lg bg-neutral-200 dark:bg-neutral-800 overflow-hidden -translate-y-4 shadow-sm">
                       <div className="w-full h-full flex items-center justify-center text-neutral-400">
-                        <img src="itbuilding.jpeg" alt="ohhhhhh not found yaar" className="w-full h-full object-cover"/>
+                        <img src="itbuilding.jpeg" alt="NITJ IT Building" className="w-full h-full object-cover"/>
                       </div>
                     </div>
                   </div>
@@ -1202,7 +1197,7 @@ const Home = () => {
           }
         }
       `}</style>
-      <section id="team" className="py-24 bg-[#fefce8]/30 dark:bg-neutral-950/10 border-b border-neutral-200 dark:border-neutral-850 scroll-mt-20 relative overflow-hidden">
+      <section id="team" className="py-24 bg-[#fafafa] dark:bg-[#0a0a0a] border-b border-neutral-200 dark:border-neutral-800 scroll-mt-20 relative overflow-hidden transition-colors duration-300">
         {/* Glow accent */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-orange-500/[0.02] dark:bg-orange-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
 

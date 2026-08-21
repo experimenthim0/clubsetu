@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Clock, MapPin, Calendar, AlertTriangle, Check, RotateCcw } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 
 const RescheduleConfirmModal = ({
@@ -23,8 +23,6 @@ const RescheduleConfirmModal = ({
   const formatDt = (d) =>
     d ? d.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A";
 
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
   const handleConfirm = async () => {
     try {
       setSubmitting(true);
@@ -34,7 +32,7 @@ const RescheduleConfirmModal = ({
         venue: newVenue
       };
 
-      const res = await axios.put(`${API_URL}/api/events/${event.id || event._id}/reschedule`, payload);
+      const res = await api.put(`/api/events/${event.id || event._id}/reschedule`, payload);
 
       showNotification(res.data.message || "Event rescheduled successfully", "success");
       if (onSuccess) onSuccess(res.data.event);

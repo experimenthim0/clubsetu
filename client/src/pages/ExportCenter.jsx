@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../services/api";
 import {
   EXPORT_DATASETS,
   ACADEMIC_SESSIONS,
   SEMESTERS,
 } from "../config/exportDatasets";
 import { useNotification } from "../context/NotificationContext";
-
-const API_URL = import.meta.env.VITE_API_URL || "";
 
 /* ─── Shared Compact Table Primitives ─────────────────────────────────── */
 const DataTable = ({ children }) => (
@@ -79,8 +77,8 @@ const ExportCenter = () => {
 
   // Fetch Clubs dropdown list
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/admin/clubs-list`)
+    api
+      .get('/api/admin/clubs-list')
       .then((res) => {
         setClubs(res.data || []);
       })
@@ -90,8 +88,8 @@ const ExportCenter = () => {
   // Fetch Events dropdown list ONLY after a specific club is selected
   useEffect(() => {
     if (clubId && clubId !== "all") {
-      axios
-        .get(`${API_URL}/api/export-center/events-list`, { params: { clubId } })
+      api
+        .get('/api/export-center/events-list', { params: { clubId } })
         .then((res) => {
           if (res.data?.success) {
             setEventsList(res.data.events || []);
@@ -108,8 +106,8 @@ const ExportCenter = () => {
 
   // Fetch Authorized Datasets list
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/export-center/datasets`)
+    api
+      .get('/api/export-center/datasets')
       .then((res) => {
         if (res.data?.datasets) {
           const authorizedIds = res.data.datasets.map((d) => d.id);
@@ -152,7 +150,7 @@ const ExportCenter = () => {
         ...datasetFilters,
       };
 
-      const res = await axios.get(`${API_URL}/api/export-center/preview`, { params });
+      const res = await api.get('/api/export-center/preview', { params });
       if (res.data?.success) {
         setPreviewData(res.data.records || []);
         setTotalCount(res.data.totalCount || 0);
@@ -192,7 +190,7 @@ const ExportCenter = () => {
         filters: { eventId, ...datasetFilters },
       };
 
-      const res = await axios.post(`${API_URL}/api/export-center/export`, payload, {
+      const res = await api.post('/api/export-center/export', payload, {
         responseType: "blob",
       });
 
@@ -226,7 +224,7 @@ const ExportCenter = () => {
   const fetchHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const res = await axios.get(`${API_URL}/api/export-center/history`);
+      const res = await api.get('/api/export-center/history');
       if (res.data?.success) {
         setExportHistory(res.data.history || []);
       }

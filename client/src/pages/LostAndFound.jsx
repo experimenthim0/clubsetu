@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import * as lostFoundService from '../services/lostFoundService';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import ShimmerText from '../components/ShimmerText';
@@ -53,7 +54,7 @@ const GLOBAL_STYLES = `
     --lost-border:  rgba(232,80,10,0.2);
     --found-bg:     #052E1A;
     --found-text:   #6EE7B7;
-    --found-border: rgba(16,185,129,0.2);
+    --found-border: rgba(10,185,129,0.2);
     --shadow-card:  0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
     --shadow-hover: 0 4px 12px rgba(0,0,0,0.4), 0 16px 40px rgba(0,0,0,0.35);
   }
@@ -100,7 +101,7 @@ const LostAndFound = () => {
   });
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const { user } = useAuth();
 
   const triggerConfirm = ({ title, message, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel', isDanger = false }) => {
     setConfirmModal({
@@ -130,7 +131,7 @@ const LostAndFound = () => {
   const fetchItems = async () => {
     setFetching(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found`, { withCredentials: true });
+      const res = await lostFoundService.getLostFoundItems();
       setItems(res.data);
     } catch { toast.error('Failed to load items'); }
     finally { setFetching(false); }
@@ -139,7 +140,7 @@ const LostAndFound = () => {
   const fetchMyItems = async () => {
     setFetching(true);
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/lost-found/my-posts`, { withCredentials: true });
+      const res = await lostFoundService.getMyPosts();
       setMyItems(res.data);
     } catch (err) { console.error(err); }
     finally { setFetching(false); }
@@ -152,7 +153,7 @@ const LostAndFound = () => {
     if (!user) return toast.error('Please login to post');
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found`, formData, { withCredentials: true });
+      await lostFoundService.createLostFoundItem(formData);
       toast.success('Post created successfully!');
       setShowModal(false);
       setFormData({ title: '', description: '', type: 'Lost', image_url: '', image_public_id: '', whatsapp: '' });
@@ -169,7 +170,7 @@ const LostAndFound = () => {
       confirmText: 'Mark Reunited', isDanger: false,
       onConfirm: async () => {
         try {
-          await axios.patch(`${import.meta.env.VITE_API_URL}/api/lost-found/${id}/reunite`, {}, { withCredentials: true });
+          await lostFoundService.reuniteItem(id);
           toast.success('Marked as Reunited');
           fetchItems(); fetchMyItems();
         } catch { toast.error('Failed to update status'); }
@@ -184,7 +185,7 @@ const LostAndFound = () => {
       confirmText: 'Yes, Claim', isDanger: false,
       onConfirm: async () => {
         try {
-          const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${item.id}/claim`, {}, { withCredentials: true });
+          const res = await lostFoundService.claimItem(item.id);
           setSelectedContact({ ...item, contact_info: res.data.contact });
           toast.success('Claim initiated!');
         } catch (err) { toast.error(err.response?.data?.message || 'Failed to claim item'); }
@@ -198,8 +199,7 @@ const LostAndFound = () => {
     if (!reportReason.trim()) return toast.error('Please select or enter a reason.');
     setReportSubmitting(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/${reportModalItem}/report`,
-        { reason: reportReason.trim() }, { withCredentials: true });
+      await lostFoundService.reportItem(reportModalItem, { reason: reportReason.trim() });
       toast.success('Report submitted. The post owner has been notified.');
       setReportModalItem(null); setReportReason('');
       fetchItems();
@@ -215,8 +215,7 @@ const LostAndFound = () => {
     const fd = new FormData();
     fd.append('image', file);
     try {
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/lost-found/upload`, fd,
-        { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data } = await lostFoundService.uploadLostFoundImage(fd);
       setFormData(prev => ({ ...prev, image_url: data.secure_url, image_public_id: data.public_id }));
       toast.success('Image uploaded!');
     } catch (err) { toast.error(err.response?.data?.message || 'Upload failed'); }

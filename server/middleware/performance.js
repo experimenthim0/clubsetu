@@ -114,6 +114,12 @@ const CACHE_RULES = [
     test: (_, path) => path.startsWith("/api/notifications"),
     header: "private, max-age=30, must-revalidate",
   },
+  // Registration membership and status are mutable per-user data. Never let
+  // the browser/proxy reuse a response after register or deregister.
+  {
+    test: (_, path) => path.startsWith("/api/events/user/"),
+    header: "private, no-cache, no-store, must-revalidate",
+  },
   // ── User-specific data (requires auth headers) ────────────────────────
   {
     test: (_, path, req) =>
@@ -128,13 +134,13 @@ const CACHE_RULES = [
   {
     test: (method, path) =>
       method === "GET" && /^\/api\/events\/?$/.test(path),
-    header: "public, max-age=300, stale-while-revalidate=600",
+    header: "public, max-age=15, stale-while-revalidate=30",
   },
   // ── Event detail: public, 5min + 15min SWR ───────────────────────────
   {
     test: (method, path) =>
       method === "GET" && /^\/api\/events\/[^/]+\/?$/.test(path),
-    header: "public, max-age=300, stale-while-revalidate=900",
+    header: "public, max-age=15, stale-while-revalidate=30",
   },
   // ── Clubs list: public, 1hr + 6hr SWR ────────────────────────────────
   {

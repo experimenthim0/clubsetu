@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
-import axios from 'axios';
 import { useNotification } from '../context/NotificationContext';
+import { uploadProfilePhoto, deleteProfilePhoto } from '../services/userService';
 
 const MAX_SIZE_MB = 5;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
@@ -64,19 +64,14 @@ const ProfilePhotoUpload = ({ user, onPhotoUpdate }) => {
     formData.append('profilePhoto', file);
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/users/profile-photo`,
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (e) => {
-            if (e.total) {
-              const pct = Math.round((e.loaded / e.total) * 100);
-              setUploadProgress(pct);
-            }
-          },
-        }
-      );
+      const res = await uploadProfilePhoto(formData, {
+        onUploadProgress: (e) => {
+          if (e.total) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(pct);
+          }
+        },
+      });
 
       if (res.data?.success) {
         showNotification(res.data.message || 'Profile photo updated successfully', 'success');
@@ -105,9 +100,7 @@ const ProfilePhotoUpload = ({ user, onPhotoUpdate }) => {
     setDeleting(true);
 
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/users/profile-photo`
-      );
+      const res = await deleteProfilePhoto();
       if (res.data?.success) {
         showNotification(res.data.message || 'Profile photo removed', 'success');
         setPreview(null);

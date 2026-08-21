@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { getClubManagedEvents } from '../services/eventService';
+import { getPaymentStats } from '../services/paymentService';
 import ShimmerText from '../components/ShimmerText';
 
 const PaymentTracking = () => {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const { user: authUser, role: authRole } = useAuth();
+  const [user, setUser] = useState(authUser);
+  const [role, setRole] = useState(authRole);
   const [events, setEvents] = useState([]);
   const [paymentStats, setPaymentStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -13,28 +16,23 @@ const PaymentTracking = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    const storedRole = localStorage.getItem('role');
-
-    if (!storedUser || !(storedRole === 'club-head' || storedRole === 'club' || storedRole === 'clubHead' || storedRole === 'facultyCoordinator')) {
+    if (!authUser || !(authRole === 'club-head' || authRole === 'club' || authRole === 'clubHead' || authRole === 'facultyCoordinator')) {
       navigate('/login');
       return;
     }
 
-    setUser(storedUser);
-    setRole(storedRole);
+    setUser(authUser);
+    setRole(authRole);
 
     const fetchData = async () => {
       try {
-        const targetClubId = storedUser.clubId || storedUser._id || storedUser.id;
-        const eventsRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/events/club-manage/${targetClubId}`
-        );
+        const targetClubId = authUser.clubId || authUser._id || authUser.id;
+        const eventsRes = await getClubManagedEvents(targetClubId);
         const paidEvents = eventsRes.data.filter(e => (e.entryFee > 0) || (e.registrationFee > 0) || (e.paymentMethod && e.paymentMethod !== 'FREE'));
         setEvents(paidEvents);
 
         const statsPromises = paidEvents.map(event =>
-          axios.get(`${import.meta.env.VITE_API_URL}/api/payment/event/${event.id || event._id}/stats`)
+          getPaymentStats(event.id || event._id)
             .then(res => ({ eventId: event.id || event._id, ...res.data }))
             .catch(() => ({ eventId: event.id || event._id, totalCollected: 0, registrations: [] }))
         );
@@ -51,7 +49,7 @@ const PaymentTracking = () => {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [authUser, authRole, navigate]);
 
   if (loading) {
     return (

@@ -9,10 +9,8 @@
  * 5. Cleaning up subscription on logout / unsubscribe
  */
 
-import axios from 'axios';
+import api from '../services/api';
 import { getNotificationPermissionState } from './pushNotifications';
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Utility to convert base64url VAPID key string to Uint8Array for PushManager
@@ -57,7 +55,7 @@ export async function registerPushSubscription() {
     }
 
     // 1. Get VAPID Public Key from server
-    const { data: keyData } = await axios.get(`${API_URL}/api/push/vapid-public-key`);
+    const { data: keyData } = await api.get('/api/push/vapid-public-key');
     if (!keyData?.publicKey) {
       console.warn('[CampusNode PushSub] Failed to retrieve VAPID public key.');
       return null;
@@ -78,7 +76,7 @@ export async function registerPushSubscription() {
 
     // 3. Send subscription object to backend
     const subscriptionJSON = subscription.toJSON();
-    await axios.post(`${API_URL}/api/push/subscribe`, {
+    await api.post('/api/push/subscribe', {
       endpoint: subscriptionJSON.endpoint,
       keys: subscriptionJSON.keys,
       userAgent: navigator.userAgent,
@@ -107,7 +105,7 @@ export async function unsubscribePushSubscription() {
     if (subscription) {
       const endpoint = subscription.endpoint;
       await subscription.unsubscribe();
-      await axios.post(`${API_URL}/api/push/unsubscribe`, { endpoint }).catch(() => {});
+      await api.post('/api/push/unsubscribe', { endpoint }).catch(() => {});
       console.log('[CampusNode PushSub] Unsubscribed from Web Push successfully.');
     }
   } catch (error) {

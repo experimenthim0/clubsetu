@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { getPublicJson } from "../lib/publicDataCache";
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 // Static pages that are always searchable
 const STATIC_PAGES = [
@@ -44,8 +42,8 @@ const SearchBar = ({ isOpen, onClose, isMobile = false }) => {
         setLoading(true);
         try {
           const [clubsData, eventsData] = await Promise.all([
-            getPublicJson(API_URL + '/api/clubs'),
-            getPublicJson(API_URL + '/api/events'),
+            getPublicJson('/api/clubs'),
+            getPublicJson('/api/events'),
           ]);
           setClubs(clubsData || []);
           setEvents(eventsData || []);

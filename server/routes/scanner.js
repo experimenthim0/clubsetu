@@ -8,6 +8,7 @@
 import express from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { generateToken, verifyToken } from "../middleware/auth.js";
 import { validate } from "../middleware/validate.js";
 import prisma from "../lib/prisma.js";
@@ -17,6 +18,16 @@ import { verifyAttendancePermission, EVENT_STAFF_PERMISSIONS } from "../middlewa
 import { createAuditLog, AUDIT_ACTIONS } from "../utils/auditLog.js";
 
 const router = express.Router();
+
+const getAttendedCountByEvent = async (events) => {
+  if (events.length === 0) return new Map();
+  const rows = await prisma.participation.groupBy({
+    by: ["eventId"],
+    where: { eventId: { in: events.map((event) => event.id) }, status: "ATTENDED" },
+    _count: { _all: true },
+  });
+  return new Map(rows.map((row) => [row.eventId, row._count._all]));
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /scanner/login — Authenticate scanner user
@@ -197,14 +208,18 @@ router.get("/events", verifyToken, async (req, res) => {
           endTime: true,
           clubId: true,
           organizerType: true,
-          registeredCount: true,
           imageUrl: true,
           club: { select: { id: true, clubName: true } },
-          _count: { select: { participations: { where: { status: "ATTENDED" } } } },
+          _count: {
+            select: {
+              participations: { where: { status: { in: ["REGISTERED", "ATTENDED"] } } },
+            },
+          },
         },
         orderBy: { startTime: "desc" },
       });
 
+      const attendedCountByEvent = await getAttendedCountByEvent(events);
       return res.json({
         events: events.map((e) => ({
           id: e.id,
@@ -216,8 +231,8 @@ router.get("/events", verifyToken, async (req, res) => {
           clubId: e.clubId,
           clubName: e.club?.clubName || (e.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
           organizerType: e.organizerType,
-          registeredCount: e.registeredCount,
-          attendedCount: e._count.participations,
+          registeredCount: e._count.participations,
+          attendedCount: attendedCountByEvent.get(e.id) || 0,
           imageUrl: e.imageUrl,
         })),
       });
@@ -281,14 +296,18 @@ router.get("/events", verifyToken, async (req, res) => {
         endTime: true,
         clubId: true,
         organizerType: true,
-        registeredCount: true,
         imageUrl: true,
         club: { select: { id: true, clubName: true } },
-        _count: { select: { participations: { where: { status: "ATTENDED" } } } },
+        _count: {
+          select: {
+            participations: { where: { status: { in: ["REGISTERED", "ATTENDED"] } } },
+          },
+        },
       },
       orderBy: { startTime: "desc" },
     });
 
+    const attendedCountByEvent = await getAttendedCountByEvent(events);
     return res.json({
       events: events.map((e) => ({
         id: e.id,
@@ -300,8 +319,8 @@ router.get("/events", verifyToken, async (req, res) => {
         clubId: e.clubId,
         clubName: e.club?.clubName || (e.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
         organizerType: e.organizerType,
-        registeredCount: e.registeredCount,
-        attendedCount: e._count.participations,
+        registeredCount: e._count.participations,
+        attendedCount: attendedCountByEvent.get(e.id) || 0,
         imageUrl: e.imageUrl,
       })),
     });
@@ -357,11 +376,30 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
         qrPayload: true,
         qrVersion: true,
         status: true,
-        student: { select: { name: true, branch: true, rollNo: true } },
+        student: { select: { name: true, branch: true, rollNo: true, year: true } },
         externalName: true,
         externalEmail: true,
       },
     });
+
+    const hydratedParticipations = await Promise.all(
+      participations.map(async (participation) => {
+        if (participation.qrCode && participation.qrPayload) return participation;
+
+        const ticketId = participation.qrCode || crypto.randomBytes(12).toString("base64url");
+        const signed = signTicket(eventId, ticketId);
+        const updated = await prisma.participation.update({
+          where: { id: participation.id },
+          data: {
+            qrCode: ticketId,
+            qrPayload: signed.qrPayload,
+            qrVersion: signed.qrVersion,
+            qrKeyId: signed.qrKeyId,
+          },
+        });
+        return { ...participation, ...updated };
+      }),
+    );
 
     // Get existing attendance records
     const existingAttendance = await prisma.attendanceRecord.findMany({
@@ -384,9 +422,12 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
         clubId: event.clubId,
         clubName: event.club?.clubName || (event.organizerType === "CENTRAL" ? "Office of DSW (Central Event)" : "College Event"),
         organizerType: event.organizerType,
-        registeredCount: event.registeredCount,
+        // Use the package size rather than Event.registeredCount. The counter
+        // can be stale after imports/legacy data, while this is the exact set
+        // the scanner has actually downloaded.
+        registeredCount: hydratedParticipations.length,
       },
-      tickets: participations.map((p) => ({
+      tickets: hydratedParticipations.map((p) => ({
         participationId: p.id,
         ticketId: p.qrCode,
         qrPayload: p.qrPayload,
@@ -395,6 +436,7 @@ router.get("/events/:eventId/offline-package", verifyToken, async (req, res) => 
         studentName: p.student?.name || p.externalName || "Unknown",
         branch: p.student?.branch || null,
         rollNo: p.student?.rollNo || null,
+        year: p.student?.year || null,
         externalEmail: p.externalEmail || null,
       })),
       publicKeys: [publicKeyInfo],
@@ -556,8 +598,16 @@ router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async 
 
     // 3. Find ticket
     const participation = await prisma.participation.findFirst({
-      where: { eventId, qrCode: verification.ticketId },
-      include: { student: { select: { name: true, branch: true, rollNo: true } } },
+      where: {
+        eventId,
+        OR: [
+          { qrCode: verification.ticketId },
+          // Also support a valid payload saved before the ticket-id column was
+          // repaired, while still binding the lookup to this event.
+          { qrPayload },
+        ],
+      },
+      include: { student: { select: { name: true, branch: true, rollNo: true, year: true } } },
     });
 
     if (!participation) {
@@ -587,6 +637,7 @@ router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async 
           name: participation.student?.name || participation.externalName || "Unknown",
           branch: participation.student?.branch || null,
           rollNo: participation.student?.rollNo || null,
+          year: participation.student?.year || null,
         },
         attendedAt: existingAttendance.scannedAt,
       });
@@ -629,6 +680,7 @@ router.post("/attendance/check-in", verifyToken, validate(checkInSchema), async 
         name: participation.student?.name || participation.externalName || "Unknown",
         branch: participation.student?.branch || null,
         rollNo: participation.student?.rollNo || null,
+        year: participation.student?.year || null,
       },
       attendedAt: new Date(),
     });
@@ -872,4 +924,3 @@ router.get(["/keys/public", "/keys"], async (req, res) => {
 });
 
 export default router;
-

@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { searchUsers, updateProfile } from '../services/userService';
+import { getUserEvents, registerForEvent } from '../services/eventService';
 import DOMPurify from 'dompurify';
 import 'react-quill-new/dist/quill.snow.css';
 import { useNotification } from '../context/NotificationContext';
 import CalendarDropdown from '../components/CalendarDropdown';
 import PaymentModal from '../components/PaymentModal';
 import { getPublicJson } from '../lib/publicDataCache';
-import { cachedFetch, getEventTTL } from '../lib/cacheManager';
+import { cachedFetch, getEventTTL, invalidateCache } from '../lib/cacheManager';
 import { prefetchClubDetail } from '../lib/prefetchManager';
 import { InstagramIcon } from "@/components/ui/instagram";
 import { LinkedinIcon } from "@/components/ui/linkedin";
@@ -74,6 +77,7 @@ const EventDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user, role, setSession } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -115,8 +119,8 @@ const EventDetails = () => {
     const delayDebounce = setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/search?query=${searchQuery}`);
-        const currentUser = JSON.parse(localStorage.getItem('user'));
+        const res = await searchUsers(searchQuery);
+        const currentUser = user;
         const filtered = res.data.filter(s => s.id !== currentUser?.id && !teammates.some(t => t.id === s.id));
         setSearchResults(filtered);
       } catch (err) {
@@ -131,7 +135,7 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const url = `${import.meta.env.VITE_API_URL}/api/events/${slug}`;
+        const url = `/api/events/${slug}`;
         
         // Initial fetch with default 10min TTL or cached data
         let eventData = await getPublicJson(url);
@@ -151,11 +155,9 @@ const EventDetails = () => {
         }
 
         // Check if the user is already registered for this event
-        const user = JSON.parse(localStorage.getItem('user'));
-        const role = localStorage.getItem('role');
         if (user && (role === 'member' || role === 'student')) {
           try {
-            const regRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/events/user/${user.id || user._id}`);
+            const regRes = await getUserEvents(user.id || user._id);
             const eventId = eventData.id || eventData._id;
             const isAlreadyReg = regRes.data.some(r => r.eventId && (r.eventId.id === eventId || r.eventId._id === eventId));
             if (isAlreadyReg) {
@@ -205,7 +207,7 @@ const EventDetails = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       
       if (paymentPayload.isTeam) {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
+        const res = await api.post('/api/teams', {
           eventId: event.id || event._id,
           teamName: paymentPayload.teamName,
           members: paymentPayload.members,
@@ -236,10 +238,13 @@ const EventDetails = () => {
           paymentRemarks: remarks
         };
         
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, 
-          registerBody
-        );
+        const res = await registerForEvent(event.id || event._id, registerBody);
+        await invalidateCache([
+          '/api/events',
+          `/api/events/${event.id || event._id}`,
+          ...(user ? [`/api/events/user/${user.id || user._id}`] : []),
+        ]);
+        setAlreadyRegistered(true);
         
         if (res.data.status === 'WAITLISTED') {
           showNotification('You have been added to the waitlist.', 'info');
@@ -281,10 +286,13 @@ const EventDetails = () => {
         ? { studentId: user.id }
         : { externalEmail, externalName };
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`,
-        registerBody
-      );
+      const res = await registerForEvent(event.id || event._id, registerBody);
+      await invalidateCache([
+        '/api/events',
+        `/api/events/${event.id || event._id}`,
+        ...(user ? [`/api/events/user/${user.id || user._id}`] : []),
+      ]);
+      setAlreadyRegistered(true);
 
       if (res.data.status === 'WAITLISTED') {
         showNotification('You have been added to the waitlist.', 'info');
@@ -440,7 +448,7 @@ const EventDetails = () => {
     // Free path for Team
     setIsRegistering(true);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/teams`, {
+      const res = await api.post('/api/teams', {
         eventId: event.id || event._id,
         teamName: teamName,
         members: teammates.map(t => t.id),
@@ -467,9 +475,9 @@ const EventDetails = () => {
     const role = localStorage.getItem('role');
     setIsRegistering(true);
     try {
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${role}/${user.id}`, modalInputs);
+      const res = await updateProfile(role, user.id || user._id, modalInputs);
       const updatedUser = res.data.user;
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setSession(updatedUser, role);
       setMissingFieldsModalOpen(false);
       showNotification('Profile updated successfully!', 'success');
       if (event.customFields && event.customFields.length > 0) { setCustomFormResponses({}); setCustomFormModalOpen(true); return; }
@@ -513,7 +521,13 @@ const EventDetails = () => {
       return;
     }
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/events/${event.id || event._id}/register`, { studentId: user.id, formResponses: customFormResponses });
+      const res = await registerForEvent(event.id || event._id, { studentId: user.id || user._id, formResponses: customFormResponses });
+      await invalidateCache([
+        '/api/events',
+        `/api/events/${event.id || event._id}`,
+        `/api/events/user/${user.id || user._id}`,
+      ]);
+      setAlreadyRegistered(true);
       showNotification(res.data.message, 'success');
       setCustomFormModalOpen(false);
       setTimeout(() => navigate('/my-events'), 1500);
@@ -619,8 +633,6 @@ const EventDetails = () => {
 
   const isUpcoming = !isEnded && !isLive && !isDeadlinePassed;
   const showMobileCTA = isUpcoming && !alreadyRegistered && !isOpenEvent;
-
-  const user = JSON.parse(localStorage.getItem('user'));
 
   // ── Auto-generated highlights ──────────────────────────────────────────────
   const highlights = [

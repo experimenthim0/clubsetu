@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getClubBySlugOrId, getClubs, updateClub } from "../services/clubService";
 import { useNotification } from "../context/NotificationContext";
 import { Link } from "react-router-dom";
 import ShimmerText from "../components/ShimmerText";
@@ -15,6 +16,7 @@ const EditClub = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user, role, setSession } = useAuth();
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [clubId, setClubId] = useState(id);
@@ -102,9 +104,7 @@ const EditClub = () => {
           throw new Error("No club ID found.");
         }
 
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/clubs/${targetId}`,
-        );
+        const res = await getClubBySlugOrId(targetId);
         if (!res.data.club) {
           throw new Error("Club data not found in response.");
         }
@@ -116,20 +116,14 @@ const EditClub = () => {
           err.message === "No club ID found."
         ) {
           try {
-            const storedUserData = localStorage.getItem("user");
-            const storedUser =
-              storedUserData && storedUserData !== "undefined"
-                ? JSON.parse(storedUserData)
-                : null;
-            const storedRole = localStorage.getItem("role");
+            const storedUser = user;
+            const storedRole = role;
 
             if (
               storedUser &&
               (storedRole === "club" || storedRole === "facultyCoordinator")
             ) {
-              const clubsRes = await axios.get(
-                `${import.meta.env.VITE_API_URL}/api/clubs`,
-              );
+              const clubsRes = await getClubs();
               const matchedClub = clubsRes.data.find(
                 (club) =>
                   club._id === storedUser.clubId ||
@@ -196,21 +190,17 @@ const EditClub = () => {
       delete processedData.clubX;
       delete processedData.clubWebsite;
       delete processedData.clubWhatsapp;
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/clubs/${clubId}`,
-        processedData,
-      );
+      const res = await updateClub(clubId, processedData);
 
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      if (storedUser) {
+      if (user) {
         const updatedUser = {
-          ...storedUser,
+          ...user,
           clubId: res.data.club._id,
           clubSlug: res.data.club.slug || "",
-          clubName: res.data.club.clubName || storedUser.clubName,
+          clubName: res.data.club.clubName || user.clubName,
           isClubAdded: true,
         };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setSession(updatedUser, role);
       }
 
       showNotification("Club information updated successfully", "success");

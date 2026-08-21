@@ -1,0 +1,33 @@
+import api from './api';
+
+/**
+ * Authentication Service
+ * All auth-related API calls consolidated in one place.
+ */
+
+export const loginUser = (email, password) =>
+  api.post('/api/auth/login', { email, password });
+
+export const verify2FA = (email, otp) =>
+  api.post('/api/auth/verify-2fa', { email, otp });
+
+export const adminLogin = (email, password) =>
+  api.post('/api/admin/login', { email, password });
+
+export const registerStudent = (formData) =>
+  api.post('/api/auth/register/student', formData);
+
+export const forgotPassword = (email, role) =>
+  api.post('/api/auth/forgot-password', { email, role });
+
+export const resetPassword = (token, newPassword, role) =>
+  api.post(`/api/auth/reset-password/${token}`, { newPassword, role });
+
+export const verifyEmail = (token) =>
+  api.get(`/api/auth/verify-email/${token}`);
+
+export const changePassword = (currentPassword, newPassword) =>
+  api.post('/api/auth/change-password', { currentPassword, newPassword });
+
+export const logoutUser = () =>
+  api.post('/api/auth/logout').catch(() => {});

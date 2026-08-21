@@ -1,31 +1,13 @@
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { useAuth } from "../context/AuthContext";
 
 const AdminNavbar = () => {
   const { isDark, toggleTheme } = useTheme();
-
-  // Read admin info for display
-  let admin = null;
-  try {
-    const stored = localStorage.getItem("admin");
-    if (stored && stored !== "undefined") {
-      admin = JSON.parse(stored);
-    }
-  } catch (err) {
-    console.error("Error parsing admin from local storage", err);
-  }
+  const { user: admin, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("admin");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    axios.post(`${API_URL}/api/auth/logout`).catch(() => { });
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/admin-secret-login";
+    logout('/admin-secret-login');
   };
 
   const handleVisitWebsite = () => {
@@ -33,7 +15,7 @@ const AdminNavbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white dark:bg-[#0a0a0a] border-b border-neutral-100 dark:border-neutral-800/80 myfont">
+    <nav className="sticky top-0 z-50 pt-[env(safe-area-inset-top)] bg-white dark:bg-[#0a0a0a] border-b border-neutral-100 dark:border-neutral-800/80 myfont">
       <div className="max-w-full mx-auto px-5 lg:px-8 h-14 flex items-center justify-between gap-4">
         {/* ── Left: Logo + Brand ── */}
         <div className="flex items-center gap-3 sm:gap-4">

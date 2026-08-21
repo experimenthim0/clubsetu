@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Building2, Calendar, Clock, AlertTriangle } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 
 const BlackoutModal = ({
@@ -44,8 +44,6 @@ const BlackoutModal = ({
 
   if (!isOpen) return null;
 
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!venue || !title || !startTime || !endTime) {
@@ -71,11 +69,11 @@ const BlackoutModal = ({
       };
 
       if (editingBlackout) {
-        await axios.put(`${API_URL}/api/venues/blackouts/${editingBlackout.id || editingBlackout._id}`, payload);
-        showNotification("Blackout window updated successfully.", "success");
+        await api.put(`/api/venues/blackouts/${editingBlackout.id || editingBlackout._id}`, payload);
+        showNotification("Blackout window updated.", "success");
       } else {
-        await axios.post(`${API_URL}/api/venues/blackouts`, payload);
-        showNotification("Venue blackout created successfully.", "success");
+        await api.post('/api/venues/blackouts', payload);
+        showNotification("Blackout window scheduled.", "success");
       }
 
       if (onSuccess) onSuccess();
@@ -95,7 +93,7 @@ const BlackoutModal = ({
 
     try {
       setSubmitting(true);
-      await axios.delete(`${API_URL}/api/venues/blackouts/${editingBlackout.id || editingBlackout._id}`);
+      await api.delete(`/api/venues/blackouts/${editingBlackout.id || editingBlackout._id}`);
       showNotification("Blackout window removed.", "success");
       if (onSuccess) onSuccess();
       onClose();

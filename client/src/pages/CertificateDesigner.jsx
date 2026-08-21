@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getEventById } from "../services/eventService";
+import { uploadCertificateTemplate, saveCertificateTemplate } from "../services/certificateService";
 import { useNotification } from "../context/NotificationContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -69,9 +70,7 @@ const CertificateDesigner = () => {
 
   const fetchEvent = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/events/${id}`,
-      );
+      const res = await getEventById(id);
       setEvent(res.data);
       if (res.data.certificateTemplate) {
         const t = res.data.certificateTemplate;
@@ -172,11 +171,7 @@ const CertificateDesigner = () => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/certificates/upload-template`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      );
+      const res = await uploadCertificateTemplate(formData);
       const { secure_url } = res.data;
       setImageUrl(secure_url);
       loadBackgroundImage(secure_url);
@@ -266,10 +261,7 @@ const CertificateDesigner = () => {
     };
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/certificates/${id}/template`,
-        payload,
-      );
+      await saveCertificateTemplate(id, payload);
       showNotification("Template saved!", "success");
       navigate("/my-events");
     } catch (err) {

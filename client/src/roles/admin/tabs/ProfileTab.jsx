@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNotification } from '../../../context/NotificationContext';
+import { useAuth } from '../../../context/AuthContext';
+import { updateProfile } from '../../../services/userService';
+import { changePassword } from '../../../services/authService';
 
 const ProfileTab = ({
     profileName,
@@ -9,6 +11,7 @@ const ProfileTab = ({
     profile2FA,
     setProfile2FA
 }) => {
+    const { user: admin, role, setSession } = useAuth();
     const { showNotification } = useNotification();
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
@@ -22,21 +25,17 @@ const ProfileTab = ({
         e.preventDefault();
         setIsSavingProfile(true);
         try {
-            const adminDataString = localStorage.getItem('admin');
-            const adminData = JSON.parse(adminDataString);
-            
-            const updateRes = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${adminData.role}/${adminData.id || adminData._id}`, {
+            const updateRes = await updateProfile(role, admin.id || admin._id, {
                 name: profileName,
                 isTwoStepEnabled: profile2FA
             });
             
             const updatedAdmin = {
-                ...adminData,
+                ...admin,
                 name: updateRes.data.user.name,
                 isTwoStepEnabled: updateRes.data.user.isTwoStepEnabled
             };
-            localStorage.setItem('admin', JSON.stringify(updatedAdmin));
-            localStorage.setItem('user', JSON.stringify(updatedAdmin));
+            setSession(updatedAdmin, role);
             
             showNotification('Profile updated successfully', 'success');
         } catch (err) {
@@ -58,10 +57,7 @@ const ProfileTab = ({
         }
         setIsSavingPassword(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/change-password`, {
-                currentPassword: profilePasswordForm.currentPassword,
-                newPassword: profilePasswordForm.newPassword
-            });
+            await changePassword(profilePasswordForm.currentPassword, profilePasswordForm.newPassword);
             showNotification('Password changed successfully', 'success');
             setProfilePasswordForm({
                 currentPassword: '',
